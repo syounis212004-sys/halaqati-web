@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="حلقتي">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="description" content="حلقتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم">
-<title>حلقتي — النسخة الرسمية 2.8.1</title>
+<title>حلقتي — النسخة الرسمية 2.8.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -464,7 +464,7 @@ body.dark .hero{color:#fff!important}.dark-contrast-note{color:var(--muted)}
 </head>
 <body>
 <div id="toast" class="toast"></div>
-<section id="auth" class="screen auth"><div class="auth-card"><div class="logo">ح</div><h1>حلقتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ النسخة الرسمية 2.8.1.4</span></div>
+<section id="auth" class="screen auth"><div class="auth-card"><div class="logo">ح</div><h1>حلقتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ النسخة الرسمية 2.8.2</span></div>
 <form id="loginForm">
 <label class="field"><span>البريد الإلكتروني</span><input class="input" id="loginEmail" type="email" autocomplete="email" required></label>
 <label class="field"><span>كلمة المرور</span><input class="input" id="loginPassword" type="password" autocomplete="current-password" required></label>
@@ -524,8 +524,8 @@ body.dark .hero{color:#fff!important}.dark-contrast-note{color:var(--muted)}
 const SUPABASE_URL='https://xlxzwucqdtggkfwwqibk.supabase.co';
 const SUPABASE_KEY='sb_publishable_VZGYTedRpXfJdswijXoxig_F0Hva8ks';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const APP_VERSION_NAME='2.8.0';
-const APP_VERSION_CODE=20800;
+const APP_VERSION_NAME='2.8.2';
+const APP_VERSION_CODE=20802;
 const HALAQATI_UPDATE_MANIFEST='https://syounis212004-sys.github.io/halaqati-web/version.json';
 let halaqatiUpdateState={checking:false,info:null,progress:0,message:'',error:''};
 
@@ -1536,6 +1536,7 @@ function professionalWordHtml(){
 
 <!-- Halaqati 2.8.0: native Android self-update checker/downloader/installer with signature verification. -->
 <!-- Halaqati v2.8.1: fixed monthly plan visibility; robust overlapping-period matching; edit/delete retained. -->
+<!-- v2.8.2: Android updater PackageInstaller stream-close fix. -->
 </body></html>`
 }
 async function exportCurrentReportWord(){

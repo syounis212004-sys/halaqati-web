@@ -33,3 +33,7 @@ Google يعمل من رابط HTTPS المنشور.
 - إصلاح ظهور الخطط الشهرية المضافة أمام الطلاب.
 - عرض أهداف الخطة والتقدم مع أزرار التعديل والحذف.
 - هذه الحزمة لا تحتوي version.json عمداً. اترك version.json الحالي في GitHub Pages كما هو، ثم بعد نجاح بناء APK v2.8.1 ارفع version.json وHalaqati-latest.apk من Artifact الخاص بالتحديث.
+
+
+## v2.8.2
+إصلاح Native Android updater. لا ترفع version.json جديداً قبل بناء APK الموقّع v2.8.2.
