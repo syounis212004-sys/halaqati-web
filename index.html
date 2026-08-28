@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="حلقتي">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="description" content="حلقتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم">
-<title>حلقتي — النسخة الرسمية 2.7.3</title>
+<title>حلقتي — النسخة الرسمية 2.8.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +36,15 @@ dialog{width:min(810px,96vw);border:0;border-radius:25px;padding:0;box-shadow:0 
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;font-size:11px}th{background:#f3f6f4;color:#55635c}.pill-group{display:flex;gap:6px;flex-wrap:wrap}.pill-group button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-size:11px}.pill-group button.active{background:var(--green);color:#fff}.qcalc-result{background:linear-gradient(145deg,#eff6f2,#fff);border:1px solid #dce9e2;border-radius:18px;padding:15px;margin-top:12px}.qcalc-result strong{font-size:25px;color:var(--green)}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#173c31;color:#fff;padding:11px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:.2s;z-index:100}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .counter{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:7px}.counter button{height:42px;border:0;border-radius:12px;background:#eef3f0;color:var(--green);font-size:22px}.counter .num{text-align:center;font-size:27px;font-weight:700}.eval-box{border-radius:17px;padding:13px;background:#f7f9f8;border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}.eval-dot{width:14px;height:14px;border-radius:50%}.eval-excellent{background:var(--blue)}.eval-very_good{background:var(--good)}.eval-good{background:var(--warn)}.eval-repeat{background:var(--danger)}
 .rec-row{padding:0;overflow:hidden}.rec-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:#f7faf8;border-bottom:1px solid var(--line)}.rec-body{padding:14px}.mode-panel{margin-top:10px}.juz-scroll{display:flex;gap:6px;overflow:auto;padding:7px 0}.juz-chip{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;min-width:48px}.surah-scroll{display:flex;gap:6px;overflow:auto;padding:7px 0}.surah-chip{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;white-space:nowrap}.range-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}.range-summary{text-align:center;margin-top:10px;padding:11px;border-top:1px solid var(--line)}.range-summary strong{font-size:24px}.calc-status{font-size:11px;color:var(--muted);margin-top:5px}.photo-lg{width:82px;height:82px;border-radius:24px;background:var(--mint);object-fit:cover;display:grid;place-items:center;font-size:31px;color:var(--green)}
-.rank-row{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px}.rank{width:36px;height:36px;border-radius:12px;background:#fff3d5;color:#84611e;display:grid;place-items:center;font-weight:800}.track-hifz{border-right:4px solid #286fe0}.track-review{border-right:4px solid #279760}.track-sard{border-right:4px solid #c68a29}.plan-bar{display:grid;gap:6px;margin-top:9px}.plan-label{display:flex;justify-content:space-between;font-size:11px}.photo-preview{width:70px;height:70px;border-radius:18px;background:var(--mint);object-fit:cover}
+.rank-row{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px}.rank{width:36px;height:36px;border-radius:12px;background:#fff3d5;color:#84611e;display:grid;place-items:center;font-weight:800}.track-hifz{border-right:4px solid #286fe0}.track-review{border-right:4px solid #279760}.track-sard{border-right:4px solid #c68a29}.plan-bar{display:grid;gap:6px;margin-top:9px}
+.plan-card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.plan-card-actions .mini{min-width:84px}
+.roster-rec{position:relative}
+.roster-rec-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end}
+.roster-rec-actions .mini{padding:5px 8px;font-size:10px}
+.danger-note{background:#fff2f0;border:1px solid #f1c4bd;color:#8c3027;border-radius:12px;padding:10px;font-size:11px;line-height:1.7}
+html.dark .danger-note{background:#3b1f1c;border-color:#754039;color:#ffd9d2}
+.plan-label{display:flex;justify-content:space-between;font-size:11px}.photo-preview{width:70px;height:70px;border-radius:18px;background:var(--mint);object-fit:cover}
 
 /* V4: themes, multi selection, forum, import center */
 body.dark{--cream:#101714;--card:#17211d;--ink:#edf5f1;--muted:#a2b1aa;--line:#2d3934;--mint:#1d3028;--mint2:#14221c;--shadow:0 14px 44px rgba(0,0,0,.28)}
@@ -49,7 +57,7 @@ body.dark .auth-card{background:#17211d;color:var(--ink)}body.dark .auth{backgro
 .forum-comments{border-top:1px solid var(--line);margin-top:12px;padding-top:9px}.comment{background:var(--mint2);border-radius:13px;padding:9px 11px;margin:7px 0}.comment-head{display:flex;gap:8px;align-items:center}.comment-head b{font-size:11px}.comment-body{font-size:12px;margin-top:4px;white-space:pre-wrap}.comment-form{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:9px}.comment-form textarea{min-height:42px;resize:vertical}.forum-tools{display:flex;gap:6px;flex-wrap:wrap}.edited{font-size:9px;color:var(--muted)}
 .score-explain{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:9px 0}.score-explain div{border-radius:11px;padding:8px;text-align:center;font-size:10px;background:var(--mint2)}.score-explain .ex{border-top:3px solid var(--blue)}.score-explain .vg{border-top:3px solid var(--good)}.score-explain .gd{border-top:3px solid var(--warn)}.score-explain .rp{border-top:3px solid var(--danger)}
 .data-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.action-card{border:1px solid var(--line);background:var(--card);border-radius:17px;padding:14px;text-align:right}.action-card b{display:block;margin-bottom:4px}.action-card span{font-size:10px;color:var(--muted)}
-.import-preview{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:13px}.import-raw{min-height:150px;font-family:monospace;direction:ltr;text-align:left}.theme-preset{width:42px;height:42px;border-radius:13px;border:3px solid #fff;box-shadow:0 0 0 1px var(--line)}.settings-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.import-preview{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:13px}.import-raw{min-height:150px;font-family:monospace;direction:ltr;text-align:left}.theme-preset{width:42px;height:42px;border-radius:13px;border:3px solid #fff;box-shadow:0 0 0 1px var(--line)}.settings-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.update-card{position:relative;overflow:hidden}.update-card:before{content:"";position:absolute;inset:auto -45px -45px auto;width:130px;height:130px;border-radius:50%;background:color-mix(in srgb,var(--green3) 10%,transparent);pointer-events:none}.update-version{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 0}.update-version-code{font-size:24px;font-weight:900;color:var(--green)}.update-status{border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:11px;margin-top:10px;line-height:1.8}.update-status.available{border-color:color-mix(in srgb,var(--green3) 50%,var(--line));background:color-mix(in srgb,var(--green3) 8%,var(--card))}.update-notes{margin:7px 0 0;padding-right:18px}.update-progress{height:9px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:9px}.update-progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--green3));transition:width .2s}.update-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.update-actions .btn{flex:1;min-width:130px}.switch-line{display:flex;align-items:center;gap:8px;font-weight:800}.switch-line input{width:20px;height:20px;accent-color:var(--green)}html.dark .update-status{background:#16241f;color:#f3faf7}html.dark .update-status.available{background:#143127}
 .profile-details{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.detail{background:var(--mint2);border-radius:13px;padding:10px}.detail span{display:block;color:var(--muted);font-size:9px}.detail b{font-size:12px}.export-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
 @media(max-width:590px){.juz-grid{grid-template-columns:repeat(5,1fr)}.surah-select-grid{grid-template-columns:repeat(2,1fr)}.data-actions{grid-template-columns:1fr}.score-explain{grid-template-columns:repeat(2,1fr)}.profile-details{grid-template-columns:1fr 1fr}}
 
@@ -444,11 +452,19 @@ body.dark .hero{color:#fff!important}.dark-contrast-note{color:var(--muted)}
 .followup-list{display:grid;gap:7px;margin-top:10px}.followup-row{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:9px;background:var(--card)}.followup-row .flag{width:34px;height:34px;border-radius:11px;background:#fff3df;color:#9a6816;display:grid;place-items:center;font-weight:900;flex:none}
 @media(max-width:650px){.role-matrix,.resource-grid{grid-template-columns:1fr}.student-card>.row>.avatar,.roster-top>.avatar{width:54px;height:54px}}
 
+
+.plan-existing-card{border-color:rgba(11,75,61,.18)}
+.plan-target-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:13px 0}
+.plan-target-grid>div{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:10px 7px;text-align:center;display:grid;gap:3px}
+.plan-target-grid b{font-size:16px;color:var(--primary)}
+.plan-target-grid span{font-size:10px;color:var(--muted)}
+@media(max-width:560px){.plan-target-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
 <div id="toast" class="toast"></div>
-<section id="auth" class="screen auth"><div class="auth-card"><div class="logo">ح</div><h1>حلقتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ النسخة الرسمية 2.7.3.4</span></div>
+<section id="auth" class="screen auth"><div class="auth-card"><div class="logo">ح</div><h1>حلقتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ النسخة الرسمية 2.8.1.4</span></div>
 <form id="loginForm">
 <label class="field"><span>البريد الإلكتروني</span><input class="input" id="loginEmail" type="email" autocomplete="email" required></label>
 <label class="field"><span>كلمة المرور</span><input class="input" id="loginPassword" type="password" autocomplete="current-password" required></label>
@@ -493,7 +509,7 @@ body.dark .hero{color:#fff!important}.dark-contrast-note{color:var(--muted)}
 
 <dialog id="teacherAssignDlg"><form id="teacherAssignForm" class="modal"><div class="modal-head"><h3>محفّظو الحلقة</h3><button class="close" type="button" onclick="teacherAssignDlg.close()">✕</button></div><input type="hidden" id="taHalaqa"><div class="notice">المحفّظ المربوط بالحَلَقة يستطيع إنشاء الجلسات وإضافة وتعديل طلاب هذه الحلقة فقط. المشرف ومسؤول النظام يبقيان قادرين على المتابعة والتعديل.</div><div id="teacherAssignList"></div><div class="form-actions"><button class="btn btn-primary">حفظ المحفّظين</button><button class="btn btn-ghost" type="button" onclick="teacherAssignDlg.close()">إلغاء</button></div></form></dialog>
 
-<dialog id="reportDlg"><form id="reportForm" class="modal"><div class="modal-head"><h3>تسميعة جديدة</h3><button class="close" type="button" onclick="reportDlg.close()">✕</button></div><input type="hidden" id="rpStudent"><input type="hidden" id="rpSession"><div class="row card" style="box-shadow:none"><div class="avatar" id="rpAvatar">ط</div><div class="grow"><b id="rpName">الطالب</b><div class="muted" id="rpSessionLabel"></div></div></div><div class="section-head"><h3>الحضور والسلوك</h3></div><div class="form-grid"><label class="field"><span>الحضور</span><select id="rpAttendance"><option value="present">حاضر</option><option value="absent">غائب</option><option value="excused">غائب بعذر</option><option value="late">متأخر</option></select></label><label class="field"><span>سبب العذر / التأخر</span><input id="rpExcuse" class="input" placeholder="اختياري"></label><label class="field"><span>السلوك</span><select id="rpBehavior"><option value="excellent">ممتاز</option><option value="good">جيد</option><option value="normal">طبيعي</option><option value="needs_attention">يحتاج متابعة</option><option value="warning">إنذار</option></select></label><label class="field"><span>درجة السلوك</span><select id="rpBehaviorScore"><option value="5">5 - ممتاز</option><option value="4">4</option><option value="3" selected>3 - طبيعي</option><option value="2">2</option><option value="1">1 - ضعيف</option></select></label></div><div class="section-head"><h3>الحفظ / المراجعة / السرد</h3><button class="mini" type="button" onclick="addRecitationRow()">+ إضافة بند</button></div><div id="recitationRows"></div><label class="field"><span>تعليق يومي لولي الأمر</span><textarea id="rpComment" rows="3" placeholder="مثال: أداء جيد، يحتاج تثبيت آخر نصف صفحة"></textarea></label><label class="field"><span>الواجب القادم</span><input id="rpHomework" class="input" placeholder="مثال: حفظ ص 35-37 ومراجعة ص 1-10"></label><div class="form-actions"><button class="btn btn-primary">حفظ التقرير اليومي</button><button class="btn btn-ghost" type="button" onclick="reportDlg.close()">إلغاء</button></div></form></dialog>
+<dialog id="reportDlg"><form id="reportForm" class="modal"><div class="modal-head"><h3>تسميعة جديدة</h3><button class="close" type="button" onclick="reportDlg.close()">✕</button></div><input type="hidden" id="rpStudent"><input type="hidden" id="rpSession"><div class="row card" style="box-shadow:none"><div class="avatar" id="rpAvatar">ط</div><div class="grow"><b id="rpName">الطالب</b><div class="muted" id="rpSessionLabel"></div></div></div><div class="section-head"><h3>الحضور والسلوك</h3></div><div class="form-grid"><label class="field"><span>الحضور</span><select id="rpAttendance"><option value="present">حاضر</option><option value="absent">غائب</option><option value="excused">غائب بعذر</option><option value="late">متأخر</option></select></label><label class="field"><span>سبب العذر / التأخر</span><input id="rpExcuse" class="input" placeholder="اختياري"></label><label class="field"><span>السلوك</span><select id="rpBehavior"><option value="excellent">ممتاز</option><option value="good">جيد</option><option value="normal">طبيعي</option><option value="needs_attention">يحتاج متابعة</option><option value="warning">إنذار</option></select></label><label class="field"><span>درجة السلوك</span><select id="rpBehaviorScore"><option value="5">5 - ممتاز</option><option value="4">4</option><option value="3" selected>3 - طبيعي</option><option value="2">2</option><option value="1">1 - ضعيف</option></select></label></div><div class="section-head"><h3>الحفظ / المراجعة / السرد</h3><button class="mini" type="button" onclick="addRecitationRow()">+ إضافة بند</button></div><div id="recitationRows"></div><label class="field"><span>تعليق يومي لولي الأمر</span><textarea id="rpComment" rows="3" placeholder="مثال: أداء جيد، يحتاج تثبيت آخر نصف صفحة"></textarea></label><label class="field"><span>الواجب القادم</span><input id="rpHomework" class="input" placeholder="مثال: حفظ ص 35-37 ومراجعة ص 1-10"></label><div class="danger-note">إذا كان تسجيل الطالب في هذه الجلسة أُدخل بالخطأ، يمكنك حذف حضوره وسلوكه وجميع تسميعاته من هذه الجلسة فقط دون حذف الجلسة أو الطالب.</div><div class="form-actions"><button class="btn btn-primary">حفظ التقرير اليومي</button><button class="btn btn-danger" type="button" onclick="deleteStudentSessionData()">حذف بيانات الطالب من الجلسة</button><button class="btn btn-ghost" type="button" onclick="reportDlg.close()">إلغاء</button></div></form></dialog>
 
 <dialog id="announcementDlg"><form id="announcementForm" class="modal"><div class="modal-head"><h3>إعلان جديد</h3><button class="close" type="button" onclick="announcementDlg.close()">✕</button></div><label class="field"><span>العنوان</span><input id="anTitle" class="input" required></label><label class="field"><span>نص الإعلان</span><textarea id="anBody" rows="5" required></textarea></label><div class="form-grid"><label class="field"><span>النوع</span><select id="anCategory"><option value="daily">إعلان يومي</option><option value="monthly">إعلان شهري</option><option value="general">عام</option><option value="schedule">جدول / موعد</option><option value="achievement">إنجاز</option><option value="urgent">تنبيه عاجل</option></select></label><label class="field"><span>الحلقة</span><select id="anHalaqa"></select></label><label class="field"><span>الجمهور</span><select id="anAudience"><option value="all">الجميع</option><option value="guardians">أولياء الأمور</option><option value="students">الطلاب</option><option value="teachers">المحفظون</option></select></label><label class="field"><span>الأهمية</span><select id="anPriority"><option value="normal">عادي</option><option value="important">مهم</option><option value="urgent">عاجل</option></select></label><label class="field"><span>تثبيت أعلى الصفحة</span><select id="anPinned"><option value="false">لا</option><option value="true">نعم</option></select></label><label class="field"><span>انتهاء الإعلان</span><input id="anExpires" class="input" type="date"></label></div><div class="form-actions"><button class="btn btn-primary">نشر الإعلان</button><button class="btn btn-ghost" type="button" onclick="announcementDlg.close()">إلغاء</button></div></form></dialog>
 
@@ -508,6 +524,11 @@ body.dark .hero{color:#fff!important}.dark-contrast-note{color:var(--muted)}
 const SUPABASE_URL='https://xlxzwucqdtggkfwwqibk.supabase.co';
 const SUPABASE_KEY='sb_publishable_VZGYTedRpXfJdswijXoxig_F0Hva8ks';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const APP_VERSION_NAME='2.8.0';
+const APP_VERSION_CODE=20800;
+const HALAQATI_UPDATE_MANIFEST='https://syounis212004-sys.github.io/halaqati-web/version.json';
+let halaqatiUpdateState={checking:false,info:null,progress:0,message:'',error:''};
+
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL=null; // Web/PWA OAuth must return to the actual HTTPS-hosted app, not a Supabase Edge Function.
 const APP_DEEP_LINK='com.mohammedsamir.halaqati://auth/callback';
@@ -801,7 +822,7 @@ $('#forgotPasswordForm').addEventListener('submit',async e=>{e.preventDefault();
 $('#recoveryPasswordForm').addEventListener('submit',async e=>{e.preventDefault();let p1=$('#recoveryPassword').value,p2=$('#recoveryPassword2').value;if(p1.length<6)return toast('كلمة المرور يجب أن تكون 6 أحرف على الأقل');if(p1!==p2)return toast('كلمتا المرور غير متطابقتين');let {data:{session}}=await db.auth.getSession();if(!session)return toast('رابط الاسترجاع غير صالح أو انتهت صلاحيته. اطلب رابطاً جديداً.');let {error}=await db.auth.updateUser({password:p1});if(error)return toast('تعذر تغيير كلمة المرور: '+error.message);toast('تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول بالكلمة الجديدة.');await db.auth.signOut();history.replaceState(null,'',location.pathname);$('#recoveryPassword').value='';$('#recoveryPassword2').value='';toggleSignup(false)});
 function showAccessStatus(p){hideAuthForms();$('#pendingPanel').classList.remove('hidden');let rejected=p.approval_status==='rejected',blocked=p.approval_status==='approved'&&!p.active;$('#pendingIcon').textContent=rejected?'!':blocked?'×':'⌛';$('#pendingTitle').textContent=rejected?'لم تتم الموافقة على الحساب':blocked?'الحساب موقوف':'الحساب قيد اعتماد المسؤول';$('#pendingText').textContent=rejected?(p.rejection_reason||'راجع مسؤول النظام لمعرفة سبب رفض الطلب.'):blocked?'تم إيقاف الحساب من إدارة النظام. تواصل مع مسؤول الحلقات.':'تم التحقق من بيانات الدخول، لكن الوصول إلى بيانات الحلقة لن يفتح حتى يحدد مسؤول النظام الصلاحية ويعتمد الحساب.';$('#pendingRole').textContent=requestRoleAr[p.requested_role]||requestRoleAr[p.role]||'ولي أمر'}
 async function checkApproval(){let {data:{user}}=await db.auth.getUser();if(!user)return location.reload();await boot(user)}
-async function boot(user=null){state.demo=false;let u=user||((await db.auth.getUser()).data.user);if(!u)return;state.user=u;let p=null,error=null;if(navigator.onLine){let res=await db.from('profiles').select('*').eq('id',u.id).single();p=res.data;error=res.error}if((error||!p)&&restoreSnapshot())p=state.profile;if(!p)return toast('تعذر تحميل الحساب. افتح التطبيق مرة واحدة مع الإنترنت أولاً.');state.profile=p;if(p.approval_status!=='approved'||!p.active){showAccessStatus(p);return}$('#pendingPanel').classList.add('hidden');await loadAll();showApp();if(navigator.onLine)setTimeout(syncOfflineQueue,600)}
+async function boot(user=null){state.demo=false;let u=user||((await db.auth.getUser()).data.user);if(!u)return;state.user=u;let p=null,error=null;if(navigator.onLine){let res=await db.from('profiles').select('*').eq('id',u.id).single();p=res.data;error=res.error}if((error||!p)&&restoreSnapshot())p=state.profile;if(!p)return toast('تعذر تحميل الحساب. افتح التطبيق مرة واحدة مع الإنترنت أولاً.');state.profile=p;if(p.approval_status!=='approved'||!p.active){showAccessStatus(p);return}$('#pendingPanel').classList.add('hidden');await loadAll();showApp();if(navigator.onLine){setTimeout(syncOfflineQueue,600);setTimeout(()=>maybeAutoCheckForUpdate(),1400)}}
 async function logout(){try{await db.auth.signOut()}catch(e){}location.reload()}
 function showApp(){$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');$('#roleLabel').textContent=roleAr[state.profile.role]||state.profile.role;$('#userName').textContent=state.profile.full_name;$('#drawerUser').textContent=`${state.profile.full_name} · ${roleAr[state.profile.role]}`;$('#userAvatar').textContent=(state.profile.full_name||'ح')[0];updateSyncBadge();render()}
 async function loadRoleExtras(){state.guardianAccounts=[];state.guardianDirectory=[];state.guardianRanksMonth={};state.guardianRanksDay={};state.guardianCompetition={};if(!navigator.onLine)return;if(roleCanManage()){let g=await db.rpc('list_guardian_accounts');if(!g.error)state.guardianAccounts=g.data||[]}if(state.profile?.role==='guardian'){let d=await db.rpc('guardian_student_directory');if(!d.error)state.guardianDirectory=d.data||[];for(let st of activeStudents()){let [m,day]=await Promise.all([db.rpc('student_rank_snapshot',{p_student_id:st.id,p_period:'month'}),db.rpc('student_rank_snapshot',{p_student_id:st.id,p_period:'day'})]);state.guardianRanksMonth[st.id]=m.data||[];state.guardianRanksDay[st.id]=day.data||[]}}}
@@ -1045,7 +1066,130 @@ $('#commentForm').addEventListener('submit',async e=>{e.preventDefault();let id=
 async function deleteForumComment(id){if(!confirm('حذف التعليق؟'))return;if(state.demo)state.comments=state.comments.filter(x=>x.id!==id);else{let {error}=await db.from('forum_comments').delete().eq('id',id);if(error)return toast(error.message);state.comments=state.comments.filter(x=>x.id!==id)}render()}
 async function deleteForumPost(id){if(!confirm('حذف المنشور وتعليقاته؟'))return;if(state.demo){state.forum=state.forum.filter(x=>x.id!==id);state.comments=state.comments.filter(x=>x.post_id!==id)}else{let {error}=await db.from('forum_posts').delete().eq('id',id);if(error)return toast(error.message);state.forum=state.forum.filter(x=>x.id!==id);state.comments=state.comments.filter(x=>x.post_id!==id)}render()}
 
-function plansPage(){let rows=state.students.map(s=>({s,g:state.goals.find(g=>g.student_id===s.id),m:state.monthly.find(m=>m.student_id===s.id)||{}}));return `<div class="hero"><h2>الخطط الشهرية</h2><p>حدد المطلوب من الطالب خلال الشهر، ويحسب التطبيق الورد اليومي ومقدار الإنجاز.</p></div><div class="section-head"><h3>خطط الشهر</h3>${roleCanManage()?'<button class="btn btn-primary" onclick="openPlan()">+ خطة</button>':''}</div>${rows.map(({s,g,m})=>{if(!g)return `<div class="card row">${avatarHtml(s)}<div class="grow"><b>${s.full_name}</b><div class="muted">لا توجد خطة لهذا الشهر</div></div>${roleCanManage()?`<button class="mini" onclick="openPlan('${s.id}')">إضافة</button>`:''}</div>`;let hp=Math.min(100,Math.round(Number(m.hifz_pages||0)/Math.max(Number(g.target_hifz_pages||1),1)*100)),rp=Math.min(100,Math.round(Number(m.review_pages||0)/Math.max(Number(g.target_review_pages||1),1)*100)),sp=Math.min(100,Math.round(Number(m.sard_pages||0)/Math.max(Number(g.target_sard_pages||1),1)*100));return `<div class="card"><div class="row">${avatarHtml(s)}<div class="grow"><b>${s.full_name}</b><div class="muted">الورد اليومي: حفظ ${fmt(g.target_daily_hifz_pages)} · مراجعة ${fmt(g.target_daily_review_pages)} · سرد ${fmt(g.target_daily_sard_pages)} صفحة</div></div></div>${planProgress('الحفظ',hp,m.hifz_pages,g.target_hifz_pages)}${planProgress('المراجعة',rp,m.review_pages,g.target_review_pages)}${planProgress('السرد',sp,m.sard_pages,g.target_sard_pages)}</div>`}).join('')}`}
+
+function goalDateOnly(v){return String(v||'').slice(0,10)}
+function goalForStudentMonth(studentId,ym=today().slice(0,7)){
+  let from=`${ym}-01`,to=monthEnd(ym);
+  let candidates=(state.goals||[]).filter(g=>{
+    if(g.student_id!==studentId)return false;
+    let gs=goalDateOnly(g.period_start),ge=goalDateOnly(g.period_end);
+    if(gs&&ge&&gs<=to&&ge>=from)return true;
+    return gs.startsWith(ym);
+  });
+  candidates.sort((a,b)=>goalDateOnly(b.period_start).localeCompare(goalDateOnly(a.period_start)));
+  return candidates[0]||null;
+}
+function goalPeriodLabel(g){
+  if(!g)return '';
+  let a=goalDateOnly(g.period_start),b=goalDateOnly(g.period_end);
+  return a&&b?`${a} ← ${b}`:(a||b||'');
+}
+
+function plansPage(){
+  let ym=today().slice(0,7);
+  let rows=activeStudents().map(st=>({
+    s:st,
+    g:goalForStudentMonth(st.id,ym),
+    m:state.monthly.find(m=>m.student_id===st.id)||{}
+  }));
+
+  let count=rows.filter(x=>x.g).length;
+
+  return `<div class="hero">
+    <h2>الخطط الشهرية</h2>
+    <p>حدد المطلوب من الطالب خلال الشهر، ويحسب التطبيق الورد اليومي ومقدار الإنجاز. الخطة المضافة تظهر مباشرة ويمكن تعديلها أو حذفها نهائياً.</p>
+  </div>
+
+  <div class="section-head">
+    <div>
+      <h3>خطط الشهر</h3>
+      <div class="muted">${count} خطة مضافة · ${rows.length-count} بدون خطة</div>
+    </div>
+    ${roleCanManage()?'<button class="btn btn-primary" onclick="openPlan()">+ خطة</button>':''}
+  </div>
+
+  ${rows.map(({s,g,m})=>{
+    if(!g)return `<div class="card row">
+      ${avatarHtml(s)}
+      <div class="grow">
+        <b>${esc(s.full_name)}</b>
+        <div class="muted">لا توجد خطة لهذا الشهر</div>
+      </div>
+      ${roleCanManage()?`<button class="mini" onclick="openPlan('${s.id}')">إضافة</button>`:''}
+    </div>`;
+
+    let hp=Math.min(100,Math.round(Number(m.hifz_pages||0)/Math.max(Number(g.target_hifz_pages||1),1)*100)),
+        rp=Math.min(100,Math.round(Number(m.review_pages||0)/Math.max(Number(g.target_review_pages||1),1)*100)),
+        sp=Math.min(100,Math.round(Number(m.sard_pages||0)/Math.max(Number(g.target_sard_pages||1),1)*100));
+
+    return `<div class="card plan-existing-card">
+      <div class="row">
+        ${avatarHtml(s)}
+        <div class="grow">
+          <div class="row" style="justify-content:flex-start;gap:8px">
+            <b>${esc(s.full_name)}</b>
+            <span class="badge">خطة مضافة</span>
+          </div>
+          <div class="muted">الفترة: ${esc(goalPeriodLabel(g))}</div>
+          <div class="muted">الورد اليومي: حفظ ${fmt(g.target_daily_hifz_pages)} · مراجعة ${fmt(g.target_daily_review_pages)} · سرد ${fmt(g.target_daily_sard_pages)} صفحة</div>
+        </div>
+      </div>
+
+      <div class="plan-target-grid">
+        <div><b>${fmt(g.target_hifz_pages)}</b><span>هدف الحفظ</span></div>
+        <div><b>${fmt(g.target_review_pages)}</b><span>هدف المراجعة</span></div>
+        <div><b>${fmt(g.target_sard_pages)}</b><span>هدف السرد</span></div>
+        <div><b>${fmt(g.expected_session_days||0)}</b><span>أيام الخطة</span></div>
+      </div>
+
+      ${planProgress('الحفظ',hp,m.hifz_pages,g.target_hifz_pages)}
+      ${planProgress('المراجعة',rp,m.review_pages,g.target_review_pages)}
+      ${planProgress('السرد',sp,m.sard_pages,g.target_sard_pages)}
+
+      ${g.note?`<div class="muted" style="margin-top:10px">ملاحظة: ${esc(g.note)}</div>`:''}
+
+      ${roleCanManage()?`<div class="plan-card-actions">
+        <button class="mini" onclick="openPlan('${s.id}','${g.id}')">تعديل الخطة</button>
+        <button class="mini red" onclick="deleteMonthlyPlan('${g.id}')">حذف الخطة نهائياً</button>
+      </div>`:''}
+    </div>`
+  }).join('')}`
+}
+
+async function deleteMonthlyPlan(id){
+  if(!roleCanManage())return;
+  let g=state.goals.find(x=>x.id===id);
+  if(!g)return toast('الخطة غير موجودة');
+  let st=state.students.find(x=>x.id===g.student_id);
+  let period=String(g.period_start||'').slice(0,7);
+
+  if(!confirm(`حذف خطة ${st?.full_name||'الطالب'} لشهر ${period} نهائياً؟
+لن تُحذف التسميعات الفعلية، وإنما أهداف الخطة الشهرية فقط.`))return;
+
+  if(!navigator.onLine||state.offline){
+    return toast('الحذف النهائي للخطة يحتاج اتصالاً بالإنترنت حتى تُحذف من قاعدة البيانات.');
+  }
+
+  try{
+    let {data,error}=await db.from('student_goals').delete().eq('id',id).select('id');
+    if(error)throw error;
+
+    if(!data?.length){
+      let check=await db.from('student_goals').select('id').eq('id',id).maybeSingle();
+      if(check.error)throw check.error;
+      if(check.data?.id)throw new Error('لم تسمح الصلاحيات بحذف هذه الخطة');
+    }
+
+    state.goals=state.goals.filter(x=>x.id!==id);
+    toast('تم حذف الخطة الشهرية نهائياً');
+    await loadAll();
+    render();
+  }catch(e){
+    console.error('deleteMonthlyPlan',e);
+    toast('تعذر حذف الخطة: '+(e?.message||e));
+  }
+}
+
 function planProgress(label,pct,done,target){return `<div class="plan-bar"><div class="plan-label"><span>${label}: ${fmt(done)} / ${fmt(target)} صفحة</span><b>${pct}%</b></div><div class="progress"><i style="width:${pct}%"></i></div></div>`}
 
 
@@ -1205,7 +1349,111 @@ async function calculateJuzs(arr){let total={pages:0,ayahs:0};for(let j of arr){
 
 function supervisionPage(){return `<div class="hero"><h2>متابعة المحفّظ</h2><p>مؤشرات تشغيلية تساعد المشرف على اكتشاف النقص مبكراً.</p></div><div class="grid stats">${stat('جلسات هذا الشهر',state.sessions.filter(x=>x.session_date>=monthStart()).length)}${stat('طلاب بلا خطة',state.students.filter(s=>!state.goals.some(g=>g.student_id===s.id)).length)}${stat('تقارير اليوم',state.dailySummary.length)}${stat('غياب اليوم',state.dailySummary.filter(x=>x.attendance_status==='absent').length)}</div><div class="card"><h3>قائمة متابعة</h3><div class="actions"><span class="badge">الحضور</span><span class="badge">الحفظ والمراجعة</span><span class="badge">السلوك</span><span class="badge">التعليقات اليومية</span><span class="badge">الخطط الشهرية</span></div></div>`}
 function dataPage(){let canImport=canManageStudents(),advanced=roleCanAdmin();return `<div class="hero"><h2>الاستيراد والتصدير</h2><p>نقل بيانات الحلقة بدون إدخال يدوي متكرر، مع مرحلة مراجعة قبل الحفظ.</p></div><div class="section-head"><h3>تصدير</h3></div><div class="data-actions"><button class="action-card" onclick="exportStudentsExcel()"><b>تصدير الطلاب Excel</b><span>الاسم، الفئة، المسار، الجنس، الهوية، الجوال والميلاد</span></button><button class="action-card" onclick="exportReportsExcel()"><b>تصدير التقارير Excel</b><span>بيانات فعلية من التقرير اليومي أو الشهري</span></button><button class="action-card" onclick="exportCurrentReportWord()"><b>تقرير Word منسق</b><span>غلاف بسيط، زخارف، جداول ونتائج فعلية</span></button><button class="action-card" onclick="printCurrentReport()"><b>PDF / طباعة</b><span>يفتح التقرير المنسق للطباعة أو الحفظ PDF</span></button></div>${canImport?`<div class="section-head"><h3>استيراد</h3></div><div class="data-actions"><button class="action-card" onclick="openImport('students')"><b>إضافة طلاب جماعياً</b><span>Excel، CSV، DOCX، PDF أو صورة بعد المراجعة — المكرر لا يُضاف</span></button>${advanced?`<button class="action-card" onclick="openImport('recitations')"><b>استيراد تسميعات سابقة</b><span>الطالب، التاريخ، النوع، الصفحات، الأخطاء والنقرات</span></button><button class="action-card" onclick="openImport('plans')"><b>استيراد الخطط</b><span>الأهداف الشهرية للطلاب</span></button>`:''}<button class="action-card" onclick="downloadImportTemplate('students')"><b>قالب الطلاب</b><span>يشمل الاسم والفئة والمسار وبقية البيانات الاختيارية</span></button></div><div class="notice" style="margin-top:12px">PDF والصور وWord لا تُعتمد مباشرة؛ يتم استخراج النص ثم مراجعته أولاً لتقليل أخطاء OCR والتنسيق.</div>`:''}`}
-function settingsPage(){let local=getThemePrefs(),global=state.settings||{};return `<div class="hero"><h2>الإعدادات</h2><p>المظهر والتفضيلات ونظام التقييم.</p></div><div class="card"><h3>المظهر</h3><div class="settings-row"><div><b>الوضع الداكن</b><div class="muted">يُحفظ على هذا الجهاز</div></div><input id="setDark" type="checkbox" ${local.dark?'checked':''} onchange="previewSettings()"></div><div class="settings-row"><div><b>اللون الأساسي</b><div class="muted">يمكن اختيار أي لون</div></div><input id="setPrimary" type="color" value="${local.primary||global.primary_color||'#0d3b2f'}" onchange="previewSettings()"></div><div class="settings-row"><div><b>اللون المساند</b></div><input id="setAccent" type="color" value="${local.accent||global.accent_color||'#2f8b69'}" onchange="previewSettings()"></div><div class="actions"><button class="theme-preset" style="background:#0d3b2f" onclick="setPreset('#0d3b2f','#2f8b69')" title="أخضر"></button><button class="theme-preset" style="background:#12345b" onclick="setPreset('#12345b','#2d6cdf')" title="أزرق"></button><button class="theme-preset" style="background:#5a3825" onclick="setPreset('#5a3825','#ad744f')" title="بني"></button><button class="theme-preset" style="background:#342b5f" onclick="setPreset('#342b5f','#765bc4')" title="بنفسجي"></button></div><div class="form-actions"><button class="btn btn-primary" onclick="saveThemeSettings()">حفظ المظهر</button><button class="btn btn-ghost" onclick="resetTheme()">إعادة الافتراضي</button></div></div><div class="card"><h3>معيار التقييم الحالي</h3><div class="muted">القاعدة في قاعدة البيانات أيضاً، وليست مجرد لون في الواجهة.</div><div class="score-explain"><div class="ex">ممتاز<br>≤ ${fmt(global.excellent_max_penalty_per_page??.5)} خصم/صفحة</div><div class="vg">جيد جداً<br>≤ ${fmt(global.very_good_max_penalty_per_page??1)}</div><div class="gd">جيد<br>≤ ${fmt(global.good_max_penalty_per_page??2)}</div><div class="rp">يحتاج إعادة<br>أعلى من ذلك</div></div><div class="notice">كل خطأ = 1 وحدة خصم، وكل نقرة = 0.5. النقاط = الصفحات − ربع وحدات الخصم. مثال: 5 صفحات + خطأ واحد = 4.75 نقطة وتقييم ممتاز لأن الكثافة 0.2 خطأ/صفحة.</div></div><div class="card"><h3>كلمة المرور</h3><div class="muted">يمكنك تغيير كلمة مرور حسابك الحالي في أي وقت.</div><div class="form-grid" style="margin-top:10px"><label class="field"><span>كلمة المرور الجديدة</span><input id="settingsPassword" class="input" type="password" minlength="6" autocomplete="new-password"></label><label class="field"><span>تأكيد كلمة المرور</span><input id="settingsPassword2" class="input" type="password" minlength="6" autocomplete="new-password"></label></div><button class="btn btn-primary" onclick="changeMyPassword()">تغيير كلمة المرور</button></div><div class="card"><b>Designed by Dr. Mohammed Samir</b><div class="muted">Halaqati Official 2.7</div></div>`}
+
+function updatePrefs(){try{return JSON.parse(localStorage.getItem('halaqati_update_prefs')||'{}')}catch(e){return {}}}
+function saveUpdatePrefs(p){try{localStorage.setItem('halaqati_update_prefs',JSON.stringify(p||{}))}catch(e){}}
+function autoUpdateCheckEnabled(){let p=updatePrefs();return p.autoCheck!==false}
+function setAutoUpdateCheck(v){let p=updatePrefs();p.autoCheck=!!v;saveUpdatePrefs(p);toast(v?'تم تفعيل الفحص التلقائي للتحديثات':'تم إيقاف الفحص التلقائي')}
+function normalizeUpdateNotes(notes){if(Array.isArray(notes))return notes.map(String);if(typeof notes==='string')return notes.split(/\n+/).map(x=>x.trim()).filter(Boolean);return []}
+function updateInfoHtml(){
+  let x=halaqatiUpdateState.info,current=APP_VERSION_NAME;
+  if(halaqatiUpdateState.checking)return `<div class="update-status">⏳ جاري البحث عن تحديث…</div>`;
+  if(halaqatiUpdateState.error)return `<div class="update-status"><b>تعذر فحص التحديث</b><div class="muted">${esc(halaqatiUpdateState.error)}</div></div>`;
+  if(!x)return `<div class="update-status">لم يتم فحص التحديثات في هذه الجلسة بعد.</div>`;
+  if(Number(x.versionCode||0)<=Number(halaqatiUpdateState.currentVersionCode||APP_VERSION_CODE))return `<div class="update-status"><b>✓ لديك أحدث نسخة</b><div class="muted">الإصدار الحالي ${esc(halaqatiUpdateState.currentVersionName||current)}</div></div>`;
+  let notes=normalizeUpdateNotes(x.notes);
+  return `<div class="update-status available"><b>يتوفر تحديث ${esc(x.versionName||'جديد')}</b>${x.mandatory?'<span class="badge red">تحديث مهم</span>':''}<div class="muted">الإصدار الحالي: ${esc(halaqatiUpdateState.currentVersionName||current)} · الجديد: ${esc(x.versionName||'—')}</div>${notes.length?`<ul class="update-notes">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:''}${isNativeHalaqati()?`<div class="update-progress"><i style="width:${Math.max(0,Math.min(100,halaqatiUpdateState.progress||0))}%"></i></div><div class="muted">${esc(halaqatiUpdateState.message||'جاهز للتنزيل')}</div><div class="update-actions"><button class="btn btn-primary" onclick="downloadAndInstallUpdate()">تنزيل وتثبيت التحديث</button></div>`:`<div class="muted">نسخة الويب/PWA تتحدث من الموقع تلقائياً. أغلقها وافتحها من جديد بعد نشر الإصدار.</div>`}</div>`;
+}
+function refreshUpdateCard(){let el=document.getElementById('updateStatusBox');if(el)el.innerHTML=updateInfoHtml()}
+async function getNativeAppVersion(){
+  if(!isNativeHalaqati())return {versionName:APP_VERSION_NAME,versionCode:APP_VERSION_CODE,canInstallPackages:false};
+  let p=nativePlugin('HalaqatiUpdater');
+  if(!p?.getVersion)return {versionName:APP_VERSION_NAME,versionCode:APP_VERSION_CODE,canInstallPackages:false};
+  try{return await p.getVersion()}catch(e){return {versionName:APP_VERSION_NAME,versionCode:APP_VERSION_CODE,canInstallPackages:false}}
+}
+async function fetchUpdateManifest(){
+  if(isNativeHalaqati()){
+    let p=nativePlugin('HalaqatiUpdater');
+    if(!p?.checkUpdate)throw new Error('إضافة التحديث غير متاحة في هذه النسخة');
+    return await p.checkUpdate({url:HALAQATI_UPDATE_MANIFEST});
+  }
+  let url=(location.protocol==='https:'||location.protocol==='http:')?new URL('./version.json',location.href).href:HALAQATI_UPDATE_MANIFEST;
+  let r=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('تعذر قراءة ملف التحديث: '+r.status);
+  return await r.json();
+}
+async function checkForAppUpdate(silent=false){
+  if(halaqatiUpdateState.checking)return;
+  halaqatiUpdateState.checking=true;halaqatiUpdateState.error='';halaqatiUpdateState.message='';refreshUpdateCard();
+  try{
+    let cur=await getNativeAppVersion();
+    halaqatiUpdateState.currentVersionName=cur.versionName||APP_VERSION_NAME;
+    halaqatiUpdateState.currentVersionCode=Number(cur.versionCode||APP_VERSION_CODE);
+    halaqatiUpdateState.canInstallPackages=!!cur.canInstallPackages;
+    let info=await fetchUpdateManifest();
+    halaqatiUpdateState.info=info;
+    let newer=Number(info.versionCode||0)>halaqatiUpdateState.currentVersionCode;
+    if(!silent)toast(newer?`يتوفر تحديث ${info.versionName||''}`:'لديك أحدث نسخة');
+    if(newer&&silent){
+      let notes=normalizeUpdateNotes(info.notes).slice(0,3).join('\n• ');
+      setTimeout(()=>{
+        if(confirm(`يتوفر تحديث جديد ${info.versionName||''}\n${notes?'• '+notes+'\n':''}\nهل تريد فتح قسم التحديثات الآن؟`)){
+          state.page='settings';render().then(()=>setTimeout(()=>document.getElementById('updateCard')?.scrollIntoView({behavior:'smooth'}),150));
+        }
+      },350);
+    }
+  }catch(e){
+    console.error('checkForAppUpdate',e);
+    halaqatiUpdateState.error=e?.message||String(e);
+    if(!silent)toast('تعذر فحص التحديث: '+halaqatiUpdateState.error);
+  }finally{halaqatiUpdateState.checking=false;refreshUpdateCard()}
+}
+async function requestUpdateInstallPermission(){
+  if(!isNativeHalaqati())return;
+  let p=nativePlugin('HalaqatiUpdater');
+  if(!p?.openInstallPermissionSettings)return toast('إعداد التثبيت غير متاح');
+  try{await p.openInstallPermissionSettings();toast('فعّل «السماح من هذا المصدر»، ثم ارجع واضغط تنزيل وتثبيت')}catch(e){toast('تعذر فتح إعداد السماح بالتثبيت')}
+}
+async function downloadAndInstallUpdate(){
+  let info=halaqatiUpdateState.info;
+  if(!info||Number(info.versionCode||0)<=Number(halaqatiUpdateState.currentVersionCode||APP_VERSION_CODE))return toast('لا يوجد تحديث أحدث');
+  if(!isNativeHalaqati())return toast('تحديث APK متاح من تطبيق Android فقط');
+  let p=nativePlugin('HalaqatiUpdater');
+  if(!p?.downloadAndInstall)return toast('إضافة التحديث غير متاحة');
+  try{
+    let cur=await p.getVersion();
+    if(cur.canInstallPackages===false){
+      if(confirm('Android يحتاج السماح لتطبيق حلقتي بتثبيت التحديثات. فتح الإعداد الآن؟'))await requestUpdateInstallPermission();
+      return;
+    }
+    halaqatiUpdateState.progress=0;halaqatiUpdateState.message='بدء تنزيل التحديث…';refreshUpdateCard();
+    if(p.addListener){
+      try{await p.removeAllListeners?.()}catch(e){}
+      p.addListener('downloadProgress',ev=>{halaqatiUpdateState.progress=Number(ev?.percent||0);halaqatiUpdateState.message=`جاري التنزيل ${Math.round(halaqatiUpdateState.progress)}%`;refreshUpdateCard()});
+    }
+    let res=await p.downloadAndInstall({
+      url:info.apkUrl,
+      expectedPackage:'com.mohammedsamir.halaqati',
+      expectedVersionCode:Number(info.versionCode||0)
+    });
+    if(res?.permissionRequired){await requestUpdateInstallPermission();return}
+    halaqatiUpdateState.progress=100;halaqatiUpdateState.message='اكتمل التنزيل — أكمل التثبيت من نافذة Android';refreshUpdateCard();
+    toast('اكتمل تنزيل التحديث. أكمل التثبيت من شاشة Android.');
+  }catch(e){
+    console.error('downloadAndInstallUpdate',e);
+    halaqatiUpdateState.message='';
+    toast('تعذر تثبيت التحديث: '+(e?.message||e));
+  }
+}
+async function maybeAutoCheckForUpdate(){
+  if(!isNativeHalaqati()||!autoUpdateCheckEnabled()||!navigator.onLine)return;
+  let p=updatePrefs(),now=Date.now(),last=Number(p.lastCheck||0);
+  if(now-last<6*60*60*1000)return;
+  p.lastCheck=now;saveUpdatePrefs(p);
+  await checkForAppUpdate(true);
+}
+
+function settingsPage(){let local=getThemePrefs(),global=state.settings||{};return `<div class="hero"><h2>الإعدادات</h2><p>المظهر والتفضيلات ونظام التقييم والتحديثات.</p></div><div class="card"><h3>المظهر</h3><div class="settings-row"><div><b>الوضع الداكن</b><div class="muted">يُحفظ على هذا الجهاز</div></div><input id="setDark" type="checkbox" ${local.dark?'checked':''} onchange="previewSettings()"></div><div class="settings-row"><div><b>اللون الأساسي</b><div class="muted">يمكن اختيار أي لون</div></div><input id="setPrimary" type="color" value="${local.primary||global.primary_color||'#0d3b2f'}" onchange="previewSettings()"></div><div class="settings-row"><div><b>اللون المساند</b></div><input id="setAccent" type="color" value="${local.accent||global.accent_color||'#2f8b69'}" onchange="previewSettings()"></div><div class="actions"><button class="theme-preset" style="background:#0d3b2f" onclick="setPreset('#0d3b2f','#2f8b69')" title="أخضر"></button><button class="theme-preset" style="background:#12345b" onclick="setPreset('#12345b','#2d6cdf')" title="أزرق"></button><button class="theme-preset" style="background:#5a3825" onclick="setPreset('#5a3825','#ad744f')" title="بني"></button><button class="theme-preset" style="background:#342b5f" onclick="setPreset('#342b5f','#765bc4')" title="بنفسجي"></button></div><div class="form-actions"><button class="btn btn-primary" onclick="saveThemeSettings()">حفظ المظهر</button><button class="btn btn-ghost" onclick="resetTheme()">إعادة الافتراضي</button></div></div><div class="card"><h3>معيار التقييم الحالي</h3><div class="muted">القاعدة في قاعدة البيانات أيضاً، وليست مجرد لون في الواجهة.</div><div class="score-explain"><div class="ex">ممتاز<br>≤ ${fmt(global.excellent_max_penalty_per_page??.5)} خصم/صفحة</div><div class="vg">جيد جداً<br>≤ ${fmt(global.very_good_max_penalty_per_page??1)}</div><div class="gd">جيد<br>≤ ${fmt(global.good_max_penalty_per_page??2)}</div><div class="rp">يحتاج إعادة<br>أعلى من ذلك</div></div><div class="notice">كل خطأ = 1 وحدة خصم، وكل نقرة = 0.5. النقاط = الصفحات − ربع وحدات الخصم.</div></div><div class="card update-card" id="updateCard"><h3>تحديثات التطبيق</h3><div class="muted">يفحص حلقتي وجود إصدار Android أحدث. تنزيل التحديث يتم من المصدر الرسمي للتطبيق، ويقوم Android بطلب موافقتك قبل التثبيت.</div><div class="update-version"><div><span class="muted">الإصدار الحالي</span><div class="update-version-code">${esc(halaqatiUpdateState.currentVersionName||APP_VERSION_NAME)}</div></div><label class="switch-line"><span>فحص تلقائي</span><input type="checkbox" ${autoUpdateCheckEnabled()?'checked':''} onchange="setAutoUpdateCheck(this.checked)"></label></div><div id="updateStatusBox">${updateInfoHtml()}</div><div class="update-actions"><button class="btn btn-primary" onclick="checkForAppUpdate(false)">البحث عن تحديث</button>${isNativeHalaqati()?'<button class="btn btn-ghost" onclick="requestUpdateInstallPermission()">إعداد السماح بالتثبيت</button>':''}</div></div><div class="card"><h3>كلمة المرور</h3><div class="muted">يمكنك تغيير كلمة مرور حسابك الحالي في أي وقت.</div><div class="form-grid" style="margin-top:10px"><label class="field"><span>كلمة المرور الجديدة</span><input id="settingsPassword" class="input" type="password" minlength="6" autocomplete="new-password"></label><label class="field"><span>تأكيد كلمة المرور</span><input id="settingsPassword2" class="input" type="password" minlength="6" autocomplete="new-password"></label></div><button class="btn btn-primary" onclick="changeMyPassword()">تغيير كلمة المرور</button></div><div class="card"><b>Designed by Dr. Mohammed Samir</b><div class="muted">Halaqati Official ${APP_VERSION_NAME}</div></div>`}
 function getThemePrefs(){try{return JSON.parse(localStorage.getItem('halaqati_theme_v4')||'{}')}catch{return {}}}
 function applySavedTheme(){let p=getThemePrefs(),g=state.settings||{};let primary=p.primary||g.primary_color||'#0d3b2f',accent=p.accent||g.accent_color||'#2f8b69';document.documentElement.style.setProperty('--green',primary);document.documentElement.style.setProperty('--green3',accent);document.body.classList.toggle('dark',!!p.dark);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',primary)}
 function previewSettings(){let p=$('#setPrimary')?.value,a=$('#setAccent')?.value,d=$('#setDark')?.checked;if(p)document.documentElement.style.setProperty('--green',p);if(a)document.documentElement.style.setProperty('--green3',a);document.body.classList.toggle('dark',!!d)}
@@ -1278,7 +1526,17 @@ async function exportReportsExcel(){
 }
 function professionalWordHtml(){
   let body=state.reportMode==='day'?dailyReportHtml():periodReportHtml();
-  return `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial,Tahoma,sans-serif;color:#18231f;padding:24px}.report-paper{border:2px solid #0d3b2f;padding:24px;position:relative}.report-brand{text-align:center;border-bottom:2px solid #c89d4a;padding-bottom:12px;margin-bottom:14px}.mark{margin:auto;background:#0d3b2f;color:#fff;width:48px;height:48px;line-height:48px;border-radius:12px;font-size:24px;font-weight:bold}.report-brand h2{color:#0d3b2f;margin:7px 0 2px}.report-meta,.report-footer{display:flex;justify-content:space-between;gap:12px;font-size:11px}.report-summary{display:table;width:100%;margin:14px 0}.report-summary>div{display:table-cell;border:1px solid #dfe6e2;text-align:center;padding:8px}.report-summary b{display:block;color:#0d3b2f;font-size:17px}table{border-collapse:collapse;width:100%;font-size:10px}th{background:#0d3b2f;color:#fff;padding:7px}td{border:1px solid #dfe6e2;padding:6px;text-align:center}.report-footer{border-top:1px solid #ddd;margin-top:15px;padding-top:8px;color:#777}</style></head><body>${body}</body></html>`
+  return `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial,Tahoma,sans-serif;color:#18231f;padding:24px}.report-paper{border:2px solid #0d3b2f;padding:24px;position:relative}.report-brand{text-align:center;border-bottom:2px solid #c89d4a;padding-bottom:12px;margin-bottom:14px}.mark{margin:auto;background:#0d3b2f;color:#fff;width:48px;height:48px;line-height:48px;border-radius:12px;font-size:24px;font-weight:bold}.report-brand h2{color:#0d3b2f;margin:7px 0 2px}.report-meta,.report-footer{display:flex;justify-content:space-between;gap:12px;font-size:11px}.report-summary{display:table;width:100%;margin:14px 0}.report-summary>div{display:table-cell;border:1px solid #dfe6e2;text-align:center;padding:8px}.report-summary b{display:block;color:#0d3b2f;font-size:17px}table{border-collapse:collapse;width:100%;font-size:10px}th{background:#0d3b2f;color:#fff;padding:7px}td{border:1px solid #dfe6e2;padding:6px;text-align:center}.report-footer{border-top:1px solid #ddd;margin-top:15px;padding-top:8px;color:#777}</style></head><body>${body}
+<!-- Halaqati v2.7.4:
+- permanent monthly plan deletion + editing
+- direct permanent recitation deletion
+- delete a student's attendance/behavior/recitations from one session
+- existing deletes retained for sessions, students, categories, announcements, forum, accounts
+-->
+
+<!-- Halaqati 2.8.0: native Android self-update checker/downloader/installer with signature verification. -->
+<!-- Halaqati v2.8.1: fixed monthly plan visibility; robust overlapping-period matching; edit/delete retained. -->
+</body></html>`
 }
 async function exportCurrentReportWord(){
   try{
@@ -1374,7 +1632,31 @@ async function openStudent(id=''){
 }
 function openAnnouncement(){fillHalaqas($('#anHalaqa'),true);announcementDlg.showModal()}
 function openForum(id=null,forceType=null){fillHalaqas($('#fpHalaqa'));$('#forumForm').reset();$('#fpId').value=id||'';let p=state.forum.find(x=>x.id===id);$('#forumDlgTitle').textContent=p?'تعديل منشور':'منشور في منتدى الحلقة';$('#forumSaveBtn').textContent=p?'حفظ التعديل':'نشر';if(p){$('#fpHalaqa').value=p.halaqa_id;$('#fpType').value=p.post_type;$('#fpTitle').value=p.title;$('#fpBody').value=p.body;$('#fpComments').value=String(p.comments_enabled!==false);$('#fpPinned').value=String(!!p.pinned)}else if(forceType)$('#fpType').value=forceType;forumDlg.showModal()}
-function openPlan(sid=''){fillStudents($('#plStudent'),sid);$('#plMonth').value=monthStart().slice(0,7);planDlg.showModal()}
+function planForEditor(){
+  let sid=$('#plStudent')?.value,ym=$('#plMonth')?.value;
+  if(!sid||!ym)return null;
+  return goalForStudentMonth(sid,ym);
+}
+function syncPlanEditorValues(){
+  let g=planForEditor();
+  $('#plHifz').value=g?.target_hifz_pages??40;
+  $('#plReview').value=g?.target_review_pages??120;
+  $('#plSard').value=g?.target_sard_pages??40;
+  $('#plDays').value=g?.expected_session_days??20;
+  $('#plNote').value=g?.note||'';
+  let save=$('#planForm button[type="submit"]');
+  if(save)save.textContent=g?'تحديث الخطة':'حفظ الخطة';
+}
+function openPlan(sid='',planId=''){
+  fillStudents($('#plStudent'),sid);
+  let g=planId?state.goals.find(x=>x.id===planId):null;
+  let ym=(g?.period_start||monthStart()).slice(0,7);
+  $('#plMonth').value=ym;
+  if(g?.student_id)$('#plStudent').value=g.student_id;
+  if(!g&&sid)g=goalForStudentMonth(sid,ym);
+  syncPlanEditorValues();
+  planDlg.showModal()
+}
 async function setupFirstHalaqa(){if(!isOwner())return toast('إنشاء الحلقات لمسؤول النظام فقط');go('halaqas');setTimeout(()=>openHalaqa(),50)}
 $('#sessionForm').addEventListener('submit',async e=>{e.preventDefault();let obj={halaqa_id:$('#sessionHalaqa').value,session_date:$('#sessionDate').value,session_type:$('#sessionType').value,title:$('#sessionTitle').value||null,notes:$('#sessionNotes').value||null,status:'open',created_by:state.user.id};let data;if(state.demo){data={...obj,id:'se'+Date.now()}}else if(!navigator.onLine||state.offline){let localId='offline-se-'+Date.now();data={...obj,id:localId,_offline:true};enqueueOffline({type:'session',key:'session:'+localId,localId,obj});state.offlineRosterCache[localId]={attendance:[],notes:[],recitations:[]};toast('تم إنشاء الجلسة محلياً — ستُرفع عند عودة الإنترنت')}else{let r=await db.from('sessions').insert(obj).select().single();if(r.error){if(isNetworkError(r.error)){let localId='offline-se-'+Date.now();data={...obj,id:localId,_offline:true};enqueueOffline({type:'session',key:'session:'+localId,localId,obj});state.offlineRosterCache[localId]={attendance:[],notes:[],recitations:[]};toast('انقطع الاتصال؛ حُفظت الجلسة على الجهاز')}else return toast(r.error.message)}else data=r.data}state.sessions.unshift(data);sessionDlg.close();state.sessionView=data.id;state.sessionRoster={attendance:[],notes:[],recitations:[]};cacheSnapshot();render()})
 $('#studentForm').addEventListener('submit',async e=>{
@@ -1392,7 +1674,46 @@ $('#studentForm').addEventListener('submit',async e=>{
 });
 $('#announcementForm').addEventListener('submit',async e=>{e.preventDefault();let exp=$('#anExpires').value?new Date($('#anExpires').value+'T23:59:59').toISOString():null;let obj={title:$('#anTitle').value,body:$('#anBody').value,category:$('#anCategory').value,halaqa_id:$('#anHalaqa').value||null,audience:$('#anAudience').value,priority:$('#anPriority').value,pinned:$('#anPinned').value==='true',expires_at:exp,created_by:state.user.id};if(state.demo){obj.id='a'+Date.now();obj.publish_at=new Date().toISOString();state.announcements.unshift(obj)}else{let {data,error}=await db.from('announcements').insert(obj).select().single();if(error)return toast(error.message);state.announcements.unshift(data)}announcementDlg.close();toast('تم نشر الإعلان');render()})
 $('#forumForm').addEventListener('submit',async e=>{e.preventDefault();let id=$('#fpId').value,obj={halaqa_id:$('#fpHalaqa').value,author_id:state.user.id,post_type:$('#fpType').value,title:$('#fpTitle').value.trim(),body:$('#fpBody').value.trim(),comments_enabled:$('#fpComments').value==='true',pinned:$('#fpPinned').value==='true'};if(!obj.title||!obj.body)return toast('العنوان والمحتوى مطلوبان');if(state.demo){if(id){let p=state.forum.find(x=>x.id===id);Object.assign(p,obj,{updated_at:new Date().toISOString()})}else{obj.id='f'+Date.now();obj.created_at=obj.updated_at=new Date().toISOString();obj.author_name=state.profile.full_name;state.forum.unshift(obj)}}else{let res=id?await db.from('forum_posts').update({post_type:obj.post_type,title:obj.title,body:obj.body,comments_enabled:obj.comments_enabled,pinned:obj.pinned}).eq('id',id).select().single():await db.from('forum_posts').insert(obj).select().single();if(res.error)return toast(res.error.message);if(id)state.forum[state.forum.findIndex(x=>x.id===id)]=res.data;else state.forum.unshift(res.data)}forumDlg.close();toast(id?'تم تعديل المنشور':'تم نشر المنشور');render()})
-$('#planForm').addEventListener('submit',async e=>{e.preventDefault();let ym=$('#plMonth').value,start=ym+'-01',end=monthEnd(ym),days=+$('#plDays').value||20,h=+$('#plHifz').value||0,r=+$('#plReview').value||0,s=+$('#plSard').value||0,obj={student_id:$('#plStudent').value,period_start:start,period_end:end,target_hifz_pages:h,target_review_pages:r,target_sard_pages:s,target_daily_hifz_pages:Math.round(h/days*100)/100,target_daily_review_pages:Math.round(r/days*100)/100,target_daily_sard_pages:Math.round(s/days*100)/100,expected_session_days:days,note:$('#plNote').value||null,created_by:state.user.id};if(state.demo){state.goals=state.goals.filter(x=>!(x.student_id===obj.student_id&&x.period_start===start));obj.id='g'+Date.now();state.goals.push(obj)}else{let old=state.goals.find(x=>x.student_id===obj.student_id&&x.period_start===start);let res=old?await db.from('student_goals').update(obj).eq('id',old.id).select().single():await db.from('student_goals').insert(obj).select().single();if(res.error)return toast(res.error.message);await loadAll()}planDlg.close();toast('تم حفظ الخطة الشهرية');render()})
+$('#plStudent').addEventListener('change',syncPlanEditorValues);
+$('#plMonth').addEventListener('change',syncPlanEditorValues);
+$('#planForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  let ym=$('#plMonth').value,start=ym+'-01',end=monthEnd(ym),days=+$('#plDays').value||20,
+      h=+$('#plHifz').value||0,r=+$('#plReview').value||0,sd=+$('#plSard').value||0,
+      studentId=$('#plStudent').value,
+      obj={
+        student_id:studentId,
+        period_start:start,
+        period_end:end,
+        target_hifz_pages:h,
+        target_review_pages:r,
+        target_sard_pages:sd,
+        target_daily_hifz_pages:Math.round(h/days*100)/100,
+        target_daily_review_pages:Math.round(r/days*100)/100,
+        target_daily_sard_pages:Math.round(sd/days*100)/100,
+        expected_session_days:days,
+        note:$('#plNote').value||null,
+        created_by:state.user.id
+      };
+
+  if(state.demo){
+    let old=goalForStudentMonth(studentId,ym);
+    state.goals=state.goals.filter(x=>x.id!==old?.id);
+    obj.id=old?.id||('g'+Date.now());
+    state.goals.push(obj);
+  }else{
+    let old=goalForStudentMonth(studentId,ym);
+    let res=old
+      ?await db.from('student_goals').update(obj).eq('id',old.id).select().single()
+      :await db.from('student_goals').insert(obj).select().single();
+    if(res.error)return toast(res.error.message);
+    await loadAll();
+  }
+
+  planDlg.close();
+  toast('تم حفظ الخطة الشهرية');
+  render();
+})
 
 async function openSessionRoster(id){state.sessionView=id;await loadSessionRosterData(id);render()}
 function closeSessionRoster(){state.sessionView=null;state.sessionRoster={attendance:[],notes:[],recitations:[]};render()}
@@ -1402,7 +1723,64 @@ function rosterNote(sid){return state.sessionRoster.notes.find(x=>x.student_id==
 function rosterRecitations(sid){return state.sessionRoster.recitations.filter(x=>x.student_id===sid)}
 function behaviorScoreFor(v){return ({excellent:5,good:4,normal:3,needs_attention:2,warning:1})[v]||3}
 function recitationRangeText(r){let mode=r.selection_data?.mode||r.input_method;if(r.start_surah&&r.end_surah){let a=`${surahs[r.start_surah-1]||'سورة'} ${r.start_ayah||''}`.trim(),b=`${surahs[r.end_surah-1]||'سورة'} ${r.end_ayah||''}`.trim();return a===b?a:`${a} ← ${b}`}if(r.start_page||r.end_page){let a=r.start_page||r.end_page,b=r.end_page||r.start_page;return a===b?`صفحة ${fmt(a)}`:`صفحات ${fmt(a)}–${fmt(b)}`}if(Array.isArray(r.selected_surahs)&&r.selected_surahs.length)return r.selected_surahs.map(x=>surahs[x-1]).filter(Boolean).join('، ');let juz=r.selection_data?.selected_juz;if(Array.isArray(juz)&&juz.length)return `الأجزاء ${juz.join('، ')}`;if(Number(r.pages_count)>0)return `${fmt(r.pages_count)} صفحة`;return 'تم تسجيل التسميع'}
-function recitationMiniCard(r){let ev=r.evaluation||r.rating||null,points=Number(r.points||0);return `<div class="roster-rec"><div class="roster-rec-type">${esc(actAr[r.activity_type]||r.activity_type)}</div><div><div class="roster-rec-range">${esc(recitationRangeText(r))}</div><div class="roster-rec-meta">${fmt(r.pages_count)} ص · ${r.mistakes||0} أخطاء · ${r.prompts||0} نقرات${ev?` · ${esc(evalAr[ev]||ev)}`:''}</div></div><div class="roster-rec-score">${points?`<b>${fmt(points)}</b><span class="muted">نقطة</span>`:''}</div></div>`}
+function recitationMiniCard(r){
+  let ev=r.evaluation||r.rating||null,points=Number(r.points||0);
+  let del=roleCanManage()
+    ?(String(r.id||'').startsWith('offline-')
+      ?'<span class="badge">محلي — احذفه من تعديل التفاصيل ثم احفظ</span>'
+      :`<button class="mini red" type="button" onclick="deleteRecitationEntry('${r.id}')">حذف التسميع</button>`)
+    :'';
+
+  return `<div class="roster-rec">
+    <div class="roster-rec-type">${esc(actAr[r.activity_type]||r.activity_type)}</div>
+    <div><div class="roster-rec-range">${esc(recitationRangeText(r))}</div><div class="roster-rec-meta">${fmt(r.pages_count)} ص · ${r.mistakes||0} أخطاء · ${r.prompts||0} نقرات${ev?` · ${esc(evalAr[ev]||ev)}`:''}</div></div>
+    <div class="roster-rec-score">${points?`<b>${fmt(points)}</b><span class="muted">نقطة</span>`:''}</div>
+    ${del?`<div class="roster-rec-actions">${del}</div>`:''}
+  </div>`
+}
+
+async function deleteRecitationEntry(id){
+  if(!roleCanManage())return;
+  let r=(state.sessionRoster.recitations||[]).find(x=>x.id===id);
+  if(!r)return toast('التسميع غير موجود');
+
+  if(String(id).startsWith('offline-')){
+    return toast('هذا التسميع محفوظ محلياً ولم يُرفع بعد. افتح «تعديل التفاصيل»، احذف البند ثم احفظ التقرير حتى لا تتم مزامنته.');
+  }
+
+  if(!confirm(`حذف هذا التسميع نهائياً؟
+سيُزال من نقاط الطالب وترتيبه وتقاريره بعد تحديث البيانات.`))return;
+
+  if(!navigator.onLine||state.offline){
+    return toast('الحذف النهائي لتسميع مسجل يحتاج اتصالاً بالإنترنت.');
+  }
+
+  try{
+    let {data,error}=await db.from('recitation_entries').delete().eq('id',id).select('id');
+    if(error)throw error;
+
+    if(!data?.length){
+      let check=await db.from('recitation_entries').select('id').eq('id',id).maybeSingle();
+      if(check.error)throw check.error;
+      if(check.data?.id)throw new Error('لم تسمح الصلاحيات بحذف هذا التسميع');
+    }
+
+    state.sessionRoster.recitations=state.sessionRoster.recitations.filter(x=>x.id!==id);
+    if(state.sessionView&&state.offlineRosterCache[state.sessionView]){
+      state.offlineRosterCache[state.sessionView].recitations=(state.offlineRosterCache[state.sessionView].recitations||[]).filter(x=>x.id!==id);
+    }
+
+    clearDeletedSessionDerivedState();
+    await loadAll();
+    if(state.sessionView)await loadSessionRosterData(state.sessionView);
+    toast('تم حذف التسميع نهائياً وتحديث الترتيب والتقارير');
+    render();
+  }catch(e){
+    console.error('deleteRecitationEntry',e);
+    toast('تعذر حذف التسميع: '+(e?.message||e));
+  }
+}
+
 function filterSessionRosterDom(v=''){state.sessionSearch=v;let q=normalizeNameJs(v),n=0;$$('[data-roster-name]').forEach(c=>{let show=!q||c.dataset.rosterName.includes(q);c.style.display=show?'':'none';if(show)n++});let x=$('#rosterVisibleCount');if(x)x.textContent=n}
 function setSessionSort(v){state.sessionSort=v;render()}
 function sessionRosterPage(id){let se=state.sessions.find(x=>x.id===id);if(!se)return '<div class="empty">الجلسة غير موجودة.</div>';let all=sortStudentsList(activeStudents().filter(x=>x.halaqa_id===se.halaqa_id),state.sessionSort),q=normalizeNameJs(state.sessionSearch),students=q?all.filter(x=>normalizeNameJs(x.full_name).includes(q)):all,a=state.sessionRoster.attendance,present=a.filter(x=>x.status==='present').length,abs=a.filter(x=>['absent','excused'].includes(x.status)).length,recorded=new Set(state.sessionRoster.recitations.map(x=>x.student_id)).size;let cards=students.map(st=>{let at=rosterAttendance(st.id),note=rosterNote(st.id),recs=rosterRecitations(st.id),status=at?.status||'',presentOn=status==='present',beh=note?.behavior||'normal';return `<div class="card roster-card" id="roster_${st.id}" data-roster-name="${esc(normalizeNameJs(st.full_name))}"><div class="roster-top">${avatarHtml(st)}<div class="grow"><b>${esc(st.full_name)}</b><div class="muted">${esc(categoryName(st))} · ${esc(studentTrackAr[st.track_code]||'بدون مسار')} · ${fmt(monthlyPointsForStudent(st.id))} نقطة</div></div>${st._offline?'<span class="offline-mark">محلي</span>':''}<span class="badge ${status==='present'?'good':status?'red':''}">${status?attAr[status]:'لم يسجل'}</span></div><div class="roster-controls"><div class="presence-box"><b>الحضور</b><label class="presence-switch" title="تشغيل = حاضر، إيقاف = غائب"><input type="checkbox" ${presentOn?'checked':''} onchange="quickPresenceToggle('${st.id}','${se.id}',this.checked)"><span class="presence-slider"></span></label><select class="att-status-select" onchange="quickAttendance('${st.id}','${se.id}',this.value,this)" aria-label="حالة الحضور"><option value="" ${!status?'selected':''}>غير مسجل</option><option value="present" ${status==='present'?'selected':''}>حاضر</option><option value="absent" ${status==='absent'?'selected':''}>غائب</option><option value="excused" ${status==='excused'?'selected':''}>غائب بعذر</option><option value="late" ${status==='late'?'selected':''}>متأخر</option></select></div><div class="behavior-box"><span class="behavior-dot ${beh}"></span><b>السلوك</b><select class="behavior-select" onchange="quickBehavior('${st.id}','${se.id}',this.value,this)">${Object.entries(behAr).map(([k,v])=>`<option value="${k}" ${beh===k?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="roster-recitations">${recs.length?recs.map(recitationMiniCard).join(''):'<div class="roster-empty-rec">لم يُسجل حفظ / مراجعة / سرد لهذا الطالب في هذه الجلسة.</div>'}</div><div class="roster-actions"><div class="quick-rec-buttons"><button onclick="quickOpenRecitation('${st.id}','${se.id}','new_hifz')">+ حفظ</button><button onclick="quickOpenRecitation('${st.id}','${se.id}','review_near')">+ مراجعة</button><button onclick="quickOpenRecitation('${st.id}','${se.id}','sard')">+ سرد</button></div><button class="mini" onclick="openDailyForStudent('${st.id}','${se.id}')">${recs.length?'تعديل التفاصيل':'إضافة التفاصيل'}</button></div></div>`}).join('');return `${offlineNotice()}<div class="session-live-head"><div><h2 style="margin:0">${esc(se.title||sesAr[se.session_type])}</h2><div class="muted">${se.session_date} · ${sesAr[se.session_type]} · ${all.length} طالب ${se._offline?'· محفوظ محلياً':''}</div></div><button class="mini" onclick="closeSessionRoster()">رجوع</button></div><div class="session-live-stats"><span>حاضر: ${present}</span><span>غائب/بعذر: ${abs}</span><span>تم تسجيل التسميع: ${recorded}/${all.length}</span></div><div class="session-tools"><input class="input" type="search" placeholder="ابحث عن اسم الطالب داخل الجلسة" value="${esc(state.sessionSearch)}" oninput="filterSessionRosterDom(this.value)"><select onchange="setSessionSort(this.value)"><option value="alpha" ${state.sessionSort==='alpha'?'selected':''}>ترتيب أبجدي</option><option value="points" ${state.sessionSort==='points'?'selected':''}>الأعلى نقاطاً</option><option value="oldest" ${state.sessionSort==='oldest'?'selected':''}>الأكبر سناً</option><option value="youngest" ${state.sessionSort==='youngest'?'selected':''}>الأصغر سناً</option><option value="joined_old" ${state.sessionSort==='joined_old'?'selected':''}>الأقدم التحاقاً</option><option value="joined_new" ${state.sessionSort==='joined_new'?'selected':''}>الأحدث التحاقاً</option></select></div><div class="roster-filter-count">المعروض: <span id="rosterVisibleCount">${students.length}</span> من ${all.length}</div><div style="height:10px"></div>${cards||'<div class="empty">لا يوجد طالب مطابق للبحث.</div>'}`}
@@ -1412,10 +1790,92 @@ async function quickBehavior(sid,seId,behavior,el=null){let existing=rosterNote(
 function flashRosterCard(sid){requestAnimationFrame(()=>{let c=document.getElementById('roster_'+sid);if(c){c.classList.remove('saved-flash');void c.offsetWidth;c.classList.add('saved-flash')}})}
 async function quickOpenRecitation(sid,seId,type){await openDailyForStudent(sid,seId);addRecitationRow(type)}
 function latestSession(){return state.sessions.find(s=>s.session_date===today())||state.sessions[0]}
+
+function removeQueuedStudentSessionOps(seId,sid){
+  let q=readOfflineQueue().filter(op=>{
+    if(op.key===`att:${seId}:${sid}`||op.key===`beh:${seId}:${sid}`||op.key===`report:${seId}:${sid}`)return false;
+    return true;
+  });
+  writeOfflineQueue(q);
+}
+async function deleteStudentSessionData(){
+  if(!roleCanManage())return;
+  let sid=$('#rpStudent').value,seId=$('#rpSession').value;
+  let st=state.students.find(x=>x.id===sid),se=state.sessions.find(x=>x.id===seId);
+  if(!sid||!seId)return;
+
+  if(!confirm(`حذف كل بيانات ${st?.full_name||'الطالب'} من جلسة ${se?.session_date||''}؟
+سيتم حذف الحضور والسلوك وجميع الحفظ والمراجعة والسرد الخاصة به في هذه الجلسة فقط.`))return;
+  if(!confirm('تأكيد نهائي: لا يمكن استرجاع هذه البيانات بعد الحذف. متابعة؟'))return;
+
+  // Local/offline session: remove queued records so they will never sync.
+  if(String(seId).startsWith('offline-')){
+    let c=state.offlineRosterCache[seId]||{attendance:[],notes:[],recitations:[]};
+    c.attendance=(c.attendance||[]).filter(x=>x.student_id!==sid);
+    c.notes=(c.notes||[]).filter(x=>x.student_id!==sid);
+    c.recitations=(c.recitations||[]).filter(x=>x.student_id!==sid);
+    state.offlineRosterCache[seId]=c;
+
+    if(state.sessionView===seId){
+      state.sessionRoster.attendance=(state.sessionRoster.attendance||[]).filter(x=>x.student_id!==sid);
+      state.sessionRoster.notes=(state.sessionRoster.notes||[]).filter(x=>x.student_id!==sid);
+      state.sessionRoster.recitations=(state.sessionRoster.recitations||[]).filter(x=>x.student_id!==sid);
+    }
+
+    removeQueuedStudentSessionOps(seId,sid);
+    rememberRoster(seId);
+    reportDlg.close();
+    toast('تم حذف بيانات الطالب المحلية من الجلسة ولن تتم مزامنتها');
+    render();
+    return;
+  }
+
+  if(!navigator.onLine||state.offline){
+    return toast('الحذف النهائي لبيانات جلسة مسجلة يحتاج اتصالاً بالإنترنت.');
+  }
+
+  try{
+    let results=await Promise.all([
+      db.from('recitation_entries').delete().eq('session_id',seId).eq('student_id',sid),
+      db.from('student_daily_notes').delete().eq('session_id',seId).eq('student_id',sid),
+      db.from('attendance_records').delete().eq('session_id',seId).eq('student_id',sid)
+    ]);
+    let err=results.find(x=>x.error)?.error;
+    if(err)throw err;
+
+    state.sessionRoster.attendance=(state.sessionRoster.attendance||[]).filter(x=>x.student_id!==sid);
+    state.sessionRoster.notes=(state.sessionRoster.notes||[]).filter(x=>x.student_id!==sid);
+    state.sessionRoster.recitations=(state.sessionRoster.recitations||[]).filter(x=>x.student_id!==sid);
+    removeQueuedStudentSessionOps(seId,sid);
+
+    clearDeletedSessionDerivedState();
+    reportDlg.close();
+    await loadAll();
+    if(state.sessionView===seId)await loadSessionRosterData(seId);
+    toast('تم حذف جميع بيانات الطالب من هذه الجلسة نهائياً');
+    render();
+  }catch(e){
+    console.error('deleteStudentSessionData',e);
+    toast('تعذر حذف بيانات الطالب من الجلسة: '+(e?.message||e));
+  }
+}
+
 async function openDailyForStudent(sid,seId=null){let st=state.students.find(x=>x.id===sid),se=seId?state.sessions.find(x=>x.id===seId):latestSession();if(!se)return openSession();let attendance=null,note=null,recs=[];if(state.sessionView===se.id){attendance=rosterAttendance(sid);note=rosterNote(sid);recs=rosterRecitations(sid)}else if(!state.demo&&navigator.onLine&&!String(se.id).startsWith('offline-')){let [a,n,r]=await Promise.all([db.from('attendance_records').select('*').eq('session_id',se.id).eq('student_id',sid).maybeSingle(),db.from('student_daily_notes').select('*').eq('session_id',se.id).eq('student_id',sid).maybeSingle(),db.from('recitation_entries').select('*').eq('session_id',se.id).eq('student_id',sid).order('created_at')]);attendance=a.data||null;note=n.data||null;recs=r.data||[]}else{let c=state.offlineRosterCache[se.id]||{attendance:[],notes:[],recitations:[]};attendance=c.attendance?.find(x=>x.student_id===sid)||null;note=c.notes?.find(x=>x.student_id===sid)||null;recs=(c.recitations||[]).filter(x=>x.student_id===sid)}$('#rpStudent').value=sid;$('#rpSession').value=se.id;$('#rpName').textContent=st.full_name;$('#rpAvatar').innerHTML=state.photoUrls[sid]?`<img src="${state.photoUrls[sid]}">`:st.full_name[0];$('#rpSessionLabel').textContent=`${se.session_date} · ${sesAr[se.session_type]}`;$('#rpAttendance').value=attendance?.status||'present';$('#rpExcuse').value=attendance?.excuse_reason||'';$('#rpBehavior').value=note?.behavior||'normal';$('#rpBehaviorScore').value=String(note?.behavior_score||behaviorScoreFor(note?.behavior||'normal'));$('#rpComment').value=note?.teacher_comment||'';$('#rpHomework').value=note?.homework||'';$('#recitationRows').innerHTML='';state.reportExistingRecIds=recs.map(x=>x.id);if(recs.length)recs.forEach(addRecitationRowFromData);else addRecitationRow(se.session_type==='sard'?'sard':se.session_type==='review'?'review_near':'new_hifz');reportDlg.showModal()}
 function addRecitationRowFromData(rec){addRecitationRow(rec.activity_type||'new_hifz');let row=$$('#recitationRows .rec-row').at(-1),id=row.dataset.id;row.dataset.dbId=rec.id||'';row.dataset.pages=rec.pages_count||0;row.dataset.ayahs=rec.ayahs_count||0;row.dataset.surahs=rec.surahs_count||0;row.dataset.startPage=rec.start_page||'';row.dataset.endPage=rec.end_page||'';row.dataset.startSurah=rec.start_surah||'';row.dataset.startAyah=rec.start_ayah||'';row.dataset.endSurah=rec.end_surah||'';row.dataset.endAyah=rec.end_ayah||'';row.dataset.selectedSurahs=JSON.stringify(rec.selected_surahs||[]);row.dataset.selectedJuz=JSON.stringify(rec.selection_data?.selected_juz||[]);let mode=rec.selection_data?.mode||rec.input_method||'ayahs';if(!['ayahs','pages','surahs','juz'].includes(mode))mode=rec.start_page?'pages':'ayahs';row.dataset.mode=mode;row.querySelector('.rType').value=rec.activity_type||'new_hifz';row.querySelectorAll('.rec-body>.tabs .tab').forEach(b=>b.classList.remove('active'));let typeBtns=[...row.querySelectorAll('.rec-body>.tabs .tab')],idx=rec.activity_type==='new_hifz'?0:String(rec.activity_type).includes('review')?1:rec.activity_type==='sard'?2:3;if(typeBtns[idx])typeBtns[idx].classList.add('active');let segBtns=[...row.querySelectorAll('.seg button')],midx={ayahs:0,pages:1,surahs:2,juz:3}[mode]??0;segBtns.forEach((b,i)=>b.classList.toggle('active',i===midx));row.querySelector('.rAyahs').classList.toggle('hidden',mode!=='ayahs');row.querySelector('.rPages').classList.toggle('hidden',mode!=='pages');row.querySelector('.rSurahs').classList.toggle('hidden',mode!=='surahs');row.querySelector('.rJuz').classList.toggle('hidden',mode!=='juz');if(rec.start_surah)$('#'+id+'SS').value=rec.start_surah;if(rec.start_ayah)$('#'+id+'SA').value=rec.start_ayah;if(rec.end_surah)$('#'+id+'ES').value=rec.end_surah;if(rec.end_ayah)$('#'+id+'EA').value=rec.end_ayah;if(rec.start_page)$('#'+id+'PF').value=rec.start_page;if(rec.end_page)$('#'+id+'PT').value=rec.end_page;(rec.selected_surahs||[]).forEach(n=>$('#'+id+'Surah'+n)?.classList.add('active'));(rec.selection_data?.selected_juz||[]).forEach(n=>$('#'+id+'J'+n)?.classList.add('active'));row.querySelector('.rPagesCount').textContent=fmt(rec.pages_count||0);row.querySelector('.rAyahsCount').textContent=rec.ayahs_count?`· ${rec.ayahs_count} آية`:'';row.querySelector('.rCalcStatus').textContent='بيانات محفوظة — يمكنك تعديلها';row.querySelector('.rMist').textContent=rec.mistakes||0;row.querySelector('.rPrompt').textContent=rec.prompts||0;row.querySelector('.rNote').value=rec.teacher_note||'';updateEval(row)}
 function recId(){return 'rr'+Math.random().toString(36).slice(2,9)}
-function addRecitationRow(type='new_hifz'){let id=recId(),d=document.createElement('div');d.className='card rec-row';d.dataset.id=id;d.dataset.pages='0';d.dataset.ayahs='0';d.dataset.surahs='0';d.dataset.startPage='';d.dataset.endPage='';d.dataset.mode='ayahs';d.innerHTML=`<div class="rec-head"><div><b>بند تسميع</b><div class="muted">اختر النوع وطريقة تحديد المقدار</div></div><button class="mini red" type="button" onclick="this.closest('.rec-row').remove()">حذف</button></div><div class="rec-body"><div class="tabs"><button class="tab ${type==='new_hifz'?'active':''}" type="button" onclick="setRecType(this,'new_hifz')">حفظ</button><button class="tab ${type.includes('review')?'active':''}" type="button" onclick="setRecType(this,'review_near')">مراجعة</button><button class="tab ${type==='sard'?'active':''}" type="button" onclick="setRecType(this,'sard')">سرد</button><button class="tab" type="button" onclick="setRecType(this,'tilawah')">تلاوة</button></div><input type="hidden" class="rType" value="${type}"><div class="seg"><button class="active" type="button" onclick="setRecMode(this,'ayahs')">السورة والآية</button><button type="button" onclick="setRecMode(this,'pages')">الصفحات</button><button type="button" onclick="setRecMode(this,'surahs')">سور متعددة</button><button type="button" onclick="setRecMode(this,'juz')">الأجزاء</button></div><div class="rAyahs mode-panel">${qAyahPanel(id,true)}</div><div class="rPages mode-panel hidden">${qPagesPanel(id,true)}</div><div class="rSurahs mode-panel hidden">${qSurahsPanel(id,true)}</div><div class="rJuz mode-panel hidden">${qJuzPanel(id,true)}</div><div class="actions"><button class="btn btn-soft" type="button" onclick="calcRecRow(this.closest('.rec-row'))">حساب المقدار</button><button class="btn btn-ghost" type="button" onclick="openRowMushaf(this.closest('.rec-row'))">📖 فتح المصحف</button></div><div class="range-summary"><span class="muted">المقدار الفعلي</span><div><strong class="rPagesCount">0</strong> صفحة <span class="muted rAyahsCount"></span></div><div class="calc-status rCalcStatus">اختر النطاق ثم اضغط حساب المقدار</div></div><div class="form-grid"><label class="field"><span>عدد الأخطاء</span><div class="counter"><button type="button" onclick="stepCounter(this,1,'mist')">＋</button><div class="num rMist">0</div><button type="button" onclick="stepCounter(this,-1,'mist')">−</button></div></label><label class="field"><span>عدد النقرات / التلقينات</span><div class="counter"><button type="button" onclick="stepCounter(this,1,'prompt')">＋</button><div class="num rPrompt">0</div><button type="button" onclick="stepCounter(this,-1,'prompt')">−</button></div></label></div><div class="eval-box"><div class="row"><span class="eval-dot eval-excellent rEvalDot"></span><div><b class="rEvalText">غير مقيّم</b><div class="muted rEvalMeta">التقييم يتغير حسب الخصم لكل صفحة</div></div></div><div style="text-align:left"><b class="rPoints">0</b><div class="muted">نقطة</div></div></div><label class="field"><span>ملاحظة خاصة بهذا التسميع</span><input class="input rNote" placeholder="اختياري"></label></div>`;$('#recitationRows').appendChild(d);updateEval(d)}
+
+function removeRecitationEditorRow(btn){
+  let row=btn.closest('.rec-row');
+  if(!row)return;
+  let existing=row.dataset.dbId;
+  let msg=existing
+    ?'حذف هذا التسميع من التقرير؟ سيتم حذفه نهائياً من قاعدة البيانات عند الضغط على «حفظ التقرير اليومي».'
+    :'حذف هذا البند غير المحفوظ؟';
+  if(!confirm(msg))return;
+  row.remove();
+}
+
+function addRecitationRow(type='new_hifz'){let id=recId(),d=document.createElement('div');d.className='card rec-row';d.dataset.id=id;d.dataset.pages='0';d.dataset.ayahs='0';d.dataset.surahs='0';d.dataset.startPage='';d.dataset.endPage='';d.dataset.mode='ayahs';d.innerHTML=`<div class="rec-head"><div><b>بند تسميع</b><div class="muted">اختر النوع وطريقة تحديد المقدار</div></div><button class="mini red" type="button" onclick="removeRecitationEditorRow(this)">حذف البند</button></div><div class="rec-body"><div class="tabs"><button class="tab ${type==='new_hifz'?'active':''}" type="button" onclick="setRecType(this,'new_hifz')">حفظ</button><button class="tab ${type.includes('review')?'active':''}" type="button" onclick="setRecType(this,'review_near')">مراجعة</button><button class="tab ${type==='sard'?'active':''}" type="button" onclick="setRecType(this,'sard')">سرد</button><button class="tab" type="button" onclick="setRecType(this,'tilawah')">تلاوة</button></div><input type="hidden" class="rType" value="${type}"><div class="seg"><button class="active" type="button" onclick="setRecMode(this,'ayahs')">السورة والآية</button><button type="button" onclick="setRecMode(this,'pages')">الصفحات</button><button type="button" onclick="setRecMode(this,'surahs')">سور متعددة</button><button type="button" onclick="setRecMode(this,'juz')">الأجزاء</button></div><div class="rAyahs mode-panel">${qAyahPanel(id,true)}</div><div class="rPages mode-panel hidden">${qPagesPanel(id,true)}</div><div class="rSurahs mode-panel hidden">${qSurahsPanel(id,true)}</div><div class="rJuz mode-panel hidden">${qJuzPanel(id,true)}</div><div class="actions"><button class="btn btn-soft" type="button" onclick="calcRecRow(this.closest('.rec-row'))">حساب المقدار</button><button class="btn btn-ghost" type="button" onclick="openRowMushaf(this.closest('.rec-row'))">📖 فتح المصحف</button></div><div class="range-summary"><span class="muted">المقدار الفعلي</span><div><strong class="rPagesCount">0</strong> صفحة <span class="muted rAyahsCount"></span></div><div class="calc-status rCalcStatus">اختر النطاق ثم اضغط حساب المقدار</div></div><div class="form-grid"><label class="field"><span>عدد الأخطاء</span><div class="counter"><button type="button" onclick="stepCounter(this,1,'mist')">＋</button><div class="num rMist">0</div><button type="button" onclick="stepCounter(this,-1,'mist')">−</button></div></label><label class="field"><span>عدد النقرات / التلقينات</span><div class="counter"><button type="button" onclick="stepCounter(this,1,'prompt')">＋</button><div class="num rPrompt">0</div><button type="button" onclick="stepCounter(this,-1,'prompt')">−</button></div></label></div><div class="eval-box"><div class="row"><span class="eval-dot eval-excellent rEvalDot"></span><div><b class="rEvalText">غير مقيّم</b><div class="muted rEvalMeta">التقييم يتغير حسب الخصم لكل صفحة</div></div></div><div style="text-align:left"><b class="rPoints">0</b><div class="muted">نقطة</div></div></div><label class="field"><span>ملاحظة خاصة بهذا التسميع</span><input class="input rNote" placeholder="اختياري"></label></div>`;$('#recitationRows').appendChild(d);updateEval(d)}
 function setRecType(btn,type){let row=btn.closest('.rec-row');row.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');row.querySelector('.rType').value=type}
 function setRecMode(btn,mode){let row=btn.closest('.rec-row');row.dataset.mode=mode;btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');row.querySelector('.rAyahs').classList.toggle('hidden',mode!=='ayahs');row.querySelector('.rPages').classList.toggle('hidden',mode!=='pages');row.querySelector('.rSurahs').classList.toggle('hidden',mode!=='surahs');row.querySelector('.rJuz').classList.toggle('hidden',mode!=='juz')}
 function stepCounter(btn,delta,kind){let row=btn.closest('.rec-row'),el=row.querySelector(kind==='mist'?'.rMist':'.rPrompt');el.textContent=Math.max(0,+el.textContent+delta);updateEval(row)}
@@ -1425,7 +1885,7 @@ function openRowMushaf(row){let id=row.dataset.id,s=+row.dataset.startSurah||+$(
 async function calcRecRow(row){let id=row.dataset.id,mode=row.dataset.mode;try{row.querySelector('.rCalcStatus').textContent='جاري الحساب...';let d,selectedSurahs=[],selectedJuz=[];if(mode==='pages'){let a=+$('#'+id+'PF').value,b=+$('#'+id+'PT').value;if(!a||!b||b<a)throw new Error('تحقق من الصفحات');if(row.dataset.startSurah&&row.dataset.endSurah)d=await calculateAyahRangeData(+row.dataset.startSurah,+row.dataset.startAyah,+row.dataset.endSurah,+row.dataset.endAyah);else d={pages:b-a+1,ayahs:0,surahs:0,startPage:a,endPage:b};row.dataset.startPage=a;row.dataset.endPage=b}else if(mode==='surahs'){selectedSurahs=selectedNums(id,'surah');if(!selectedSurahs.length)throw new Error('اختر سورة واحدة على الأقل');d=await calculateFullSurahs(selectedSurahs);d.surahs=selectedSurahs.length}else if(mode==='juz'){selectedJuz=selectedNums(id,'juz');if(!selectedJuz.length)throw new Error('اختر جزءاً واحداً على الأقل');d=await calculateJuzs(selectedJuz);d.surahs=0}else{let ss=+$('#'+id+'SS').value,sa=+$('#'+id+'SA').value,es=+$('#'+id+'ES').value,ea=+$('#'+id+'EA').value;d=await calculateAyahRangeData(ss,sa,es,ea);row.dataset.startSurah=ss;row.dataset.endSurah=es;row.dataset.startAyah=sa;row.dataset.endAyah=ea}row.dataset.pages=d.pages;row.dataset.ayahs=d.ayahs||0;row.dataset.surahs=d.surahs||0;row.dataset.selectedSurahs=JSON.stringify(selectedSurahs);row.dataset.selectedJuz=JSON.stringify(selectedJuz);if(d.startPage)row.dataset.startPage=d.startPage;if(d.endPage)row.dataset.endPage=d.endPage;row.querySelector('.rPagesCount').textContent=fmt(d.pages);row.querySelector('.rAyahsCount').textContent=d.ayahs?`· ${d.ayahs} آية`:'';row.querySelector('.rCalcStatus').textContent=d.estimated?'تقدير احتياطي؛ تعذر الاتصال ببيانات المصحف':'تم حساب المقدار';updateEval(row)}catch(e){row.querySelector('.rCalcStatus').textContent=e.message;toast(e.message)}}
 $('#reportForm').addEventListener('submit',async e=>{e.preventDefault();let sid=$('#rpStudent').value,seId=$('#rpSession').value,attendance={session_id:seId,student_id:sid,status:$('#rpAttendance').value,excuse_reason:$('#rpExcuse').value||null,recorded_by:state.user.id},note={session_id:seId,student_id:sid,behavior:$('#rpBehavior').value,behavior_score:+$('#rpBehaviorScore').value,teacher_comment:$('#rpComment').value||null,homework:$('#rpHomework').value||null,parent_visible:true,created_by:state.user.id};let formRows=$$('.rec-row').map(r=>{let data={session_id:seId,student_id:sid,activity_type:r.querySelector('.rType').value,input_method:r.dataset.mode,start_surah:+r.dataset.startSurah||null,start_ayah:+r.dataset.startAyah||null,end_surah:+r.dataset.endSurah||null,end_ayah:+r.dataset.endAyah||null,start_page:+r.dataset.startPage||null,end_page:+r.dataset.endPage||null,pages_count:+r.dataset.pages||0,ayahs_count:+r.dataset.ayahs||0,surahs_count:+r.dataset.surahs||0,mistakes:+r.querySelector('.rMist').textContent||0,prompts:+r.querySelector('.rPrompt').textContent||0,teacher_note:r.querySelector('.rNote').value||null,selected_surahs:JSON.parse(r.dataset.selectedSurahs||'[]'),selection_data:{mode:r.dataset.mode,selected_juz:JSON.parse(r.dataset.selectedJuz||'[]'),start_global:r.dataset.startGlobal||null,end_global:r.dataset.endGlobal||null},created_by:state.user.id};return {dbId:r.dataset.dbId||null,data:decorateRecForOffline(data)}});let payload={sessionId:seId,studentId:sid,attendance,note,rows:formRows,existingRecIds:[...(state.reportExistingRecIds||[])]};if(state.demo){reportDlg.close();toast('تم حفظ التقرير التجريبي');return}if(!navigator.onLine||String(seId).startsWith('offline-')){saveReportOffline(payload);reportDlg.close();render();return}try{await syncReportPayload(payload,{});reportDlg.close();toast('تم حفظ الحضور والسلوك والتسميع');await loadAll();if(state.sessionView===seId)await loadSessionRosterData(seId);render()}catch(err){if(isNetworkError(err)){saveReportOffline(payload);reportDlg.close();render()}else toast(err.message||err)}})
 
-function studentProfile(id){if(state.profile?.role==='guardian'&&!state.students.some(x=>x.id===id)){toast('لا تملك صلاحية فتح ملف هذا الطالب');go('home');return}let st=state.students.find(x=>x.id===id),m=state.monthly.find(x=>x.student_id===id)||{},g=state.goals.find(x=>x.student_id===id),leaders=state.leaderMonthly.filter(x=>x.student_id===id);if(!st)return;$('#content').innerHTML=`<div class="card"><div class="row">${avatarHtml(st,'photo-lg')}<div class="grow"><h2 style="margin:0">${esc(st.full_name)}</h2><div class="muted">${esc(st.program_name||'بدون مسار')} · ${esc(st.guardian_email||'ولي الأمر غير مربوط')}</div><div class="actions"><span class="badge">${st.status==='active'?'طالب نشط':esc(st.status)}</span>${canManageStudents()?`<button class="mini" onclick="openStudent('${st.id}')">تعديل الملف</button>`:''}</div></div></div><div class="profile-details" style="margin-top:13px"><div class="detail"><span>الجنس</span><b>${st.gender==='male'?'ذكر':st.gender==='female'?'أنثى':'—'}</b></div><div class="detail"><span>رقم الهوية</span><b>${esc(st.national_id||'—')}</b></div><div class="detail"><span>الجوال</span><b>${esc(st.phone||'—')}</b></div><div class="detail"><span>تاريخ الميلاد</span><b>${esc(st.date_of_birth||'—')}</b></div><div class="detail"><span>المرحلة</span><b>${esc(st.school_grade||'—')}</b></div><div class="detail"><span>جوال ولي الأمر</span><b>${esc(st.guardian_phone||'—')}</b></div></div></div><div class="grid stats">${stat('حفظ الشهر',fmt(m.hifz_pages)+' ص')}${stat('المراجعة',fmt(m.review_pages)+' ص')}${stat('السرد',fmt(m.sard_pages)+' ص')}${stat('الحضور',m.present_days||0)}</div>${g?`<div class="card"><h3>الخطة الشهرية</h3><div class="muted">ورد يومي: حفظ ${fmt(g.target_daily_hifz_pages)} · مراجعة ${fmt(g.target_daily_review_pages)} · سرد ${fmt(g.target_daily_sard_pages)} صفحة</div>${planProgress('الحفظ',Math.min(100,Math.round((m.hifz_pages||0)/(g.target_hifz_pages||1)*100)),m.hifz_pages,g.target_hifz_pages)}${planProgress('المراجعة',Math.min(100,Math.round((m.review_pages||0)/(g.target_review_pages||1)*100)),m.review_pages,g.target_review_pages)}${planProgress('السرد',Math.min(100,Math.round((m.sard_pages||0)/(g.target_sard_pages||1)*100)),m.sard_pages,g.target_sard_pages)}</div>`:''}<div class="card"><h3>النقاط هذا الشهر</h3>${leaders.map(x=>`<div class="row" style="padding:8px 0;border-bottom:1px dashed var(--line)"><span class="grow">${trackAr[x.track]}</span><span class="muted">${fmt(x.pages)} ص · ${fmt(x.penalty_per_page)} خصم/ص</span><b>${fmt(x.points)}</b></div>`).join('')||'<div class="muted">لا توجد نقاط بعد.</div>'}</div><button class="btn btn-ghost" onclick="go(state.profile.role==='guardian'?'profile':'students')">رجوع</button>`}
+function studentProfile(id){if(state.profile?.role==='guardian'&&!state.students.some(x=>x.id===id)){toast('لا تملك صلاحية فتح ملف هذا الطالب');go('home');return}let st=state.students.find(x=>x.id===id),m=state.monthly.find(x=>x.student_id===id)||{},g=state.goals.find(x=>x.student_id===id),leaders=state.leaderMonthly.filter(x=>x.student_id===id);if(!st)return;$('#content').innerHTML=`<div class="card"><div class="row">${avatarHtml(st,'photo-lg')}<div class="grow"><h2 style="margin:0">${esc(st.full_name)}</h2><div class="muted">${esc(st.program_name||'بدون مسار')} · ${esc(st.guardian_email||'ولي الأمر غير مربوط')}</div><div class="actions"><span class="badge">${st.status==='active'?'طالب نشط':esc(st.status)}</span>${canManageStudents()?`<button class="mini" onclick="openStudent('${st.id}')">تعديل الملف</button>`:''}</div></div></div><div class="profile-details" style="margin-top:13px"><div class="detail"><span>الجنس</span><b>${st.gender==='male'?'ذكر':st.gender==='female'?'أنثى':'—'}</b></div><div class="detail"><span>رقم الهوية</span><b>${esc(st.national_id||'—')}</b></div><div class="detail"><span>الجوال</span><b>${esc(st.phone||'—')}</b></div><div class="detail"><span>تاريخ الميلاد</span><b>${esc(st.date_of_birth||'—')}</b></div><div class="detail"><span>المرحلة</span><b>${esc(st.school_grade||'—')}</b></div><div class="detail"><span>جوال ولي الأمر</span><b>${esc(st.guardian_phone||'—')}</b></div></div></div><div class="grid stats">${stat('حفظ الشهر',fmt(m.hifz_pages)+' ص')}${stat('المراجعة',fmt(m.review_pages)+' ص')}${stat('السرد',fmt(m.sard_pages)+' ص')}${stat('الحضور',m.present_days||0)}</div>${g?`<div class="card"><h3>الخطة الشهرية</h3><div class="muted">ورد يومي: حفظ ${fmt(g.target_daily_hifz_pages)} · مراجعة ${fmt(g.target_daily_review_pages)} · سرد ${fmt(g.target_daily_sard_pages)} صفحة</div>${planProgress('الحفظ',Math.min(100,Math.round((m.hifz_pages||0)/(g.target_hifz_pages||1)*100)),m.hifz_pages,g.target_hifz_pages)}${planProgress('المراجعة',Math.min(100,Math.round((m.review_pages||0)/(g.target_review_pages||1)*100)),m.review_pages,g.target_review_pages)}${planProgress('السرد',Math.min(100,Math.round((m.sard_pages||0)/(g.target_sard_pages||1)*100)),m.sard_pages,g.target_sard_pages)}${roleCanManage()?`<div class="plan-card-actions"><button class="mini" onclick="openPlan('${st.id}','${g.id}')">تعديل الخطة</button><button class="mini red" onclick="deleteMonthlyPlan('${g.id}')">حذف نهائي</button></div>`:''}</div>`:''}<div class="card"><h3>النقاط هذا الشهر</h3>${leaders.map(x=>`<div class="row" style="padding:8px 0;border-bottom:1px dashed var(--line)"><span class="grow">${trackAr[x.track]}</span><span class="muted">${fmt(x.pages)} ص · ${fmt(x.penalty_per_page)} خصم/ص</span><b>${fmt(x.points)}</b></div>`).join('')||'<div class="muted">لا توجد نقاط بعد.</div>'}</div><button class="btn btn-ghost" onclick="go(state.profile.role==='guardian'?'profile':'students')">رجوع</button>`}
 
 
 /* ===== v2.5 reporting engine ===== */

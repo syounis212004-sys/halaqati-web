@@ -1,4 +1,4 @@
-const CACHE='halaqati-pwa-v2.7.3';
+const CACHE='halaqati-pwa-v2.8.1';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
@@ -24,6 +24,9 @@ self.addEventListener('fetch',event=>{
   const req=event.request;
   if(req.method!=='GET')return;
   const url=new URL(req.url);
+
+  // Always fetch the update manifest/APK from the network; never serve a stale cached version.
+  if(url.pathname.endsWith('/version.json') || url.pathname.endsWith('/Halaqati-latest.apk')) return;
 
   // Never cache Supabase Auth/API traffic.
   if(isApiRequest(url))return;
