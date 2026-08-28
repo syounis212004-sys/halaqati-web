@@ -1,13 +1,13 @@
 {
-  "versionCode": 20801,
-  "versionName": "2.8.1",
+  "versionCode": 20802,
+  "versionName": "2.8.2",
   "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
   "mandatory": false,
   "minSupportedVersionCode": 20800,
-  "publishedAt": "2026-08-28T14:36:01.647Z",
+  "publishedAt": "2026-08-28T14:50:39.667Z",
   "notes": [
-    "إصلاح ظهور الخطط الشهرية المضافة",
-    "إظهار أهداف الخطة ونسبة الإنجاز أمام كل طالب",
-    "الإبقاء على تعديل الخطة وحذفها نهائياً"
+    "إصلاح خطأ تثبيت التحديث: Files still open",
+    "إغلاق ملف APK قبل تنفيذ PackageInstaller.commit",
+    "الإبقاء على إصلاح عرض وتعديل وحذف الخطط الشهرية"
   ]
 }
