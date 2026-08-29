@@ -1,13 +1,11 @@
 {
-  "versionCode": 20802,
-  "versionName": "2.8.2",
+  "versionName": "2.9.0",
+  "versionCode": 20900,
   "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
   "mandatory": false,
-  "minSupportedVersionCode": 20800,
-  "publishedAt": "2026-08-28T14:50:39.667Z",
   "notes": [
-    "إصلاح خطأ تثبيت التحديث: Files still open",
-    "إغلاق ملف APK قبل تنفيذ PackageInstaller.commit",
-    "الإبقاء على إصلاح عرض وتعديل وحذف الخطط الشهرية"
+    "تحسين العمل بدون إنترنت والمزامنة التلقائية.",
+    "تحسين حساب صفحات القرآن.",
+    "إصلاح بناء وتوقيع نسخة Android."
   ]
 }
