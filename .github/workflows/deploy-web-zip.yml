@@ -1,0 +1,117 @@
+name: Deploy Halaqati Web ZIP to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_name:
+        description: "اسم ملف ZIP (اتركه فارغًا لاختيار أحدث Halaqati-v*-web.zip تلقائيًا)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Extract ZIP and deploy website
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Choose web ZIP
+        id: choose
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INPUT_ZIP="${{ github.event.inputs.zip_name || '' }}"
+
+          if [ -n "$INPUT_ZIP" ]; then
+            ZIP="$INPUT_ZIP"
+          else
+            ZIP="$(find . -maxdepth 1 -type f -name 'Halaqati-v*-web.zip' -printf '%f\n' | sort -V | tail -n 1)"
+          fi
+
+          if [ -z "${ZIP:-}" ] || [ ! -f "$ZIP" ]; then
+            echo "::error::لم أجد ملف Halaqati-v*-web.zip في جذر المستودع."
+            echo "الملفات الموجودة:"
+            ls -la
+            exit 1
+          fi
+
+          echo "Using ZIP: $ZIP"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Extract website
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf _web_extract _site
+          mkdir -p _web_extract _site
+
+          unzip -q "${{ steps.choose.outputs.zip }}" -d _web_extract
+
+          INDEX="$(find _web_extract -type f -name 'index.html' -not -path '*/__MACOSX/*' | head -n 1)"
+
+          if [ -z "${INDEX:-}" ]; then
+            echo "::error::تم فك الضغط لكن لم أجد index.html."
+            find _web_extract -maxdepth 4 -type f | sort
+            exit 1
+          fi
+
+          ROOT="$(dirname "$INDEX")"
+          echo "Website root detected: $ROOT"
+
+          cp -a "$ROOT"/. _site/
+
+          # ملفات غير مطلوبة من بعض برامج الضغط
+          find _site -name '.DS_Store' -delete 2>/dev/null || true
+          rm -rf _site/__MACOSX 2>/dev/null || true
+
+      - name: Validate website
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -s _site/index.html
+
+          echo "=== Website files ==="
+          find _site -maxdepth 2 -type f | sort | head -n 200
+
+          if [ -d _site/assets ]; then
+            echo "assets/ موجود ✅"
+          fi
+
+          if [ -d _site/core ]; then
+            echo "core/ موجود ✅"
+          fi
+
+          if [ -d _site/vendor ]; then
+            echo "vendor/ موجود ✅"
+          fi
+
+          echo "index.html موجود ✅"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4    
