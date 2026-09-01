@@ -1,0 +1,199 @@
+name: Deploy Latest Halaqati Web + Update Files to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Halaqati-v*-web.zip"
+      - "Halaqati-v*-publish-update.zip"
+      - ".github/workflows/deploy-release.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "halaqati-pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find latest complete Halaqati release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import os
+
+          root = Path(".")
+
+          web_re = re.compile(r"^Halaqati-v(\d+\.\d+\.\d+)-web\.zip$", re.I)
+          update_re = re.compile(r"^Halaqati-v(\d+\.\d+\.\d+)-publish-update\.zip$", re.I)
+
+          web = {}
+          update = {}
+
+          for p in root.iterdir():
+              if not p.is_file():
+                  continue
+
+              m = web_re.match(p.name)
+              if m:
+                  web[m.group(1)] = p.name
+                  continue
+
+              m = update_re.match(p.name)
+              if m:
+                  update[m.group(1)] = p.name
+
+          complete = sorted(
+              set(web) & set(update),
+              key=lambda v: tuple(int(x) for x in v.split("."))
+          )
+
+          if not complete:
+              print("ERROR: No complete Halaqati release pair was found.")
+              print("Expected both:")
+              print("  Halaqati-vX.Y.Z-web.zip")
+              print("  Halaqati-vX.Y.Z-publish-update.zip")
+              print("\nFiles in repository root:")
+              for p in sorted(root.iterdir()):
+                  if p.is_file():
+                      print(" ", p.name)
+              raise SystemExit(1)
+
+          version = complete[-1]
+          web_zip = web[version]
+          update_zip = update[version]
+
+          print(f"Selected latest complete release: v{version}")
+          print(f"Web ZIP: {web_zip}")
+          print(f"Update ZIP: {update_zip}")
+
+          github_output = Path(os.environ["GITHUB_OUTPUT"])
+          with github_output.open("a", encoding="utf-8") as f:
+              f.write(f"version={version}\n")
+              f.write(f"web_zip={web_zip}\n")
+              f.write(f"update_zip={update_zip}\n")
+          PY
+
+      - name: Prepare web site
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          WEB_ZIP: ${{ steps.release.outputs.web_zip }}
+          UPDATE_ZIP: ${{ steps.release.outputs.update_zip }}
+        run: |
+          set -euo pipefail
+
+          echo "Deploying Halaqati v$RELEASE_VERSION"
+          echo "WEB_ZIP=$WEB_ZIP"
+          echo "UPDATE_ZIP=$UPDATE_ZIP"
+
+          test -f "$WEB_ZIP"
+          test -f "$UPDATE_ZIP"
+
+          rm -rf web_extract update_extract _site
+          mkdir -p web_extract update_extract _site
+
+          unzip -q "$WEB_ZIP" -d web_extract
+
+          INDEX_FILE="$(find web_extract -type f -name 'index.html' -print | head -n 1)"
+          test -n "${INDEX_FILE:-}" && test -f "$INDEX_FILE" || {
+            echo "ERROR: index.html was not found inside $WEB_ZIP"
+            find web_extract -maxdepth 3 -type f -print
+            exit 1
+          }
+
+          WEB_ROOT="$(dirname "$INDEX_FILE")"
+          cp -a "$WEB_ROOT"/. _site/
+
+          unzip -q "$UPDATE_ZIP" -d update_extract
+
+          VERSION_FILE="$(find update_extract -type f -name 'version.json' -print | head -n 1)"
+          APK_FILE="$(find update_extract -type f -name 'Halaqati-latest.apk' -print | head -n 1)"
+
+          test -n "${VERSION_FILE:-}" && test -f "$VERSION_FILE" || {
+            echo "ERROR: version.json was not found inside $UPDATE_ZIP"
+            find update_extract -maxdepth 3 -type f -print
+            exit 1
+          }
+
+          test -n "${APK_FILE:-}" && test -f "$APK_FILE" || {
+            echo "ERROR: Halaqati-latest.apk was not found inside $UPDATE_ZIP"
+            find update_extract -maxdepth 3 -type f -print
+            exit 1
+          }
+
+          cp "$VERSION_FILE" _site/version.json
+          cp "$APK_FILE" _site/Halaqati-latest.apk
+
+          touch _site/.nojekyll
+
+          test -f _site/index.html
+          test -f _site/version.json
+          test -f _site/Halaqati-latest.apk
+          test -f _site/sw.js
+          test -d _site/assets
+          test -d _site/core
+          test -d _site/vendor
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          expected = os.environ["RELEASE_VERSION"]
+          p = Path("_site/version.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+
+          print("Update manifest:", json.dumps(data, ensure_ascii=False, indent=2))
+
+          actual = str(
+              data.get("versionName")
+              or data.get("version")
+              or ""
+          ).lstrip("v")
+
+          if not actual:
+              raise SystemExit("ERROR: version.json does not contain version/versionName")
+
+          if actual != expected:
+              raise SystemExit(
+                  f"ERROR: selected release is v{expected}, "
+                  f"but version.json says v{actual}"
+              )
+
+          print(f"Version verified: v{actual} ✅")
+          PY
+
+          echo "Prepared GitHub Pages site:"
+          du -sh _site
+          find _site -maxdepth 2 -type f | sort | head -100
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
