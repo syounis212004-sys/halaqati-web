@@ -7,7 +7,7 @@ on:
     paths:
       - "Halaqati-v*-web.zip"
       - "Halaqati-v*-publish-update.zip"
-      - ".github/workflows/deploy-release.yml"
+      - ".github/workflows/deploy-release-latest.yml"
 
 permissions:
   contents: read
