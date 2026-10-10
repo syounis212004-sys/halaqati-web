@@ -1,0 +1,186 @@
+name: Update Halaqati Latest Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: halaqati-web-latest-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout halaqati-web
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Select newest publish-update package
+        id: latest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LATEST_ZIP="$(python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          candidates = []
+          pattern = re.compile(
+              r"^Halaqati-v([0-9]+(?:\.[0-9]+)+)-publish-update\.zip$"
+          )
+
+          for path in Path(".").glob("Halaqati-v*-publish-update.zip"):
+              match = pattern.match(path.name)
+              if not match:
+                  continue
+              version_text = match.group(1)
+              version_tuple = tuple(int(x) for x in version_text.split("."))
+              candidates.append((version_tuple, version_text, path.name))
+
+          if not candidates:
+              raise SystemExit(
+                  "No Halaqati-v*-publish-update.zip package was found."
+              )
+
+          candidates.sort(key=lambda item: item[0])
+          _, version, filename = candidates[-1]
+
+          print(filename)
+          Path("/tmp/halaqati-selected-version").write_text(
+              version, encoding="utf-8"
+          )
+          PY
+          )"
+
+          VERSION="$(cat /tmp/halaqati-selected-version)"
+
+          echo "Selected package: $LATEST_ZIP"
+          echo "Selected version: $VERSION"
+
+          echo "zip=$LATEST_ZIP" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Extract latest update package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf /tmp/halaqati-publish
+          mkdir -p /tmp/halaqati-publish
+
+          unzip -q "${{ steps.latest.outputs.zip }}" \
+            -d /tmp/halaqati-publish
+
+          echo "Package contents:"
+          find /tmp/halaqati-publish -maxdepth 3 -type f -print
+
+      - name: Prepare Halaqati-latest.apk and version.json
+        shell: bash
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          APK="$(find /tmp/halaqati-publish \
+            -type f \
+            -iname '*.apk' \
+            -print \
+            | sort \
+            | head -n 1)"
+
+          VERSION_JSON="$(find /tmp/halaqati-publish \
+            -type f \
+            \( -iname 'version.json' -o -iname '*version*.json' \) \
+            -print \
+            | sort \
+            | head -n 1)"
+
+          if [ -z "${APK:-}" ] || [ ! -s "$APK" ]; then
+            echo "::error::The latest publish-update ZIP contains no APK."
+            exit 1
+          fi
+
+          if [ -z "${VERSION_JSON:-}" ] || [ ! -s "$VERSION_JSON" ]; then
+            echo "::error::The latest publish-update ZIP contains no version JSON."
+            exit 1
+          fi
+
+          cp "$APK" Halaqati-latest.apk
+          cp "$VERSION_JSON" version.json
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("version.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+
+          selected_version = os.environ["VERSION"].strip()
+          existing_version = str(data.get("versionName", "")).strip()
+
+          if existing_version and existing_version != selected_version:
+              raise SystemExit(
+                  f"version.json says {existing_version}, "
+                  f"but newest package filename says {selected_version}"
+              )
+
+          data["versionName"] = selected_version
+
+          if "versionCode" not in data:
+              raise SystemExit("versionCode is missing from version.json")
+
+          try:
+              if int(data["versionCode"]) <= 0:
+                  raise ValueError
+          except (TypeError, ValueError):
+              raise SystemExit("versionCode in version.json is invalid")
+
+          data["apkUrl"] = (
+              "https://raw.githubusercontent.com/"
+              "syounis212004-sys/halaqati-web/main/"
+              "Halaqati-latest.apk"
+          )
+
+          path.write_text(
+              json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print(
+              f"Prepared Halaqati {data['versionName']} "
+              f"({data['versionCode']})"
+          )
+          print(f"APK URL: {data['apkUrl']}")
+          PY
+
+          test -s Halaqati-latest.apk
+          test -s version.json
+
+      - name: Publish latest direct-update files
+        shell: bash
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "halaqati-release-bot"
+          git config user.email "actions@github.com"
+
+          git add Halaqati-latest.apk version.json
+
+          if git diff --cached --quiet; then
+            echo "Web updater is already on Halaqati v$VERSION."
+            exit 0
+          fi
+
+          git commit -m "Publish Halaqati v${VERSION} direct update"
+          git push
