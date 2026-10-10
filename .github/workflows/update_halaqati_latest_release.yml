@@ -1,0 +1,73 @@
+name: Update Halaqati Latest Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout halaqati-web
+        uses: actions/checkout@v4
+
+      - name: Sync latest Halaqati release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          APP_REPO: syounis212004-sys/Halaqati
+        run: |
+          set -euo pipefail
+
+          TAG="$(gh release view \
+            --repo "$APP_REPO" \
+            --json tagName \
+            --jq '.tagName')"
+
+          echo "Latest application release: $TAG"
+
+          rm -rf /tmp/halaqati-release
+          mkdir -p /tmp/halaqati-release
+
+          gh release download "$TAG" \
+            --repo "$APP_REPO" \
+            --dir /tmp/halaqati-release \
+            --pattern "Halaqati-v*-release.apk" \
+            --pattern "version.json"
+
+          APK="$(find /tmp/halaqati-release \
+            -type f \
+            -name 'Halaqati-v*-release.apk' \
+            | head -n 1)"
+
+          test -s "$APK"
+          test -s /tmp/halaqati-release/version.json
+
+          cp "$APK" Halaqati-latest.apk
+          cp /tmp/halaqati-release/version.json version.json
+
+          VERSION="$(python3 - <<'PY'
+          import json
+          d=json.load(open("version.json"))
+          assert int(d["versionCode"]) > 0
+          assert d["versionName"]
+          assert d["apkUrl"].endswith("/Halaqati-latest.apk")
+          print(d["versionName"])
+          PY
+          )"
+
+          git config user.name "halaqati-release-bot"
+          git config user.email "actions@github.com"
+
+          git add Halaqati-latest.apk version.json
+
+          if git diff --cached --quiet; then
+            echo "Already on latest version: $VERSION"
+          else
+            git commit -m "Publish Halaqati v${VERSION} direct update"
+            git push
+          fi
