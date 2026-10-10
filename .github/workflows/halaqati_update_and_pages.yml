@@ -1,0 +1,323 @@
+name: Halaqati Update + GitHub Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "Halaqati-v*-publish-update.zip"
+      - "Halaqati-v*-web.zip"
+      - ".github/workflows/halaqati_update_and_pages.yml"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: halaqati-update-and-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Select newest publish-update package
+        id: latest_update
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LATEST_ZIP="$(python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          pattern = re.compile(
+              r"^Halaqati-v([0-9]+(?:\.[0-9]+)+)-publish-update\.zip$"
+          )
+
+          items = []
+          for p in Path(".").glob("Halaqati-v*-publish-update.zip"):
+              m = pattern.match(p.name)
+              if not m:
+                  continue
+              version_text = m.group(1)
+              version_tuple = tuple(int(x) for x in version_text.split("."))
+              items.append((version_tuple, version_text, p.name))
+
+          if not items:
+              raise SystemExit(
+                  "No Halaqati-v*-publish-update.zip found in repository root."
+              )
+
+          items.sort(key=lambda x: x[0])
+          _, version, filename = items[-1]
+
+          print(filename)
+          Path("/tmp/halaqati_version").write_text(version, encoding="utf-8")
+          PY
+          )"
+
+          VERSION="$(cat /tmp/halaqati_version)"
+
+          echo "Selected update package: $LATEST_ZIP"
+          echo "Selected app version: $VERSION"
+
+          echo "zip=$LATEST_ZIP" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Extract updater package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf /tmp/halaqati_update
+          mkdir -p /tmp/halaqati_update
+
+          unzip -q "${{ steps.latest_update.outputs.zip }}" \
+            -d /tmp/halaqati_update
+
+          echo "Updater package contents:"
+          find /tmp/halaqati_update -maxdepth 4 -type f -print
+
+      - name: Prepare Halaqati-latest.apk and version.json
+        shell: bash
+        env:
+          VERSION: ${{ steps.latest_update.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          APK="$(find /tmp/halaqati_update \
+            -type f \
+            -iname '*.apk' \
+            -print \
+            | sort \
+            | head -n 1)"
+
+          VERSION_JSON="$(find /tmp/halaqati_update \
+            -type f \
+            \( -iname 'version.json' -o -iname '*version*.json' \) \
+            -print \
+            | sort \
+            | head -n 1)"
+
+          if [ -z "${APK:-}" ] || [ ! -s "$APK" ]; then
+            echo "::error::No APK found inside the latest publish-update ZIP."
+            exit 1
+          fi
+
+          if [ -z "${VERSION_JSON:-}" ] || [ ! -s "$VERSION_JSON" ]; then
+            echo "::error::No version.json found inside the latest publish-update ZIP."
+            exit 1
+          fi
+
+          cp "$APK" Halaqati-latest.apk
+          cp "$VERSION_JSON" version.json
+
+          APK_SHA="$(sha256sum Halaqati-latest.apk | awk '{print $1}')"
+          export APK_SHA
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          p = Path("version.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+
+          selected_version = os.environ["VERSION"].strip()
+          source_version = str(data.get("versionName", "")).strip()
+
+          if source_version and source_version != selected_version:
+              raise SystemExit(
+                  f"version.json says {source_version}, "
+                  f"but selected package is {selected_version}"
+              )
+
+          try:
+              code = int(data["versionCode"])
+          except Exception:
+              raise SystemExit("versionCode is missing or invalid")
+
+          if code <= 0:
+              raise SystemExit("versionCode must be greater than zero")
+
+          data["versionName"] = selected_version
+          data["versionCode"] = code
+          data["apkUrl"] = (
+              "https://syounis212004-sys.github.io/"
+              "halaqati-web/Halaqati-latest.apk"
+          )
+          data["sha256"] = os.environ["APK_SHA"]
+
+          p.write_text(
+              json.dumps(data, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print(
+              f"Prepared Halaqati {data['versionName']} "
+              f"({data['versionCode']})"
+          )
+          print("APK URL:", data["apkUrl"])
+          print("SHA256:", data["sha256"])
+          PY
+
+          test -s Halaqati-latest.apk
+          test -s version.json
+
+      - name: Select newest web package
+        id: latest_web
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WEB_ZIP="$(python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          pattern = re.compile(
+              r"^Halaqati-v([0-9]+(?:\.[0-9]+)+)-web\.zip$"
+          )
+
+          items = []
+          for p in Path(".").glob("Halaqati-v*-web.zip"):
+              m = pattern.match(p.name)
+              if not m:
+                  continue
+              version_tuple = tuple(int(x) for x in m.group(1).split("."))
+              items.append((version_tuple, p.name))
+
+          if not items:
+              raise SystemExit(
+                  "No Halaqati-v*-web.zip found in repository root."
+              )
+
+          items.sort(key=lambda x: x[0])
+          print(items[-1][1])
+          PY
+          )"
+
+          echo "Selected web package: $WEB_ZIP"
+          echo "zip=$WEB_ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Build GitHub Pages site
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf /tmp/halaqati_web _site
+          mkdir -p /tmp/halaqati_web _site
+
+          unzip -q "${{ steps.latest_web.outputs.zip }}" \
+            -d /tmp/halaqati_web
+
+          INDEX_FILE="$(find /tmp/halaqati_web \
+            -type f \
+            -name 'index.html' \
+            -not -path '*/__MACOSX/*' \
+            -print \
+            | head -n 1)"
+
+          if [ -z "${INDEX_FILE:-}" ] || [ ! -f "$INDEX_FILE" ]; then
+            echo "::error::index.html was not found inside the selected web ZIP."
+            find /tmp/halaqati_web -maxdepth 4 -type f -print | head -200
+            exit 1
+          fi
+
+          WEB_ROOT="$(dirname "$INDEX_FILE")"
+
+          cp -a "$WEB_ROOT"/. _site/
+          cp version.json _site/version.json
+          cp Halaqati-latest.apk _site/Halaqati-latest.apk
+
+          touch _site/.nojekyll
+          find _site -name '.DS_Store' -delete 2>/dev/null || true
+          rm -rf _site/__MACOSX 2>/dev/null || true
+
+          test -s _site/index.html
+          test -s _site/version.json
+          test -s _site/Halaqati-latest.apk
+
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("_site/version.json").read_text(encoding="utf-8")
+          )
+
+          apk = Path("_site/Halaqati-latest.apk")
+          actual_sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+
+          required = ["versionName", "versionCode", "apkUrl", "sha256"]
+          missing = [k for k in required if k not in data]
+          if missing:
+              raise SystemExit(f"Missing version.json keys: {missing}")
+
+          if int(data["versionCode"]) <= 0:
+              raise SystemExit("versionCode must be greater than zero")
+
+          if not str(data["apkUrl"]).endswith("/Halaqati-latest.apk"):
+              raise SystemExit("apkUrl must end with /Halaqati-latest.apk")
+
+          if data["sha256"].lower() != actual_sha.lower():
+              raise SystemExit(
+                  f"APK sha256 mismatch: json={data['sha256']} actual={actual_sha}"
+              )
+
+          print(
+              "Publishing:",
+              data["versionName"],
+              data["versionCode"],
+          )
+          print("APK:", data["apkUrl"])
+          print("SHA256:", actual_sha)
+          PY
+
+          echo "Prepared GitHub Pages site:"
+          du -sh _site
+
+      - name: Commit updater files to main
+        shell: bash
+        env:
+          VERSION: ${{ steps.latest_update.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "halaqati-release-bot"
+          git config user.email "actions@github.com"
+
+          git add Halaqati-latest.apk version.json
+
+          if git diff --cached --quiet; then
+            echo "Repository updater files are already on v$VERSION."
+          else
+            git commit -m "Publish Halaqati v${VERSION} direct update"
+            git push
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
