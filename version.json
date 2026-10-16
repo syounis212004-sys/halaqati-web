@@ -1,7 +1,7 @@
 {
   "versionName": "2.60.1",
   "versionCode": 26001,
-  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
+  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
   "sha256": "ef1e900481548ab13a2d68001b99d1c9baf4ce5d5fd07ede0c62a8533286d63e",
   "native": true,
   "notes": [
