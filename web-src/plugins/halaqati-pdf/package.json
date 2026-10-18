@@ -1,0 +1,9 @@
+{
+  "name": "halaqati-pdf",
+  "version": "1.0.0",
+  "private": true,
+  "files": ["android"],
+  "capacitor": {
+    "android": { "src": "android" }
+  }
+}
