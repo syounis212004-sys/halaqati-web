@@ -1,7 +1,10 @@
 /* Halaqati v2.63.22 — visual identity layer: new drawer, brand, palette defaults, page transitions. */
 (function(){
-  const ROLE_AR={admin:'مدير النظام',supervisor:'مشرف',teacher:'محفّظ',guardian:'ولي أمر'};
-  const SECTIONS=[['الرئيسية',['home','notifications','community']],['العمل اليومي',['sessions','students','plans','halaqas']],['المتابعة والتقارير',['reports','ranking','competition','certificates','supervision','profile']],['أدوات',['quran','data']],['الإدارة',['users','settings']]];
+  const ROLE_TITLE={admin:'مسؤول النظام والحلقات',supervisor:'مشرف الحلقات',teacher:'محفّظ الحلقة',guardian:'ولي الأمر'};
+  // native drawerGroupOf: 0 الأساسي · 1 المتابعة والإنجاز · 2 التواصل والأدوات · 3 الإدارة · 4 الحساب والنظام
+  const GROUPS=[['الأساسي',['home','sessions','students','plans','halaqas']],['المتابعة والإنجاز',['ranking','competition','certificates','reports','supervision','profile']],['التواصل والأدوات',['community','quran','data']],['الإدارة',['users']],['الحساب والنظام',['notifications','sync','settings']]];
+  const SYNC_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-15-6.7L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 15 6.7L21 16"/><path d="M16 16h5v5"/></svg>';
+  const OFF_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M5.8 9.3A6 6 0 0 0 7 21h10a4.5 4.5 0 0 0 1.6-.3"/><path d="M9.5 4.6A6 6 0 0 1 17 9.6 4.5 4.5 0 0 1 21 14"/></svg>';
   const esc2=v=>typeof esc==='function'?esc(v):String(v);
 
   // Palette: native defaults replace the old default pair, user-chosen colors are kept.
@@ -16,45 +19,34 @@
     };
   }
 
-  function bell(){const n=Number(state.notificationUnread||0);return n?`🔔<i class="dh-count">${n>99?'99+':n}</i>`:'🔔'}
-  function statusText(){
-    if(!state.networkVerified||state.offline)return {t:'دون اتصال — البيانات محفوظة على الجهاز',c:'off'};
-    const q=typeof readOfflineQueue==='function'?readOfflineQueue().length:0;
-    return q?{t:`متصل — ${q} عملية بانتظار المزامنة`,c:'pend'}:{t:'متصل ومتزامن',c:'ok'};
-  }
+  const online=()=>state.networkVerified&&!state.offline;
+  function pending(){return typeof readOfflineQueue==='function'?readOfflineQueue().length:0}
   function refreshDrawerHead(){
-    const role=document.getElementById('drawerRole');if(role)role.textContent=ROLE_AR[state.profile?.role]||'';
-    const b=document.getElementById('dhBell');if(b)b.innerHTML=bell();
-    const s=document.getElementById('dhStatus'),st=statusText();if(s){s.textContent=st.t;s.className='dh-status '+st.c}
+    const nm=document.getElementById('dhName');if(nm)nm.textContent=state.profile?.full_name||'المستخدم';
+    const role=document.getElementById('drawerRole');if(role)role.textContent=ROLE_TITLE[state.profile?.role]||'المستخدم';
+    const on=online(),dot=document.getElementById('dhDot'),c=document.getElementById('dhConn');
+    if(dot)dot.className='dh-dot '+(on?'on':'off');if(c)c.textContent=on?'متصل':'دون اتصال';
   }
   if(typeof buildNav==='function'){
     const baseBuild=buildNav;
     buildNav=function(){
       const n=document.getElementById('nav');
       if(!n||typeof navItems!=='function')return baseBuild.apply(this,arguments);
-      const items=navItems(),map=new Map(items.map(x=>[x[0],x[1]])),used=new Set;
-      const btn=([p,l])=>`<button type="button" class="${state.page===p?'active':''}" ${state.page===p?'aria-current="page"':''} onclick="go('${p}')"><span class="ico">${iconFor(p)}</span><span>${l}</span></button>`;
+      const items=navItems(),map=new Map(items.map(x=>[x[0],String(x[1]).replace(/\s*\(\d+\)$/,'')])),used=new Set,pend=pending(),unread=Number(state.notificationUnread||0);
+      map.set('sync',online()?'المزامنة':'دون اتصال');
+      const tile=(p,l)=>{
+        const active=state.page===p,badge=p==='notifications'?unread:p==='sync'?pend:0,spin=p==='sync'&&online()&&pend>0;
+        const icon=p==='sync'?(online()?SYNC_SVG:OFF_SVG):iconFor(p);
+        return `<button type="button" class="dtile ${active?'active':''}" ${active?'aria-current="page"':''} onclick="${p==='sync'?"toggleDrawer(false);openSyncStatusDialog()":`go('${p}')`}"><span class="dt-ico ${spin?'rc27-spin':''}">${icon}${badge?`<i class="dt-badge">${badge>99?'99+':badge}</i>`:''}</span><span class="dt-label">${esc2(l)}</span></button>`;
+      };
       let html='';
-      SECTIONS.forEach(([title,keys])=>{const rows=keys.filter(k=>map.has(k)).map(k=>{used.add(k);return [k,map.get(k)]});if(rows.length)html+=`<div class="nav-section">${title}</div>${rows.map(btn).join('')}`});
-      const rest=items.filter(x=>!used.has(x[0]));if(rest.length)html+=`<div class="nav-section">أخرى</div>${rest.map(btn).join('')}`;
+      GROUPS.forEach(([title,keys])=>{const rows=keys.filter(k=>map.has(k));rows.forEach(k=>used.add(k));if(rows.length)html+=`<div class="nav-section">${title}</div><div class="dgrid">${rows.map(k=>tile(k,map.get(k))).join('')}</div>`});
+      const rest=items.filter(x=>!used.has(x[0]));if(rest.length)html+=`<div class="nav-section">أخرى</div><div class="dgrid">${rest.map(x=>tile(x[0],map.get(x[0]))).join('')}</div>`;
       n.innerHTML=html;
       if(typeof buildMobileNav==='function')buildMobileNav();
       refreshDrawerHead();
     };
   }
-  setInterval(refreshDrawerHead,4000);
+  setInterval(()=>{refreshDrawerHead();if(document.getElementById('drawer')?.classList.contains('open')&&typeof buildNav==='function')buildNav()},4000);
 
-  // Directional page transition (slide in from the reading side), disabled by reduced motion.
-  if(typeof render==='function'){
-    let last=null;
-    const baseRender=render;
-    render=async function(){
-      const r=await baseRender.apply(this,arguments);
-      try{
-        const c=document.getElementById('content');
-        if(c&&state.page!==last){last=state.page;c.classList.remove('rc27-enter');void c.offsetWidth;c.classList.add('rc27-enter')}
-      }catch(_e){}
-      return r;
-    };
-  }
 })();
