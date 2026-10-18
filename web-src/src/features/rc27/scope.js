@@ -4,7 +4,7 @@
 (function(){
   const h=v=>typeof esc==='function'?esc(v):String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const RC=window.RC27=window.RC27||{master:null,refs:null,memberships:[]};
-  const TYPE_AR={regular:'حلقة',tajweed:'برنامج تجويد',tilawah:'برنامج تلاوة',training:'برنامج تدريب',course:'دورة',other:'برنامج'};
+  const TYPE_AR={regular:'حلقة',tajweed:'التلاوة والتجويد',tilawah:'التلاوة والتجويد',training:'برنامج تدريب',course:'دورة',other:'برنامج'};
   window.RC27_TYPE_AR=TYPE_AR;
   const isProgram=x=>!!x&&!!x.halaqa_type&&x.halaqa_type!=='regular';
   window.rc27IsProgram=isProgram;

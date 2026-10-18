@@ -30,10 +30,18 @@
   }
   window.rc27SyncTilawah=mount;
   window.rc27TilawahApply=function(row,data){
+    if(typeof rc27TagPhase==='function')rc27TagPhase(data);
+    if(!row.dataset.dbId&&data.activity_type==='new_hifz'&&typeof rc27GapCheck==='function')rc27GapCheck(data);
     if(data.activity_type!=='tilawah')return;
     const a=Object.assign(blank(),readAssess(row)||{}),s=score(a);
     a.overall_score=s;data.selection_data=Object.assign({},data.selection_data,{tilawah_assessment:a});
     data.mistakes=a.lahn_jali+a.lahn_khafi;data.prompts=0;data.evaluation=evalOf(s);
+  };
+  // native saveRecitation: tilawah rows carry the assessment score as safety, TILAWAH_V1 scoring and its own evaluation
+  window.rc27AfterDecorate=function(d){
+    const a=d.activity_type==='tilawah'&&d.selection_data?.tilawah_assessment;
+    if(a&&a.overall_score!=null){d.safety_percentage=Number(a.overall_score);d.evaluation=evalOf(Number(a.overall_score));d.scoring_version='TILAWAH_V1'}
+    return d;
   };
   // rows are created by addRecitationRow / edit loaders; mount the panel (and limit program tabs) when they appear
   function currentSessionIsProgram(){
