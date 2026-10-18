@@ -17,6 +17,10 @@ import startupRuntimeUrl from './core/startup.js?url';
 import reportsRuntimeUrl from './features/reports/runtime.js?url';
 import vectorPdfRuntimeUrl from './features/reports/vector-pdf-runtime.js?url';
 import rc27RuntimeUrl from './features/rc27/runtime.js?url';
+import rc27ScopeUrl from './features/rc27/scope.js?url';
+import rc27ProgramsUrl from './features/rc27/programs.js?url';
+import rc27UiUrl from './features/rc27/ui.js?url';
+import rc27GuardianUrl from './features/rc27/guardian.js?url';
 import certificatesRuntimeUrl from './features/certificates/runtime.js?url';
 import smartPlansRuntimeUrl from './features/plans/runtime.js?url';
 import guardianRuntimeUrl from './features/guardian/runtime.js?url';
@@ -72,6 +76,10 @@ async function boot() {
   await loadClassicScript(certificatesRuntimeUrl, { id: 'halaqati-certificates-runtime' });
   // Startup stays last so every function/override is present before auth restoration begins.
   await loadClassicScript(rc27RuntimeUrl, { id: 'halaqati-rc27-runtime' });
+  await loadClassicScript(rc27ScopeUrl, { id: 'halaqati-rc27-scope' });
+  await loadClassicScript(rc27ProgramsUrl, { id: 'halaqati-rc27-programs' });
+  await loadClassicScript(rc27UiUrl, { id: 'halaqati-rc27-ui' });
+  await loadClassicScript(rc27GuardianUrl, { id: 'halaqati-rc27-guardian' });
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
   installReportLazyLoading();
   installImportLazyLoading();

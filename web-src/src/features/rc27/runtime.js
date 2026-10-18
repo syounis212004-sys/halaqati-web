@@ -70,9 +70,18 @@
   }
 
   // ---------- Settings: display preferences + admin maintenance ----------
+  const DIAG={loadMs:null,loadedAt:null,loads:0};
+  if(typeof loadAll==='function'){
+    const baseLoad=loadAll;
+    loadAll=async function(){const t0=performance.now();try{return await baseLoad.apply(this,arguments)}finally{DIAG.loadMs=Math.round(performance.now()-t0);DIAG.loadedAt=new Date();DIAG.loads++}};
+  }
+  function diagCard(){
+    const q=typeof readOfflineQueue==='function'?readOfflineQueue().length:0;
+    return `<div class="card"><h3>التشخيص</h3><div class="muted">${DIAG.loadMs==null?'لم يُحمَّل شيء بعد':`آخر تحميل للبيانات: ${DIAG.loadMs} م.ث (${DIAG.loadedAt.toLocaleTimeString('ar-EG-u-nu-latn')})`}</div><div class="muted">الاتصال: ${state.networkVerified&&!state.offline?'متصل':'دون اتصال'} · عمليات معلقة: ${q} · طلاب: ${(state.students||[]).length} · جلسات: ${(state.sessions||[]).length}</div></div>`;
+  }
   function displayCard(){
     const p=readPrefs();
-    return `<div class="card"><h3>العرض</h3><div class="settings-row"><div><b>الكثافة المختصرة</b><div class="muted">تصغير المسافات والبطاقات لعرض معلومات أكثر</div></div><input type="checkbox" ${p.density==='compact'?'checked':''} onchange="rc27SetPref('density',this.checked?'compact':'comfortable')"></div><div class="settings-row"><div><b>تخفيف الحركة</b><div class="muted">تعطيل الحركات الاختيارية</div></div><input type="checkbox" ${p.reduceMotion?'checked':''} onchange="rc27SetPref('reduceMotion',this.checked)"></div></div>`;
+    return `<div class="card"><h3>العرض</h3><div class="settings-row"><div><b>الكثافة المختصرة</b><div class="muted">تصغير المسافات والبطاقات لعرض معلومات أكثر</div></div><input type="checkbox" ${p.density==='compact'?'checked':''} onchange="rc27SetPref('density',this.checked?'compact':'comfortable')"></div><div class="settings-row"><div><b>تخفيف الحركة</b><div class="muted">تعطيل الحركات الاختيارية</div></div><input type="checkbox" ${p.reduceMotion?'checked':''} onchange="rc27SetPref('reduceMotion',this.checked)"></div><div class="settings-row"><div><b>زيتوني الشعار</b><div class="muted">لون التطبيق من هوية حلقاتي الجديدة</div></div><button class="theme-preset" type="button" style="background:#42502D" onclick="setPreset('#42502D','#7C8F4E');saveThemeSettings()"></button></div></div>${diagCard()}`;
   }
   function maintenanceCard(){
     if(!(typeof isOwner==='function'&&isOwner()))return '';

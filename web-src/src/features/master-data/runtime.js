@@ -15,7 +15,7 @@ function masterStripMeta(row){let x={...cloneJson(row||{})};for(let k of Object.
 function masterPayload(entity,row){
   let x=masterStripMeta(row),out={};
   let keys=entity==='halaqa'
-    ?['name','description','supervisor_id','location','schedule_text','active']
+    ?['name','description','supervisor_id','location','schedule_text','active','halaqa_type','starts_on','ends_on','allow_secondary_members','program_kind','program_specialization','program_level','assessment_type','affects_primary_plan']
     :entity==='category'
       ?['halaqa_id','name','min_age','max_age','description','active','created_by']
       :['full_name','user_id','halaqa_id','primary_teacher_id','date_of_birth','phone','guardian_phone','enrollment_date','status','photo_path','notes','target_pages_weekly','target_review_pages_weekly','guardian_email','gender','national_id','program_name','school_grade','address','category_id','track_code','withdrawn_at','withdrawn_by'];
