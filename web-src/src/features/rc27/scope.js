@@ -195,4 +195,12 @@
     const baseOpen=openSession;
     openSession=function(){const r=baseOpen.apply(this,arguments);setTimeout(rc27FilterSessionTypes,0);return r};
   }
+
+  // ---------- Quick recitation buttons follow the student / session kind (native SessionWorkflowRules) ----------
+  window.rc27QuickButtons=function(st,se){
+    const hq=state.halaqas.find(x=>x.id===se?.halaqa_id),b=(type,label)=>`<button onclick="quickOpenRecitation('${st.id}','${se.id}','${type}')">+ ${label}</button>`;
+    if(isProgram(hq))return `<div class="quick-rec-buttons">${b('tilawah','تلاوة')}${b('test','اختبار')}</div>`;
+    if(st.track_code==='tathbit')return `<div class="quick-rec-buttons">${b('review_far','تثبيت')}</div>`;
+    return `<div class="quick-rec-buttons">${b('new_hifz','حفظ')}${b('review_near','مراجعة')}${b('sard','سرد')}</div>`;
+  };
 })();

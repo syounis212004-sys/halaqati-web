@@ -85,7 +85,7 @@
   }
   function maintenanceCard(){
     if(!(typeof isOwner==='function'&&isOwner()))return '';
-    return `<div class="card"><h3>صيانة البيانات (للمدير)</h3><div class="settings-row"><div><b>الجلسات المحذوفة</b><div class="muted">استرجاع جلسة حُذفت من الخادم مع تسميعها وحضورها</div></div><button class="mini" type="button" onclick="rc27OpenDeletedSessions()">فتح</button></div><div class="settings-row"><div><b>نسخة احتياطية كاملة</b><div class="muted">تنزيل كل البيانات في ملف JSON واحد</div></div><button class="mini" type="button" onclick="rc27Backup(this)">تنزيل</button></div></div>`;
+    return `<div class="card"><h3>صيانة البيانات (للمدير)</h3><div class="settings-row"><div><b>الجلسات المحذوفة</b><div class="muted">استرجاع جلسة حُذفت من الخادم مع تسميعها وحضورها</div></div><button class="mini" type="button" onclick="rc27OpenDeletedSessions()">فتح</button></div><div class="settings-row"><div><b>نسخة احتياطية كاملة</b><div class="muted">تنزيل كل البيانات في ملف zip واحد (ملف JSON لكل جدول)</div></div><button class="mini" type="button" onclick="rc27Backup(this)">تنزيل</button></div></div>`;
   }
   if(typeof settingsPage==='function'){
     const baseSettings=settingsPage;
@@ -116,20 +116,37 @@
     rc27OpenDeletedSessions();
   };
 
-  // ---------- Full JSON backup ----------
+  // ---------- Full backup (zip: one JSON per table + MANIFEST.json, same tables/paging as the native app) ----------
+  const BACKUP_TABLES=['profiles','halaqas','halaqa_teachers','halaqa_supervisors','students','student_guardians','student_categories','student_halaqa_memberships','sessions','attendance_records','recitation_entries','student_daily_notes','student_goals','monthly_comments','announcements','supervisor_visits','student_points','app_settings','smart_plans','smart_plan_events','smart_plan_phases','smart_plan_phase_states','smart_plan_phase_templates','smart_plan_month_archives','smart_plan_health_daily','certificate_templates','certificates','certificate_series','certificate_revisions','achievement_badge_definitions','student_badge_awards','management_audit_log','deleted_session_snapshots','notification_preferences'];
+  const BACKUP_ORDER={achievement_badge_definitions:['code'],certificate_series:['series_key'],halaqa_supervisors:['halaqa_id','supervisor_id'],halaqa_teachers:['halaqa_id','teacher_id'],notification_preferences:['user_id'],smart_plan_health_daily:['plan_id','student_id','day'],student_guardians:['student_id','guardian_id']};
+  function loadJsZip(){
+    if(window.JSZip)return Promise.resolve(window.JSZip);
+    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=new URL('./core/jszip.min.js',document.baseURI).href;s.onload=()=>res(window.JSZip);s.onerror=rej;document.head.appendChild(s)});
+  }
   window.rc27Backup=async function(btn){
-    const tables=['halaqas','student_categories','students','student_guardians','halaqa_teachers','halaqa_supervisors','sessions','attendance_records','recitation_entries','student_daily_notes','smart_plans','smart_plan_events','student_goals','announcements','forum_posts','forum_comments','app_settings'];
-    btn.disabled=true;const out={app:'Halaqati',version:'2.63.22',exported_at:new Date().toISOString(),tables:{},errors:{}};
-    for(const t of tables){
-      const rows=[];let from=0;
-      for(;;){
-        const {data,error}=await db.from(t).select('*').range(from,from+999);
-        if(error){out.errors[t]=error.message||String(error);break}
-        rows.push(...(data||[]));if(!data||data.length<1000)break;from+=1000;
+    if(!navigator.onLine||!state.networkVerified)return toast('النسخة الاحتياطية تحتاج اتصالًا بالإنترنت');
+    btn.disabled=true;
+    try{
+      const JSZip=await loadJsZip(),zip=new JSZip,manifest={created_at:new Date().toISOString(),app_version:'2.63.22',source:'web',tables:{},failed:[],skipped:[]};
+      let done=0;
+      for(const t of BACKUP_TABLES){
+        toast(`نسخ ${t} (${++done}/${BACKUP_TABLES.length})`);
+        const rows=[];let from=0,ok=true;
+        for(;;){
+          let q=db.from(t).select('*');for(const c of (BACKUP_ORDER[t]||['id']))q=q.order(c,{ascending:true});
+          const {data,error}=await q.range(from,from+999);
+          if(error){if(error.code==='42P01'||error.code==='PGRST205'||/does not exist|schema cache/i.test(error.message||''))manifest.skipped.push(t);else manifest.failed.push(`${t}: ${error.message||error}`);ok=false;break}
+          rows.push(...(data||[]));if(!data||data.length<1000)break;from+=1000;
+        }
+        if(!ok)continue;
+        zip.file(t+'.json',JSON.stringify(rows));manifest.tables[t]=rows.length;
       }
-      out.tables[t]=rows;toast(`نسخ ${t}…`);
-    }
-    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:'application/json'}));a.download=`halaqati-backup-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-    btn.disabled=false;toast(Object.keys(out.errors).length?'تم التنزيل مع تعذر بعض الجداول':'تم تنزيل النسخة الاحتياطية');
+      zip.file('MANIFEST.json',JSON.stringify(manifest,null,2));
+      const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download=`halaqati-backup-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+      const rowsTotal=Object.values(manifest.tables).reduce((x,y)=>x+y,0);
+      toast(manifest.failed.length?`تم التنزيل مع تعذر ${manifest.failed.length} جدول`:`تم تنزيل النسخة الاحتياطية (${Object.keys(manifest.tables).length} جدولًا، ${rowsTotal} صفًا)`);
+    }catch(e){toast('تعذرت النسخة الاحتياطية: '+(e.message||e))}
+    finally{btn.disabled=false}
   };
 })();
