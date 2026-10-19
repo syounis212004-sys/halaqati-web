@@ -197,8 +197,8 @@
   function pageEndLoc(page){const l=layoutOf();if(!l)return null;let last=null;for(let g=1;g<l.page.length;g++){if(l.page[g]===page)last=g;else if(last&&l.page[g]>page)break}return last?locOfGlobalA(last):null}
   const locOfGlobalA=g=>{let s=1;while(s<114&&ayahPrefix[s]<g)s++;return {s,a:g-ayahPrefix[s-1]}};
   // snapshot = what the native app computes for one student's monthly plan today
-  function snapshot(plan,today){
-    const sid=plan.student_id,parent=plan,phRows=S.phases.filter(p=>p.plan_id===plan.id&&p.status!=='archived').filter(p=>plan.plan_type==='tathbit'?p.phase_type==='tathbit':p.phase_type!=='tathbit'),states=S.states.filter(x=>x.student_id===sid&&phRows.some(p=>p.id===x.phase_id));
+  function snapshot(plan,today,sidArg){
+    const sid=sidArg||plan.student_id,parent=plan,phRows=S.phases.filter(p=>p.plan_id===plan.id&&p.status!=='archived').filter(p=>plan.plan_type==='tathbit'?p.phase_type==='tathbit':p.phase_type!=='tathbit'),states=S.states.filter(x=>x.student_id===sid&&phRows.some(p=>p.id===x.phase_id));
     const recs=(S.recs.get(sid)||[]).map(r=>({...r,session_date:recDate(r)})),events=(window.state?.smartPlanEvents||[]).filter(e=>e.plan_id===plan.id&&(!e.student_id||e.student_id===sid));
     const act=activePhase(phRows.map(enginePhase),states,sid,today),actRow=act?phRows.find(p=>p.id===act.id):null,actState=actRow?states.find(x=>x.phase_id===actRow.id):null;
     const pa=phaseAwarePlan(parent,actRow,actState,recs),plan2=pa.plan;
@@ -237,6 +237,20 @@
       chunk.forEach(id=>S.recs.set(id,[]));
       (data||[]).forEach(r=>S.recs.get(r.student_id).push({...r,session_date:r.sessions?.session_date}));
     }
+  }
+
+  async function loadRecsBulk(studentIds,days){
+    if(!navigator.onLine)return;
+    const since=addDays(T0(),-(days||190)),key='bulk:'+since;
+    if(S.bulkAt&&Date.now()-S.bulkAt<300000&&S.bulkKey===key)return;
+    const rows=[];let from=0;
+    for(let i=0;i<12;i++){
+      const {data,error}=await db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,safety_percentage,created_at,phase_id,selection_data,session_id,sessions!inner(session_date)').gte('sessions.session_date',since).order('created_at',{ascending:false}).range(from,from+999);
+      if(error)break;rows.push(...(data||[]));if(!data||data.length<1000)break;from+=1000;
+    }
+    const by=new Map(studentIds.map(id=>[id,[]]));
+    rows.forEach(r=>{if(by.has(r.student_id))by.get(r.student_id).push({...r,session_date:r.sessions?.session_date})});
+    by.forEach((v,k)=>S.recs.set(k,v));S.bulkAt=Date.now();S.bulkKey=key;S.latestRecs=rows;
   }
   window.rc27PhasesPreload=()=>{if(navigator.onLine&&state.networkVerified&&state.user)load(false)};
 
@@ -389,7 +403,7 @@
     if(!isOnline())throw new Error('يلزم اتصال بالإنترنت لبدء دورة شهر جديدة');const m=T0().slice(0,8)+'01';
     const {data,error}=await db.rpc('rc19_start_month',{p_month_start:m});if(error)throw error;S.recs.clear();await load(true);return data;
   }
-  window.RC27Phases={S,snapshot,previewPagesFrom,load,loadRecs,flush,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
+  window.RC27Phases={S,loadRecsBulk,snapshot,previewPagesFrom,load,loadRecs,flush,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
 
   // ================= recitation tagging (native: tathbit never carries a phase) =================
   window.rc27TagPhase=function(data){

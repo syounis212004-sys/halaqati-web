@@ -271,6 +271,7 @@
     }
     return out;
   }
+  window.rc27RebasePreviews=rebasePreviews;
   window.rc27RebaseOpen=async function(){
     open('<div class="card"><h3>إعادة ضبط نطاق الشهر</h3><div class="muted">جارٍ الفحص…</div></div>');
     try{
@@ -303,5 +304,6 @@
       }
     }catch(_e){}
   }
+  window.rc27HealRanges=healUndersized;
   setTimeout(healUndersized,20000);
 })();

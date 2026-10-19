@@ -569,17 +569,13 @@ function calculateConsecutiveMissed(planInput, dailyAmounts, currentDate, baseDa
   return missed;
 }
 
-function statusFromRatio(ratio, consecutiveMissed, alertDays) {
-  if (consecutiveMissed >= alertDays || ratio < 0.75) {
-    return { health: 'red', healthLabel: 'خطر تعثر', pace: 'behind', paceLabel: 'متأخر' };
-  }
-  if (ratio < 0.9) {
-    return { health: 'yellow', healthLabel: 'تنبيه', pace: 'behind', paceLabel: 'متأخر' };
-  }
-  if (ratio > 1.05) {
-    return { health: 'green', healthLabel: 'سليم', pace: 'ahead', paceLabel: 'متقدم' };
-  }
-  return { health: 'green', healthLabel: 'سليم', pace: 'on_track', paceLabel: 'ملتزم' };
+function statusFromRatio(ratio) {
+  // native SmartPlanHealthRules (RC19): blue / green / yellow / red bands against what was due by today
+  const r = Math.max(0, ratio);
+  if (r > 1.10) return { health: 'blue', healthLabel: 'متقدم', pace: 'ahead', paceLabel: 'متقدم' };
+  if (r >= 0.90) return { health: 'green', healthLabel: 'على المسار', pace: 'on_track', paceLabel: 'ملتزم' };
+  if (r >= 0.75) return { health: 'yellow', healthLabel: 'يحتاج انتباه', pace: 'behind', paceLabel: 'متأخر' };
+  return { health: 'red', healthLabel: 'يحتاج متابعة', pace: 'behind', paceLabel: 'متأخر' };
 }
 
 function calculateProgress({
@@ -696,7 +692,7 @@ function calculateProgress({
 
   const ratio = expectedByNow > 0 ? completion.amount / expectedByNow : (completion.amount > 0 ? 1.1 : 1);
   const consecutiveMissed = calculateConsecutiveMissed(plan, completion.dailyAmounts, currentDate, originalDaily);
-  const status = statusFromRatio(ratio, consecutiveMissed, plan.delay_alert_days);
+  const status = statusFromRatio(ratio);
   const remainingCapacity = futureRegularDates.length * dailyCap;
   const uncoveredPages = Math.max(0, remaining - remainingCapacity);
   const suggestedEndDate = extendEndDate(plan, uncoveredPages, dailyCap);

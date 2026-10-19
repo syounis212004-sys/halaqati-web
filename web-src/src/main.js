@@ -25,6 +25,7 @@ import rc27UiUrl from './features/rc27/ui.js?url';
 import rc27GuardianUrl from './features/rc27/guardian.js?url';
 import rc27MotionUrl from './features/rc27/motion.js?url';
 import rc27PhasesUrl from './features/rc27/phases.js?url';
+import rc27DashboardUrl from './features/rc27/dashboard.js?url';
 import rc27PlansUrl from './features/rc27/plans.js?url';
 import certificatesRuntimeUrl from './features/certificates/runtime.js?url';
 import smartPlansRuntimeUrl from './features/plans/runtime.js?url';
@@ -88,6 +89,7 @@ async function boot() {
   await loadClassicScript(rc27PhasesUrl, { id: 'halaqati-rc27-phases' });
   await loadClassicScript(rc27PlansUrl, { id: 'halaqati-rc27-plans' });
   await loadClassicScript(rc27MotionUrl, { id: 'halaqati-rc27-motion' });
+  await loadClassicScript(rc27DashboardUrl, { id: 'halaqati-rc27-dashboard' });
   await loadClassicScript(rc27GuardianUrl, { id: 'halaqati-rc27-guardian' });
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
   installReportLazyLoading();
