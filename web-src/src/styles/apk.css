@@ -82,3 +82,21 @@ html[data-view="desktop"] dialog{max-width:680px}
 @media(min-width:1024px){html[data-view="desktop"] .content>.card+.card{margin-top:0}}
 .rc27-viewswitch{display:flex;gap:6px;margin-top:6px}.rc27-viewswitch button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--r-sm);min-height:36px;font:inherit;font-size:12px;cursor:pointer}.rc27-viewswitch button.on{background:var(--primary-container);color:var(--on-primary-container);border-color:var(--green)}
 html[data-view="mobile"][data-wide="1"]{overflow:hidden;height:100%}
+
+/* ---- RC27.29: side menu as a full page of rows; true-black dark mode ---- */
+html body .dgrid{grid-template-columns:1fr;gap:2px}
+html body .nav .dtile{flex-direction:row;justify-content:flex-start;align-items:center;gap:14px;min-height:52px;padding:6px 10px;border-radius:14px;background:transparent;font-size:15px;text-align:start}
+html body .nav .dtile .dt-label{display:block;-webkit-line-clamp:unset;flex:1}
+html body .nav .dtile .dt-ico{width:40px;height:40px;background:var(--mint2)}
+html body .nav .dtile.active{background:var(--primary-container);color:var(--on-primary-container)}
+html body .nav .dtile.active .dt-ico{background:var(--green);color:#fff}
+@media(max-width:700px){html body .drawer{width:100vw;max-width:100vw}}
+body.dark{
+  --cream:#000000;--card:#0B100E;--surface:#0B100E;--mint:#13201A;--mint2:#0F1713;--line:#26322C;--primary-container:#14352C;
+  --st-neutral-bg:#0F1713;
+}
+body.dark .nav .dtile{background:transparent;color:#E9F3EE}body.dark .nav .dtile.active{background:#14352C;color:#DDF8EC}body.dark .nav .dtile .dt-ico{background:#0F1713;color:#8FDDBF}
+body.dark .drawer{background:#000}
+body.dark .topbar,body.dark .modal-head,body.dark dialog,body.dark .input,body.dark select,body.dark textarea,body.dark .btn-ghost,body.dark .stat,body.dark .card,body.dark .tab,body.dark .pill-group button,body.dark .auth-card{background:#0B100E;color:var(--ink)}
+body.dark .topbar{background:#000!important}
+body.dark .auth,body.dark .seg{background:#000}

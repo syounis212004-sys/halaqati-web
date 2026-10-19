@@ -49,4 +49,25 @@
   }
   setInterval(()=>{refreshDrawerHead();if(document.getElementById('drawer')?.classList.contains('open')&&typeof buildNav==='function')buildNav()},4000);
 
+  // RC27.25: pages opened from the side menu (notifications, settings, sync, ...) stack over the page they came from,
+  // so Back returns to it instead of the home page. Bottom-bar pages reset the stack.
+  const BAR=new Set(['home','sessions','students','plans','ranking','children','achievements']);
+  const stack=[];let popping=false;
+  if(typeof go==='function'){
+    const baseGo=go;
+    go=function(p){
+      const prev=state.page;
+      if(!popping){
+        if(BAR.has(p))stack.length=0;
+        else if(prev&&prev!==p){stack.push(prev);try{history.pushState({rc27:stack.length},'')}catch(_e){}}
+      }
+      return baseGo.apply(this,arguments);
+    };
+    window.addEventListener('popstate',()=>{
+      if(!stack.length)return;
+      const back=stack.pop();popping=true;
+      try{go(back)}finally{popping=false}
+    });
+  }
+
 })();

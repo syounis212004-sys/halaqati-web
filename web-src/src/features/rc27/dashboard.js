@@ -175,9 +175,9 @@
     O.missingHalaqas=null;O.compare=null;
     if(online&&(role==='admin'||role==='supervisor')){
       try{
-        const hs=(window.RC27?.master?.halaqas||state.halaqas||[]).filter(x=>x.active!==false),done=new Set((window.RC27?.master?.sessions||state.sessions||[]).filter(s=>String(s.session_date).startsWith(today)&&s.status!=='cancelled').map(s=>s.halaqa_id));
+        const hs=(window.RC27?.master?.halaqas||state.halaqas||[]).filter(x=>x.active!==false&&!rc27IsProgram(x)),done=new Set((window.RC27?.master?.sessions||state.sessions||[]).filter(s=>String(s.session_date).startsWith(today)&&s.status!=='cancelled').map(s=>s.halaqa_id));
         O.missingHalaqas={total:hs.length,names:hs.filter(x=>!done.has(x.id)).map(x=>x.name)};
-        if(hs.length>=2){
+        if(false){
           const from=today.slice(0,8)+'01';
           const [se,at,rc]=await Promise.all([db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).limit(2000),db.from('attendance_records').select('status,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).limit(5000),db.from('recitation_entries').select('activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).limit(5000)]);
           const POOR=['repeat','weak','إعادة','ضعيف'],REVIEW=['review_near','review_far','tathbit','sard'];
@@ -211,7 +211,7 @@
       const meter=(l,v)=>`<div class="rc27-meter"><div><span>${l}</span><b>${v==null?'—':v+'٪'}</b></div><i><u style="width:${v==null?0:v}%;background:${v==null?'var(--outline)':v>=75?'var(--green)':v>=50?'var(--gold)':'var(--danger)'}"></u></i></div>`;
       out.push(shell('neutral','🏅','مقارنة الحلقات هذا الشهر',`${ranked.length} حلقات · الحضور والجودة والإنجاز`,null,open?ranked.map((x,i)=>`<div class="rc27-cmp"><div class="rc27-cmp-h"><span class="rc27-cmp-n">${i+1}</span><div><b>${h(x.name||'حلقة')}</b><small>${x.sessions>0?`${x.students} طالبًا · ${x.sessions} جلسات`:`${x.students} طالبًا · لا جلسات هذا الشهر بعد`}</small></div></div>${x.sessions>0?meter('الحضور',x.att)+meter('جودة التسميع',x.quality)+`<small>صفحات/طالب ${x.ppS.toFixed(1)} · حفظ ${x.hifz.toFixed(0)} ص · مراجعة وتثبيت وسرد ${x.rev.toFixed(0)} ص</small>`:''}</div>`).join(''):'',"rc27InsToggle('cmp')",open));
     }
-    return out.join('');
+    return out.join('')+(window.RC27Insights?window.RC27Insights.cards(role):'');
   }
 
   // ================= page =================
@@ -269,7 +269,7 @@
     const baseHome=homePage;
     homePage=function(){
       if(!['admin','supervisor','teacher'].includes(state.profile?.role))return baseHome.apply(this,arguments);
-      setTimeout(()=>{refresh(false);loadOrg()},0);
+      setTimeout(()=>{refresh(false);loadOrg();window.RC27Insights?.load()},0);
       return homeHtml();
     };
   }
