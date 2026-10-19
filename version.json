@@ -1,7 +1,7 @@
 {
   "versionName": "2.63.22",
   "versionCode": 26322,
-  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
+  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
   "sha256": "ff71591c0475fbe4d27db31b36ca7b695cf26550d242598f6d4740480f52fa28",
   "native": true,
   "notes": [
