@@ -1,0 +1,32 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const must=(ok,msg)=>{if(!ok)throw new Error(msg)};
+const main=read('src/main.js');
+const core=read('src/core/runtime.js');
+const master=read('src/features/master-data/runtime.js');
+const students=read('src/features/students/runtime.js');
+const pkg=JSON.parse(read('package.json'));
+const reports=read('src/features/reports/runtime.js');
+const sessions=read('src/features/sessions/runtime.js');
+
+must(pkg.version==='2.18.2','package version must be 2.18.2');
+must(main.includes("masterDataRuntimeUrl") && main.indexOf("halaqati-master-data-runtime")<main.indexOf("halaqati-students-runtime"),'master data runtime must load before students');
+must(core.includes("APP_VERSION_NAME='2.18.2'")&&core.includes('APP_VERSION_CODE=21802'),'app version constants incorrect');
+must(core.includes("applyMasterOfflineOperation")&&core.includes("offlineOperationPriority")&&core.includes("isMasterConflictError"),'core sync master hooks missing');
+must(master.includes("type:'master_upsert'")&&master.includes("type:'master_delete'")&&master.includes('resolveMasterConflict'),'master upsert/delete/conflict logic missing');
+must(master.includes("entity==='halaqa'?10")&&master.includes("entity==='category'?20")&&master.includes("entity==='student'?30"),'dependency priorities missing');
+must(students.includes("saveMasterLocal('halaqa'")&&students.includes("saveMasterLocal('student'")&&students.includes("saveMasterLocal('category'"),'offline-first form saves missing');
+must(!students.includes('إضافة أو تعديل ملف الطالب يحتاج اتصالاً بالإنترنت'),'old online-only student guard still present');
+must(!students.includes('حذف الحلقة يحتاج اتصالاً بالإنترنت'),'old online-only halaqa delete guard still present');
+must(students.includes('patchStudentsOfflineFirst'),'bulk student offline updates missing');
+must(students.includes("deleteMasterLocal('halaqa'")&&students.includes("deleteMasterLocal('category'")&&students.includes("deleteMasterLocal('student'"),'offline deletes missing');
+
+must(!/db\.from\('(students|halaqas|student_categories)'\)/.test(students),'students runtime still bypasses offline master-data CRUD');
+must(students.includes('المحفّظ الحالي')&&students.includes('old?.primary_teacher_id'),'offline student edit must preserve the current teacher when cached user directory is unavailable');
+must(master.includes("return String(a)===String(b)"),'master conflict timestamp comparison must be exact');
+const h1=crypto.createHash('sha256').update(reports).digest('hex');
+must(h1==='c8b31694396053b3055c77030af31dd1a4f20e27d5960d23ed30954666150d73','reports runtime changed unexpectedly');
+const h2=crypto.createHash('sha256').update(sessions).digest('hex');
+must(h2==='a4b932929f2b6e63dd29ebdf9620ee6d51a1369ac582e3fed4912b2751c806a7','sessions runtime changed outside the approved v2.18.2 session-create hotfix');
+console.log('MASTER_OFFLINE_V2141_CHECK_PASS');

@@ -1,0 +1,26 @@
+<!doctype html><html><meta charset="utf-8"><body>RUNNING<script type="module">
+(async()=>{
+  try{
+    const {halaqatiOfflineStore}=await import('./offline-store-test.js');
+    await halaqatiOfflineStore.open();
+    const user='00000000-0000-4000-8000-000000000141';
+    await halaqatiOfflineStore.clearUser(user);
+    const hid=crypto.randomUUID(),cid=crypto.randomUUID();
+    const students=[];const ops=[];
+    ops.push({id:crypto.randomUUID(),userId:user,dedupeKey:'master:halaqa:'+hid,key:'master:halaqa:'+hid,type:'master_upsert',entity:'halaqa',entityId:hid,payload:{name:'حلقة Offline'},status:'pending',attempts:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),order:1});
+    ops.push({id:crypto.randomUUID(),userId:user,dedupeKey:'master:category:'+cid,key:'master:category:'+cid,type:'master_upsert',entity:'category',entityId:cid,payload:{halaqa_id:hid,name:'ناشئة'},status:'pending',attempts:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),order:2});
+    for(let i=0;i<250;i++){
+      const id=crypto.randomUUID();students.push({id,halaqa_id:hid,category_id:cid,full_name:'طالب '+(i+1),status:'active',_offline:true,_syncState:'pending'});
+      ops.push({id:crypto.randomUUID(),userId:user,dedupeKey:'master:student:'+id,key:'master:student:'+id,type:'master_upsert',entity:'student',entityId:id,payload:{halaqa_id:hid,category_id:cid,full_name:'طالب '+(i+1),status:'active'},status:'pending',attempts:0,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),order:3+i});
+    }
+    await halaqatiOfflineStore.replaceOperations(user,ops);
+    await halaqatiOfflineStore.putSnapshot(user,{profile:{id:user,full_name:'مسؤول اختبار'},halaqas:[{id:hid,name:'حلقة Offline',_offline:true}],categories:[{id:cid,halaqa_id:hid,name:'ناشئة',_offline:true}],students});
+    halaqatiOfflineStore.db?.close();halaqatiOfflineStore.db=null;halaqatiOfflineStore.openPromise=null;
+    const got=await halaqatiOfflineStore.listOperations(user);const snap=await halaqatiOfflineStore.getSnapshot(user);
+    if(got.length!==252)throw new Error('master outbox count '+got.length);
+    if(snap?.halaqas?.length!==1||snap?.categories?.length!==1||snap?.students?.length!==250)throw new Error('master snapshot mismatch');
+    if(got[0]?.entity!=='halaqa'||got[1]?.entity!=='category')throw new Error('dependency order not persisted');
+    document.body.textContent='MASTER_DATA_IDB_SMOKE_PASS';
+  }catch(e){document.body.textContent='MASTER_DATA_IDB_SMOKE_FAIL '+(e?.stack||e)}
+})();
+</script></body></html>

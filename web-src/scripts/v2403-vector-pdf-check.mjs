@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const pkg=JSON.parse(read('package.json'));
+if(!['2.40.8','2.41.1','2.41.2'].includes(pkg.version))throw new Error('package version must be 2.40.8');
+if(pkg.dependencies?.['halaqati-pdf']!=='file:plugins/halaqati-pdf')throw new Error('halaqati-pdf local dependency missing');
+const main=read('src/main.js');
+if(!main.includes('vector-pdf-runtime.js?url')||!main.includes('halaqati-vector-pdf-runtime'))throw new Error('PDF runtime is not boot-loaded');
+const v=read('src/features/reports/vector-pdf-runtime.js');
+for(const token of ['HalaqatiPdf','buildVectorHtml','buildDirectVectorPdf','saveDirectPdf','@page','table-header-group','break-inside:avoid','d.fonts','w.print','cairo-pdf.ttf','setR2L','saveBase64Pdf'])if(!v.includes(token))throw new Error('PDF runtime missing '+token);
+if(/html2canvas/.test(v))throw new Error('v2.40.8 direct vector runtime must not raster-capture report pages');
+const java=read('plugins/halaqati-pdf/android/src/main/java/com/mohammedsamir/halaqati/pdf/HalaqatiPdfPlugin.java');
+for(const token of ['@CapacitorPlugin(name = "HalaqatiPdf")','createPrintDocumentAdapter','PrintManager','printManager.print','PrintAttributes.MediaSize.ISO_A4','PrintJob','saveBase64Pdf','MediaStore.Downloads','direct-mediastore-no-print-spooler','new WebView(activity)'])if(!java.includes(token))throw new Error('Android PDF plugin missing '+token);
+if(java.includes('getBridge().getWebView()'))throw new Error('v2.40.8 must not print the live Capacitor WebView');
+if(/new\s+PrintDocumentAdapter\.(LayoutResultCallback|WriteResultCallback)/.test(java))throw new Error('Android vector plugin must not instantiate hidden PrintDocumentAdapter callbacks');
+if(/java\.lang\.reflect/.test(java))throw new Error('Android vector plugin must not use reflection');
+console.log('v2.40.8 vector PDF source checks passed ✅');

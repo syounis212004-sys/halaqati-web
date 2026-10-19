@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+const core=fs.readFileSync('src/core/runtime.js','utf8');
+const auth=fs.readFileSync('src/features/auth/runtime.js','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const must=(x,m)=>{if(!x){console.error('OFFLINE_SYNC_RECOVERY_CHECK_FAIL:',m);process.exit(1)}};
+must(core.includes('captureSyncSessionDependencies'),'missing queue dependency snapshot');
+must(core.includes('ensureSyncSessionExists'),'missing orphan session recovery');
+must(core.includes("HALAQATI_SYNC_SESSION_MISSING"),'missing explicit missing-session classification');
+must(core.includes("q.filter(x=>x.type==='session')"),'session operations are not prioritized');
+must(core.includes('clearSyncRecoverySessions'),'recovery metadata is not cleared after success');
+must(core.includes("syncIssue='dependency'"),'RLS dependency failure still conflated with login');
+must(auth.includes('openSyncAuthRecovery'),'missing safe re-auth dialog controller');
+must(auth.includes('finishSyncReauth'),'missing same-user reauthentication validation');
+must(auth.includes('await syncOfflineQueue({refreshAfter:false})'),'server refresh can overwrite cached session metadata before sync');
+must(html.includes('id="syncAuthDlg"'),'re-auth dialog missing from UI');
+must(html.includes('onclick="handleSyncBadgeClick()"'),'sync badge cannot open recovery flow');
+console.log('OFFLINE_SYNC_RECOVERY_CHECK_PASS');

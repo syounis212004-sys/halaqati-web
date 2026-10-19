@@ -1,0 +1,27 @@
+import fs from 'node:fs';
+const must=(c,m)=>{if(!c)throw new Error(m)};
+const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+const engine=fs.readFileSync('src/features/plans/engine.js','utf8');
+const plans=fs.readFileSync('src/features/plans/runtime.js','utf8');
+const sessions=fs.readFileSync('src/features/sessions/runtime.js','utf8');
+const core=fs.readFileSync('src/core/runtime.js','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const css=fs.readFileSync('src/styles/app.css','utf8');
+must(['2.18.0','2.18.2'].includes(pkg.version),'package version');
+must(core.includes('computeRecitationV5')&&core.includes('pr*.25')&&core.includes("scoring_version:'V5'"),'V5 scoring core');
+must(sessions.includes('سلامة ${fmt(d.safety)}%'),'V5 safety UI');
+must(engine.includes('minimum_daily_pages')&&engine.includes('aheadBy')&&engine.includes('intensiveSardDay'),'daily floor/intensive week');
+must(plans.includes('forward_surahs_forward_ayahs')&&plans.includes('buildDirectionalRange'),'two Quran directions');
+must(plans.includes('smartPlanLastRecitationHtml')&&plans.includes('المقرر القادم'),'last recitation / next duty UI');
+must(plans.includes('intensive_week_from')&&plans.includes("reason:'sard_week'"),'sard week pause');
+must(html.includes('جلسة تربوية / تفاعلية')&&html.includes('sessionActivityFields'),'activity session UI');
+must(sessions.includes('activity_score')&&sessions.includes('participation'),'activity result persistence');
+must(css.includes('v2.18.0 — Smart Plan V5 + activity sessions'),'v2180 CSS');
+must(plans.includes('smartPlanGuardianCompactPanel')&&plans.includes('guardianLatestActivityHtml'),'guardian simplified smart plan/activity summary');
+must(plans.includes('smartPlanRouteDefaultDirection')&&plans.includes("track_code==='tathbit'"),'track-aware sard/tathbit direction defaults');
+must(sessions.includes('duplicateActivitySession')&&sessions.includes("activitySession?'':`<div class=\"quick-rec-buttons\""),'recurring activity session and no Quran quick-entry in lesson');
+must(sessions.includes('parseActivityQuestionsText')&&sessions.includes('activitySessionLeaderboardHtml'),'structured activity questions + leaderboard');
+must(engine.includes("['good', 'very_good', 'excellent'].includes(evaluation)"),'good+ accepted across V5 Quran plan tracks');
+must(core.includes('guardianActivities:{}')&&core.includes('guardianActivities:state.guardianActivities'),'guardian activity cache');
+
+console.log('V2180_CHECK_PASS');

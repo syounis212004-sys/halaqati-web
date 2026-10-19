@@ -1,0 +1,17 @@
+<!doctype html><html><meta charset="utf-8"><body>RUNNING<script type="module">
+(async()=>{
+  try{
+    const {halaqatiOfflineStore}=await import('./offline-store-test.js');
+    await halaqatiOfflineStore.open();
+    const user='00000000-0000-4000-8000-000000000001';
+    await halaqatiOfflineStore.clearUser(user);
+    const ops=[];for(let i=0;i<500;i++)ops.push({id:crypto.randomUUID(),userId:user,dedupeKey:'op:'+i,key:'op:'+i,type:i<10?'session':'attendance',status:'pending',attempts:0,createdAt:new Date(Date.now()+i).toISOString(),updatedAt:new Date().toISOString(),order:i,sessionId:'s'+Math.floor(i/50)});
+    await halaqatiOfflineStore.replaceOperations(user,ops);
+    let got=await halaqatiOfflineStore.listOperations(user);if(got.length!==500)throw new Error('outbox count '+got.length);
+    await halaqatiOfflineStore.putSnapshot(user,{profile:{id:user,full_name:'اختبار'},sessions:[{id:'x'}]});
+    let snap=await halaqatiOfflineStore.getSnapshot(user);if(snap?.profile?.full_name!=='اختبار'||snap?.sessions?.length!==1)throw new Error('snapshot mismatch');
+    got=got.slice(0,499);await halaqatiOfflineStore.replaceOperations(user,got);let got2=await halaqatiOfflineStore.listOperations(user);if(got2.length!==499)throw new Error('durable replace mismatch');
+    document.body.textContent='OFFLINE_IDB_SMOKE_PASS';
+  }catch(e){document.body.textContent='OFFLINE_IDB_SMOKE_FAIL '+(e?.stack||e)}
+})();
+</script></body></html>

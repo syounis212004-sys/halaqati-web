@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const students=read('src/features/students/runtime.js');
+const legacy=read('src/legacy/app.js');
+const sessions=read('src/features/sessions/runtime.js');
+const core=read('src/core/runtime.js');
+const master=read('src/features/master-data/runtime.js');
+const pkg=JSON.parse(read('package.json'));
+function ok(v,m){if(!v)throw new Error(m)}
+ok(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'version mismatch');
+ok(sessions.includes("setRecMode(this,'juz')"),'juz chooser missing');
+ok(sessions.includes('input_method:r.dataset.mode'),'session save must preserve chosen input method');
+ok(core.includes("['pages','ayahs','surahs','juz','import'].includes(v)"),'input-method normalization whitelist missing juz/import');
+ok(core.includes('d.input_method=normalizeRecitationInputMethod'),'sync input-method normalization missing');
+ok(master.includes("db.rpc('delete_halaqa_cascade',{p_halaqa_id:op.entityId})"),'safe halaqa delete RPC missing');
+ok(students.includes("typed.trim()!==String(h.name||'').trim()"),'typed halaqa-name confirmation missing');
+ok(students.includes('تأكيد أخير: حذف'),'second delete confirmation missing');
+ok(legacy.includes("deleteHalaqaCascade('${h.id}')"),'active halaqas card missing delete button');
+ok(legacy.includes('mini red'),'delete button must be visually destructive');
+console.log('DATA_INTEGRITY_CHECK_PASS');

@@ -1,0 +1,29 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Arabic raster PDF fidelity smoke</title>
+<link rel="stylesheet" href="./core/cairo.css">
+<script src="./vendor/html2canvas-1.4.1.min.js"></script><script src="./vendor/jspdf-2.5.1.umd.min.js"></script><script src="./vendor/pdfjs-3.11.174.min.js"></script>
+<style>body{margin:0;background:#fff;font-family:Cairo,Tahoma,Arial,sans-serif}.page{width:1120px;background:#fff;padding:40px;box-sizing:border-box;color:#18231f}.title{font-size:34px;font-weight:800;color:#0d3b2f}.names{font-size:22px;line-height:1.9;border:2px solid #0d3b2f;border-radius:16px;padding:24px;margin-top:20px}.row{border-bottom:1px solid #dfe6e2;padding:8px}</style>
+</head><body><div id="source" class="page"><div class="title">حلقتي - تقرير عربي عالي الجودة</div><div class="names"><div class="row">إبراهيم عصمت يوسف البريم</div><div class="row">محمد سامح إسماعيل أبو عودة</div><div class="row">معاوية بن أبي سفيان</div><div class="row">القرآن الكريم - مراجعة وتثبيت وسرد</div><div class="row">ياسر رائد فايز أبو عليان</div></div></div><pre id="result">WAIT</pre><script>
+const result=document.getElementById('result');
+function b64(bytes){let out='',c=0x8000;for(let i=0;i<bytes.length;i+=c)out+=String.fromCharCode(...bytes.subarray(i,Math.min(bytes.length,i+c)));return btoa(out)}
+async function run(){try{
+ await document.fonts.ready;
+ const source=document.getElementById('source');
+ const canvas=await html2canvas(source,{scale:2,useCORS:true,backgroundColor:'#fff',logging:false});
+ if(canvas.width<1000||canvas.height<300)throw Error('bad source canvas');
+ const probe=document.createElement('canvas');probe.width=80;probe.height=80;const pc=probe.getContext('2d',{willReadFrequently:true});pc.drawImage(canvas,0,0,80,80);const d=pc.getImageData(0,0,80,80).data;let ink=0;for(let i=0;i<d.length;i+=4)if(d[i]<240||d[i+1]<240||d[i+2]<240)ink++;if(ink<10)throw Error('browser Arabic canvas blank');
+ const fr=await fetch('./core/fonts/amiri-search.ttf',{cache:'no-store'});if(!fr.ok)throw Error('font '+fr.status);const fb=b64(new Uint8Array(await fr.arrayBuffer()));
+ const {jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
+ pdf.addFileToVFS('Search.ttf',fb);pdf.addFont('Search.ttf','Search','normal');
+ const x=7,y=7,w=283,h=canvas.height*w/canvas.width;pdf.addImage(canvas.toDataURL('image/png'),'PNG',x,y,w,h,undefined,'FAST');
+ pdf.setFont('Search');pdf.setFontSize(10);
+ const searchable=['إبراهيم عصمت يوسف البريم','محمد سامح إسماعيل أبو عودة','معاوية بن أبي سفيان','القرآن الكريم','ياسر رائد فايز أبو عليان'];
+ searchable.forEach((t,i)=>pdf.text(t,286,20+i*5,{align:'right',renderingMode:'invisible'}));
+ const bytes=new Uint8Array(pdf.output('arraybuffer'));if(bytes.length<5000)throw Error('pdf too small');
+ pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdfjs-3.11.174.worker.min.js';const doc=await pdfjsLib.getDocument({data:bytes}).promise;if(doc.numPages!==1)throw Error('page count');
+ const page=await doc.getPage(1),tc=await page.getTextContent();const extracted=tc.items.map(x=>x.str).join(' ').replace(/\s+/g,' ');
+ for(const word of ['إبراهيم','إسماعيل','معاوية','القرآن','عليان'])if(!extracted.includes(word))throw Error('missing searchable Arabic '+word+' :: '+extracted);
+ const vp=page.getViewport({scale:1});const out=document.createElement('canvas');out.width=Math.ceil(vp.width);out.height=Math.ceil(vp.height);await page.render({canvasContext:out.getContext('2d'),viewport:vp}).promise;
+ const q=document.createElement('canvas');q.width=80;q.height=60;const qc=q.getContext('2d',{willReadFrequently:true});qc.drawImage(out,0,0,80,60);const rd=qc.getImageData(0,0,80,60).data;let pdfInk=0;for(let i=0;i<rd.length;i+=4)if(rd[i]<242||rd[i+1]<242||rd[i+2]<242)pdfInk++;if(pdfInk<10)throw Error('rendered PDF blank');
+ result.textContent='ARABIC_RASTER_PDF_PASS searchable='+extracted+' bytes='+bytes.length;
+}catch(e){result.textContent='ARABIC_RASTER_PDF_FAIL '+(e&&e.stack||e)}}run();
+</script></body></html>

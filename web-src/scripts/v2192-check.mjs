@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read=p=>fs.readFileSync(p,'utf8');
+const pkg=JSON.parse(read('package.json'));
+const core=read('src/core/runtime.js'),main=read('src/main.js'),ops=read('src/features/operations/runtime.js');
+assert.ok(['2.19.2','2.19.3','2.20.0','2.30.0','2.40.0','2.40.1','2.40.2','2.40.4','2.40.6','2.40.8','2.41.1','2.41.2'].includes(pkg.version));
+assert.ok(core.includes(`APP_VERSION_NAME='${pkg.version}'`)&&core.includes(pkg.version==='2.41.2'?'APP_VERSION_CODE=24102':pkg.version==='2.41.1'?'APP_VERSION_CODE=24101':['2.40.8','2.41.1','2.41.2'].includes(pkg.version)?'APP_VERSION_CODE=24008':pkg.version==='2.40.6'?'APP_VERSION_CODE=24006':pkg.version==='2.40.4'?'APP_VERSION_CODE=24004':pkg.version==='2.40.2'?'APP_VERSION_CODE=24002':pkg.version==='2.40.1'?'APP_VERSION_CODE=24001':pkg.version==='2.40.0'?'APP_VERSION_CODE=24000':pkg.version==='2.30.0'?'APP_VERSION_CODE=23000':pkg.version==='2.20.0'?'APP_VERSION_CODE=22000':pkg.version==='2.19.3'?'APP_VERSION_CODE=21903':'APP_VERSION_CODE=21902'));
+assert.ok(main.includes(`version: '${pkg.version}'`));
+assert.ok(ops.includes('async function opsCaptureParentPdfHQ'));
+assert.ok(ops.includes('scale:2'),'HQ PDF canvas must render at scale 2');
+const hq=ops.slice(ops.lastIndexOf('/* Halaqati v2.19.2'));
+assert.ok(hq.includes("canvasToPngBytes")||hq.includes("toDataURL('image/png')"),'HQ PDF must use lossless PNG');
+assert.ok(hq.includes("pdf.addImage(png,'PNG'")||hq.includes("addImage(img,'PNG'"),'HQ PDF must embed PNG');
+assert.ok(hq.includes('compress:false'),'jsPDF stream compression must be disabled for HQ parent PDF');
+assert.ok(!hq.includes("addImage(img,'JPEG'")&&!hq.includes("toDataURL('image/jpeg'"),'v2.19.2 HQ PDF block must not use JPEG');
+assert.ok(!hq.includes("addImage(png,'PNG',10,10,w,Math.min(277,h),undefined,'FAST'"),'HQ PDF block must not use FAST image compression');
+console.log('HALAQATI_V2192_HQ_PDF_CHECK_PASS');

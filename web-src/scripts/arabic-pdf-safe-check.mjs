@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const runtime=read('src/features/reports/runtime.js');
+const vector=read('src/features/reports/vector-pdf-runtime.js');
+const java=read('plugins/halaqati-pdf/android/src/main/java/com/mohammedsamir/halaqati/pdf/HalaqatiPdfPlugin.java');
+const main=read('src/main.js');
+const core=read('src/core/runtime.js');
+const pkg=JSON.parse(read('package.json'));
+function ok(v,msg){if(!v){console.error('ARABIC_PDF_SAFE_CHECK_FAIL:',msg);process.exit(1)}console.log('OK:',msg)}
+ok(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'package version preserves v2.40.8+ PDF behavior');
+const expectedCode=pkg.version==='2.41.2'?'const APP_VERSION_CODE=24102;':pkg.version==='2.41.1'?'const APP_VERSION_CODE=24101;':'const APP_VERSION_CODE=24008;';
+ok(core.includes(`const APP_VERSION_NAME='${pkg.version}';`)&&core.includes(expectedCode),'Android/app version matches current release');
+ok(runtime.includes('applyAutoFitPdfTables')&&runtime.includes('pdfColumnWeights(table,head,kinds)'),'Auto-fit table engine remains');
+ok(main.includes('halaqati-vector-pdf-runtime'),'PDF runtime is loaded');
+ok(vector.includes('cairo-pdf.ttf')&&vector.includes("family='HalaqatiCairo'")&&vector.includes('setR2L'),'Cairo + Arabic RTL direct-vector text path is preserved');
+ok(vector.includes('table-header-group')&&vector.includes('break-inside:avoid'),'isolated print HTML remains row-safe');
+ok(runtime.includes('contenteditable="true"'),'manual report editing remains enabled');
+ok(runtime.includes("paper.style.fontFamily=font.value+', sans-serif'"),'preview font control remains wired');
+ok(runtime.includes('const factor=Number(fontSize.value)/11'),'preview font-size control remains wired');
+ok(runtime.includes('paper.style.color=textColor.value'),'preview text color control remains wired');
+ok(runtime.includes('el.style.color=accent.value'),'preview accent color control remains wired');
+ok(runtime.includes('paper.dataset.orientation=orientation.value'),'portrait/landscape control remains wired');
+ok(!vector.includes('html2canvas'),'direct PDF path does not capture the page as a raster screenshot');
+ok(!vector.includes("renderingMode:'invisible'"),'direct vector path does not rely on hidden searchable-text overlay');
+ok(java.includes('createPrintDocumentAdapter')&&java.includes('document.fonts.status'),'system printing uses Chromium/WebView and waits for fonts');
+ok(java.includes('saveBase64Pdf')&&java.includes('MediaStore.Downloads'),'direct save bypasses Print Spooler');
+ok(!java.includes('getBridge().getWebView()'),'system printing is isolated from the Capacitor app WebView');
+console.log('ARABIC_PDF_SAFE_CHECK_PASS');

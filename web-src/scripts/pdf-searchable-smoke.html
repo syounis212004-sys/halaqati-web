@@ -1,0 +1,29 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Searchable PDF smoke</title>
+<script src="./vendor/jspdf-2.5.1.umd.min.js"></script>
+<script src="./vendor/pdfjs-3.11.174.min.js"></script>
+</head><body><pre id="result">WAIT</pre><script>
+const result=document.getElementById('result');
+function b64(bytes){let out='',chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)out+=String.fromCharCode(...bytes.subarray(i,Math.min(bytes.length,i+chunk)));return btoa(out)}
+async function run(){
+ try{
+  const expected='إبراهيم عصمت يوسف البريم';
+  const second='محمد سامح إسماعيل أبو عودة';
+  const fr=await fetch('./core/fonts/amiri-search.ttf',{cache:'no-store'});if(!fr.ok)throw Error('font '+fr.status);
+  const fb=b64(new Uint8Array(await fr.arrayBuffer()));
+  const {jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
+  pdf.addFileToVFS('Search.ttf',fb);pdf.addFont('Search.ttf','Search','normal');pdf.setFont('Search');pdf.setFontSize(12);
+  // Visible appearance remains raster-like. Invisible Unicode is the searchable layer.
+  pdf.setFillColor(245,245,245);pdf.rect(10,10,277,50,'F');
+  pdf.text(expected,270,28,{align:'right',renderingMode:'invisible'});
+  pdf.text(second,270,42,{align:'right',renderingMode:'invisible'});
+  const bytes=new Uint8Array(pdf.output('arraybuffer'));
+  pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdfjs-3.11.174.worker.min.js';
+  const doc=await pdfjsLib.getDocument({data:bytes}).promise,page=await doc.getPage(1),tc=await page.getTextContent();
+  const extracted=tc.items.map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
+  const required=['إبراهيم','عصمت','البريم','محمد','إسماعيل','عودة'];
+  for(const word of required)if(!extracted.includes(word))throw Error('Arabic searchable text missing: '+word+' :: '+extracted);
+  result.textContent='SEARCHABLE_PDF_PASS extracted='+extracted;
+ }catch(e){result.textContent='SEARCHABLE_PDF_FAIL '+(e&&e.stack||e)}
+}
+run();
+</script></body></html>

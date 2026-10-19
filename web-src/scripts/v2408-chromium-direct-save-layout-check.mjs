@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const must=(c,m)=>{if(!c)throw new Error(m)};
+const pkg=JSON.parse(read('package.json'));
+const core=read('src/core/runtime.js');
+const reports=read('src/features/reports/runtime.js');
+const vector=read('src/features/reports/vector-pdf-runtime.js');
+const java=read('plugins/halaqati-pdf/android/src/main/java/com/mohammedsamir/halaqati/pdf/HalaqatiPdfPlugin.java');
+const writer=read('plugins/halaqati-pdf/android/src/main/java/android/print/HalaqatiWebViewPdfWriter.java');
+
+must(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'package version must preserve v2.40.8+ behavior');
+const expectedCode=pkg.version==='2.41.2'?'APP_VERSION_CODE=24102':pkg.version==='2.41.1'?'APP_VERSION_CODE=24101':'APP_VERSION_CODE=24008';
+must(core.includes(`APP_VERSION_NAME='${pkg.version}'`)&&core.includes(expectedCode),'runtime version/code mismatch');
+for(const t of ['saveHtmlPdf','nativeSaveHtmlPdf','buildVectorHtml','compatibilityRasterExport','hf-preview-save-status','previewHost()'])must(vector.includes(t),'v2.40.8 vector runtime missing '+t);
+must(vector.includes("return await p.saveHtmlPdf({html,filename,orientation})"),'primary save must call native Chromium HTML PDF writer');
+must(vector.includes("source.id==='reportPreviewPaper'&&compatibilityRasterExport"),'high-fidelity compatibility fallback missing');
+must(reports.includes('position:relative')&&reports.includes('id="hfSavePdf"')&&reports.includes('id="hfPrintPdf"'),'preview/modal controls missing');
+must(reports.includes('nativePdf?.saveBase64Pdf'),'compatibility renderer must save directly without share/spooler when native bridge exists');
+for(const t of ['saveHtmlPdf','persistCompletedPdfFile','createPrintDocumentAdapter','HalaqatiWebViewPdfWriter.write','chromium-webview-direct-vector-no-print-spooler','verifyStoredPdf'])must(java.includes(t),'Android Chromium direct-save bridge missing '+t);
+must(java.includes('new PrintAttributes.Resolution("halaqati-vector", "Halaqati Vector PDF", 600, 600)'),'Chromium direct PDF resolution attributes missing');
+must(!java.includes('getBridge().getWebView()'),'direct save/print must never use live Capacitor WebView');
+for(const t of ['package android.print;','new PrintDocumentAdapter.LayoutResultCallback()','new PrintDocumentAdapter.WriteResultCallback()','PageRange.ALL_PAGES','adapter.onLayout','adapter.onWrite','adapter.onFinish'])must(writer.includes(t),'WebView PDF writer helper missing '+t);
+must(!vector.match(/async function exportElementDirectPdf[\s\S]*?buildDirectVectorPdf\(source,orientation,[\s\S]*?if\(isNative\(\)\)/),'native save must not render token-by-token before calling Chromium');
+console.log('HALAQATI_V2408_CHROMIUM_DIRECT_SAVE_LAYOUT_FIX_PASS');

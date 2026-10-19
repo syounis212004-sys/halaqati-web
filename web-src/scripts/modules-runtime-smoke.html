@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><title>Phase3 modules smoke</title><body>
+<form id="loginForm"></form>
+<form id="signupForm"></form>
+<form id="forgotPasswordForm"></form>
+<form id="recoveryPasswordForm"></form>
+<form id="halaqaForm"></form>
+<form id="categoryForm"></form>
+<form id="teacherAssignForm"></form>
+<form id="commentForm"></form>
+<form id="sessionForm"></form>
+<form id="studentForm"></form>
+<form id="announcementForm"></form>
+<form id="forumForm"></form>
+<form id="planForm"></form>
+<form id="reportForm"></form>
+<form id="supervisorAssignForm"></form>
+<div id="toast"></div><div id="drawer"></div><div id="backdrop"></div><div id="nav"></div><button id="fab"></button><div id="syncBadge"></div><div id="content"></div><div id="auth"></div><div id="app"></div><div id="roleLabel"></div><div id="userName"></div><div id="drawerUser"></div><div id="userAvatar"></div><div id="pendingPanel"></div>
+<script>window.supabase={createClient(){return {auth:{signInWithPassword:async()=>({data:{},error:null}),signInWithOAuth:async()=>({data:{},error:null}),signUp:async()=>({data:{},error:null}),resetPasswordForEmail:async()=>({error:null}),updateUser:async()=>({error:null}),getUser:async()=>({data:{user:null}}),getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},from(){const q={select(){return q},eq(){return q},order(){return q},limit(){return q},gte(){return q},single:async()=>({data:null,error:null})};return q},storage:{from(){return {createSignedUrl:async()=>({data:null,error:null})}}}}}};</script>
+<script src="../src/core/runtime.js"></script>
+<script src="../src/core/navigation.js"></script>
+<script src="../src/features/auth/runtime.js"></script>
+<script src="../src/features/students/runtime.js"></script>
+<script src="../src/features/sessions/runtime.js"></script>
+<script src="../src/features/settings/runtime.js"></script>
+<script src="../src/legacy/app.js"></script>
+<script>try{const names=['boot','loginWithGoogle','studentsPage','openStudent','sessionsPage','openSessionRoster','settingsPage','render','navItems'];const bad=names.filter(n=>typeof window[n]!=='function');document.body.dataset.result=bad.length?'FAIL:'+bad.join(','):'PHASE3_RUNTIME_SMOKE_PASS';}catch(e){document.body.dataset.result='FAIL:'+e.message}</script>
+</body>

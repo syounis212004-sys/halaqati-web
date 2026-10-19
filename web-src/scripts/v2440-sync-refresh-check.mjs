@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const must=(v,m)=>{if(!v){console.error('V2440_SYNC_REFRESH_FAIL:',m);process.exit(1)}};
+const core=read('src/core/runtime.js'),auth=read('src/features/auth/runtime.js'),perf=read('src/core/performance-runtime.js'),startup=read('src/core/startup.js'),css=read('src/styles/uiux-pro-max.css'),pkg=JSON.parse(read('package.json'));
+must(pkg.version==='2.44.0','wrong package version');
+must(core.includes("APP_VERSION_NAME='2.44.0'")&&core.includes('APP_VERSION_CODE=24400'),'runtime version not bumped');
+must(auth.includes("refreshFromServer({renderAfter:true})")&&auth.includes('لم يتم اعتماد الحساب بعد'),'approval button is not server-first');
+must(perf.includes("setTimeout(()=>refreshFromServer({renderAfter:true}),80)")&&perf.includes('تم اعتماد الحساب وفتح لوحة ولي الأمر'),'stale pending snapshot recovery missing');
+must(startup.includes('hfRunPullRefresh')&&startup.includes("touchmove")&&startup.includes('12000'),'pull refresh or approval polling missing');
+must(css.includes('.pull-refresh-indicator'),'pull refresh CSS missing');
+must(core.includes('syncVerifiedServerSessions')&&core.includes('queueDeferredSyncNotification'),'sync acceleration primitives missing');
+must(core.includes("internetReachable(false)")&&!core.includes("setOfflineOpState(op.id,{status:'syncing',lastError:''})"),'queue bootstrap/I/O optimization missing');
+must(core.includes("Promise.all((p.rows||[]).map(async rr=>"),'report row parallel upload missing');
+must(core.includes("refreshFromServer({renderAfter:false})"),'fast post-sync refresh missing');
+console.log('V2440_SYNC_REFRESH_PASS');

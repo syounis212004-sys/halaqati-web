@@ -28,7 +28,25 @@
   }
 
   // ورد اليوم حسب المرحلة الفعّالة: بداية من آخر نشاط (مرساة) أو من بداية النطاق، والمقدار من المقترح اليومي للمرحلة
+  function actDutyHtml(plan,t){
+    const A=window.RC27PhaseActivities,sn=P().snapshot?P().snapshot(plan,t):null;if(!A||!sn)return null;
+    const acts=A(plan,sn,t);if(!acts.length)return null;
+    const lab=a=>{const ln=a.lineKeys||[];if(!ln.length)return '';const e=endpointOfLine(ln.at(-1),true);return e?`من ${h(surahs[a.start.s-1])}:${a.start.a} إلى ${h(surahs[e.s-1])}:${e.a} · ≈ ${fm(a.pages)} ص`:''};
+    const sid=plan.student_id;
+    return acts.map(x=>{
+      const kind=x.key==='sard'?'sard':x.key==='review'?'review':'new_hifz';
+      const btn=(x.assignment&&canWrite())?`<button class="mini" onclick="rc27DutyNow('${sid}','${kind}')">سمّع الآن</button>`:'';
+      let body;
+      if(x.assignment)body=lab(x.assignment);
+      else if(x.needsStart)body='لا يوجد تسميع سرد سابق ولا نقطة بداية محددة. حدّد بداية المرحلة أو سجّل أول تسميع.';
+      else if(x.extraAssignment)body='ليس يوم دوام · ورد إضافي: '+lab(x.extraAssignment);
+      else body=x.scheduledToday?'لا مقرر إضافي اليوم':'ليس يوم دوام لهذه الخطة';
+      const nx=x.nextDuty?`<div class="muted">التالي ${h(String(x.nextDuty.date).slice(0,10))}: ${lab(x.nextDuty.assignment)}</div>`:'';
+      return `<div class="notice" style="margin-top:8px"><b>ورد اليوم (${h(x.label||x.key)})</b><div>${body}</div>${nx}${btn}</div>`;
+    }).join('');
+  }
   function dutyHtml(plan,phs){
+    try{const r=actDutyHtml(plan,T0());if(r)return r}catch(_e){}
     try{
       const t=T0(),sid=plan.student_id,act=P().activePhase(phs.map(P().enginePhase),S().states,sid,t);if(!act)return '';
       try{

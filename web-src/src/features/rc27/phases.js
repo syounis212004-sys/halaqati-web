@@ -167,7 +167,7 @@
   const recDate=r=>String(r.session_date||r.sessions?.session_date||'').slice(0,10);
   function materialized(plan){const st=studentOf(plan.student_id);try{return typeof materializeSmartPlan==='function'?(materializeSmartPlan(plan,st)||plan):plan}catch(_e){return plan}}
   function phaseAwarePlan(parent,phaseRow,state,studentRecs){
-    const base=materialized(parent);if(!phaseRow)return {plan:base,ph:null};
+    const base=materialized(parent);if(!phaseRow)return {plan:base,ph:null,row:{type:base.plan_type,target:Number(base.target_pages)||0,range_start_page:base.range_start_page??null,range_end_page:base.range_end_page??null,range_start_surah:parent.range_start_surah??null,range_start_ayah:parent.range_start_ayah??null,range_end_surah:parent.range_end_surah??null,range_end_ayah:parent.range_end_ayah??null,settings:{...(base.settings||{})}}};
     const ph=enginePhase(phaseRow),eff=effective(ph,state?[state]:[],state?.student_id),phase={...ph,start:eff.start,end:eff.end};
     const resolvedT=resolvedTarget(phase,state||null),effTarget=Math.max(0,(resolvedT||0)+(Number(state?.carry_shortfall_pages)||0));
     const pRoute=phase.type==='sard'?([ROUTE_NAS,ROUTE_BAQ].includes(phaseRow.settings?.route_direction)?phaseRow.settings.route_direction:(parent.settings?.sard_route_direction||defaultRoute(parent.plan_type))):(base.settings?.route_direction||defaultRoute(phase.type==='tathbit'?'tathbit':'hifz'));
@@ -190,8 +190,11 @@
     const lineKeys=phase.type!=='hifz'?[]:gen?gen.lineKeys:(phase.startMode==='plan_start'&&!phaseRow.range_start_page&&!phaseRow.range_start_surah?(base.settings?.memorization_line_keys||[]):[]);
     const startPage=start?pageOfAyah(start.s,start.a):null,fallbackEnd=phase.type==='hifz'?explicitEnd:hardTerm,endPage=gen?.endPage??(fallbackEnd?pageOfAyah(fallbackEnd.s,fallbackEnd.a):null);
     const rsp=gen?.startPage??startPage??phaseRow.range_start_page??(phase.type==='hifz'?parent.range_start_page:null),rep=endPage??phaseRow.range_end_page??(phase.type==='hifz'&&phase.goalMode==='quran_range'?parent.range_end_page:null);
+    const rsS=gen?.start?.s??start?.s??phaseRow.range_start_surah??(phase.type==='hifz'?parent.range_start_surah:null),rsA=gen?.start?.a??start?.a??phaseRow.range_start_ayah??(phase.type==='hifz'?parent.range_start_ayah:null);
+    const reS=gen?.end?.s??fallbackEnd?.s??phaseRow.range_end_surah??(phase.type==='hifz'&&phase.goalMode==='quran_range'?parent.range_end_surah:null),reA=gen?.end?.a??fallbackEnd?.a??phaseRow.range_end_ayah??(phase.type==='hifz'&&phase.goalMode==='quran_range'?parent.range_end_ayah:null);
+    const row={type:phase.type,target:effTarget,range_start_page:rsp??null,range_end_page:rep??null,range_start_surah:rsS??null,range_start_ayah:rsA??null,range_end_surah:reS??null,range_end_ayah:reA??null,settings:{...(base.settings||{}),memorization_line_keys:lineKeys,route_direction:pRoute,sard_route_direction:phase.type==='sard'?pRoute:(base.settings?.sard_route_direction||parent.settings?.sard_route_direction||null),sard_target_pages:phase.type==='sard'?effTarget:(base.settings?.sard_target_pages||0),enabled_activities:[phase.type==='sard'?'sard':phase.type==='tathbit'?'tathbit':'hifz']}};
     const plan={...base,plan_type:phase.type,target_pages:effTarget,start_date:phase.start,end_date:phase.end,schedule_weekdays:[...phase.weekdays],catch_up_weekday:null,range_start_page:rsp??null,range_end_page:rep??null,milestone_mode:phase.type==='hifz'?base.milestone_mode:'none',milestone_requires_approval:phase.type==='hifz'&&!!base.milestone_requires_approval,settings:{...(base.settings||{}),memorization_line_keys:lineKeys,route_direction:pRoute}};
-    return {plan,ph:phase,state};
+    return {plan,ph:phase,state,row};
   }
   function pageStartLoc(page){const l=layoutOf();if(!l)return null;for(let g=1;g<l.page.length;g++)if(l.page[g]===page)return locOfGlobalA(g);return null}
   function pageEndLoc(page){const l=layoutOf();if(!l)return null;let last=null;for(let g=1;g<l.page.length;g++){if(l.page[g]===page)last=g;else if(last&&l.page[g]>page)break}return last?locOfGlobalA(last):null}
@@ -206,8 +209,100 @@
     const pr=recs.filter(r=>{const tag=tagOf(r);return actRow&&tag===actRow.id?inDates(r):actRow&&tag==null?inDates(r)&&typeMatches(plan2.plan_type,String(r.activity_type)):actRow?false:inDates(r)&&typeMatches(plan2.plan_type,String(r.activity_type))}).map(r=>actRow&&tagOf(r)===actRow.id?{...r,selection_data:{...(r.selection_data||{}),smart_plan_id:plan2.id}}:r);
     let raw=null;try{raw=eng().calculateProgress({plan:plan2,studentId:sid,recitations:pr,sessions:state.sessions||[],events,today})}catch(e){console.warn('rc27 engine',e)}
     const phaseProgress=act&&raw?progress(act,raw.completed,today,actState):null;
-    return {phase:actRow,phaseState:actState,raw,phaseProgress,completed:raw?raw.completed:0,plan:plan2};
+    return {phase:actRow,phaseState:actState,raw,phaseProgress,completed:raw?raw.completed:0,plan:plan2,row:pa.row,recs,actState,sid};
   }
+
+  // ================= native activitySnapshotsForPlan (per-activity daily duty, anchors, extra / next duty) =================
+  const ACT_TYPES={hifz:['new_hifz','hifz'],sard:['sard'],review:['review','review_near','review_far'],tathbit:['tathbit','review_far']};
+  const ACT_LABEL={hifz:'الحفظ',sard:'السرد',review:'المراجعة',tathbit:'التثبيت'};
+  const recKey=r=>recDate(r)+'|'+String(r.created_at||'');
+  function latestAnchor(recs,activity){return recs.filter(r=>ACT_TYPES[activity]?.includes(String(r.activity_type).toLowerCase())&&r.end_surah&&r.end_ayah).sort((a,b)=>recKey(a)<recKey(b)?-1:1).at(-1)||null}
+  const routeFor=(activity,primaryType,hifzRoute,sardRoute)=>activity==='hifz'?(hifzRoute||(primaryType==='hifz'?ROUTE_NAS:ROUTE_BAQ)):activity==='sard'?(sardRoute||(primaryType==='hifz'?ROUTE_NAS:ROUTE_BAQ)):activity==='tathbit'?(hifzRoute||ROUTE_BAQ):ROUTE_BAQ;
+  const terminalSurah=(activity,route)=>route!==ROUTE_NAS?114:(['hifz','sard'].includes(activity)?2:activity==='tathbit'?1:114);
+  function effectiveDailyPages(activity,eng,orig,min,planned,weekly,asgPages,asgKind){
+    const v=activity==='hifz'?Math.max(eng,orig,min,planned,weekly,asgKind==='hifz'?asgPages:0):activity==='sard'?Math.max(eng,planned):Math.max(eng,planned,weekly);
+    return Math.max(0,v);
+  }
+  function assignmentFromAnchor(row,recs,activity,requestedPages,o={}){
+    if(!(requestedPages>0))return null;
+    const route=routeFor(activity,row.type,row.settings?.route_direction,row.settings?.sard_route_direction);
+    let start=o.startOverride||null;
+    if(!start){
+      let anchor=o.anchorOverride||null;
+      if(!anchor){const last=latestAnchor(recs,activity);if(!last)return null;anchor={s:+last.end_surah,a:+last.end_ayah}}
+      start=nextLoc(anchor,route);if(!start)return null;
+    }
+    const reverse=route===ROUTE_NAS,gts=terminalSurah(activity,route);
+    if(reverse&&start.s<gts)return null;
+    const cfgTerm=row.range_end_surah&&row.range_end_ayah?{s:row.range_end_surah,a:row.range_end_ayah}:row.range_end_page?pageEndLoc(row.range_end_page):null,gTerm={s:gts,a:MAXAYAH(gts)},term=cfgTerm||gTerm;
+    const wanted=Math.max(1,Math.ceil(requestedPages*15));
+    let avail=routeLines(start,term,route)||[];
+    if(!avail.length&&['hifz','review','sard'].includes(activity)&&cfgTerm)avail=routeLines(start,gTerm,route)||[];
+    const keys=avail.slice(0,wanted);if(!keys.length)return null;
+    const last=keys.at(-1),m=/^(\d+):(\d+)$/.exec(last);
+    return {kind:activity,pages:keys.length/15,startPage:Number(keys[0].split(':')[0]),endPage:Number(last.split(':')[0]),isCatchUp:false,blockedByRetry:false,lineKeys:keys,start,route};
+  }
+  function endOfLines(keys){const k=keys.at(-1),m=/^(\d+):(\d+)$/.exec(k||'');if(!m)return null;return window.RC27Phases.endpointOfLine?window.RC27Phases.endpointOfLine(k,true):null}
+  function endpointOfLineP(key,preferLast){
+    const layout=layoutOf(),m=/^(\d+):(\d+)$/.exec(key);if(!layout||!m)return null;const pg=+m[1],line=+m[2];
+    const idx=pageRanges(layout).get(pg);if(!idx)return null;const c=[];
+    for(let g=idx[0];g<=idx[1];g++){const f=Number(layout.first?.[g]||0),l=Number(layout.last?.[g]||f);if(line>=f&&line<=l)c.push(g)}
+    const g=preferLast?c.at(-1):c[0];return g?locOfGlobalA(g):null;
+  }
+  let pageIdx=null;
+  function pageRanges(layout){if(pageIdx)return pageIdx;const m=new Map;for(let g=1;g<layout.page.length;g++){const pg=layout.page[g];if(!pg)continue;const r=m.get(pg);if(!r)m.set(pg,[g,g]);else r[1]=g}return pageIdx=m}
+  function activitySnapshots(plan,sn,today){
+    if(!sn||!sn.raw||!sn.row)return [];
+    const row=sn.row,plan2=sn.plan,primary=sn.raw,activePhase=sn.phase,actState=sn.actState,phaseProgress=sn.phaseProgress,student=studentOf(sn.sid)||{};
+    const enabled=(()=>{if(row.type==='tathbit'||plan.plan_type==='tathbit')return ['tathbit'];const st=(row.settings?.enabled_activities||plan.settings?.enabled_activities||[]).map(x=>String(x).trim().toLowerCase()).filter(x=>['hifz','sard','review'].includes(x));const clean=[...new Set(st)];return clean.length?clean:(row.type==='sard'?['sard']:row.type==='review'?['review']:['hifz'])})();
+    const passingRecs=sn.recs.filter(r=>{try{return eng().isPassing(r,plan2)}catch(_e){return passing(r)}});
+    const schedule=(()=>{try{return eng().planDates(plan2)}catch(_e){return []}})(),nextDate=schedule.find(d=>d>today)||null;
+    const asg=primary.assignment||{},activeToday=schedule.includes(today)||asg.isCatchUp||asg.blockedByRetry;
+    const planStart=String(plan2.start_date).slice(0,10),planEnd=String(plan2.end_date).slice(0,10);
+    return enabled.map(activity=>{
+      const upTo=passingRecs.filter(r=>recDate(r)<=today),globalLast=latestAnchor(upTo,activity);
+      const curPhaseRecs=(activity==='sard'&&activePhase?.phase_type==='sard')?passingRecs.filter(r=>recDate(r)<=today&&(tagOf(r)===activePhase.id||(tagOf(r)==null&&recDate(r)>=planStart&&recDate(r)<=planEnd))):upTo;
+      const phaseLast=latestAnchor(curPhaseRecs,activity);
+      const anchorRecs=activity!=='sard'?passingRecs:activePhase?.phase_type!=='sard'?passingRecs:['last_sard','last_activity'].includes(activePhase.start_mode)?passingRecs:curPhaseRecs;
+      const assignmentLast=latestAnchor(anchorRecs.filter(r=>recDate(r)<=today),activity);
+      let explicitStart=null;
+      if(activity==='sard'&&activePhase?.phase_type==='sard'&&!assignmentLast){
+        const cfg=()=>activePhase.range_start_surah&&activePhase.range_start_ayah?{s:activePhase.range_start_surah,a:activePhase.range_start_ayah}:activePhase.range_start_page?pageStartLoc(activePhase.range_start_page):null;
+        if(['manual','range_start'].includes(activePhase.start_mode))explicitStart=cfg();else if(['last_sard','last_activity'].includes(activePhase.start_mode)&&!globalLast)explicitStart=cfg();
+      }
+      const target=activity==='sard'&&activePhase?.phase_type==='sard'?(phaseProgress?.target||0):activity==='sard'?(Number(row.settings?.sard_target_pages)>0?Number(row.settings.sard_target_pages):0):(Number(row.target)||0);
+      const scheduledDays=Math.max(1,schedule.length),plannedDaily=target>0?target/scheduledDays:0,wk=(plan2.schedule_weekdays||[]).length||1;
+      const weeklyDaily=activity==='hifz'?(Number(student.target_pages_weekly)>0?Number(student.target_pages_weekly)/wk:0):activity==='review'?(Number(student.target_review_pages_weekly)>0?Number(student.target_review_pages_weekly)/wk:0):0;
+      const continueSurplus=activity==='sard'&&actState?.settings?.continue_surplus===true;
+      let dailyComputed;
+      if(activity==='sard'&&activePhase?.phase_type==='sard'&&phaseProgress?.target==null)dailyComputed=0;
+      else if(activity==='sard'&&activePhase?.phase_type==='sard'&&phaseProgress?.complete&&continueSurplus)dailyComputed=plannedDaily;
+      else if(activity==='sard'&&activePhase?.phase_type==='sard')dailyComputed=phaseProgress?.suggested||0;
+      else dailyComputed=effectiveDailyPages(activity,Number(primary.dailyTarget)||0,Number(primary.originalDaily)||0,Number(primary.minimumDaily)||0,plannedDaily,weeklyDaily,Number(asg.pages)||0,asg.kind);
+      const daily=(activity==='hifz'&&dailyComputed<=0.001&&plannedDaily>0.001)?plannedDaily:dailyComputed;
+      let assignment=null;
+      if(!activeToday)assignment=null;
+      else if(activity==='hifz'&&asg.kind!=='hifz')assignment=asg;
+      else if(activity==='sard'&&phaseProgress?.complete&&!continueSurplus)assignment=null;
+      else if(activity==='sard'&&!assignmentLast&&!explicitStart)assignment=null;
+      else if(daily<=0.001)assignment=null;
+      else assignment=assignmentFromAnchor(row,anchorRecs,activity,daily,{startOverride:explicitStart});
+      let extra=null;
+      if(!(activeToday||assignment)){
+        if(activity==='sard'&&!assignmentLast&&!explicitStart)extra=null;
+        else if(activity==='sard'&&phaseProgress?.complete&&!continueSurplus)extra=null;
+        else{const pages=daily>0.001?daily:plannedDaily;extra=pages>0.001?(()=>{try{return assignmentFromAnchor(row,anchorRecs,activity,pages,{startOverride:explicitStart})}catch(_e){return null}})():null}
+      }
+      let next=null;
+      if(nextDate){
+        const pa=assignment?.lineKeys?.length?endpointOfLineP(assignment.lineKeys.at(-1),true):null;
+        const na=assignmentFromAnchor(row,anchorRecs,activity,Math.max(daily,1/15),{anchorOverride:pa});
+        if(na)next={date:nextDate,assignment:na};
+      }
+      return {key:activity,label:ACT_LABEL[activity],scheduledToday:activeToday,lastRecitation:activity==='sard'?(phaseLast||globalLast):globalLast,assignment,nextDuty:next,needsStart:activity==='sard'&&!assignmentLast&&!explicitStart,targetPages:target,route:routeFor(activity,row.type,row.settings?.route_direction,row.settings?.sard_route_direction),extraAssignment:extra};
+    });
+  }
+  window.RC27PhaseActivities=activitySnapshots;
   window.RC27PhaseSnapshot=snapshot;
   // ================= data =================
   async function load(force){

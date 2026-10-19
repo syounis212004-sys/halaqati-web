@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const pkg=JSON.parse(read('package.json'));
+const core=read('src/core/runtime.js');
+const appCss=read('src/styles/app.css');
+const vector=read('src/features/reports/vector-pdf-runtime.js');
+const must=(c,m)=>{if(!c)throw new Error(m)};
+must(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'package version must be 2.40.8');
+must(core.includes(`APP_VERSION_NAME='${pkg.version}'`)&&core.includes(pkg.version==='2.41.2'?'APP_VERSION_CODE=24102':pkg.version==='2.41.1'?'APP_VERSION_CODE=24101':'APP_VERSION_CODE=24008'),'app version/code mismatch');
+must(appCss.includes('body *{visibility:hidden!important}')&&appCss.includes('#reportExportArea,#reportExportArea *{visibility:visible!important}'),'legacy print visibility gate changed; re-audit PDF override');
+const guard='#hf-vector-print-root,#hf-vector-print-root *{visibility:visible!important}';
+must(vector.includes(guard),'standalone vector report visibility guard is missing');
+must(vector.includes('#hf-vector-print-root{display:block!important;position:static!important}'),'standalone vector root display guard is missing');
+must(vector.includes("css+'\\n'+printOverrides(orientation,fontFamily)"),'print overrides must be appended after collected app CSS');
+must(fs.existsSync('scripts/v2405-pdf-visibility-smoke.mjs'),'visibility smoke generator is missing');
+must(!vector.includes('html2canvas'),'PDF runtime must not page-rasterize with html2canvas');
+console.log('HALAQATI_V2405_PDF_BLANK_FIX_PASS');

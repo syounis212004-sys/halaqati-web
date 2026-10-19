@@ -1,0 +1,21 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const must=(c,m)=>{if(!c)throw new Error(m)};
+const pkg=JSON.parse(read('package.json'));
+const core=read('src/core/runtime.js');
+const startup=read('src/core/startup.js');
+const legacy=read('src/legacy/app.js');
+const vector=read('src/features/reports/vector-pdf-runtime.js');
+const java=read('plugins/halaqati-pdf/android/src/main/java/com/mohammedsamir/halaqati/pdf/HalaqatiPdfPlugin.java');
+must(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'package version must be 2.40.8');
+must(core.includes(`APP_VERSION_NAME='${pkg.version}'`)&&core.includes(pkg.version==='2.41.2'?'APP_VERSION_CODE=24102':pkg.version==='2.41.1'?'APP_VERSION_CODE=24101':'APP_VERSION_CODE=24008'),'app version/code mismatch');
+// v2.40.6 session protections remain, but v2.40.8 removes the live-WebView dependency entirely.
+for(const token of ['persistPrintRecoveryState','halaqati_print_resume_v2407','saveOfflineAuth','cacheSnapshot'])must(vector.includes(token)||startup.includes(token)||legacy.includes(token),'session recovery missing '+token);
+for(const token of ['PrintJob','final PrintJob job = printManager.print','pollActivePrintJob','job.isCompleted()','job.isCancelled()','job.isFailed()'])must(java.includes(token),'PrintJob tracking missing '+token);
+must(!java.includes('getBridge().getWebView()'),'live Capacitor WebView print path must be removed');
+must(java.includes('new WebView(activity)'),'dedicated print WebView missing');
+must(java.includes('saveBase64Pdf')&&java.includes('MediaStore.Downloads'),'direct no-spooler save path missing');
+must(!/new\s+PrintDocumentAdapter\.(LayoutResultCallback|WriteResultCallback)/.test(java),'must not instantiate hidden print callbacks');
+must(!java.includes('java.lang.reflect'),'must not use reflection');
+console.log('HALAQATI_V2406_PROTECTIONS_RETAINED_PASS');
+console.log('v2.40.8 supersedes the live-WebView workaround with direct save + isolated printing ✅');

@@ -1,0 +1,17 @@
+import fs from 'node:fs';import vm from 'node:vm';
+const read=p=>fs.readFileSync(p,'utf8');const must=(v,m)=>{if(!v)throw new Error(m)};
+const pkg=JSON.parse(read('package.json')),core=read('src/core/runtime.js'),cert=read('src/features/certificates/runtime.js'),css=read('src/styles/certificates.css');
+must(pkg.version==='2.41.2','package version must be 2.41.2');
+must(core.includes("APP_VERSION_NAME='2.41.2'")&&core.includes('APP_VERSION_CODE=24102'),'runtime version/code mismatch');
+must(cert.includes("numberPosition:'under-logo'")&&cert.includes('cert-number-logo'),'default certificate number must be under center logo');
+must(cert.includes("['under-dates','bottom-left'].includes(saved.numberPosition)"),'legacy number-position migration missing');
+must(!cert.includes("numberPosition==='under-dates'"),'old central under-dates number placement remains');
+must(css.includes('.cert-dates{position:absolute')&&css.includes('justify-content:space-between')&&css.includes('bottom:166px'),'separated lower dates layout missing');
+must(css.includes('.cert-number-logo{position:absolute')&&css.includes('top:calc(var(--cert-logo-size) + 7px)'),'logo-side number placement missing');
+must(cert.includes('certGirihPattern')&&cert.includes('islamicSideRosetteSvg')&&cert.includes('cert-star-fill'),'refined girih/8-point geometry missing');
+must(css.includes('.cert-side-rosette')&&css.includes('.cert-corner .cert-star-fill'),'refined ornament styles missing');
+const store=new Map();const ctx={console,Date,Intl,Blob,URL,FileReader:function(){},confirm:()=>true,window:null,state:{user:{id:'u1'},students:[{id:'s1',full_name:'أحمد حسن وصفي أبو عنزة',status:'active',track_code:'general_hifz',category_id:'c1',halaqa_id:'h1'}],categories:[{id:'c1',name:'السنابل'}],halaqas:[{id:'h1',name:'حلقة'}]},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)},today:()=> '2026-09-06',monthStart:ym=>`${ym}-01`,monthEnd:ym=>`${ym}-30`,activeStudents:()=>[{id:'s1',full_name:'أحمد حسن وصفي أبو عنزة',status:'active',track_code:'general_hifz',category_id:'c1',halaqa_id:'h1'}],esc:v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'),fmt:String,offlineUuid:()=> 'id1',roleCanManage:()=>true,studentTrackAr:{general_hifz:'مسار الحفظ العام'},render:()=>{},toast:()=>{},$:()=>null,categoryName:()=> 'السنابل',db:{from(){throw new Error('network forbidden')}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(cert,ctx);
+const s=ctx.HalaqatiCertificates.settings();const d={type:'sard',studentName:'أحمد حسن وصفي أبو عنزة',template:'emerald',title:'إتمام سرد أجزاء من القرآن الكريم',intro:'نص',achievement:'إنجاز',dua:'دعاء',certificateNumber:'HAL-CERT-2026-0004',date:'2026-09-06',style:{fontFamily:'Cairo',customFont:'',primary:'#0b5f5b',secondary:'#8a4d22',accent:'#b9954a',paper:'#fbf7eb',ink:'#18211e',titleSize:44,studentSize:38,bodySize:20,logoSize:168,borderWidth:3,ornamentOpacity:82,showVerse:true,showDates:true,showSignatures:true,numberPosition:'under-logo'}};
+const html=ctx.HalaqatiCertificates.certificateInnerHtml(d,s);
+for(const token of ['cert-number-logo','cert-date-hijri','cert-date-gregorian','cert-side-rosette r1','cert-side-rosette l1','HAL-CERT-2026-0004'])must(html.includes(token),'rendered certificate missing '+token);
+console.log('v2.41.2 certificate layout polish checks passed ✅');

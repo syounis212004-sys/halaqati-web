@@ -1,0 +1,23 @@
+import fs from 'node:fs';
+const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+const bridge=fs.readFileSync('src/features/notifications/push-bridge.js','utf8');
+const runtime=fs.readFileSync('src/features/notifications/runtime.js','utf8');
+const cfg=JSON.parse(fs.readFileSync('capacitor.config.json','utf8'));
+function ok(v,m){if(!v)throw new Error(m)}
+ok(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'wrong app version');
+ok(pkg.dependencies?.['@capacitor/push-notifications']==='8.1.2','official Capacitor Push 8.1.2 must be pinned');
+ok(!pkg.dependencies?.['halaqati-push-bridge'],'custom push bridge dependency must be removed');
+ok(!fs.existsSync('plugins/halaqati-push-bridge'),'custom push bridge directory must be removed');
+ok(bridge.includes("from '@capacitor/push-notifications'"),'official push import missing');
+ok(bridge.includes('PushNotifications'),'official PushNotifications bridge missing');
+ok(!bridge.includes('registerPlugin('),'custom Capacitor registerPlugin path must be gone');
+ok(runtime.includes("addListener('registration'"),'official registration listener missing');
+ok(runtime.includes("addListener('registrationError'"),'official registrationError listener missing');
+ok(runtime.includes('await plugin.register()'),'official register() call missing');
+ok(runtime.includes('push_token:token'),'FCM token server registration missing');
+ok(!runtime.includes('registerFid'),'FID registration path must be gone');
+ok(!runtime.includes('HalaqatiPushBridge'),'custom push bridge reference must be gone');
+ok(!runtime.includes('registration_type:'),'client must not upload FID/token mode');
+ok(cfg.plugins?.PushNotifications?.presentationOptions?.includes('alert'),'foreground alert presentation missing');
+ok(cfg.plugins?.PushNotifications?.presentationOptions?.includes('sound'),'foreground sound presentation missing');
+console.log('OFFICIAL_CAPACITOR_PUSH_V2157_CHECK_PASS');
