@@ -199,79 +199,111 @@
     }
     if(state.page==='home')render();
   }
-  const SHELL={danger:['--st-bad-bg','--st-bad-fg'],warning:['--st-warn-bg','--st-warn-fg'],info:['--st-info-bg','--st-info-fg'],success:['--st-ok-bg','--st-ok-fg'],neutral:['--mint2','--muted']};
-  function shell(kind,icon,title,summary,count,extra,onclick,open){
-    const [bg,fg]=SHELL[kind]||SHELL.info;
-    return `<div class="rc27-ins" style="background:var(${bg});color:var(${fg})" ${onclick?`onclick="${onclick}"`:''}><div class="rc27-ins-head"><span class="rc27-ins-ico">${icon}</span><div class="rc27-ins-t"><b>${h(title)}</b>${summary?`<small>${h(summary)}</small>`:''}</div>${count!=null?`<span class="rc27-ins-n">${count}</span>`:''}${open!=null?`<span class="rc27-ins-chev ${open?'up':''}">⌄</span>`:''}</div>${extra||''}</div>`;
-  }
+  // ================= org cards (InsightCardShell via NX) =================
   const names=(l,n)=>l.slice(0,n).join('، ')+(l.length>n?` … +${l.length-n}`:'');
-  window.rc27InsToggle=function(k){O['open_'+k]=!O['open_'+k];render()};
+  window.rc27InsToggle=function(k){O['open_'+k]=!O['open_'+k];if(!window.nhRerender())render()};
+  const IC=(n,s)=>typeof mi==='function'?mi(n,s):'';
   function orgCards(){
-    const role=state.profile?.role,out=[];
-    if(showPlans()&&O.routeDone.length)out.push(shell('warning','🏆','أتمّوا مسار الحفظ',names(O.routeDone,3)+' — أنشئ لهم خطة مراجعة أو تثبيت.',O.routeDone.length,'',"go('plans')"));
-    if(O.streaks.length){const open=!!O.open_abs;out.push(shell('danger','📅','غياب متكرر',open?'غابوا 3 جلسات متتالية فأكثر':names(O.streaks.map(x=>x.name),4).replace(/ … \+\d+$/,' …'),O.streaks.length,open?O.streaks.slice(0,15).map(x=>`<div class="rc27-ins-row"><div><b>${h(x.name)}</b><small>غاب ${x.count} جلسات متتالية</small></div><button class="mini" onclick="event.stopPropagation();rc27SendGuardian('${x.sid}',${x.count})">رسالة للولي</button></div>`).join(''):'',"rc27InsToggle('abs')",open))}
-    if(showPlans()&&O.noPlan.length)out.push(shell('info','📝','طلاب بلا خطة هذا الشهر',names(O.noPlan,3),O.noPlan.length,'',"go('plans')"));
-    if(role!=='teacher'&&O.noGuardian.length)out.push(shell('info','👪','طلاب بلا ولي أمر مرتبط',names(O.noGuardian,3),O.noGuardian.length,'',"go('students')"));
-    if((role==='admin'||role==='supervisor')&&O.missingHalaqas&&O.missingHalaqas.total>=2){const m=O.missingHalaqas;out.push(shell(m.names.length?'warning':'success',m.names.length?'🚫':'✅',m.names.length?'حلقات لم تسجّل جلسة اليوم':'كل الحلقات سجّلت جلسة اليوم',m.names.length?m.names.slice(0,6).join('، ')+(m.names.length>6?' …':''):`${m.total} من ${m.total}`,m.names.length?m.names.length:null,'',"go('sessions')"))}
-    if((role==='admin'||role==='supervisor')&&O.compare&&O.compare.length){
-      const open=O.open_cmp!==false,ranked=O.compare.slice().sort((a,b)=>((b.sessions>0)-(a.sessions>0))||((b.att??-1)-(a.att??-1)));
-      const meter=(l,v)=>`<div class="rc27-meter"><div><span>${l}</span><b>${v==null?'—':v+'٪'}</b></div><i><u style="width:${v==null?0:v}%;background:${v==null?'var(--outline)':v>=75?'var(--green)':v>=50?'var(--gold)':'var(--danger)'}"></u></i></div>`;
-      out.push(shell('neutral','🏅','مقارنة الحلقات هذا الشهر',`${ranked.length} حلقات · الحضور والجودة والإنجاز`,null,open?ranked.map((x,i)=>`<div class="rc27-cmp"><div class="rc27-cmp-h"><span class="rc27-cmp-n">${i+1}</span><div><b>${h(x.name||'حلقة')}</b><small>${x.sessions>0?`${x.students} طالبًا · ${x.sessions} جلسات`:`${x.students} طالبًا · لا جلسات هذا الشهر بعد`}</small></div></div>${x.sessions>0?meter('الحضور',x.att)+meter('جودة التسميع',x.quality)+`<small>صفحات/طالب ${x.ppS.toFixed(1)} · حفظ ${x.hifz.toFixed(0)} ص · مراجعة وتثبيت وسرد ${x.rev.toFixed(0)} ص</small>`:''}</div>`).join(''):'',"rc27InsToggle('cmp')",open));
+    const role=state.profile?.role,out=[],X=window.RC27Insights?.parts||{};
+    const mgr=role==='admin'||role==='supervisor';
+    // PlansNeedAttentionCard
+    if(showPlans()&&O.routeDone.length)out.push(NX.insight('warning','EmojiEvents','أتمّوا مسار الحفظ',h(names(O.routeDone,3)+' — أنشئ لهم خطة مراجعة أو تثبيت.'),{count:O.routeDone.length,onclick:"go('plans')"}));
+    // AbsenceStreakCard
+    if(O.streaks.length){
+      const open=!!O.open_abs;
+      out.push(NX.insight('danger','EventBusy','غياب متكرر',h(open?'غابوا 3 جلسات متتالية فأكثر':names(O.streaks.map(x=>x.name),4).replace(/ … \+\d+$/,' …')),{count:O.streaks.length,expanded:open,onclick:"rc27InsToggle('abs')",
+        body:open?O.streaks.slice(0,15).map(x=>`<div class="nh-irow"><div class="nh-irow-t"><b>${h(x.name)}</b><small>غاب ${x.count} جلسات متتالية</small></div>${NX.btn('رسالة للولي',{kind:'text',cls:'nh-tb',onclick:`event.stopPropagation();rc27SendGuardian('${x.sid}',${x.count})`})}</div>`).join(''):''}));
     }
-    return out.join('')+(window.RC27Insights?window.RC27Insights.cards(role):'');
+    // InactiveStudentsCard
+    if(X.inactive)out.push(X.inactive());
+    if(role==='teacher'&&X.seasons)out.push(X.seasons(false));
+    // OrgAttentionCard
+    if(showPlans()&&O.noPlan.length)out.push(NX.insight('info','AssignmentLate','طلاب بلا خطة هذا الشهر',h(names(O.noPlan,3)),{count:O.noPlan.length,onclick:"go('plans')"}));
+    if(showPlans()&&role!=='teacher'&&O.noGuardian.length)out.push(NX.insight('info','FamilyRestroom','طلاب بلا ولي أمر مرتبط',h(names(O.noGuardian,3)),{count:O.noGuardian.length,onclick:"go('students')"}));
+    // AdminHalaqaTodayCard, HalaqaComparisonCard, SeasonsCard(manage)
+    if(mgr&&O.missingHalaqas&&O.missingHalaqas.total>=2){
+      const m=O.missingHalaqas,none=!m.names.length;
+      out.push(NX.insight(none?'success':'warning',none?'EventAvailable':'EventBusy',none?'كل الحلقات سجّلت جلسة اليوم':'حلقات لم تسجّل جلسة اليوم',h(none?`${m.total} من ${m.total}`:m.names.slice(0,6).join('، ')+(m.names.length>6?' …':'')),{count:none?null:m.names.length,onclick:"go('sessions')"}));
+    }
+    if(mgr&&X.cmp)out.push(X.cmp());
+    if(mgr&&X.seasons)out.push(X.seasons(true));
+    return out.filter(Boolean).join('');
   }
 
   // ================= page =================
-  const bucketCard=(kind,title,items,key)=>{const [bg,fg]=SHELL[kind]||SHELL.info;return `<div class="rc27-bucket" style="background:var(${bg});color:var(${fg})" onclick="rc27OpenBucket('${key}')"><div class="rc27-bucket-h"><span>${kind==='danger'?'⚠':kind==='success'?'🏆':'ℹ'}</span><b>${items.length}</b></div><b>${h(title)}</b>${items.slice(0,2).map(i=>`<small>${h(i.studentName)} · ${h(i.reason)}</small>`).join('')}</div>`};
+  const TONE={danger:'danger',warning:'warning',info:'info',success:'success'};
+  const bucketCard=(kind,title,items,key)=>{
+    const ic=kind==='danger'?'Warning':kind==='success'?'EmojiEvents':'Info';
+    return `<div class="nh-bucket nx-s-${TONE[kind]||'info'}"><div class="nh-bucket-h">${IC(ic,20)}<b>${items.length}</b></div><b class="nh-bucket-t">${h(title)}</b>${items.slice(0,2).map(i=>`<span class="nh-bucket-n">${h(i.studentName)}</span>`).join('')}${items.length?'':'<span class="nh-bucket-n">لا يوجد</span>'}<button type="button" class="nh-bucket-b" onclick="rc27OpenBucket('${key}')">عرض القائمة كاملة (${items.length})</button></div>`;
+  };
   const BUCKETS=()=>({nh:['لم يسمّع اليوم',D.notHeard],ab:['غائب اليوم',D.absentLate],at:['متأخر عن الخطة',D.attention],rv:['يحتاج مراجعة',D.review],ot:['تجاوز هدفه',D.overTarget]});
   window.rc27OpenBucket=function(k){
-    const [title,items]=BUCKETS()[k];const d=document.getElementById('rc27Dlg')||(()=>{const x=document.createElement('dialog');x.id='rc27Dlg';x.className='rc27-dlg';document.body.appendChild(x);return x})();
-    d.innerHTML=`<div class="card"><h3>${h(title)}</h3></div>${items.length?items.map(i=>`<div class="card rc27-click" onclick="rc27CloseDlg();studentProfile('${i.studentId}')"><b>${h(i.studentName)}</b><div class="muted">${h(i.reason)}</div></div>`).join(''):'<div class="empty">لا توجد عناصر في هذه القائمة</div>'}<div class="form-actions"><button class="btn btn-ghost" onclick="rc27CloseDlg()">إغلاق</button></div>`;
-    if(!d.open)d.showModal();
+    const [title,items]=BUCKETS()[k];
+    const body=items.length?`<div class="nh-list">${items.map(i=>`<button type="button" class="nh-li" onclick="NX.closeDialog('nhBucket');studentProfile('${i.studentId}')"><span class="nh-li-t"><b>${h(i.studentName)}</b><small>${h(i.reason)}</small></span>${IC('ChevronLeft',22)}</button>`).join('')}</div>`:NX.empty('لا توجد عناصر في هذه القائمة');
+    NX.dialog('nhBucket',h(title),body,{cls:'nh-bucket-dlg'});
   };
   window.rc27OpenToday=async function(){
     try{const se=typeof ensureTodaySession==='function'?await ensureTodaySession():null;if(se){state.sessionView=se.id;state.page='sessions';render()}}catch(e){toast(e.message||String(e))}
   };
-  function followItem(i){return `<div class="card rc27-click" onclick="studentProfile('${i.studentId}')"><div class="row"><span class="rc27-fu-ico">🔎</span><div class="grow"><b>${h(i.studentName)}</b><div class="muted">${h(i.reason)}</div></div><span class="muted">‹</span></div></div>`}
+  function followItem(i){return `<button type="button" class="nh-fu" onclick="studentProfile('${i.studentId}')">${IC('PersonSearch',19)}<span class="nh-fu-t"><b>${h(i.studentName)}</b><small>${h(i.reason)}</small></span>${IC('ChevronLeft',20)}</button>`}
+  const HOME_ICON={play:'PlayCircle',book:'MenuBook',check:'TaskAlt',star:'EmojiEvents',rest:'Weekend',sync:'Sync'};
+  const nhTitle=t=>`<h3 class="nh-title">${t}</h3>`;
   function homeHtml(){
     ensureDashboardOwner();
     const p=state.profile,compact=prefs().homeStyle==='compact',d=D.daily;
     const off=d?.mode==='OFF_DAY',waiting=d?.mode==='NO_SESSION_YET',exp=d?D.expected.size:0,present=d?.count?Math.max(0,exp-D.absentLate.length):0,wait=d?.count?Math.max(0,present-D.heard):0;
     const hs=homeState(D.loaded,off,waiting,D.heard,wait),seed=Math.floor(Date.now()/864e5),msg=pickMsg(p.role==='teacher',hs,seed,wait,D.absentLate.length,D.heard);
     const groups=followUpGroups(),all=[...new Map(groups.flatMap(g=>g.items).map(i=>[i.studentId,i])).values()];
-    const metric=(t,v,go)=>`<div class="stat" ${go?`onclick="${go}"`:''}><b>${v}</b><span>${t}</span></div>`;
-    const admin=['admin','supervisor','teacher'].includes(p.role);
-    let html=`<div class="hero rc27-home-hero"><h2>${h(msg.title)}</h2><p>${h(msg.subtitle)}</p></div>`;
-    if(compact)html=`<div class="card"><b>${h(msg.title)}</b><div class="muted">${h(msg.subtitle)}</div></div>`;
-    html+=`<button class="btn btn-primary rc27-wide" ${(!D.loaded||off)?'disabled':''} onclick="rc27OpenToday()">▶ ${off?'اليوم إجازة':waiting?'ابدأ جلسة اليوم':'فتح جلسة اليوم'}</button>`;
-    if(showPlans())html+=`<button class="btn btn-soft rc27-wide" onclick="openQuickMemorization()">التحفيظ السريع</button>`;
+    const analytic=['admin','supervisor','teacher'].includes(p.role);
+    // --- top: hero + actions
+    let top=compact?NX.card(`<b class="nh-compact-t">${h(msg.title)}</b>${msg.subtitle?`<small class="nh-compact-s">${h(msg.subtitle)}</small>`:''}`,{cls:'nh-compact'}):NX.hero(h(msg.title),h(msg.subtitle),{icon:HOME_ICON[msg.icon]||'Sync',cls:'nh-hero'});
+    let acts=NX.btn(off?'اليوم إجازة':waiting?'ابدأ جلسة اليوم':'فتح جلسة اليوم',{kind:'filled',icon:'PlayArrow',full:true,cls:'nh-act',disabled:!D.loaded||off,onclick:'rc27OpenToday()'});
+    if(showPlans())acts+=NX.btn('التحفيظ السريع',{kind:'tonal',full:true,cls:'nh-act nh-act2',onclick:'openQuickMemorization()'});
+    top+=`<div class="nh-actions">${acts}</div>`;
     const showMore=!compact||O.showMore;
-    if(compact)html+=`<button class="btn btn-ghost rc27-wide" onclick="rc27ToggleMore()">${O.showMore?'إخفاء المؤشرات الإضافية':'عرض المؤشرات الإضافية'}</button>`;
-    if(showMore&&admin)html+=orgCards();
-    Object.values(D.errors).slice(0,1).forEach(m=>{html+=`<div class="notice">بقيت البيانات السابقة ظاهرة. ${h(m)}</div>`});
-    if(!D.loaded)html+='<div class="rc27-skel" style="height:90px;margin:10px 0"></div>';
-    else html+=`<div class="grid rc27-metrics">${metric('حاضر اليوم',present,"rc27OpenToday()")}${metric('أتمّ التسميع',D.heard,"go('reports')")}${metric('بانتظارك',wait,"go('follow_up')")}</div>`;
-    html+='<div class="section-head"><h3>المتابعة اليومية</h3></div>';
-    if(!D.loaded)html+='<div class="rc27-skel" style="height:70px"></div>';
-    else if(off||waiting)html+=`<div class="card"><h3 style="margin:0 0 4px">${h(d.title)}</h3><div class="muted">${h(d.subtitle)}</div><div class="rc27-banner-note">${off?'لم يسمّع اليوم: 0 · غائب اليوم: 0':'لن يُحسب أي طالب كـ«لم يسمّع» أو «غائب» قبل بدء الجلسة.'}</div></div>`;
-    else html+=`<div class="rc27-bgrid">${bucketCard('danger','لم يسمّع اليوم',D.notHeard,'nh')}${bucketCard('warning','غائب اليوم',D.absentLate,'ab')}</div>`;
-    if(showPlans())html+=`<div class="section-head"><h3>متابعة الخطة</h3></div><div class="rc27-bgrid">${bucketCard('warning','متأخر عن الخطة',D.attention,'at')}${bucketCard('info','يحتاج مراجعة',D.review,'rv')}${bucketCard('success','تجاوز هدفه',D.overTarget,'ot')}</div>`;
-    html+=`<div class="section-head"><h3>طلاب يحتاجون متابعة</h3>${all.length?'<button class="mini" onclick="go(\'follow_up\')">فتح المتابعة</button>':''}</div>`;
-    groups.forEach(g=>{html+=`<div class="rc27-grp">${h(g.title)}</div>${g.items.slice(0,compact?2:4).map(followItem).join('')}`});
-    if(!all.length&&D.loaded)html+='<div class="empty">لا توجد تنبيهات متابعة حاليًا</div>';
-    html+=`<button class="btn btn-ghost rc27-wide" onclick="go('ranking')">الإحصائيات والترتيب</button>`;
+    if(compact)top+=NX.btn(O.showMore?'إخفاء المؤشرات الإضافية':'عرض المؤشرات الإضافية',{kind:'text',full:true,onclick:'rc27ToggleMore()'});
+    // --- side: insight cards
+    const side=(showMore&&analytic)?`<div class="nh-cards">${orgCards()}</div>`:'';
+    // --- rest
+    let rest='';
+    const errs=Object.values(D.errors).slice(0,1);
+    errs.forEach(m=>{rest+=NX.notice('بقيت البيانات السابقة ظاهرة. '+h(m),'warning')});
+    if(!D.loaded)rest+=NX.skeleton(2);
+    else rest+=NX.metrics([NX.metric('حاضر اليوم',present,{icon:'HowToReg',onclick:'rc27OpenToday()'}),NX.metric('أتمّ التسميع',D.heard,{icon:'TaskAlt',onclick:"go('reports')"}),NX.metric('بانتظارك',wait,{icon:'HourglassTop',onclick:"go('follow_up')"})],3);
+    rest+=nhTitle('المتابعة اليومية');
+    if(!D.loaded)rest+=NX.skeleton(1);
+    else if(off||waiting)rest+=NX.card(`<div class="nh-banner"><b class="nh-banner-t">${h(d.title)}</b><span class="nh-banner-s">${h(d.subtitle)}</span><span class="nh-banner-n ${off?'':'sm'}">${off?'لم يسمّع اليوم: 0 · غائب اليوم: 0':'لن يُحسب أي طالب كـ«لم يسمّع» أو «غائب» قبل بدء الجلسة.'}</span></div>`,{cls:'nh-bannercard'});
+    else rest+=`<div class="nh-bgrid nh-b2">${bucketCard('danger','لم يسمّع اليوم',D.notHeard,'nh')}${bucketCard('warning','غائب اليوم',D.absentLate,'ab')}</div>`;
+    if(showPlans())rest+=nhTitle('متابعة الخطة')+`<div class="nh-bgrid nh-b3">${bucketCard('warning','متأخر عن الخطة',D.attention,'at')}${bucketCard('info','يحتاج مراجعة',D.review,'rv')}${bucketCard('success','تجاوز هدفه',D.overTarget,'ot')}</div>`;
+    rest+=`<div class="nh-titlerow">${nhTitle('طلاب يحتاجون متابعة')}${all.length?NX.btn('فتح المتابعة',{kind:'text',onclick:"go('follow_up')"}):''}</div>`;
+    groups.forEach(g=>{rest+=`<div class="nh-grp">${h(g.title)}</div><div class="nh-fulist">${g.items.slice(0,compact?2:4).map(followItem).join('')}</div>`});
+    if(!all.length&&D.loaded)rest+=NX.empty('لا توجد تنبيهات متابعة حاليًا',{icon:'TaskAlt'});
+    rest+=NX.btn('الإحصائيات والترتيب',{kind:'outlined',full:true,cls:'nh-wide',onclick:"go('ranking')"});
     const pend=typeof readOfflineQueue==='function'?readOfflineQueue().length:0;
-    if(pend)html+=`<button class="btn btn-ghost rc27-wide" onclick="openSyncStatusDialog()">مزامنة ${pend} عملية معلقة</button>`;
-    return html;
+    if(pend)rest+=NX.btn(`مزامنة ${pend} عملية معلقة`,{kind:'outlined',full:true,cls:'nh-wide',onclick:'openSyncStatusDialog()'});
+    return `<div class="nh nh-home ${side?'':'nh-solo'}"><div class="nh-top">${top}</div>${side?`<aside class="nh-side">${side}</aside>`:''}<div class="nh-rest">${rest}</div></div>`;
   }
-  window.rc27ToggleMore=()=>{O.showMore=!O.showMore;render()};
+  window.rc27ToggleMore=()=>{O.showMore=!O.showMore;if(!window.nhRerender())render()};
+  window.nhRerender=function(){
+    const el=document.querySelector('.nh-home');
+    if(!el||state.page!=='home'||!['admin','supervisor','teacher'].includes(state.profile?.role))return false;
+    const tmp=document.createElement('div');tmp.innerHTML=homeHtml();el.replaceWith(tmp.firstElementChild);return true;
+  };
   function followHtml(){
     ensureDashboardOwner();
     const groups=followUpGroups(),q=(O.fq||'').trim(),sel=O.fsel||'الكل',labels=['الكل',...groups.map(g=>g.title)];
     const match=r=>!q||r.studentName.includes(q)||r.reason.includes(q),vis=sel==='الكل'?groups:groups.filter(g=>g.title===sel),total=new Set(groups.flatMap(g=>g.items.map(i=>i.studentId))).size;
-    return `<div class="section-head"><h3>متابعة الطلاب</h3><button class="mini" onclick="go('home')">رجوع</button></div><div class="muted">${total} طالب يحتاج متابعة</div><input class="input" placeholder="ابحث باسم الطالب أو سبب المتابعة" value="${h(q)}" onchange="O_fq(this.value)" style="margin:8px 0"><div class="tabs">${labels.map(l=>`<button class="tab ${l===sel?'active':''}" onclick="O_fsel('${h(l)}')">${h(l)}</button>`).join('')}</div>${!D.loaded?'<div class="rc27-skel" style="height:120px"></div>':!groups.length?'<div class="empty">لا توجد حالات متابعة حاليًا</div>':vis.map(g=>{const rows=g.items.filter(match);return rows.length?`<div class="section-head"><h3>${h(g.title)}</h3><b>${rows.length}</b></div>${rows.map(followItem).join('')}`:''}).join('')||'<div class="empty">لا توجد نتائج مطابقة للبحث</div>'}`;
+    const head=`<div class="nh-fhead">${NX.iconBtn('ArrowBack',{title:'رجوع',onclick:"go('home')"})}<div class="nh-fhead-t"><b>متابعة الطلاب</b><small>${total} طالب يحتاج متابعة</small></div>${NX.iconBtn('Refresh',{title:'تحديث',onclick:'rc27DashRefresh()'})}</div>`;
+    const search=NX.search(q,'ابحث باسم الطالب أو سبب المتابعة',{onchange:'O_fq(this.value)',oninput:'O_fqLive(this)'});
+    const chips=NX.chips(labels.map(l=>({label:h(l),selected:l===sel,onclick:`O_fsel('${h(l).replace(/'/g,"\\'")}')`})));
+    let body;
+    if(!D.loaded)body=NX.skeleton(5);
+    else if(!groups.length)body=NX.empty('لا توجد حالات متابعة حاليًا',{icon:'TaskAlt'});
+    else body=vis.map(g=>{const rows=g.items.filter(match);return rows.length?`<div class="nh-titlerow nh-fsec"><h3 class="nh-title m">${h(g.title)}</h3><b class="nh-count">${rows.length}</b></div><div class="nh-fulist">${rows.map(followItem).join('')}</div>`:''}).join('')||NX.empty('لا توجد نتائج مطابقة للبحث');
+    return `<div class="nh nh-follow">${head}${search}${chips}<div class="nh-fbody">${body}</div></div>`;
   }
   window.O_fq=v=>{O.fq=v;render()};window.O_fsel=v=>{O.fsel=v;render()};
+  window.O_fqLive=el=>{clearTimeout(O._ft);O._ft=setTimeout(()=>{O.fq=el.value;const b=document.querySelector('.nh-fbody');if(b){const f=document.createElement('div');f.innerHTML=followHtml();b.replaceWith(f.querySelector('.nh-fbody'))}},250)};
 
   // ================= wiring =================
   if(typeof homePage==='function'){

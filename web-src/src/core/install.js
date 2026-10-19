@@ -4,6 +4,7 @@ window.halaqatiInstallCard=function(){
   if(window.Capacitor?.isNativePlatform?.())return '';
   return `<section class="card pwa-install"><div><h3>${installed()?'حلقاتي مثبت على هذا الجهاز':'حلقاتي على جهازك'}</h3><p class="muted">نفس الحسابات والبيانات على الجوال والكمبيوتر.</p></div>${installed()?'':`<button class="btn btn-primary" type="button" onclick="halaqatiInstall()">${installPrompt?'تثبيت حلقاتي':'طريقة التثبيت'}</button>`}<div class="view-links"><a href="./?view=mobile">فتح بواجهة الجوال</a><a href="./?view=desktop">فتح بواجهة الكمبيوتر</a></div><p id="pwaInstallHelp" class="muted" hidden></p></section>`;
 };
+window.halaqatiCanPromptInstall=()=>!!installPrompt;
 window.halaqatiInstall=async function(){
   if(installPrompt){const prompt=installPrompt;installPrompt=null;await prompt.prompt();await prompt.userChoice;return}
   const box=document.getElementById('pwaInstallHelp');if(!box)return;

@@ -1,0 +1,159 @@
+/* RC27.40 native screens: reports / rankings / Quran calculator (web twin of ReportsAndTools.kt). Prefix: nr- */
+.nr-root{display:grid;gap:12px;min-width:0}
+.nr-root *{min-width:0}
+.nr-h{margin:0 0 2px}
+.nr-lbl{font:600 13px/20px Cairo,sans-serif;color:var(--muted);margin-top:2px;display:flex;gap:6px;align-items:center}
+.nr-note{margin:0}
+.nr-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nr-sec{display:grid;gap:8px}
+.nr-root .nx-chips.wrap .nx-chip{min-height:44px}
+.nr-root .nx-chip.on{background:var(--primary-container,var(--mint));color:var(--on-primary-container,var(--green));box-shadow:none}
+.nr-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+.nr-indet i{width:40%!important;animation:nrSlide 1.1s ease-in-out infinite alternate}
+@keyframes nrSlide{from{margin-inline-start:0}to{margin-inline-start:60%}}
+
+/* ---- studio ---- */
+.nr-cols{display:grid;gap:12px;min-width:0}
+.nr-side,.nr-main{display:grid;gap:12px;align-content:start;min-width:0}
+.nr-compare .nr-cmps{display:grid;gap:0;margin-top:6px}
+.nr-cmp{display:flex;align-items:center;gap:10px;min-height:40px}
+.nr-cmp-l{flex:1;font:600 16px/24px Cairo,sans-serif}
+.nr-cmp b{font:700 14px Cairo,sans-serif}
+.nr-cmp em{font:700 13px Cairo,sans-serif;font-style:normal}
+.nr-cmp em.good{color:var(--green)}.nr-cmp em.bad{color:var(--st-bad-fg)}
+.nr-datebox{display:flex;align-items:center;gap:10px;min-height:54px;padding:0 14px;border:1px solid var(--outline);border-radius:999px;color:var(--green);font:600 14px Cairo,sans-serif}
+.nr-prepare{min-height:48px}
+.nr-ctl-head{display:flex;align-items:center;gap:8px;color:var(--green)}
+.nr-ctl-head span{color:var(--ink)}
+.nr-range,.nr-zoomrow input{width:100%;accent-color:var(--green)}
+.nr-zoomrow{display:flex;align-items:center;gap:10px}
+.nr-zoomrow .nr-zoomval{font:700 13px Cairo,sans-serif;min-width:42px}
+.nr-prev-head{align-items:flex-start}
+.nr-viewport{background:var(--nx-surface-var);border-radius:14px;padding:10px;overflow:auto;direction:ltr;border:1px solid var(--line)}
+.nr-viewport.landscape{max-height:470px}.nr-viewport.portrait{max-height:600px}
+.nr-viewport-big{max-height:none;height:min(70dvh,900px)}
+.nr-scaler{position:relative;margin:0 auto}
+.nr-sheet{position:absolute;top:0;left:0;transform-origin:0 0;direction:rtl;background:#fff;color:#18231f;box-shadow:0 8px 28px rgba(13,59,47,.16);width:1120px}
+.nr-viewport-big .nr-sheet{position:absolute}
+.nr-sheet[data-orientation=landscape]{width:1120px}.nr-sheet[data-orientation=portrait]{width:792px}
+.nr-sheet .pro-report-page{box-shadow:none!important;margin:0 0 18px!important;border-radius:0!important;border:0!important;min-height:auto;background:#fff;box-sizing:border-box;overflow:visible!important}
+.nr-sheet[data-orientation=landscape] .pro-report-page{width:1120px}.nr-sheet[data-orientation=portrait] .pro-report-page{width:792px}
+.nr-sheet .pro-table-wrap{width:100%!important;min-width:0!important;max-width:100%!important;overflow:visible!important}
+.nr-sheet .pro-table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
+.nr-sheet .pro-table th,.nr-sheet .pro-table td{box-sizing:border-box!important;text-align:center;overflow:hidden!important;text-overflow:clip!important}
+.nr-sheet .pro-table .name,.nr-sheet .pro-table .hf-col-name{text-align:right!important;white-space:nowrap!important}
+.nr-sheet .pro-table .hf-col-flex,.nr-sheet .pro-table .text-cell{white-space:normal!important;text-align:right!important;line-height:1.65!important;overflow-wrap:anywhere!important}
+.nr-sheet[data-orientation=portrait] .pro-kpis{grid-template-columns:repeat(3,1fr)!important}
+.nr-unscaled .nr-viewport{overflow:visible!important;max-height:none!important;height:auto!important;padding:0}
+.nr-unscaled .nr-scaler{width:auto!important;height:auto!important}
+.nr-unscaled .nr-sheet{position:static!important;transform:none!important;width:1120px}
+.nr-vp-empty{min-height:150px;display:grid;place-items:center;direction:rtl}
+.nr-ph{display:grid;justify-items:center;gap:8px;text-align:center;color:var(--muted);padding:18px}
+.nr-ph p{margin:0;font:500 14px/20px Cairo,sans-serif}
+.nr-prog-doc{background:var(--nx-surface-var);border-radius:14px;padding:10px;overflow:auto;max-height:640px;border:1px solid var(--line)}
+.nr-prog-doc .report-paper{background:#fff;color:#18231f;border-radius:10px;padding:16px}
+.nr-export{display:grid;gap:8px}
+.nr-pdf{min-height:50px;border-radius:999px}
+.nr-export-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.nr-export-grid .nx-btn{min-height:48px;width:100%}
+.nr-li{display:flex;align-items:center;gap:10px;padding:2px}
+.nr-li small{display:block;font:400 12px/18px Cairo,sans-serif}
+.nr-results .nx-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.nx-dlg.nr-wide-dlg{width:min(100vw,1200px);height:92dvh}
+.nx-dlg.nr-wide-dlg .nx-dlg-body{height:100%}
+html[data-view="desktop"] .nx-dlg.nr-wide-dlg{width:min(94vw,1240px);height:90vh}
+.nx-dlg.nr-wide-dlg .nx-dlg-content{overflow:hidden;grid-template-rows:auto 1fr;height:100%}
+
+/* ---- rankings ---- */
+.nr-rk-cols{display:grid;gap:10px;min-width:0}
+.nr-rk-side,.nr-rk-main{display:grid;gap:10px;align-content:start;min-width:0}
+.nr-rk-row{display:flex;align-items:center;gap:12px;padding:14px}
+.nr-rk-row small{display:block}
+.nr-rk-n{min-width:44px;height:44px;border-radius:14px;background:var(--nx-secondary-container);color:var(--on-primary-container,var(--green));display:inline-grid;place-items:center;font:700 16px Cairo,sans-serif;flex:none}
+.nr-rk-n.sm{min-width:30px;height:30px;border-radius:10px;font-size:14px}
+.nr-rk-n.gold{background:#f6e3a1;color:#6b4e00}.nr-rk-n.silver{background:#e3e7ea;color:#3e4a52}.nr-rk-n.bronze{background:#ecd0ad;color:#6a431a}
+body.dark .nr-rk-n.gold{background:#5a4710;color:#f6e3a1}body.dark .nr-rk-n.silver{background:#3a4248;color:#e3e7ea}body.dark .nr-rk-n.bronze{background:#5a3b1c;color:#ecd0ad}
+.nr-rk-v{text-align:center;flex:none}
+.nr-rk-v b{display:block;font:700 19px/28px Cairo,sans-serif}
+.nr-rk-v small{display:block;font:400 11px/16px Cairo,sans-serif;color:var(--muted)}
+.nr-rk-desk{display:none}
+.nr-rk-filters .nx-chips.wrap{gap:8px}
+
+/* ---- Quran calculator ---- */
+.nr-qhead{margin:2px 2px 0}
+.nr-qcols{display:grid;gap:12px;min-width:0}
+.nr-qpick,.nr-qside{display:grid;gap:12px;align-content:start;min-width:0}
+.nr-quran .mode-panel{display:grid;gap:12px}
+.nr-quran .mode-panel.hidden{display:none}
+.nr-quran .qcalc-result{background:var(--primary-container,var(--mint));color:var(--on-primary-container,var(--green));border-radius:var(--nx-r-metric);padding:16px;text-align:center;display:grid;gap:2px;border:1px solid var(--line)}
+.nr-quran .qcalc-result .muted{font:500 12px/18px Cairo,sans-serif}
+.nr-quran .qcalc-result strong{font:700 34px/44px Cairo,sans-serif}
+.nr-quran .field{display:grid;gap:4px;font:600 13px Cairo,sans-serif;color:var(--muted)}
+.nr-quran .input,.nr-quran input.input{width:100%;min-height:48px;padding:10px 14px;border-radius:14px;border:1px solid var(--outline);background:var(--card);color:var(--ink);font:500 14px Cairo,sans-serif;outline:0;box-sizing:border-box}
+.nr-quran .input:focus{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.nr-quran .range-pair,.nr-quran .ayah-range-numbers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nr-quran .ayah-range-numbers label{display:grid;gap:4px;font:600 13px Cairo,sans-serif;color:var(--muted)}
+.nr-quran .ayah-picker{display:grid;gap:10px}
+.nr-quran .ayah-picker-label{font:600 13px/20px Cairo,sans-serif;color:var(--muted)}
+.nr-quran .ayah-picker-help,.nr-quran .muted{font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
+.nr-quran .ayah-juz-strip,.nr-quran .ayah-surah-strip,.nr-quran .juz-grid,.nr-quran .surah-select-grid{display:flex;flex-wrap:wrap;gap:7px}
+.nr-quran .ayah-surah-strip{max-height:190px;overflow:auto;padding:2px}
+.nr-quran .surah-select-grid{max-height:340px;overflow:auto;padding:2px}
+.nr-quran .ayah-juz-chip,.nr-quran .ayah-surah-chip,.nr-quran .juz-chip,.nr-quran .surah-select-grid button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border-radius:12px;border:0;background:var(--nx-surface-var);color:var(--muted);font:600 14px Cairo,sans-serif;cursor:pointer;flex:none;width:auto;min-width:44px}
+.nr-quran .ayah-juz-chip.active,.nr-quran .ayah-surah-chip.active,.nr-quran .juz-chip.active,.nr-quran .surah-select-grid button.active{background:var(--primary-container,var(--mint));color:var(--on-primary-container,var(--green));box-shadow:inset 0 0 0 1.5px var(--green)}
+.nr-quran .surah-select-grid button{flex:1 1 calc(50% - 7px);justify-content:flex-start}
+.nr-quran .selection-summary,.nr-quran .page-preview{border-radius:14px;background:var(--nx-surface-var);padding:10px 14px;font:500 13px/20px Cairo,sans-serif;color:var(--ink)}
+.nr-quran .page-preview:empty{display:none}
+.nr-quran .ayah-dual-range{position:relative;height:36px;--start:0%;--end:100%}
+.nr-quran .ayah-dual-range input[type=range]{position:absolute;inset:0;width:100%;margin:0;background:transparent;pointer-events:none;accent-color:var(--green)}
+.nr-quran .ayah-dual-range input[type=range]::-webkit-slider-thumb{pointer-events:auto}
+.nr-quran .ayah-dual-range input[type=range]::-moz-range-thumb{pointer-events:auto}
+.nr-quran .ayah-range-fill{position:absolute;top:50%;height:6px;border-radius:3px;background:var(--green);transform:translateY(-50%);inset-inline-start:var(--start);width:calc(var(--end) - var(--start));opacity:.35}
+.nr-quran .actions{display:flex;gap:8px;flex-wrap:wrap}
+.nr-quran .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:1px solid transparent;font:600 14px Cairo,sans-serif;cursor:pointer;background:var(--green);color:#fff}
+.nr-quran .btn.btn-soft{background:transparent;color:var(--green);border-color:var(--outline)}
+.nr-quran .btn.btn-primary{width:100%}
+.nr-surah-search{margin-bottom:2px}
+
+/* ---- desktop: real two-pane tools ---- */
+html[data-view="desktop"] .nr-studio .nr-cols{grid-template-columns:minmax(340px,400px) minmax(0,1fr);gap:18px;align-items:start}
+html[data-view="desktop"] .nr-studio .nr-side{position:sticky;top:12px;max-height:calc(100vh - 28px);overflow:auto;padding-inline-end:4px;scrollbar-width:thin}
+html[data-view="desktop"] .nr-viewport.landscape,html[data-view="desktop"] .nr-viewport.portrait{max-height:calc(100vh - 230px);min-height:420px}
+html[data-view="desktop"] .nr-export{grid-template-columns:minmax(180px,1fr) 3fr;align-items:center}
+html[data-view="desktop"] .nr-export-grid{grid-template-columns:repeat(5,1fr)}
+html[data-view="desktop"] .nr-results .nx-metrics{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+html[data-view="desktop"] .nr-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-view="desktop"] .nr-results .nx-metrics{grid-column:1/-1}
+html[data-view="desktop"] .nr-rk-cols{grid-template-columns:minmax(300px,340px) minmax(0,1fr);gap:18px;align-items:start}
+html[data-view="desktop"] .nr-rk-side{position:sticky;top:12px}
+html[data-view="desktop"] .nr-rk-phone{display:none}
+html[data-view="desktop"] .nr-rk-desk{display:grid;gap:16px}
+html[data-view="desktop"] .nr-qcols{grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:18px;align-items:start}
+html[data-view="desktop"] .nr-qside{position:sticky;top:12px}
+html[data-view="desktop"] .nr-quran .surah-select-grid button{flex:1 1 calc(25% - 7px)}
+
+/* podium + table (desktop ranking) */
+.nr-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;padding-top:8px}
+.nr-pod{display:grid;justify-items:center;gap:6px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:var(--nx-r-card);padding:16px 12px 0;position:relative;overflow:hidden}
+.nr-pod b{max-width:100%;font:700 15px/22px Cairo,sans-serif}
+.nr-pod-v{font:700 20px/28px Cairo,sans-serif;color:var(--green)}.nr-pod-v small{font:500 12px Cairo,sans-serif;color:var(--muted)}
+.nr-pod-ic{color:var(--green);display:inline-flex}
+.nr-pod-step{align-self:stretch;margin:6px -12px 0;display:grid;place-items:center;background:var(--nx-surface-var);font:800 28px Cairo,sans-serif;color:var(--muted)}
+.nr-pod.gold{padding-top:26px}.nr-pod.gold .nr-pod-step{height:96px;background:#f6e3a1;color:#6b4e00}.nr-pod.gold .nr-pod-ic{color:#b8860b}
+.nr-pod.silver .nr-pod-step{height:70px;background:#e3e7ea;color:#3e4a52}
+.nr-pod.bronze .nr-pod-step{height:54px;background:#ecd0ad;color:#6a431a}
+body.dark .nr-pod.gold .nr-pod-step{background:#5a4710;color:#f6e3a1}body.dark .nr-pod.silver .nr-pod-step{background:#3a4248;color:#e3e7ea}body.dark .nr-pod.bronze .nr-pod-step{background:#5a3b1c;color:#ecd0ad}
+.nr-tablewrap{overflow:auto;max-height:calc(100vh - 360px);min-height:200px}
+.nr-table{width:100%;border-collapse:separate;border-spacing:0;font:500 14px/20px Cairo,sans-serif}
+.nr-table th{position:sticky;top:0;background:var(--nx-surface-var);color:var(--muted);font:700 12px/18px Cairo,sans-serif;text-align:start;padding:10px 14px;border-bottom:1px solid var(--line);z-index:1}
+.nr-table td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:start}
+.nr-table .c{text-align:center}.nr-table td.strong{font-weight:800;color:var(--green)}
+.nr-table tbody tr:hover td{background:var(--nx-surface-var)}
+.nr-name{display:flex;align-items:center;gap:10px}
+.nr-name .nx-avatar{border-radius:10px;font-size:14px}
+
+@media(prefers-reduced-motion:reduce){.nr-indet i{animation:none}}
+@media(max-width:380px){.nr-two{grid-template-columns:1fr}}
+
+/* nx.css resolves its aliases on :root, so dark tokens (body.dark) must be re-bound for our screens */
+body.dark .nr-root,body.dark .nx-dlg.nr-wide-dlg{--nx-surface-var:var(--mint2);--nx-secondary-container:var(--mint);--nx-outline-var:var(--line)}
