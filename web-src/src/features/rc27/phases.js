@@ -102,8 +102,46 @@
     return R(recs.reduce((x,r)=>x+Math.max(0,Number(r.pages_count)||0),0));
   }
 
+
+  // ================= durable outbox (writes made offline replay in order when the connection returns) =================
+  const QK='halaqati_phase_outbox_v1',SK='halaqati_phase_snapshot_v1';
+  const readQ=()=>{try{return JSON.parse(localStorage.getItem(QK)||'[]')}catch(_e){return []}};
+  const writeQ=q=>{try{localStorage.setItem(QK,JSON.stringify(q))}catch(_e){}};
+  const isOnline=()=>navigator.onLine&&state.networkVerified!==false&&!state.offline;
+  async function exec(op){
+    let r;
+    if(op.kind==='upsert')r=await db.from(op.table).upsert(op.obj,{onConflict:op.onConflict});
+    else if(op.kind==='update')r=await db.from(op.table).update(op.obj).eq(op.key,op.val);
+    else if(op.kind==='rpc')r=await db.rpc(op.name,op.args);
+    if(r&&r.error)throw r.error;
+    return r&&r.data;
+  }
+  const isNetErr=e=>/Failed to fetch|NetworkError|network|timeout|load failed/i.test(String(e?.message||e));
+  async function send(op){
+    if(!isOnline()){const q=readQ();q.push({...op,id:crypto.randomUUID(),at:Date.now()});writeQ(q);S.queued=q.length;toast('حُفظ على الجهاز وسيُرفع عند عودة الاتصال');return {queued:true}}
+    try{return {data:await exec(op)}}catch(e){if(isNetErr(e)){const q=readQ();q.push({...op,id:crypto.randomUUID(),at:Date.now()});writeQ(q);S.queued=q.length;toast('انقطع الاتصال؛ حُفظت العملية وستُرفع تلقائيًا');return {queued:true}}throw e}
+  }
+  let flushing=false;
+  async function flush(){
+    if(flushing||!isOnline())return;const q=readQ();if(!q.length)return;flushing=true;
+    try{
+      const left=[];let failed=false;
+      for(const op of q){
+        if(failed){left.push(op);continue}
+        try{await exec(op)}catch(e){if(isNetErr(e)){failed=true;left.push(op)}else{console.warn('phase op dropped',op.kind,op.name||op.table,e);op.error=String(e.message||e);op.dead=true;left.push(op)}}
+      }
+      writeQ(left.filter(o=>!o.dead||true));S.queued=left.filter(o=>!o.dead).length;
+      if(left.length!==q.length){await load(true);if(typeof render==='function'&&state.page==='plans')render()}
+    }finally{flushing=false}
+  }
+  window.addEventListener('online',()=>setTimeout(flush,800));setInterval(flush,30000);
+  function saveSnap(){try{localStorage.setItem(SK,JSON.stringify({u:state.user?.id,plans:S.plans,phases:S.phases,states:S.states,templates:S.templates}))}catch(_e){}}
+  function loadSnap(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j&&(!state.user||j.u===state.user.id)){S.plans=j.plans||[];S.phases=j.phases||[];S.states=j.states||[];S.templates=j.templates||[]}}catch(_e){}}
+  loadSnap();
+  window.rc27PhaseQueueCount=()=>readQ().filter(o=>!o.dead).length;
   // ================= data =================
   async function load(force){
+    if(!isOnline())return;
     if(!force&&S.loading)return S.loading;
     if(!force&&Date.now()-S.at<60000&&S.phases.length)return;
     S.loading=(async()=>{
@@ -115,7 +153,7 @@
           db.from('smart_plan_phase_states').select('*').order('updated_at',{ascending:false}).limit(8000),
           db.from('smart_plan_phase_templates').select('*').eq('active',true).order('updated_at',{ascending:false}).limit(500)]);
         if(ph.error)throw ph.error;
-        S.plans=pl.data||[];S.phases=ph.data||[];S.states=ps.data||[];S.templates=tp.data||[];S.err=null;S.at=Date.now();
+        S.plans=pl.data||[];S.phases=ph.data||[];S.states=ps.data||[];S.templates=tp.data||[];S.err=null;S.at=Date.now();saveSnap();
       }catch(e){S.err=e.message||String(e)}finally{S.loading=null}
     })();
     return S.loading;
@@ -133,11 +171,21 @@
   window.rc27PhasesPreload=()=>{if(navigator.onLine&&state.networkVerified&&state.user)load(false)};
 
   // ================= writes (mirror HalaqatiRepository) =================
-  const needOnline=()=>{if(!navigator.onLine||!state.networkVerified)throw new Error('هذه العملية تحتاج اتصالًا بالإنترنت')};
+  const needOnline=()=>{};
   const planOf=id=>S.plans.find(p=>p.id===id);
   const phasesOf=pid=>S.phases.filter(p=>p.plan_id===pid&&p.status!=='archived').sort((a,b)=>a.phase_order-b.phase_order);
   const stateOf=(pid,sid)=>S.states.find(x=>x.phase_id===pid&&x.student_id===sid);
   const studentOf=id=>(window.RC27?.master?.students||state.students).find(s=>s.id===id);
+
+  function localApplyPhase(obj,isNew){const i=S.phases.findIndex(x=>x.id===obj.id);if(i>=0)S.phases[i]={...S.phases[i],...obj};else S.phases.push(obj);saveSnap()}
+  function localApplyTransition(planId,fromId,toId,rows){
+    const to=S.phases.find(p=>p.id===toId),starts=!to||String(to.start_date).slice(0,10)<=T0(),now=new Date().toISOString();
+    rows.forEach(r=>{
+      const up=(phaseId,o)=>{const i=S.states.findIndex(x=>x.phase_id===phaseId&&x.student_id===r.studentId);if(i>=0)S.states[i]={...S.states[i],...o};else S.states.push({phase_id:phaseId,student_id:r.studentId,settings:{},carry_shortfall_pages:0,...o})};
+      up(fromId,{status:'completed',frozen_completed_pages:r.completed,frozen_target_pages:r.target??null,completion_percent:r.target>0.001?R(r.completed/r.target*100,1):null,completed_at:now});
+      up(toId,{status:starts?'active':'not_started',target_pages_override:r.sardOverride??null,carry_shortfall_pages:Math.max(0,r.carry||0)});
+    });saveSnap();
+  }
   async function syncParent(planId){
     const rows=phasesOf(planId);if(!rows.length)return;
     const start=rows.map(p=>String(p.start_date).slice(0,10)).sort()[0],end=rows.map(p=>String(p.end_date).slice(0,10)).sort().at(-1),hf=rows.find(p=>p.phase_type==='hifz');
@@ -148,7 +196,7 @@
       let sp=hf.range_start_page,ep=hf.range_end_page;if(sp!=null&&ep!=null&&sp>ep)[sp,ep]=[ep,sp];
       obj.range_start_page=sp??null;obj.range_end_page=ep??null;obj.range_start_surah=hf.range_start_surah??null;obj.range_start_ayah=hf.range_start_ayah??null;obj.range_end_surah=hf.range_end_surah??null;obj.range_end_ayah=hf.range_end_ayah??null;
     }
-    const {error}=await db.from('smart_plans').update(obj).eq('id',planId);if(error)throw error;
+    await send({kind:'update',table:'smart_plans',obj,key:'id',val:planId});
   }
   async function savePhase(d){
     needOnline();
@@ -182,13 +230,13 @@
     if(issues.length)throw new Error(issues.map(x=>x.message).join('؛ '));
     const now=new Date().toISOString(),expected=d.expectedRevision??existing?.revision??1;
     const obj={id,plan_id:d.planId,phase_order:d.phaseOrder,phase_type:d.phaseType,title:(d.title||'').trim()||(d.phaseType==='sard'?'مرحلة السرد':d.phaseType==='tathbit'?'مرحلة التثبيت':'مرحلة الحفظ'),start_date:d.startDate,end_date:d.endDate,schedule_weekdays:weekdays,goal_mode:d.goalMode,goal_unit:d.goalUnit,target_units:d.targetUnits??null,target_pages:d.targetPages??null,distribution_mode:d.distributionMode,start_mode:d.startMode,range_start_page:rs.page,range_end_page:re.page,range_start_surah:rs.surah,range_start_ayah:rs.ayah,range_end_surah:re.surah,range_end_ayah:re.ayah,allow_surplus:d.allowSurplus!==false,status:d.status,settings,revision:existing?expected+1:1,updated_at:now};
-    if(!existing){obj.created_by=state.user.id;const {error}=await db.from('smart_plan_phases').upsert(obj,{onConflict:'id'});if(error)throw error}
-    else{const patch={...obj};delete patch.id;delete patch.plan_id;const {error}=await db.rpc('rc112_update_plan_phase',{p_phase_id:id,p_expected_revision:expected,p_patch:patch});if(error)throw error}
-    await load(true);await syncParent(d.planId);return id;
+    if(!existing){obj.created_by=state.user.id;await send({kind:'upsert',table:'smart_plan_phases',obj,onConflict:'id'})}
+    else{const patch={...obj};delete patch.id;delete patch.plan_id;await send({kind:'rpc',name:'rc112_update_plan_phase',args:{p_phase_id:id,p_expected_revision:expected,p_patch:patch}})}
+    localApplyPhase(obj,!existing);await load(true);await syncParent(d.planId);return id;
   }
   async function setPhaseStatus(id,status){
     needOnline();if(!['draft','active','completed','archived'].includes(status))throw new Error('حالة المرحلة غير صالحة');
-    const {error}=await db.from('smart_plan_phases').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error)throw error;await load(true);
+    await send({kind:'update',table:'smart_plan_phases',obj:{status,updated_at:new Date().toISOString()},key:'id',val:id});const ph=S.phases.find(x=>x.id===id);if(ph)ph.status=status;saveSnap();await load(true);
   }
   async function upsertState(phaseId,studentId,o){
     needOnline();
@@ -198,12 +246,12 @@
     const obj={phase_id:phaseId,student_id:studentId,status:o.status,target_pages_override:o.targetOverride??ex?.target_pages_override??null,start_date_override:o.startOverride??ex?.start_date_override??null,end_date_override:o.endOverride??ex?.end_date_override??null,frozen_completed_pages:o.frozenCompleted??ex?.frozen_completed_pages??null,frozen_target_pages:o.frozenTarget??ex?.frozen_target_pages??null,completion_percent:o.percent??ex?.completion_percent??null,carry_shortfall_pages:o.carry??ex?.carry_shortfall_pages??0,settings:o.settings||ex?.settings||{},updated_at:now,updated_by:state.user.id};
     if(ex?.id)obj.id=ex.id;
     if(o.status==='completed')obj.completed_at=ex?.completed_at||now;else if(ex?.completed_at)obj.completed_at=ex.completed_at;
-    const {error}=await db.from('smart_plan_phase_states').upsert(obj,{onConflict:'phase_id,student_id'});if(error)throw error;
+    await send({kind:'upsert',table:'smart_plan_phase_states',obj,onConflict:'phase_id,student_id'});const i=S.states.findIndex(x=>x.phase_id===phaseId&&x.student_id===studentId);if(i>=0)S.states[i]={...S.states[i],...obj};else S.states.push(obj);saveSnap();
   }
   async function planEvent(planId,studentId,type,payload){
     const cid=crypto.randomUUID(),obj={id:crypto.randomUUID(),client_event_id:cid,plan_id:planId,student_id:studentId,event_type:type,event_date:T0(),payload,created_by:state.user.id};
     if(payload.phase_id)obj.phase_id=payload.phase_id;
-    const {error}=await db.from('smart_plan_events').upsert(obj,{onConflict:'client_event_id'});if(error)throw error;
+    await send({kind:'upsert',table:'smart_plan_events',obj,onConflict:'client_event_id'});
   }
   async function completePhaseForStudent(plan,phaseId,sid,done,target){
     const pct=target>0.001?R(done/target*100,1):null;
@@ -213,7 +261,7 @@
   async function transition(planId,fromId,toId,rows){
     needOnline();if(!rows.length)throw new Error('لا يوجد طلاب للانتقال');
     const payload=rows.map(r=>({student_id:r.studentId,completed_pages:Math.max(0,r.completed),target_pages:r.target??null,completion_percent:r.target>0.001?R(r.completed/r.target*100,1):null,carry_shortfall_pages:Math.max(0,r.carry||0),sard_target_pages_override:r.sardOverride??null}));
-    const {error}=await db.rpc('rc112_transition_plan_students',{p_plan_id:planId,p_from_phase_id:fromId,p_to_phase_id:toId,p_rows:payload});if(error)throw error;await load(true);
+    await send({kind:'rpc',name:'rc112_transition_plan_students',args:{p_plan_id:planId,p_from_phase_id:fromId,p_to_phase_id:toId,p_rows:payload}});localApplyTransition(planId,fromId,toId,rows);await load(true);
   }
   async function bulkCycles(rows){
     needOnline();if(!rows.length)throw new Error('لا يوجد طلاب لتحديث دورة الحفظ والسرد');
@@ -222,12 +270,12 @@
       if(!(r.sardTarget>0))throw new Error('هدف السرد يجب أن يكون أكبر من صفر');if(![ROUTE_NAS,ROUTE_BAQ].includes(r.route))throw new Error('اتجاه السرد غير صالح');
       return {plan_id:r.planId,student_id:r.studentId,hifz_completed_pages:Math.max(0,r.hifzCompleted),hifz_target_pages:r.hifzTarget??null,hifz_completion_percent:r.hifzTarget>0.001?R(Math.max(0,r.hifzCompleted)/r.hifzTarget*100,1):null,hifz_start_date:r.hifzStart,hifz_end_date:r.hifzEnd,sard_start_date:r.sardStart,sard_end_date:r.sardEnd,sard_target_pages:r.sardTarget,sard_route_direction:r.route,sard_weekdays:[...new Set(r.weekdays)].filter(x=>x>=0&&x<=6),carry_shortfall_pages:Math.max(0,r.carry||0)};
     });
-    const {error}=await db.rpc('rc113_bulk_configure_plan_cycles',{p_rows:payload});if(error)throw error;await load(true);
+    await send({kind:'rpc',name:'rc113_bulk_configure_plan_cycles',args:{p_rows:payload}});await load(true);
   }
   async function saveTemplate(halaqaId,name,mode,definition,id){
     needOnline();if(!['dates','weeks','manual'].includes(mode))throw new Error('نوع قالب المراحل غير صالح');
     const obj={id:id||crypto.randomUUID(),halaqa_id:halaqaId,name:(name||'').trim()||'خطة الحفظ الشهرية',template_mode:mode,definition,active:true,updated_at:new Date().toISOString(),created_by:state.user.id};
-    const {error}=await db.from('smart_plan_phase_templates').upsert(obj,{onConflict:'id'});if(error)throw error;await load(true);return obj.id;
+    await send({kind:'upsert',table:'smart_plan_phase_templates',obj,onConflict:'id'});S.templates=[obj,...S.templates.filter(x=>x.id!==obj.id)];saveSnap();await load(true);return obj.id;
   }
   async function applyTemplate(plan,tpl){
     needOnline();
@@ -268,10 +316,10 @@
     for(const d of defs.sort((a,b)=>a.phaseOrder-b.phaseOrder))await savePhase(d);
   }
   async function startMonth(){
-    needOnline();const m=T0().slice(0,8)+'01';
+    if(!isOnline())throw new Error('يلزم اتصال بالإنترنت لبدء دورة شهر جديدة');const m=T0().slice(0,8)+'01';
     const {data,error}=await db.rpc('rc19_start_month',{p_month_start:m});if(error)throw error;S.recs.clear();await load(true);return data;
   }
-  window.RC27Phases={S,load,loadRecs,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
+  window.RC27Phases={S,load,loadRecs,flush,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
 
   // ================= recitation tagging (native: tathbit never carries a phase) =================
   window.rc27TagPhase=function(data){

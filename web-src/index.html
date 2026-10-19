@@ -8,6 +8,9 @@
   <title>حلقتي</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="./core/cairo.css" />
+<script>(function(){var K='halaqati_view_v1',r=document.documentElement,framed=/[?&]framed=1/.test(location.search);try{var q=new URLSearchParams(location.search).get('view');if(q&&/^(desktop|mobile|auto)$/.test(q))localStorage.setItem(K,q)}catch(e){}var pref='auto';try{pref=localStorage.getItem(K)||'auto'}catch(e){}
+if(!framed&&pref==='mobile'&&window.top===window.self&&window.innerWidth>=700){location.replace('./mobile.html'+location.hash);return}
+function ap(){var p='auto';try{p=localStorage.getItem(K)||'auto'}catch(e){}var w=window.innerWidth,v=p==='desktop'?'desktop':p==='mobile'?'mobile':(w>=1024?'desktop':'mobile');r.setAttribute('data-view',v);r.setAttribute('data-wide','0');r.setAttribute('data-view-pref',p)}ap();window.addEventListener('resize',ap);window.rc27ApplyView=ap})()</script>
 </head>
 <body>
 <div id="rc27Splash" role="img" aria-label="حلقاتي"><div class="rc27-splash-art"><img src="./brand/logo.svg" width="150" height="150" alt=""></div><div class="rc27-splash-credit"><b>صُنع بأيدٍ شرقية</b><span>الشرقية — خانيونس</span><small>Designed by : Dr. Mohammed Samir Abu Younis</small></div></div><script>try{var d=JSON.parse(localStorage.getItem('halaqati_display_v1')||'{}');if(d.reduceMotion||/[?&]n=|[?&]notification/.test(location.search)){document.getElementById('rc27Splash').remove()}}catch(e){}setTimeout(function(){var x=document.getElementById('rc27Splash');if(x)x.remove()},7000)</script>

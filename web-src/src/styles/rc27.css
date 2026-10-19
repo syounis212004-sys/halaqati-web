@@ -76,7 +76,7 @@ body.dark .nav .dtile{background:#22332C99;color:#E9F3EE}body.dark .nav .dtile.a
 .rc27-hero>*{position:relative;z-index:1}
 .rc27-hero>.rc27-ambient{position:absolute!important;z-index:0!important;bottom:-62px;inset-inline-end:-54px;width:190px;height:190px;opacity:.17;pointer-events:none}
 .rc27-hero>.rc27-hero-art{position:absolute!important;z-index:1;top:10px;inset-inline-end:14px;width:68px;height:68px}
-.rc27-hero:has(.rc27-hero-art) h2,.rc27-hero:has(.rc27-hero-art) p{padding-inline-end:76px}
+html[data-view="desktop"] .rc27-hero:has(button) .rc27-hero-art{display:none}
 .rc27-empty-art{display:flex;justify-content:center;margin-bottom:6px}
 .rc27-sync-art,.rc27-signup-art,.rc27-pending-art{display:flex;justify-content:center}
 .rc27-signup-art .rc27-lt,.rc27-pending-art .rc27-lt{width:84px;height:84px}
