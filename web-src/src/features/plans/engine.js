@@ -302,7 +302,7 @@ function eventAdjustment(events = []) {
   }, 0);
 }
 
-function buildCompletion(planInput, studentId, records = [], sessions = [], events = []) {
+function buildCompletionBase(planInput, studentId, records = [], sessions = [], events = []) {
   const plan = normalizePlan(planInput);
   const sessionMap = new Map((sessions || []).map((session) => [session.id, session]));
   const relevant = relevantRecords(plan, studentId, records, sessionMap);
@@ -331,7 +331,7 @@ function buildCompletion(planInput, studentId, records = [], sessions = [], even
     const retryLineKeys = orderedLineKeys.filter((key) => lineState.has(key) && !lineState.get(key)?.passing);
     let nextLineIndex = orderedLineKeys.findIndex((key) => !lineState.get(key)?.passing);
     if (nextLineIndex < 0) nextLineIndex = null;
-    amount = clamp(amount + eventAdjustment(events), 0, plan.target_pages);
+    amount = Math.max(0, amount + eventAdjustment(events));
     return {
       amount: round(amount),
       completedPages: lineKeysToPages(completedLineKeys),
@@ -373,7 +373,7 @@ function buildCompletion(planInput, studentId, records = [], sessions = [], even
     }
   }
 
-  amount = clamp(amount + eventAdjustment(events), 0, plan.target_pages);
+  amount = Math.max(0, amount + eventAdjustment(events));
   const completedPages = exact
     ? [...pageState.entries()].filter(([, item]) => item.passing).map(([page]) => page).sort((a, b) => a - b)
     : [];
@@ -392,6 +392,42 @@ function buildCompletion(planInput, studentId, records = [], sessions = [], even
   }
 
   return { amount, completedPages, retryPages: [...new Set(retryPages)], completedLineKeys: [], retryLineKeys: [], nextLineIndex: null, nextPage, dailyAmounts, relevant, pageState, lineState, linePlan: false, targetLines: 0 };
+}
+
+
+// Native RC27.7 parity: a hifz plan's completed amount is the continuous stretch from the FIRST ayah recited in the plan
+// month to the LAST ayah reached along the route (15 lines per page); daily amounts are the new lines each day pushed the frontier.
+const SPAN_NAS = 'reverse_surahs_forward_ayahs';
+function spanPosition(surah, ayah, route) { return ((route === SPAN_NAS ? 200 - surah : surah) * 1000) + ayah; }
+function spanCompletion(plan, relevant) {
+  const provider = globalThis.rc27RouteLineKeys;
+  if (plan.plan_type !== 'hifz' || typeof provider !== 'function') return null;
+  const route = plan.settings?.route_direction || SPAN_NAS;
+  const ayahLevel = relevant.filter((r) => isPassing(r, plan) && r.start_surah && r.start_ayah && r.end_surah && r.end_ayah);
+  if (!ayahLevel.length) return null;
+  const loc = (s, a) => ({ s: Number(s), a: Number(a) });
+  let base = null;
+  for (const r of ayahLevel) { const l = loc(r.start_surah, r.start_ayah); if (!base || spanPosition(l.s, l.a, route) < spanPosition(base.s, base.a, route)) base = l; }
+  const daily = new Map(); const covered = new Set(); let frontier = null;
+  for (const r of ayahLevel) {
+    const end = loc(r.end_surah, r.end_ayah);
+    if (frontier && spanPosition(end.s, end.a, route) <= spanPosition(frontier.s, frontier.a, route)) continue;
+    const keys = provider(frontier || base, end, route);
+    if (!keys) return null;
+    const before = covered.size;
+    keys.forEach((k) => covered.add(k));
+    const delta = covered.size - before;
+    if (delta > 0) daily.set(r._planDate, (daily.get(r._planDate) || 0) + delta / 15);
+    frontier = end;
+  }
+  return { amount: covered.size / 15, daily };
+}
+function buildCompletion(planInput, studentId, records = [], sessions = [], events = []) {
+  const base = buildCompletionBase(planInput, studentId, records, sessions, events);
+  const plan = normalizePlan(planInput);
+  const span = spanCompletion(plan, base.relevant || []);
+  if (!span) return base;
+  return { ...base, amount: round(Math.max(0, span.amount + eventAdjustment(events))), dailyAmounts: span.daily };
 }
 
 function approvedMilestoneKeys(events = []) {

@@ -96,12 +96,14 @@
     return rows.filter(r=>{const d=String(r.session_date||'').slice(0,10);if(d<plan.start_date||d>plan.end_date)return false;const tagged=r.phase_id||r.selection_data?.smart_plan_phase_id;if(tagged)return tagged===ph.id;return typeOk(r.activity_type)});
   }
   function completedPages(plan,ph,sid,st){
+    // native: frozen result first; else the active phase's engine progress; else (non-sard) the parent plan's progress
     if(st&&st.frozen_completed_pages!=null)return Number(st.frozen_completed_pages);
-    const recs=phaseRecs(plan,ph,sid);
-    if((ph.phase_type||ph.type)==='hifz')return R(hifzSpanPages(recs,plan.settings?.route_direction||ROUTE_NAS));
-    return R(recs.reduce((x,r)=>x+Math.max(0,Number(r.pages_count)||0),0));
+    const sn=snapshot(plan,T0()),pt=ph.phase_type||ph.type;
+    if(sn.phase&&sn.phase.id===ph.id&&sn.phaseProgress)return R(sn.phaseProgress.completed);
+    if(pt==='sard')return 0;
+    if(sn.phase&&sn.phase.phase_type==='sard')return 0;
+    return R((sn.phaseProgress?sn.phaseProgress.completed:sn.raw?.completed)||0);
   }
-
 
   // ================= durable outbox (writes made offline replay in order when the connection returns) =================
   const QK='halaqati_phase_outbox_v1',SK='halaqati_phase_snapshot_v1';
@@ -139,6 +141,74 @@
   function loadSnap(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j&&(!state.user||j.u===state.user.id)){S.plans=j.plans||[];S.phases=j.phases||[];S.states=j.states||[];S.templates=j.templates||[]}}catch(_e){}}
   loadSnap();
   window.rc27PhaseQueueCount=()=>readQ().filter(o=>!o.dead).length;
+
+  // ================= native parity: phase-aware plan + engine progress (HalaqatiRepository.phaseAwarePlan) =================
+  const eng=()=>window.HalaqatiSmartPlansEngine;
+  const MAXAYAH=s=>ayahCounts[s-1];
+  const layoutOf=()=>typeof smartPlanQuranLayout==='function'?smartPlanQuranLayout():null;
+  const pageOfAyah=(s,a)=>{const l=layoutOf();return l?Number(l.page?.[globalAyah(s,a)]||0):0};
+  function routeLines(from,to,route){
+    const layout=layoutOf();if(!layout)return null;const out=[],seen=new Set,step=route===ROUTE_NAS?-1:1;
+    for(let s=from.s;step<0?s>=to.s:s<=to.s;s+=step){const a0=s===from.s?from.a:1,a1=s===to.s?to.a:MAXAYAH(s);for(let a=a0;a<=a1;a++)for(const k of smartPlanAyahLineKeys(s,a,layout))if(!seen.has(k)){seen.add(k);out.push(k)}}
+    return out;
+  }
+  window.rc27RouteLineKeys=routeLines;
+  function previewPagesFrom(start,targetPages,route){
+    const layout=layoutOf();if(!layout||!(targetPages>0))return null;const need=Math.max(1,Math.ceil(targetPages*15-1e-9)),keys=new Set,order=[];let end=start;
+    const step=route===ROUTE_NAS?-1:1;
+    outer:for(let s=start.s;step<0?s>=1:s<=114;s+=step){for(let a=(s===start.s?start.a:1);a<=MAXAYAH(s);a++){for(const k of smartPlanAyahLineKeys(s,a,layout))if(!keys.has(k)){keys.add(k);order.push(k)}end={s,a};if(keys.size>=need)break outer}}
+    return {start,end,lineKeys:order,startPage:Number(order[0]?.split(':')[0])||pageOfAyah(start.s,start.a),endPage:Number(order.at(-1)?.split(':')[0])||pageOfAyah(end.s,end.a)};
+  }
+  function exactRange(start,end,route){const keys=routeLines(start,end,route);if(!keys||!keys.length)return null;return {start,end,lineKeys:keys,startPage:Number(keys[0].split(':')[0]),endPage:Number(keys.at(-1).split(':')[0])}}
+  const tagOf=r=>{const v=r.selection_data?.smart_plan_phase_id||r.phase_id;return v&&!['null','undefined'].includes(String(v).trim().toLowerCase())?String(v).trim():null};
+  const typeMatches=(pt,a)=>pt==='hifz'?['new_hifz','hifz'].includes(a):pt==='review'?['review','review_near','review_far'].includes(a):pt==='sard'?a==='sard':pt==='tathbit'?['tathbit','review_far'].includes(a):false;
+  const defaultRoute=type=>type==='hifz'?ROUTE_NAS:ROUTE_BAQ;
+  function nextLoc(e,route){if(e.a<MAXAYAH(e.s))return {s:e.s,a:e.a+1};const n=route===ROUTE_NAS?e.s-1:e.s+1;return (n<1||n>114)?null:{s:n,a:1}}
+  const recDate=r=>String(r.session_date||r.sessions?.session_date||'').slice(0,10);
+  function materialized(plan){const st=studentOf(plan.student_id);try{return typeof materializeSmartPlan==='function'?(materializeSmartPlan(plan,st)||plan):plan}catch(_e){return plan}}
+  function phaseAwarePlan(parent,phaseRow,state,studentRecs){
+    const base=materialized(parent);if(!phaseRow)return {plan:base,ph:null};
+    const ph=enginePhase(phaseRow),eff=effective(ph,state?[state]:[],state?.student_id),phase={...ph,start:eff.start,end:eff.end};
+    const resolvedT=resolvedTarget(phase,state||null),effTarget=Math.max(0,(resolvedT||0)+(Number(state?.carry_shortfall_pages)||0));
+    const pRoute=phase.type==='sard'?([ROUTE_NAS,ROUTE_BAQ].includes(phaseRow.settings?.route_direction)?phaseRow.settings.route_direction:(parent.settings?.sard_route_direction||defaultRoute(parent.plan_type))):(base.settings?.route_direction||defaultRoute(phase.type==='tathbit'?'tathbit':'hifz'));
+    const cfgStart=()=>phaseRow.range_start_surah&&phaseRow.range_start_ayah?{s:phaseRow.range_start_surah,a:phaseRow.range_start_ayah}:phaseRow.range_start_page?pageStartLoc(phaseRow.range_start_page):parent.range_start_surah&&parent.range_start_ayah?{s:parent.range_start_surah,a:parent.range_start_ayah}:parent.range_start_page?pageStartLoc(parent.range_start_page):null;
+    const explicitEnd=phaseRow.range_end_surah&&phaseRow.range_end_ayah?{s:phaseRow.range_end_surah,a:phaseRow.range_end_ayah}:phaseRow.range_end_page?pageEndLoc(phaseRow.range_end_page):null;
+    const parentTerm=parent.range_end_surah&&parent.range_end_ayah?{s:parent.range_end_surah,a:parent.range_end_ayah}:parent.range_end_page?pageEndLoc(parent.range_end_page):null;
+    let hist=null;
+    if(phase.startMode==='last_activity'||(phase.type==='sard'&&phase.startMode==='last_sard')){
+      const act=phase.type==='sard'?'sard':phase.type==='tathbit'?'tathbit':'hifz',okAct=a=>act==='hifz'?['new_hifz','hifz'].includes(a):act==='sard'?a==='sard':a==='tathbit';
+      const acc=studentRecs.filter(r=>recDate(r)<phase.start&&passing(r)&&okAct(String(r.activity_type).toLowerCase())&&r.end_surah&&r.end_ayah).sort((a,b)=>(recDate(a)+String(a.created_at||''))<(recDate(b)+String(b.created_at||''))?-1:1).at(-1);
+      if(acc)hist=nextLoc({s:+acc.end_surah,a:+acc.end_ayah},pRoute);
+    }
+    const start=hist||cfgStart(),hardTerm=explicitEnd||parentTerm,reverse=pRoute===ROUTE_NAS;
+    const reachable=(s,tm)=>reverse?(s.s>tm.s||(s.s===tm.s&&s.a<=tm.a)):(globalAyah(s.s,s.a)<=globalAyah(tm.s,tm.a)),passesT=(c,tm)=>reverse?(c.s<tm.s||(c.s===tm.s&&c.a>tm.a)):(globalAyah(c.s,c.a)>globalAyah(tm.s,tm.a));
+    let gen=null;
+    if(phase.type==='hifz'&&start){
+      if(phase.goalMode==='quran_range'&&explicitEnd)gen=exactRange(start,explicitEnd,pRoute);
+      else if(effTarget>0.001){const pv=previewPagesFrom(start,effTarget,pRoute);if(pv){gen=(hardTerm&&pv.end&&reachable(start,hardTerm)&&passesT(pv.end,hardTerm))?(exactRange(start,hardTerm,pRoute)||pv):pv}}
+    }
+    const lineKeys=phase.type!=='hifz'?[]:gen?gen.lineKeys:(phase.startMode==='plan_start'&&!phaseRow.range_start_page&&!phaseRow.range_start_surah?(base.settings?.memorization_line_keys||[]):[]);
+    const startPage=start?pageOfAyah(start.s,start.a):null,fallbackEnd=phase.type==='hifz'?explicitEnd:hardTerm,endPage=gen?.endPage??(fallbackEnd?pageOfAyah(fallbackEnd.s,fallbackEnd.a):null);
+    const rsp=gen?.startPage??startPage??phaseRow.range_start_page??(phase.type==='hifz'?parent.range_start_page:null),rep=endPage??phaseRow.range_end_page??(phase.type==='hifz'&&phase.goalMode==='quran_range'?parent.range_end_page:null);
+    const plan={...base,plan_type:phase.type,target_pages:effTarget,start_date:phase.start,end_date:phase.end,schedule_weekdays:[...phase.weekdays],catch_up_weekday:null,range_start_page:rsp??null,range_end_page:rep??null,milestone_mode:phase.type==='hifz'?base.milestone_mode:'none',milestone_requires_approval:phase.type==='hifz'&&!!base.milestone_requires_approval,settings:{...(base.settings||{}),memorization_line_keys:lineKeys,route_direction:pRoute}};
+    return {plan,ph:phase,state};
+  }
+  function pageStartLoc(page){const l=layoutOf();if(!l)return null;for(let g=1;g<l.page.length;g++)if(l.page[g]===page)return locOfGlobalA(g);return null}
+  function pageEndLoc(page){const l=layoutOf();if(!l)return null;let last=null;for(let g=1;g<l.page.length;g++){if(l.page[g]===page)last=g;else if(last&&l.page[g]>page)break}return last?locOfGlobalA(last):null}
+  const locOfGlobalA=g=>{let s=1;while(s<114&&ayahPrefix[s]<g)s++;return {s,a:g-ayahPrefix[s-1]}};
+  // snapshot = what the native app computes for one student's monthly plan today
+  function snapshot(plan,today){
+    const sid=plan.student_id,parent=plan,phRows=S.phases.filter(p=>p.plan_id===plan.id&&p.status!=='archived').filter(p=>plan.plan_type==='tathbit'?p.phase_type==='tathbit':p.phase_type!=='tathbit'),states=S.states.filter(x=>x.student_id===sid&&phRows.some(p=>p.id===x.phase_id));
+    const recs=(S.recs.get(sid)||[]).map(r=>({...r,session_date:recDate(r)})),events=(window.state?.smartPlanEvents||[]).filter(e=>e.plan_id===plan.id&&(!e.student_id||e.student_id===sid));
+    const act=activePhase(phRows.map(enginePhase),states,sid,today),actRow=act?phRows.find(p=>p.id===act.id):null,actState=actRow?states.find(x=>x.phase_id===actRow.id):null;
+    const pa=phaseAwarePlan(parent,actRow,actState,recs),plan2=pa.plan;
+    const inDates=r=>recDate(r)>=String(plan2.start_date).slice(0,10)&&recDate(r)<=String(plan2.end_date).slice(0,10);
+    const pr=recs.filter(r=>{const tag=tagOf(r);return actRow&&tag===actRow.id?inDates(r):actRow&&tag==null?inDates(r)&&typeMatches(plan2.plan_type,String(r.activity_type)):actRow?false:inDates(r)&&typeMatches(plan2.plan_type,String(r.activity_type))}).map(r=>actRow&&tagOf(r)===actRow.id?{...r,selection_data:{...(r.selection_data||{}),smart_plan_id:plan2.id}}:r);
+    let raw=null;try{raw=eng().calculateProgress({plan:plan2,studentId:sid,recitations:pr,sessions:state.sessions||[],events,today})}catch(e){console.warn('rc27 engine',e)}
+    const phaseProgress=act&&raw?progress(act,raw.completed,today,actState):null;
+    return {phase:actRow,phaseState:actState,raw,phaseProgress,completed:raw?raw.completed:0,plan:plan2};
+  }
+  window.RC27PhaseSnapshot=snapshot;
   // ================= data =================
   async function load(force){
     if(!isOnline())return;
@@ -160,9 +230,9 @@
   }
   async function loadRecs(studentIds){
     const need=studentIds.filter(id=>!S.recs.has(id));if(!need.length)return;
-    const since=addDays(T0().slice(0,8)+'01',-40);
-    for(let i=0;i<need.length;i+=40){
-      const chunk=need.slice(i,i+40);
+    const since=addDays(T0().slice(0,8)+'01',-190);
+    for(let i=0;i<need.length;i+=15){
+      const chunk=need.slice(i,i+15);
       const {data}=await db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,created_at,phase_id,selection_data,sessions!inner(session_date)').in('student_id',chunk).gte('sessions.session_date',since).limit(10000);
       chunk.forEach(id=>S.recs.set(id,[]));
       (data||[]).forEach(r=>S.recs.get(r.student_id).push({...r,session_date:r.sessions?.session_date}));
@@ -319,7 +389,7 @@
     if(!isOnline())throw new Error('يلزم اتصال بالإنترنت لبدء دورة شهر جديدة');const m=T0().slice(0,8)+'01';
     const {data,error}=await db.rpc('rc19_start_month',{p_month_start:m});if(error)throw error;S.recs.clear();await load(true);return data;
   }
-  window.RC27Phases={S,load,loadRecs,flush,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
+  window.RC27Phases={S,snapshot,previewPagesFrom,load,loadRecs,flush,savePhase,setPhaseStatus,upsertState,completePhaseForStudent,transition,bulkCycles,saveTemplate,applyTemplate,startMonth,progress,activePhase,validateTimeline,enginePhase,completedPages,lifecycle,hifzSpanPages};
 
   // ================= recitation tagging (native: tathbit never carries a phase) =================
   window.rc27TagPhase=function(data){

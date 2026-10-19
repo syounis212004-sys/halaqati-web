@@ -31,8 +31,20 @@
   function dutyHtml(plan,phs){
     try{
       const t=T0(),sid=plan.student_id,act=P().activePhase(phs.map(P().enginePhase),S().states,sid,t);if(!act)return '';
+      try{
+        const sn=P().snapshot?P().snapshot(plan,t):null;
+        if(sn&&sn.raw&&sn.plan&&typeof decorateSmartPlanAssignment==='function'){
+          const a=decorateSmartPlanAssignment({...sn.plan,plan_type:sn.plan.plan_type},sn.raw,sid,t);
+          if(a&&a.ayahLabel&&Number(a.pages||a.scheduledPages||0)>0)return `<div class="notice" style="margin-top:8px"><b>ورد اليوم (${TYPE_AR[sn.plan.plan_type]||''})</b><div>${typeof smartPlanAssignmentLabel==='function'?h(smartPlanAssignmentLabel(a)):h(a.ayahLabel)} · ≈ ${fm(a.pages||a.scheduledPages)} ص</div>${canWrite()?`<button class="mini" onclick="rc27DutyNow('${sid}','${sn.plan.plan_type==='sard'?'sard':'new_hifz'}')">سمّع الآن</button>`:''}</div>`;
+        }
+      }catch(_e){}
       const raw=phs.find(x=>x.id===act.id),st=S().states.find(x=>x.phase_id===act.id&&x.student_id===sid),done=P().completedPages(plan,raw,sid,st),pr=P().progress(act,done,t,st);
       if(pr.complete&&pr.suggested==null)return '';
+      if(raw.phase_type==='hifz'){
+        const rt=routeOf(plan),terminal=termOf(rt),ends=(S().recs.get(sid)||[]).filter(r=>['new_hifz','hifz'].includes(String(r.activity_type).toLowerCase())&&r.end_surah&&r.end_ayah&&passingEv(r.evaluation)).sort((a,b)=>(String(a.session_date)+String(a.created_at))<(String(b.session_date)+String(b.created_at))?-1:1),last=ends.at(-1);
+        const msg=last&&posR(+last.end_surah,+last.end_ayah,rt)>=posR(terminal.s,terminal.a,rt)?'أتمّ الطالب مسار الحفظ كاملًا ووصل إلى نهايته. أنشئ له خطة مراجعة أو تثبيت أو غيّر مساره.':!last?'لا يوجد تسميع حفظ سابق لتحديد نقطة البداية. سجّل أول تسميع للطالب ليظهر المقرر.':'لم يُحسب مقدار الحفظ لهذا اليوم. راجع هدف الخطة وأيام الدوام.';
+        return `<div class="muted" style="margin-top:8px">ورد اليوم: ${h(msg)}</div>`;
+      }
       const route=raw.phase_type==='sard'?(raw.settings?.route_direction||routeOf(plan)):routeOf(plan),recs=(S().recs.get(sid)||[]).filter(r=>String(r.session_date)<=t),typeOk=a=>raw.phase_type==='sard'?String(a).toLowerCase()==='sard':['new_hifz','hifz'].includes(String(a).toLowerCase());
       const last=recs.filter(r=>typeOk(r.activity_type)&&r.end_surah&&r.end_ayah).sort((a,b)=>(String(a.session_date)+String(a.created_at))<(String(b.session_date)+String(b.created_at))?-1:1).at(-1);
       let start=null;
@@ -284,8 +296,8 @@
       const cand=S().plans.filter(p=>['hifz','tathbit'].includes(p.plan_type)&&p.status==='active'&&p.scope_type==='student'&&p.student_id&&p.range_start_surah&&p.range_start_ayah&&String(p.start_date).slice(0,10)<=t&&String(p.end_date).slice(0,10)>=t&&under((p.settings?.memorization_line_keys||[]).length||((p.range_start_page&&p.range_end_page)?(Math.abs(p.range_end_page-p.range_start_page)+1)*15:null),Number(p.target_pages)||0));
       const phased=new Set(S().phases.filter(x=>x.status!=='archived').map(x=>x.plan_id));
       for(const p of cand.filter(x=>!phased.has(x.id))){
-        const route=routeOf(p),start={s:p.range_start_surah,a:p.range_start_ayah},terminal=termOf(route),all=orderedLines(start,terminal,route);if(!all||!all.length)continue;
-        const lines=all.slice(0,Math.max(1,Math.ceil(Number(p.target_pages)*15))),end=endpointOfLine(lines.at(-1),true);if(!end)continue;
+        const route=routeOf(p),start={s:p.range_start_surah,a:p.range_start_ayah},pv=window.RC27Phases.previewPagesFrom(start,Number(p.target_pages),route);if(!pv||!pv.lineKeys.length)continue;
+        const lines=pv.lineKeys,end=pv.end;
         const pgs=normPages(Number(lines[0].split(':')[0]),Number(lines.at(-1).split(':')[0]));
         await db.from('smart_plans').update({range_end_surah:end.s,range_end_ayah:end.a,range_start_page:pgs[0]??null,range_end_page:pgs[1]??null,settings:{...(p.settings||{}),memorization_line_keys:lines},updated_at:new Date().toISOString()}).eq('id',p.id).select('id');
       }

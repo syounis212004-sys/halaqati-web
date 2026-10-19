@@ -133,7 +133,7 @@ function smartPlanProgress(plan,studentId,date=today()){
   if(smartPlanRenderMemo.active&&smartPlanRenderMemo.progress.has(memoKey))return smartPlanRenderMemo.progress.get(memoKey);
   let student=state.students.find(x=>String(x.id)===String(studentId)),materialized=materializeSmartPlan(plan,student);
   if(!materialized)materialized={...plan,target_units:plan.target_units||1,target_pages:plan.target_pages||1};
-  if(materialized.plan_type==='hifz')materialized={...materialized,settings:{...(materialized.settings||{}),minimum_daily_mode:materialized.settings?.minimum_daily_mode||'dynamic',pause_ranges:[...(materialized.settings?.pause_ranges||[]),...smartPlanSardPauseRanges(student)]}};
+  if(materialized.plan_type==='hifz')materialized={...materialized,settings:{...(materialized.settings||{}),minimum_daily_mode:materialized.settings?.minimum_daily_mode||'dynamic',pause_ranges:[...(materialized.settings?.pause_ranges||[])]}};
   let progress=smartPlansEngine.calculateProgress({plan:materialized,studentId,recitations:smartPlanStudentRecitations(studentId),sessions:state.sessions,events:smartPlanEventsFor(plan.id,studentId),today:date});
   progress.assignment=decorateSmartPlanAssignment(materialized,progress,studentId,date);
   if(smartPlanRenderMemo.active)smartPlanRenderMemo.progress.set(memoKey,progress);
