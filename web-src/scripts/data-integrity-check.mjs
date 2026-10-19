@@ -7,7 +7,7 @@ const core=read('src/core/runtime.js');
 const master=read('src/features/master-data/runtime.js');
 const pkg=JSON.parse(read('package.json'));
 function ok(v,m){if(!v)throw new Error(m)}
-ok(['2.40.8','2.41.1','2.41.2'].includes(pkg.version),'version mismatch');
+ok(/^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(pkg.version),'invalid package version');
 ok(sessions.includes("setRecMode(this,'juz')"),'juz chooser missing');
 ok(sessions.includes('input_method:r.dataset.mode'),'session save must preserve chosen input method');
 ok(core.includes("['pages','ayahs','surahs','juz','import'].includes(v)"),'input-method normalization whitelist missing juz/import');

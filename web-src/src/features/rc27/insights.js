@@ -13,6 +13,9 @@
   const addMonths=(d,n)=>{const x=new Date(d+'T00:00:00Z'),day=x.getUTCDate();x.setUTCDate(1);x.setUTCMonth(x.getUTCMonth()+n);const last=new Date(Date.UTC(x.getUTCFullYear(),x.getUTCMonth()+1,0)).getUTCDate();x.setUTCDate(Math.min(day,last));return x.toISOString().slice(0,10)};
   const POOR=['repeat','weak','إعادة','ضعيف'],REVIEW=['review_near','review_far','tathbit','sard'];
   const I={open:{},period:'month',cat:false,cmp:null,cmpAt:0,cmpKey:'',inactive:null,inactiveAt:0,seasons:null,seasonsAt:0,live:[],err:null,busy:false};
+  let insightOwner=null;
+  function ensureOwner(){const key=String(state.user?.id||'')+'|'+role();if(key===insightOwner)return;insightOwner=key;Object.assign(I,{cmp:null,cmpAt:0,cmpKey:'',inactive:null,inactiveAt:0,seasons:null,seasonsAt:0,live:[],err:null});for(const k of Object.keys(OV))delete OV[k]}
+  window.addEventListener('halaqati:sessionchange',()=>{I.cmpAt=0;I.inactiveAt=0;I.seasonsAt=0});
   const PERIODS=[['week','هذا الأسبوع'],['month','هذا الشهر'],['prev','الشهر الماضي'],['quarter','آخر 3 أشهر'],['year','آخر سنة']];
   const DURATIONS=[[14,'أسبوعان'],[30,'شهر'],[91,'3 أشهر'],[182,'6 أشهر'],[365,'سنة']];
 
@@ -33,13 +36,13 @@
     }).sort((a,b)=>b.ppS-a.ppS);
   }
   async function compareGroups(from,to,byCat){
-    if(!online())return null;
+    ensureOwner();if(!online())return null;
     const hs=(window.RC27?.master?.halaqas||state.halaqas||[]).filter(x=>x.active!==false&&!isProg(x));
     if(hs.length<2)return null;
     const hname=Object.fromEntries(hs.map(x=>[x.id,x.name])),stu=(window.RC27?.master?.students||state.students||[]).filter(s=>s.status==='active'&&hname[s.halaqa_id]);
-    const f=q=>q.gte('sessions.session_date',from).lte('sessions.session_date',to).limit(10000);
-    const [at,rc,se]=await Promise.all([f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')),f(db.from('recitation_entries').select('student_id,activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)')),
-      db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).lte('session_date',to).limit(5000)]);
+    const f=q=>q.gte('sessions.session_date',from).lte('sessions.session_date',to);
+    const [at,rc,se]=await Promise.all([window.HalaqatiData.result(()=>f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')).order('session_id').order('student_id'),()=>state.user?.id),window.HalaqatiData.result(()=>f(db.from('recitation_entries').select('student_id,activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)')).order('id'),()=>state.user?.id),
+      window.HalaqatiData.result(()=>db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).lte('session_date',to).order('id'),()=>state.user?.id)]);
     if(at.error||rc.error||se.error)throw (at.error||rc.error||se.error);
     const live=o=>o.sessions&&o.sessions.status!=='cancelled';
     if(!byCat){
@@ -48,7 +51,7 @@
         (at.data||[]).filter(live).map(o=>({g:o.sessions.halaqa_id,s:o.status})),(rc.data||[]).filter(live).map(o=>({g:o.sessions.halaqa_id,t:o.activity_type,p:Number(o.pages_count)||0,e:o.evaluation})));
       return {stats,names:hname};
     }
-    const cr=await db.from('student_categories').select('id,halaqa_id,name,active').order('name').limit(500);if(cr.error)throw cr.error;
+    const cr=await window.HalaqatiData.result(()=>db.from('student_categories').select('id,halaqa_id,name,active').order('name').order('id'),()=>state.user?.id);if(cr.error)throw cr.error;
     const cats=(cr.data||[]).filter(c=>c.active!==false&&hname[c.halaqa_id]),cname=Object.fromEntries(cats.map(c=>[c.id,c.name+' · '+hname[c.halaqa_id]]));
     const catOf={};stu.forEach(s=>{if(s.category_id&&cname[s.category_id])catOf[s.id]=s.category_id});
     const keys=new Set,attR=[],recR=[];
@@ -72,10 +75,10 @@
 
   // ---------- inactive students (14+ days) ----------
   async function loadInactive(){
-    if(Date.now()-I.inactiveAt<300000)return;I.inactiveAt=Date.now();
+    ensureOwner();if(Date.now()-I.inactiveAt<300000)return;I.inactiveAt=Date.now();
     if(!online()){I.inactive=null;return}
     try{
-      const today=T0(),from=addDays(today,-45),r=await db.from('recitation_entries').select('student_id,sessions!inner(session_date,status)').gte('sessions.session_date',from).limit(5000);
+      const today=T0(),from=addDays(today,-45),r=await window.HalaqatiData.result(()=>db.from('recitation_entries').select('student_id,sessions!inner(session_date,status)').gte('sessions.session_date',from).order('id'),()=>state.user?.id);
       if(r.error)throw r.error;
       const last={};(r.data||[]).forEach(o=>{if(!o.sessions||o.sessions.status==='cancelled')return;const d=o.sessions.session_date;if(o.student_id&&d>(last[o.student_id]||''))last[o.student_id]=d});
       if(!Object.keys(last).length){I.inactive=[];return}// an empty window means a failed read, not "nobody recited"
@@ -101,7 +104,7 @@
 
   // ---------- comparison ----------
   async function loadCmp(force){
-    const key=I.period+'|'+I.cat;
+    ensureOwner();const key=state.user?.id+'|'+I.period+'|'+I.cat;
     if(!force&&I.cmpKey===key&&Date.now()-I.cmpAt<300000)return;
     I.cmpKey=key;I.cmpAt=Date.now();
     try{const [f,t]=periodRange(I.period,T0()),r=await compareGroups(f,t,I.cat);if(r){I.cmp=r}else if(!I.cmp)I.cmp=null;rerender()}catch(_e){}
@@ -116,10 +119,11 @@
 
   // ---------- seasons ----------
   async function loadSeasons(force){
-    if(!force&&Date.now()-I.seasonsAt<300000)return;I.seasonsAt=Date.now();
+    ensureOwner();const user=state.user?.id;if(!force&&Date.now()-I.seasonsAt<300000)return;I.seasonsAt=Date.now();
     if(!online())return;
     try{
       const r=await db.from('competition_seasons').select('*').order('start_date',{ascending:false}).limit(30);
+      if(user!==state.user?.id)return;
       if(r.error){I.seasons=null;return}// table missing / no access: card stays hidden
       I.seasons=r.data||[];
       const act=I.seasons.find(s=>s.status==='active');I.live=[];
@@ -162,6 +166,7 @@
   window.rc27SeasonCreate=async function(){
     const name=(document.getElementById('rc27SeName').value||'').trim(),days=+document.getElementById('rc27SeDays').value,level=document.querySelector('input[name=rc27SeLvl]:checked')?.value||'halaqa';
     if(name.length<2)return toast('اكتب اسم الموسم');
+    if(!canManageSeasons())return;
     const r=await db.from('competition_seasons').insert({name,level,start_date:T0(),end_date:addDays(T0(),days),status:'active'});
     if(r.error){I.err=r.error.message||'تعذر إنشاء الموسم';toast(I.err)}else I.err=null;
     rc27CloseDlg();await loadSeasons(true);render();
@@ -171,7 +176,11 @@
     dlg(`<div class="card"><h3>إنهاء الموسم</h3><p>سيُحفظ الترتيب الحالي كنتيجة نهائية لموسم «${h(act.name)}» ويُغلق الموسم.</p><div class="actions"><button class="btn btn-primary" onclick="rc27SeasonClose('${act.id}')">إنهاء وحفظ</button><button class="btn btn-ghost" onclick="rc27CloseDlg()">إلغاء</button></div></div>`);
   };
   window.rc27SeasonClose=async function(id){
-    const winners=I.live.map((x,i)=>({rank:i+1,name:x.name,group_id:x.st.id,attendance:x.st.att,quality:x.st.quality,pages_per_student:x.st.ppS}));
+    if(!canManageSeasons())return;
+    const act=(I.seasons||[]).find(x=>x.id===id&&x.status==='active');if(!act)return;
+    let computed;try{computed=await compareGroups(String(act.start_date).slice(0,10),String(act.end_date).slice(0,10)<T0()?String(act.end_date).slice(0,10):T0(),act.level==='category')}catch(e){return toast('لم تُحفظ النتائج: '+e.message)}
+    if(!computed)return toast('لا تتوفر بيانات مكتملة لحفظ نتائج الموسم');
+    const winners=rank(computed.stats).map((x,i)=>({rank:i+1,name:computed.names[x.id]||'',group_id:x.id,attendance:x.att,quality:x.quality,pages_per_student:x.ppS}));
     const r=await db.from('competition_seasons').update({status:'closed',closed_at:new Date().toISOString(),winners}).eq('id',id);
     if(r.error){I.err=r.error.message||'تعذر إنهاء الموسم';toast(I.err)}else I.err=null;
     rc27CloseDlg();await loadSeasons(true);render();
@@ -191,10 +200,10 @@
       const names=I.inactive.slice(0,4).map(x=>x.name).join('، ')+(I.inactive.length>4?' …':'');
       out.push(shell('warning','⏳','طلاب لم يسمّعوا منذ فترة',open?'لم يُسجَّل لهم تسميع منذ 14 يومًا فأكثر':names,I.inactive.length,open?rows:'','inactive',open));
     }
-    if(r==='admin'||r==='supervisor'){out.push(cmpCard());out.push(seasonsCard(true))}
+    ensureOwner();if(r==='admin'||r==='supervisor'){out.push(cmpCard());out.push(seasonsCard(true))}else if(r==='teacher')out.push(seasonsCard(false));
     return out.join('');
   }
-  window.RC27Insights={cards,load(){loadInactive();if(role()==='admin'||role()==='supervisor'){loadCmp(false);loadSeasons(false)}},compareGroups};
+  window.RC27Insights={cards,load(){ensureOwner();loadInactive();loadSeasons(false);if(role()==='admin'||role()==='supervisor')loadCmp(false)},compareGroups};
 
   // ---------- guardian: overview cards ----------
   const MONTHS=['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
@@ -275,6 +284,7 @@
     const o=OV[sid];if(!o)return;const d=new Date();sendText(reportText(o,d.getMonth()+1,d.getFullYear()),'');
   };
   async function fillGuardian(){
+    ensureOwner();const user=state.user?.id;
     const box=document.getElementById('rc27GOv');if(!box)return;
     try{
       let html='';
@@ -291,7 +301,7 @@
       }
       await loadSeasons(true);
       if(I.seasons)html+=seasonsCard(false);
-      if(box.isConnected)box.innerHTML=html;
+      if(user===state.user?.id&&box.isConnected)box.innerHTML=html;
     }catch(e){console.warn('rc27 guardian insights',e)}
   }
   window.rc27FillGuardian=fillGuardian;

@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+function api(){const ctx={window:{},Date};vm.runInNewContext(fs.readFileSync(new URL('../src/features/plans/health.js',import.meta.url),'utf8'),ctx);return ctx.window.HalaqatiPlanHealth;}
+const plan={id:'p',schedule_weekdays:[1]},student={id:'s',full_name:'طالب'},progress={health:'red',plannedByToday:20,completed:5,behindBy:15};
+test('health notification only marked delivered after confirmed send',async()=>{const calls=[];const db={rpc:async(n)=>{calls.push(n);return {data:{should_notify:true,episode_key:'episode'}}}};await api().record(db,plan,student,progress,'2026-10-19',async()=>null);assert.deepEqual(calls,['rc19_record_plan_health']);});
+test('health uses native episode key to deduplicate with Android',async()=>{const calls=[];let msg;const db={rpc:async(n)=>{calls.push(n);return {data:{should_notify:true,episode_key:'e'}}}};await api().record(db,plan,student,progress,'2026-10-19',async(p)=>{msg=p;return {ok:true}});assert.equal(msg.source_key,'smart-plan-health:p:s:e');assert.equal(calls[1],'rc19_mark_plan_health_notified');});

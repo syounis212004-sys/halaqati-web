@@ -1,9 +1,15 @@
+import { version as webVersion } from '../package.json';
+import './core/view.js';
+import './core/install.js';
 import './styles/app.css';
 import './styles/uiux-pro-max.css';
 import './styles/live-halaqa.css';
 import './styles/certificates.css';
 import './styles/rc27.css';
 import './styles/apk.css';
+import './styles/responsive.css';
+import rc27DataUrl from './features/rc27/data.js?url';
+import sessionServerUrl from './features/sessions/server.js?url';
 import coreRuntimeUrl from './core/runtime.js?url';
 import navigationRuntimeUrl from './core/navigation.js?url';
 import latinDigitsRuntimeUrl from './core/latin-digits-runtime.js?url';
@@ -28,7 +34,10 @@ import rc27PhasesUrl from './features/rc27/phases.js?url';
 import rc27DashboardUrl from './features/rc27/dashboard.js?url';
 import rc27InsightsUrl from './features/rc27/insights.js?url';
 import rc27PlansUrl from './features/rc27/plans.js?url';
+import certificatePdfUrl from './features/certificates/pdf.js?url';
+import certificateServerUrl from './features/certificates/server.js?url';
 import certificatesRuntimeUrl from './features/certificates/runtime.js?url';
+import planHealthUrl from './features/plans/health.js?url';
 import smartPlansRuntimeUrl from './features/plans/runtime.js?url';
 import guardianRuntimeUrl from './features/guardian/runtime.js?url';
 import operationsRuntimeUrl from './features/operations/runtime.js?url';
@@ -43,6 +52,7 @@ import { registerHalaqatiPwa } from './core/pwa.js';
 import { installHalaqatiOfflineStore } from './core/offline-store.js';
 import { installSmartPlansEngine } from './features/plans/engine.js';
 const base = import.meta.env.BASE_URL;
+window.HALAQATI_WEB_VERSION=webVersion;
 
 async function boot() {
   installSmartPlansEngine(window);
@@ -55,6 +65,8 @@ async function boot() {
 
   // Phase 3: load the classic-compatible modules in dependency order. They share the
   // same global lexical environment as the old single file, preserving existing behavior.
+  await loadClassicScript(rc27DataUrl, { id: 'halaqati-complete-data' });
+  await loadClassicScript(sessionServerUrl, { id: 'halaqati-session-server' });
   await loadClassicScript(coreRuntimeUrl, { id: 'halaqati-core-runtime' });
   await loadClassicScript(latinDigitsRuntimeUrl, { id: 'halaqati-latin-digits-runtime' });
   await loadClassicScript(navigationRuntimeUrl, { id: 'halaqati-navigation-runtime' });
@@ -65,6 +77,7 @@ async function boot() {
   await loadClassicScript(settingsRuntimeUrl, { id: 'halaqati-settings-runtime' });
   await loadClassicScript(legacyUrl, { id: 'halaqati-legacy-runtime' });
   // Smart plans are additive and intentionally load after legacy overrides.
+  await loadClassicScript(planHealthUrl, { id: 'halaqati-native-plan-health' });
   await loadClassicScript(smartPlansRuntimeUrl, { id: 'halaqati-smart-plans-runtime' });
   // v2.42 parent dashboard/ranking layer depends on smart-plan calculations.
   await loadClassicScript(guardianRuntimeUrl, { id: 'halaqati-guardian-v242-runtime' });
@@ -80,6 +93,8 @@ async function boot() {
   // v2.40.8 saves the exact Chromium print layout directly to Downloads without Print Spooler; system printing remains isolated.
   await loadClassicScript(vectorPdfRuntimeUrl, { id: 'halaqati-vector-pdf-runtime' });
   // v2.41 manual local certificate center uses the same stable Chromium vector engine.
+  await loadClassicScript(certificatePdfUrl, { id: 'halaqati-arabic-certificate-pdf' });
+  await loadClassicScript(certificateServerUrl, { id: 'halaqati-certificate-server' });
   await loadClassicScript(certificatesRuntimeUrl, { id: 'halaqati-certificates-runtime' });
   // Startup stays last so every function/override is present before auth restoration begins.
   await loadClassicScript(rc27RuntimeUrl, { id: 'halaqati-rc27-runtime' });
@@ -98,7 +113,7 @@ async function boot() {
   installImportLazyLoading();
   registerHalaqatiPwa();
 
-  window.dispatchEvent(new CustomEvent('halaqati:ready', { detail: { version: '2.63.22', architecture: 'vite-offline-smart-plans-operations-suite-uiux-pro-max-performance-core-live-halaqa-latin-digits-chromium-direct-vector-pdf-layout-safe-mediastore-isolated-print-guardian-v6-cohort-ranks-local-certificates-official-capacitor-push-arabic-rtl' } }));
+  window.dispatchEvent(new CustomEvent('halaqati:ready', { detail: { version: webVersion, architecture: 'vite-offline-smart-plans-operations-suite-uiux-pro-max-performance-core-live-halaqa-latin-digits-chromium-direct-vector-pdf-layout-safe-mediastore-isolated-print-guardian-v6-cohort-ranks-local-certificates-official-capacitor-push-arabic-rtl' } }));
 }
 
 boot().catch((error) => {

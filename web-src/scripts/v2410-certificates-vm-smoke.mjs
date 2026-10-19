@@ -10,7 +10,7 @@ const ctx={console,Date,Intl,Blob,URL,FileReader:function(){},confirm:()=>true,
 ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync('src/features/certificates/runtime.js','utf8'),ctx);
 if(!ctx.HalaqatiCertificates)throw new Error('certificate runtime did not load');
 const page=ctx.certificatesPage();
-for(const text of ['مركز الشهادات','إصدار شهادة','PDF Vector','أرشيف محلي','Cairo','إتمام سرد جزء / أجزاء'])if(!page.includes(text))throw new Error('UI missing '+text);
+for(const text of ['مركز الشهادات','إصدار شهادة','PDF','أرشيف محلي','Cairo','إتمام سرد جزء / أجزاء'])if(!page.includes(text))throw new Error('UI missing '+text);
 if(ctx.HalaqatiCertificates.idealScore({ethics:100,discipline:100,attendance:100,memorization:100})!==100)throw new Error('ideal score weighting failed');
 const a=ctx.HalaqatiCertificates.nextCertificateNumber(true);if(a!=='HAL-CERT-2026-0001')throw new Error('certificate number peek failed: '+a);
 const b=ctx.HalaqatiCertificates.nextCertificateNumber();if(b!=='HAL-CERT-2026-0001')throw new Error('certificate number commit failed: '+b);

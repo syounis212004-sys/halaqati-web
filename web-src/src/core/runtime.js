@@ -58,7 +58,7 @@ function sessionIdForOfflineOp(op){if(!op)return null;if(op.type==='session')ret
 function normalizeOfflineOperation(op,index=0){
   let now=new Date().toISOString(),status=String(op?.status||'pending');if(!['pending','failed','syncing'].includes(status))status='pending';
   let dedupe=op?.dedupeKey||op?.key||`${op?.type||'op'}:${op?.id||offlineUuid()}`;
-  return {...cloneJson(op||{}),id:op?.id||offlineUuid(),userId:state.user?.id||op?.userId||'',dedupeKey:dedupe,key:op?.key||dedupe,sessionId:sessionIdForOfflineOp(op),status,attempts:Number(op?.attempts||0),lastError:op?.lastError||'',createdAt:op?.createdAt||now,updatedAt:now,order:Number(op?.order||Date.now()+index)}
+  return {...cloneJson(op||{}),id:op?.id||offlineUuid(),userId:state.user?.id||op?.userId||'',dedupeKey:dedupe,key:op?.key||dedupe,sessionId:sessionIdForOfflineOp(op),status,revision:Number(op?.revision||0),attempts:Number(op?.attempts||0),lastError:op?.lastError||'',createdAt:op?.createdAt||now,updatedAt:now,order:Number(op?.order||Date.now()+index)}
 }
 function readJsonLocal(key,fallback){try{let raw=key&&localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch{return fallback}}
 function readOfflineQueue(){if(state.offlineStoreReady)return state.offlineQueueCache||[];let raw=readJsonLocal(queueKey(),null);if(!raw)raw=readJsonLocal(legacyQueueKey(),[]);return Array.isArray(raw)?raw.map(normalizeOfflineOperation):[]}
@@ -211,7 +211,8 @@ function syncQueueStats(q=readOfflineQueue()){let failed=q.filter(x=>x.status===
 function updateSyncBadge(){let b=$('#syncBadge');if(!b)return;let q=readOfflineQueue(),st=syncQueueStats(q);state.pendingSync=q.length;b.className='sync-badge';if(state.syncing){b.classList.add('syncing');b.textContent=`مزامنة ${state.syncProcessed}/${state.syncTotal}`;return}if(state.authNeedsLogin&&q.length){b.classList.add('pending');b.textContent=`تسجيل الدخول للمزامنة · ${q.length}`;return}if(!state.networkVerified||state.offline){b.classList.add('offline');b.textContent=q.length?`بدون نت · ${q.length} محفوظ`:'جاهز دون إنترنت';return}if(st.failed){b.classList.add('pending');b.textContent=`مزامنة ${q.length} · فشل ${st.failed}`;return}if(q.length){b.classList.add('pending');b.textContent=`بانتظار المزامنة ${q.length}`;return}b.textContent='متصل · متزامن'}
 function enqueueOffline(op){
   let q=readOfflineQueue(),incoming=normalizeOfflineOperation(op),i=q.findIndex(x=>x.dedupeKey===incoming.dedupeKey||x.key===incoming.key);
-  if(i>=0){incoming.id=q[i].id;incoming.createdAt=q[i].createdAt;incoming.order=q[i].order;incoming.attempts=0;incoming.status='pending';incoming.lastError='';q[i]=incoming}else q.push(incoming);
+  if(i>=0&&incoming.type==='session'&&q[i].type==='session'){incoming.obj={...q[i].obj,...incoming.obj};if(q[i].intent==='create'||q[i].intent==='edit'&&incoming.intent==='status')incoming.intent=q[i].intent}
+  if(i>=0){incoming.revision=Number(q[i].revision||0)+1;incoming.id=q[i].id;incoming.createdAt=q[i].createdAt;incoming.order=q[i].order;incoming.attempts=0;incoming.status='pending';incoming.lastError='';q[i]=incoming}else q.push(incoming);
   writeOfflineQueue(q);state.offline=!state.networkVerified;cacheSnapshot();captureSyncSessionDependencies();return incoming
 }
 function resolveSessionId(id,map=readSessionMap()){return map[id]||id}
@@ -235,7 +236,7 @@ function saveReportOffline(payload){
   payload=cloneJson(payload);payload.rows=(payload.rows||[]).map(rr=>({...rr,dbId:isUuid(rr.dbId)?rr.dbId:offlineUuid()}));
   let at={id:rosterAttendance(sid)?.id||offlineUuid(),...payload.attendance,_offline:true},nt={id:rosterNote(sid)?.id||offlineUuid(),...payload.note,_offline:true};let oldA=rosterAttendance(sid),oldN=rosterNote(sid);if(oldA)Object.assign(oldA,at);else state.sessionRoster.attendance.push(at);if(oldN)Object.assign(oldN,nt);else state.sessionRoster.notes.push(nt);
   state.sessionRoster.recitations=state.sessionRoster.recitations.filter(x=>x.student_id!==sid);payload.rows.forEach(rr=>state.sessionRoster.recitations.push({id:rr.dbId,...decorateRecForOffline(rr.data),_offline:true}));
-  enqueueOffline({type:'report',key:`report:${seId}:${sid}`,dedupeKey:`report:${seId}:${sid}`,payload});rememberRoster(seId);toast('تم حفظ التقرير محلياً وسيُرفع تلقائياً')
+  enqueueOffline({type:'report',key:`report:${seId}:${sid}`,dedupeKey:`report:${seId}:${sid}`,payload});rememberRoster(seId);window.dispatchEvent(new CustomEvent('halaqati:reportchange',{detail:payload}));toast('تم حفظ التقرير محلياً وسيُرفع تلقائياً')
 }
 async function syncReportPayload(p,map){
   let seId=await ensureSyncSessionExists(p.sessionId,map),attendance={...p.attendance,session_id:seId},note={...p.note,session_id:seId};
@@ -248,9 +249,8 @@ async function applyOfflineOperation(op,map){
   if((op.type==='master_upsert'||op.type==='master_delete')&&typeof applyMasterOfflineOperation==='function')return await applyMasterOfflineOperation(op,map);
   if(op.type==='session'){
     let obj={...op.obj};delete obj._offline;if(isUuid(op.localId))obj.id=op.localId;else delete obj.id;
-    let r=await db.from('sessions').upsert(obj,{onConflict:'id'}).select().single();
-    if(r.error&&String(r.error.code)==='23505'){let ex=await db.from('sessions').select('*').eq('halaqa_id',obj.halaqa_id).eq('session_date',obj.session_date).eq('session_type',obj.session_type).eq('title',obj.title).maybeSingle();if(ex.error)throw ex.error;if(ex.data)r={data:ex.data,error:null}}
-    if(r.error)throw r.error;map[op.localId]=r.data.id;syncVerifiedServerSessions.add(String(r.data.id));writeSessionMap(map);let local=state.sessions.find(x=>String(x.id)===String(op.localId));if(local)Object.assign(local,r.data,{_offline:false});if(state.sessionView===op.localId)state.sessionView=r.data.id;if(state.offlineRosterCache[op.localId]&&r.data.id!==op.localId){state.offlineRosterCache[r.data.id]=state.offlineRosterCache[op.localId];delete state.offlineRosterCache[op.localId]}return
+    let r={data:await window.HalaqatiSessionServer.save(db,{...op,intent:op.intent||((state.sessions.find(x=>String(x.id)===String(op.localId))?._offline||isLocalSessionId(op.localId))?'create':'edit'),obj})};
+    if(r.error)throw r.error;map[op.localId]=r.data.id;syncVerifiedServerSessions.add(String(r.data.id));writeSessionMap(map);let local=state.sessions.find(x=>String(x.id)===String(op.localId));if(local){const newer=readOfflineQueue().find(x=>x.id===op.id&&Number(x.revision||0)!==Number(op.revision||0));Object.assign(local,r.data,newer?.obj||{},{id:r.data.id,_offline:!!newer})}if(state.sessionView===op.localId)state.sessionView=r.data.id;if(state.offlineRosterCache[op.localId]&&r.data.id!==op.localId){state.offlineRosterCache[r.data.id]=state.offlineRosterCache[op.localId];delete state.offlineRosterCache[op.localId]}return
   }
   if(op.type==='delete_session'){let id=resolveSessionId(op.payload.session_id,map);let r=await db.from('sessions').delete().eq('id',id);if(r.error)throw r.error;return}
   if(op.type==='attendance'){let seId=await ensureSyncSessionExists(op.payload.session_id,map),p={...op.payload,session_id:seId};let r=await db.from('attendance_records').upsert(p,{onConflict:'session_id,student_id'});if(r.error)throw r.error;if(typeof emitAttendanceNotification==='function')queueDeferredSyncNotification(()=>emitAttendanceNotification(p));return}
@@ -274,13 +274,14 @@ async function syncOfflineQueue({refreshAfter=true}={}){
   await pruneDeletedSessionOfflineData({silent:true});q=readOfflineQueue();if(!q.length){state.offline=false;state.authNeedsLogin=false;state.syncIssue='';clearSyncRecoverySessions();updateSyncBadge();cacheSnapshot();return}
   state.syncing=true;state.offline=false;state.authNeedsLogin=false;state.syncIssue='';state.syncProcessed=0;state.syncTotal=q.length;updateSyncBadge();let map=readSessionMap();
   let ordered=[...q].sort((a,b)=>offlineOperationPriority(a)-offlineOperationPriority(b)||Number(a.order||0)-Number(b.order||0));
-  let halted=false;
+  let halted=false,queuedAgain=false;
   for(let op of ordered){
     let current=readOfflineQueue().find(x=>x.id===op.id);if(!current)continue;if(current.status==='failed'&&Number(current.attempts||0)>=3)continue;
     try{
       try{await applyOfflineOperation(current,map)}catch(e){if(isAuthOrRlsError(e)){let ok=await ensureServerAuthSession({forceRefresh:true,silent:true});if(!ok)throw e;await applyOfflineOperation(current,map)}else throw e}
-      let left=readOfflineQueue().filter(x=>x.id!==op.id);writeOfflineQueue(left);state.syncProcessed++;updateSyncBadge()
+      let left=readOfflineQueue().filter(x=>x.id!==op.id||Number(x.revision||0)!==Number(current.revision||0));if(left.some(x=>x.id===op.id))queuedAgain=true;writeOfflineQueue(left);state.syncProcessed++;updateSyncBadge()
     }catch(e){
+      if(readOfflineQueue().some(x=>x.id===op.id&&Number(x.revision||0)!==Number(current.revision||0))){queuedAgain=true;continue}
       console.error('offline sync operation',current.type,e);
       if(typeof isMasterConflictError==='function'&&isMasterConflictError(e)){setOfflineOpState(op.id,{status:'failed',attempts:Number(current.attempts||0),lastError:String(e?.message||e).slice(0,300),conflict:e.masterConflict||null});state.syncProcessed++;updateSyncBadge();continue}
       if(isNetworkError(e)){setOfflineOpState(op.id,{status:'pending',lastError:'انقطع الاتصال أثناء المزامنة'});halted=true;break}
@@ -293,7 +294,7 @@ async function syncOfflineQueue({refreshAfter=true}={}){
   }
   state.syncing=false;let remaining=readOfflineQueue();if(!remaining.length){state.offline=false;state.authNeedsLogin=false;state.syncIssue='';state.offlineRosterCache={};clearSyncRecoverySessions();let mk=sessionMapKey();if(mk)localStorage.removeItem(mk);toast('تمت مزامنة البيانات المحفوظة بنجاح');if(refreshAfter){if(typeof refreshFromServer==='function')await refreshFromServer({renderAfter:false});else await loadAll(true);if(state.sessionView)await loadSessionRosterData(state.sessionView);render()}}
   else if(!halted){let st=syncQueueStats(remaining);if(st.failed)toast(`اكتملت المزامنة مع ${st.failed} عملية تحتاج إعادة محاولة`)}
-  cacheSnapshot();updateSyncBadge();renderSyncStatusDialog()
+  cacheSnapshot();updateSyncBadge();renderSyncStatusDialog();if(queuedAgain&&!halted)setTimeout(()=>syncOfflineQueue({refreshAfter}),80)
 }
 
 function monthlyPointsForStudent(id){return state.leaderMonthly.filter(x=>x.student_id===id).reduce((a,x)=>a+Number(x.points||0),0)}

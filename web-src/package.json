@@ -1,8 +1,8 @@
 {
   "name": "halaqati-vite-capacitor",
-  "version": "2.63.22",
+  "version": "2.63.39-web.1",
   "private": true,
-  "description": "حلقاتي v2.44.0 — إصلاح اعتماد ولي الأمر، السحب للتحديث، وتسريع المزامنة Offline/Supabase",
+  "description": "حلقاتي — ويب متجاوب مع عقود أندرويد RC27.39",
   "scripts": {
     "dev": "node scripts/fetch-vendor.mjs --core-only && vite",
     "fetch:vendor": "node scripts/fetch-vendor.mjs",
@@ -61,7 +61,10 @@
     "check:v2412": "node scripts/v2412-certificate-layout-polish-check.mjs",
     "check:v2420": "node scripts/v2420-v6-guardian-smartplan-check.mjs && node --test scripts/v2420-v6-score.test.mjs",
     "check:v2430": "node --test scripts/v2430-dashboard.test.mjs",
-    "check:v2440": "node scripts/v2440-sync-refresh-check.mjs"
+    "check:v2440": "node scripts/v2440-sync-refresh-check.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "check:parity": "npm run check:legacy && node --test scripts/*.test.mjs && node scripts/offline-queue-stability-vm-smoke.mjs && node scripts/v2410-certificates-vm-smoke.mjs",
+    "check:browser": "node scripts/browser-parity.mjs && node scripts/browser-behavior.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -72,12 +75,13 @@
     "@capacitor/push-notifications": "8.1.2",
     "@capacitor/share": "^8.0.0",
     "halaqati-deeplink": "file:plugins/halaqati-deeplink",
+    "halaqati-pdf": "file:plugins/halaqati-pdf",
     "halaqati-updater": "file:plugins/halaqati-updater",
-    "quran-meta": "6.0.17",
-    "halaqati-pdf": "file:plugins/halaqati-pdf"
+    "quran-meta": "6.0.17"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
+    "playwright": "1.64.1",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0"
   }

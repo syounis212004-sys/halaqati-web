@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+function api(){const ctx={window:{}};vm.runInNewContext(fs.readFileSync(new URL('../src/features/rc27/data.js',import.meta.url),'utf8'),ctx);return ctx.window.HalaqatiData;}
+test('fetches all rows when server caps pages below requested size',async()=>{const rows=Array.from({length:1251},(_,id)=>({id}));const offsets=[];const result=await api().all(()=>({range:async(from)=>{offsets.push(from);return {data:rows.slice(from,from+137)}}}));assert.equal(result.length,1251);assert.equal(offsets.at(-1),1251);});
+test('a later page failure never becomes successful partial totals',async()=>{let n=0;await assert.rejects(()=>api().all(()=>({range:async()=>++n===1?{data:[{id:1}]}:{error:{message:'permission denied'}}})),/permission denied/);});
+test('account switch discards old in-flight pages',async()=>{let user='one';const a=api();await assert.rejects(()=>a.all(()=>({range:async()=>{user='two';return {data:[{id:1}]}}}),()=>user),/الحساب/);});

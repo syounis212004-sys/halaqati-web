@@ -4,18 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0B5D4F" />
-  <meta name="description" content="حلقتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم" />
-  <title>حلقتي</title>
+  <meta name="description" content="حلقاتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم" />
+  <title>حلقاتي</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="./core/cairo.css" />
-<script>(function(){var K='halaqati_view_v1',r=document.documentElement,framed=/[?&]framed=1/.test(location.search);try{var q=new URLSearchParams(location.search).get('view');if(q&&/^(desktop|mobile|auto)$/.test(q))localStorage.setItem(K,q)}catch(e){}var pref='auto';try{pref=localStorage.getItem(K)||'auto'}catch(e){}
-if(!framed&&pref==='mobile'&&window.top===window.self&&window.innerWidth>=700){location.replace('./mobile.html'+location.hash);return}
-function ap(){var p='auto';try{p=localStorage.getItem(K)||'auto'}catch(e){}var w=window.innerWidth,v=p==='desktop'?'desktop':p==='mobile'?'mobile':(w>=1024?'desktop':'mobile');r.setAttribute('data-view',v);r.setAttribute('data-wide','0');r.setAttribute('data-view-pref',p)}ap();window.addEventListener('resize',ap);window.rc27ApplyView=ap})()</script>
+
 </head>
 <body>
 <div id="rc27Splash" role="img" aria-label="حلقاتي"><div class="rc27-splash-art"><img src="./brand/logo.svg" width="150" height="150" alt=""></div><div class="rc27-splash-credit"><b>صُنع بأيدٍ شرقية</b><span>الشرقية — خانيونس</span><small>Designed by : Dr. Mohammed Samir Abu Younis</small></div></div><script>try{var d=JSON.parse(localStorage.getItem('halaqati_display_v1')||'{}');if(d.reduceMotion||/[?&]n=|[?&]notification/.test(location.search)){document.getElementById('rc27Splash').remove()}}catch(e){}setTimeout(function(){var x=document.getElementById('rc27Splash');if(x)x.remove()},7000)</script>
 <div id="toast" class="toast"></div>
-<section id="auth" class="screen auth"><div class="rc27-auth-ambient" id="rc27AuthAmbient"></div><div class="auth-card"><img class="auth-logo" src="./brand/logo.svg" alt="حلقتي" width="84" height="84"><h1>حلقتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ النسخة الرسمية 2.63.22</span></div>
+<section id="auth" class="screen auth"><div class="rc27-auth-ambient" id="rc27AuthAmbient"></div><div class="auth-card"><img class="auth-logo" src="./brand/logo.svg" alt="حلقاتي" width="84" height="84"><h1>حلقاتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ نسخة الويب RC27.39</span></div>
 <form id="loginForm">
 <label class="field"><span>البريد الإلكتروني</span><input class="input" id="loginEmail" type="email" autocomplete="email" required></label>
 <label class="field"><span>كلمة المرور</span><input class="input" id="loginPassword" type="password" autocomplete="current-password" required></label>
@@ -28,7 +26,7 @@ function ap(){var p='auto';try{p=localStorage.getItem(K)||'auto'}catch(e){}var w
 <button class="btn google-login-btn" type="button" onclick="loginWithGoogle()">
 <span class="google-g">G</span><span>المتابعة باستخدام Google</span>
 </button>
-<div class="muted google-login-note">يمكنك الدخول بالبريد وكلمة المرور أو باستخدام Google. في نسخة Android سيعود تسجيل Google إلى تطبيق حلقتي تلقائيًا بعد اختيار الحساب.</div>
+<div class="muted google-login-note">يمكنك الدخول بالبريد وكلمة المرور أو باستخدام Google. في نسخة Android سيعود تسجيل Google إلى تطبيق حلقاتي تلقائيًا بعد اختيار الحساب.</div>
 </form>
 <form id="signupForm" class="hidden"><div class="rc27-signup-art" id="rc27SignupArt"></div><div class="notice">إنشاء الحساب لا يمنح صلاحية الدخول مباشرة. يراجع مسؤول النظام الطلب ويحدد الصلاحية قبل إتاحة بيانات الحلقة.</div><label class="field"><span>الاسم الكامل</span><input class="input" id="signupName" autocomplete="name" required></label><label class="field"><span>رقم الجوال</span><input class="input" id="signupPhone" inputmode="tel" autocomplete="tel" placeholder="05xxxxxxxx"></label><label class="field"><span>نوع الحساب المطلوب</span><select id="signupRole"><option value="guardian">ولي أمر</option><option value="teacher">محفّظ الحلقة</option><option value="supervisor">مشرف الحلقات</option></select></label><label class="field"><span>البريد الإلكتروني</span><input class="input" id="signupEmail" type="email" autocomplete="email" required></label><label class="field"><span>كلمة المرور</span><input class="input" id="signupPassword" type="password" minlength="6" autocomplete="new-password" required></label><div class="auth-actions"><button class="btn btn-primary" type="submit">إرسال طلب إنشاء الحساب</button><button class="btn btn-ghost" type="button" onclick="toggleSignup(false)">لدي حساب بالفعل</button></div></form>
 <form id="forgotPasswordForm" class="hidden"><div class="notice"><b>استرجاع كلمة المرور</b><br>اكتب البريد الإلكتروني المسجل، وسيصلك رابط استعادة كلمة المرور على بريدك الإلكتروني.</div><label class="field"><span>البريد الإلكتروني</span><input class="input" id="forgotEmail" type="email" autocomplete="email" required></label><div class="auth-actions"><button class="btn btn-primary" type="submit">إرسال رابط الاسترجاع</button><button class="btn btn-ghost" type="button" onclick="showForgotPassword(false)">العودة لتسجيل الدخول</button></div></form>

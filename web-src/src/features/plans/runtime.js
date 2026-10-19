@@ -423,8 +423,15 @@ studentProfile=function(id){smartPlanBaseStudentProfile(id);let student=state.st
 
 async function checkSmartPlanAlerts(){
   if(!roleCanManage()||!state.smartPlansAvailable||!navigator.onLine||typeof invokeNotify!=='function')return;let date=today(),tomorrow=smartPlansEngine.addDays(date,1),evening=new Date().getHours()>=17;
+  if(readOfflineQueue().length)return;
+  if(window.RC27Phases){try{await window.RC27Phases.load(false);await window.RC27Phases.loadRecs(activeStudents().map(s=>s.id))}catch(e){console.warn('health requires complete plan data',e.message);return}}
   for(let student of activeStudents()){
-    for(let plan of effectiveSmartPlans(student,date)){let progress=smartPlanProgress(plan,student.id,date);if(progress.consecutiveMissed>=plan.delay_alert_days){await invokeNotify({action:'event_student',kind:'system',student_id:student.id,source_key:`smart-plan-delay:${plan.id}:${student.id}:${date}`,title:`تنبيه الخطة · ${student.full_name}`,body:`الخطة متأخرة ${progress.consecutiveMissed} أيام دوام. المتبقي ${fmt(progress.remaining)} صفحة، والحالة ${progress.healthLabel}.`,deep_link:`student:${student.id}`,data:{smart_plan_id:plan.id,health:progress.health,missed_days:progress.consecutiveMissed}},{silent:true})}}
+    for(let plan of effectiveSmartPlans(student,date)){
+      let progress=smartPlanProgress(plan,student.id,date),phase=null;
+      try{const snap=window.RC27PhaseSnapshot?.(plan,date,student.id);if(snap?.raw){progress=snap.raw;phase=snap.phase}}
+      catch(e){console.warn('plan phase health',e)}
+      try{await window.HalaqatiPlanHealth.record(db,plan,student,progress,date,p=>invokeNotify(p,{silent:true}),phase)}catch(e){console.warn('plan health unavailable',e.message)}
+    }
     if(evening){let next=smartPlanForSession(student,tomorrow,'tasmee');if(next?.plan?.home_prep_push&&next.progress.assignment.startPage){let a=next.progress.assignment;await invokeNotify({action:'event_student',kind:'system',student_id:student.id,source_key:`smart-plan-prep:${next.plan.id}:${student.id}:${tomorrow}`,title:`تحضير الغد · ${student.full_name}`,body:`مطلوب غداً ${smartPlanAssignmentLabel(a)}.`,deep_link:`student:${student.id}`,data:{smart_plan_id:next.plan.id,plan_date:tomorrow,start_page:a.startPage,end_page:a.endPage}},{silent:true})}}
   }
 }

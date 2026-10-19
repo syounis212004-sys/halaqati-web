@@ -80,14 +80,15 @@
 
   // ---------- Program data (recitations + attendance) ----------
   const cache=new Map;
+  window.addEventListener('halaqati:sessionchange',()=>cache.clear());
   async function programData(from,to){
     const ids=new Set(((window.RC27&&RC27.master&&RC27.master.halaqas)||state.halaqas).filter(rc27IsProgram).map(x=>x.id));
     const sc=rc27Scope();const hids=sc.selectedId?new Set([sc.selectedId]):ids;
-    const key=from+'|'+to+'|'+[...hids].sort().join(',');const hit=cache.get(key);if(hit&&Date.now()-hit.at<120000)return hit.v;
+    const key=state.user?.id+'|'+from+'|'+to+'|'+[...hids].sort().join(',');const hit=cache.get(key);if(hit&&Date.now()-hit.at<120000)return hit.v;
     const f=q=>q.gte('sessions.session_date',from).lte('sessions.session_date',to).neq('sessions.status','cancelled');
     const [rec,att]=await Promise.all([
-      f(db.from('recitation_entries').select('student_id,activity_type,points,selection_data,evaluation,sessions!inner(session_date,halaqa_id,status)')).limit(10000),
-      f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')).limit(20000)]);
+      window.HalaqatiData.result(()=>f(db.from('recitation_entries').select('student_id,activity_type,points,selection_data,evaluation,sessions!inner(session_date,halaqa_id,status)')).order('id'),()=>state.user?.id),
+      window.HalaqatiData.result(()=>f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')).order('session_id').order('student_id'),()=>state.user?.id)]);
     if(rec.error)throw rec.error;if(att.error)throw att.error;
     const v={rec:(rec.data||[]).filter(r=>hids.has(r.sessions?.halaqa_id)),att:(att.data||[]).filter(r=>hids.has(r.sessions?.halaqa_id)),hids};
     cache.set(key,{at:Date.now(),v});return v;

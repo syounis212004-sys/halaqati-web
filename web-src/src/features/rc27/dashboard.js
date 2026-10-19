@@ -4,7 +4,10 @@
   const h=v=>typeof esc==='function'?esc(v):String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const T0=()=>new Date().toISOString().slice(0,10);
   const P=()=>window.RC27Phases,S=()=>P().S;
-  const D={loaded:false,busy:false,at:0,errors:{},daily:null,heard:0,pages:0,expected:new Set,notHeard:[],absentLate:[],attention:[],review:[],overTarget:[],alerts:[],todaySessions:0,plansHealthy:null};
+  const freshD=()=> ({loaded:false,busy:false,at:0,errors:{},daily:null,heard:0,pages:0,expected:new Set,notHeard:[],absentLate:[],attention:[],review:[],overTarget:[],alerts:[],todaySessions:0,plansHealthy:null});let D=freshD();
+  let dashboardOwner=null;
+  function dashboardKey(){const sc=window.rc27Scope?.()||{};return [state.user?.id,state.profile?.role,sc.selectedId,sc.kind].join('|')}
+  function ensureDashboardOwner(){const key=dashboardKey();if(key!==dashboardOwner){dashboardOwner=key;D=freshD();O=freshO()}return {key,daily:D,org:O}}
   const prefs=()=>{try{return JSON.parse(localStorage.getItem('halaqati_display_v1')||'{}')}catch(_e){return {}}};
   const isProgramMode=()=>typeof rc27Scope==='function'&&rc27Scope().kind==='program';
   const showPlans=()=>!isProgramMode();
@@ -62,7 +65,9 @@
   }
 
   // ================= load =================
+  window.addEventListener('halaqati:sessionchange',()=>{D.loaded=false;D.at=0});
   async function refresh(force){
+    const cache=ensureDashboardOwner(),D=cache.daily;
     if(D.busy)return;if(!force&&D.loaded&&Date.now()-D.at<60000)return;
     D.busy=true;const errors={},today=T0();
     try{
@@ -71,7 +76,7 @@
       if(online){try{await P().load(true)}catch(e){errors.plans=e.message||String(e)}}
       let recs=[];
       if(online){
-        try{const r=await db.from('recitation_entries').select('id,session_id,student_id,activity_type,pages_count,mistakes,prompts,evaluation,safety_percentage,created_at,sessions!inner(session_date)').order('created_at',{ascending:false}).limit(1200);if(r.error)throw r.error;recs=r.data||[];D.recs=recs}catch(e){errors.recitations=e.message||String(e);recs=D.recs||[]}
+        try{const r=await window.HalaqatiData.result(()=>db.from('recitation_entries').select('id,session_id,student_id,activity_type,pages_count,mistakes,prompts,evaluation,safety_percentage,created_at,sessions!inner(session_date)').gte('sessions.session_date',new Date(Date.now()-190*864e5).toISOString().slice(0,10)).order('created_at',{ascending:false}).order('id'),()=>state.user?.id);if(r.error)throw r.error;recs=r.data||[];D.recs=recs}catch(e){errors.recitations=e.message||String(e);recs=D.recs||[]}
         try{if(showPlans())await P().loadRecsBulk(students.map(s=>s.id),190)}catch(e){errors.plans=e.message||String(e)}
       }else recs=D.recs||[];
       const snaps=showPlans()?planSnapshots(students,today):[];
@@ -92,7 +97,7 @@
         try{
           if(!online)throw new Error('offline');
           const ids=[...startedIds],byId=new Map(students.map(s=>[s.id,s]));
-          const r=ids.length?await db.from('attendance_records').select('id,session_id,student_id,status').in('session_id',ids).limit(2000):{data:[]};if(r.error)throw r.error;
+          const r=ids.length?await window.HalaqatiData.result(()=>db.from('attendance_records').select('id,session_id,student_id,status').in('session_id',ids).order('session_id').order('student_id'),()=>state.user?.id):{data:[]};if(r.error)throw r.error;
           const seen=new Map;(r.data||[]).forEach(row=>{const st=byId.get(row.student_id);if(st&&daily.expected.has(row.student_id)&&['absent','excused'].includes(String(row.status).toLowerCase()))seen.set(st.id,{studentId:st.id,studentName:st.full_name,reason:'غائب اليوم'})});
           absentLate=[...seen.values()];
         }catch(e){if(e.message!=='offline')errors.attendance=e.message||String(e)}
@@ -113,6 +118,7 @@
 
   // ================= FollowUpRules.group =================
   function followUpGroups(){
+    ensureDashboardOwner();
     const sources=[['متأخرون عن الخطة',D.attention],['جودة التسميع',D.review],['غياب متكرر / اليوم',D.absentLate],['لم يسمّع',D.notHeard]];
     const counts=new Map;sources.forEach(([,l])=>l.forEach(x=>counts.set(x.studentId,(counts.get(x.studentId)||0)+1)));
     const urgent=[];const seenU=new Set;sources.forEach(([,l])=>l.forEach(x=>{if((counts.get(x.studentId)||0)>=2&&!seenU.has(x.studentId)){seenU.add(x.studentId);urgent.push(x)}}));
@@ -139,7 +145,7 @@
   }
 
   // ================= org cards =================
-  const O={noPlan:[],noGuardian:[],routeDone:[],streaks:[],missingHalaqas:null,compare:null,at:0};
+  const freshO=()=> ({noPlan:[],noGuardian:[],routeDone:[],streaks:[],missingHalaqas:null,compare:null,at:0});let O=freshO();
   const guardianMsg=(name,count,halaqa)=>`السلام عليكم ورحمة الله وبركاته، نودّ الاطمئنان على الطالب ${name}، فقد غاب عن ${count} جلسات متتالية${halaqa?` في ${halaqa}`:''}. نرجو إفادتنا بالسبب وحرصكم على انتظامه. جزاكم الله خيرًا.`;
   window.rc27SendGuardian=function(sid,count){
     const st=(window.RC27?.master?.students||state.students).find(s=>s.id===sid);if(!st)return;
@@ -149,6 +155,7 @@
     else if(navigator.share)navigator.share({text:msg}).catch(()=>{});else{navigator.clipboard?.writeText(msg);toast('تم نسخ رسالة ولي الأمر')}
   };
   async function loadOrg(){
+    const cache=ensureDashboardOwner(),O=cache.org;
     if(Date.now()-O.at<300000)return;O.at=Date.now();
     const today=T0(),role=state.profile?.role,online=navigator.onLine&&state.networkVerified!==false&&!state.offline,students=(state.students||[]).filter(s=>s.status==='active');
     const progIds=new Set((window.RC27?.master?.halaqas||state.halaqas||[]).filter(x=>rc27IsProgram(x)).map(x=>x.id));
@@ -164,7 +171,7 @@
     if(online){
       try{
         const from=new Date(Date.now()-60*864e5).toISOString().slice(0,10);
-        const r=await db.from('attendance_records').select('student_id,status,sessions!inner(session_date,status)').gte('sessions.session_date',from).limit(5000);if(r.error)throw r.error;
+        const r=await window.HalaqatiData.result(()=>db.from('attendance_records').select('student_id,status,sessions!inner(session_date,status)').gte('sessions.session_date',from).order('session_id').order('student_id'),()=>state.user?.id);if(r.error)throw r.error;
         const by=new Map;(r.data||[]).forEach(o=>{if(o.sessions?.status==='cancelled')return;(by.get(o.student_id)||by.set(o.student_id,[]).get(o.student_id)).push({date:o.sessions.session_date,status:o.status})});
         const byId=new Map(students.map(s=>[s.id,s]));
         by.forEach((rows,sid)=>{if(!byId.has(sid))return;let c=0,last=null;for(const x of rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)))){if(x.status==='absent'){c++;if(!last)last=x.date}else if(x.status==='excused')continue;else break}if(c>=3)O.streaks.push({sid,count:c,last,name:byId.get(sid).full_name})});
@@ -179,7 +186,7 @@
         O.missingHalaqas={total:hs.length,names:hs.filter(x=>!done.has(x.id)).map(x=>x.name)};
         if(false){
           const from=today.slice(0,8)+'01';
-          const [se,at,rc]=await Promise.all([db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).limit(2000),db.from('attendance_records').select('status,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).limit(5000),db.from('recitation_entries').select('activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).limit(5000)]);
+          const [se,at,rc]=await Promise.all([window.HalaqatiData.result(()=>db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).order('id'),()=>state.user?.id),window.HalaqatiData.result(()=>db.from('attendance_records').select('status,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).order('session_id').order('student_id'),()=>state.user?.id),window.HalaqatiData.result(()=>db.from('recitation_entries').select('activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)').gte('sessions.session_date',from).order('id'),()=>state.user?.id)]);
           const POOR=['repeat','weak','إعادة','ضعيف'],REVIEW=['review_near','review_far','tathbit','sard'];
           const stuBy={};(window.RC27?.master?.students||state.students).filter(s=>s.status==='active').forEach(s=>{stuBy[s.halaqa_id]=(stuBy[s.halaqa_id]||0)+1});
           O.compare=hs.map(x=>{
@@ -227,6 +234,7 @@
   };
   function followItem(i){return `<div class="card rc27-click" onclick="studentProfile('${i.studentId}')"><div class="row"><span class="rc27-fu-ico">🔎</span><div class="grow"><b>${h(i.studentName)}</b><div class="muted">${h(i.reason)}</div></div><span class="muted">‹</span></div></div>`}
   function homeHtml(){
+    ensureDashboardOwner();
     const p=state.profile,compact=prefs().homeStyle==='compact',d=D.daily;
     const off=d?.mode==='OFF_DAY',waiting=d?.mode==='NO_SESSION_YET',exp=d?D.expected.size:0,present=d?.count?Math.max(0,exp-D.absentLate.length):0,wait=d?.count?Math.max(0,present-D.heard):0;
     const hs=homeState(D.loaded,off,waiting,D.heard,wait),seed=Math.floor(Date.now()/864e5),msg=pickMsg(p.role==='teacher',hs,seed,wait,D.absentLate.length,D.heard);
@@ -258,6 +266,7 @@
   }
   window.rc27ToggleMore=()=>{O.showMore=!O.showMore;render()};
   function followHtml(){
+    ensureDashboardOwner();
     const groups=followUpGroups(),q=(O.fq||'').trim(),sel=O.fsel||'الكل',labels=['الكل',...groups.map(g=>g.title)];
     const match=r=>!q||r.studentName.includes(q)||r.reason.includes(q),vis=sel==='الكل'?groups:groups.filter(g=>g.title===sel),total=new Set(groups.flatMap(g=>g.items.map(i=>i.studentId))).size;
     return `<div class="section-head"><h3>متابعة الطلاب</h3><button class="mini" onclick="go('home')">رجوع</button></div><div class="muted">${total} طالب يحتاج متابعة</div><input class="input" placeholder="ابحث باسم الطالب أو سبب المتابعة" value="${h(q)}" onchange="O_fq(this.value)" style="margin:8px 0"><div class="tabs">${labels.map(l=>`<button class="tab ${l===sel?'active':''}" onclick="O_fsel('${h(l)}')">${h(l)}</button>`).join('')}</div>${!D.loaded?'<div class="rc27-skel" style="height:120px"></div>':!groups.length?'<div class="empty">لا توجد حالات متابعة حاليًا</div>':vis.map(g=>{const rows=g.items.filter(match);return rows.length?`<div class="section-head"><h3>${h(g.title)}</h3><b>${rows.length}</b></div>${rows.map(followItem).join('')}`:''}).join('')||'<div class="empty">لا توجد نتائج مطابقة للبحث</div>'}`;
@@ -268,6 +277,7 @@
   if(typeof homePage==='function'){
     const baseHome=homePage;
     homePage=function(){
+      ensureDashboardOwner();
       if(!['admin','supervisor','teacher'].includes(state.profile?.role))return baseHome.apply(this,arguments);
       setTimeout(()=>{refresh(false);loadOrg();window.RC27Insights?.load()},0);
       return homeHtml();

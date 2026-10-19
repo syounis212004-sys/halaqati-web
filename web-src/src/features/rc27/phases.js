@@ -17,6 +17,10 @@
   const GOAL_AR={pages:'صفحات',juz:'أجزاء',quran_range:'نطاق من القرآن',open:'مفتوح'};
   const S={plans:[],phases:[],states:[],templates:[],recs:new Map,at:0,loading:null,err:null};
 
+  let phaseOwner=null;
+  function ensurePhaseOwner(){const user=state.user?.id||'';if(user===phaseOwner)return;phaseOwner=user;Object.assign(S,{plans:[],phases:[],states:[],templates:[],recs:new Map,at:0,bulkAt:0,loading:null,err:null});loadSnap()}
+  window.addEventListener('halaqati:reportchange',e=>{const p=e.detail;if(!p?.studentId)return;const date=state.sessions.find(x=>x.id===p.sessionId)?.session_date||T0(),old=S.recs.get(p.studentId)||[];const rows=(p.rows||[]).map(r=>({...r.data,id:r.dbId,session_id:p.sessionId,session_date:date,_offline:true}));S.recs.set(p.studentId,[...old.filter(r=>r.session_id!==p.sessionId),...rows]);S.bulkAt=0});
+  window.addEventListener('halaqati:sessionchange',e=>{S.at=0;S.bulkAt=0;if(e.detail?.structural&&navigator.onLine&&!state.offline)S.recs.clear()});
   // ================= engine (SmartPlanPhaseEngine) =================
   function enginePhase(p){return {id:p.id,planId:p.plan_id,order:p.phase_order,type:p.phase_type,start:String(p.start_date).slice(0,10),end:String(p.end_date).slice(0,10),weekdays:new Set(p.schedule_weekdays||[]),goalMode:p.goal_mode,targetPages:p.target_pages!=null?Number(p.target_pages):null,targetUnits:p.target_units!=null?Number(p.target_units):null,distribution:p.distribution_mode,startMode:p.start_mode,allowSurplus:p.allow_surplus!==false,status:p.status,raw:p}}
   function scheduledDates(ph,from,to){const s=from&&from>ph.start?from:ph.start,e=to&&to<ph.end?to:ph.end;const out=[];if(s>e)return out;for(let d=s;d<=e;d=addDays(d,1))if(ph.weekdays.has(wd(d)))out.push(d);return out}
@@ -138,7 +142,7 @@
   }
   window.addEventListener('online',()=>setTimeout(flush,800));setInterval(flush,30000);
   function saveSnap(){try{localStorage.setItem(SK,JSON.stringify({u:state.user?.id,plans:S.plans,phases:S.phases,states:S.states,templates:S.templates}))}catch(_e){}}
-  function loadSnap(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j&&(!state.user||j.u===state.user.id)){S.plans=j.plans||[];S.phases=j.phases||[];S.states=j.states||[];S.templates=j.templates||[]}}catch(_e){}}
+  function loadSnap(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j&&state.user?.id&&j.u===state.user.id){S.plans=j.plans||[];S.phases=j.phases||[];S.states=j.states||[];S.templates=j.templates||[]}}catch(_e){}}
   loadSnap();
   window.rc27PhaseQueueCount=()=>readQ().filter(o=>!o.dead).length;
 
@@ -306,6 +310,7 @@
   window.RC27PhaseSnapshot=snapshot;
   // ================= data =================
   async function load(force){
+    ensurePhaseOwner();
     if(!isOnline())return;
     if(!force&&S.loading)return S.loading;
     if(!force&&Date.now()-S.at<60000&&S.phases.length)return;
@@ -313,36 +318,35 @@
       try{
         const month=T0().slice(0,8)+'01',since=addDays(month,-40);
         const [pl,ph,ps,tp]=await Promise.all([
-          db.from('smart_plans').select('*').neq('status','archived').gte('end_date',since).limit(2000),
-          db.from('smart_plan_phases').select('*').order('plan_id').order('phase_order').limit(3000),
-          db.from('smart_plan_phase_states').select('*').order('updated_at',{ascending:false}).limit(8000),
-          db.from('smart_plan_phase_templates').select('*').eq('active',true).order('updated_at',{ascending:false}).limit(500)]);
-        if(ph.error)throw ph.error;
+          window.HalaqatiData.result(()=>db.from('smart_plans').select('*').neq('status','archived').gte('end_date',since).order('id'),()=>state.user?.id),
+          window.HalaqatiData.result(()=>db.from('smart_plan_phases').select('*').order('plan_id').order('phase_order').order('id'),()=>state.user?.id),
+          window.HalaqatiData.result(()=>db.from('smart_plan_phase_states').select('*').order('updated_at',{ascending:false}).order('id'),()=>state.user?.id),
+          window.HalaqatiData.result(()=>db.from('smart_plan_phase_templates').select('*').eq('active',true).order('updated_at',{ascending:false}).order('id'),()=>state.user?.id)]);
+        if(pl.error||ph.error||ps.error||tp.error)throw (pl.error||ph.error||ps.error||tp.error);
         S.plans=pl.data||[];S.phases=ph.data||[];S.states=ps.data||[];S.templates=tp.data||[];S.err=null;S.at=Date.now();saveSnap();
       }catch(e){S.err=e.message||String(e)}finally{S.loading=null}
     })();
     return S.loading;
   }
   async function loadRecs(studentIds){
+    ensurePhaseOwner();
     const need=studentIds.filter(id=>!S.recs.has(id));if(!need.length)return;
     const since=addDays(T0().slice(0,8)+'01',-190);
     for(let i=0;i<need.length;i+=15){
       const chunk=need.slice(i,i+15);
-      const {data}=await db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,created_at,phase_id,selection_data,sessions!inner(session_date)').in('student_id',chunk).gte('sessions.session_date',since).limit(10000);
+      const {data,error}=await window.HalaqatiData.result(()=>db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,created_at,phase_id,selection_data,sessions!inner(session_date)').in('student_id',chunk).gte('sessions.session_date',since).order('id'),()=>state.user?.id);
+      if(error)throw error;
       chunk.forEach(id=>S.recs.set(id,[]));
       (data||[]).forEach(r=>S.recs.get(r.student_id).push({...r,session_date:r.sessions?.session_date}));
     }
   }
 
   async function loadRecsBulk(studentIds,days){
+    ensurePhaseOwner();
     if(!navigator.onLine)return;
     const since=addDays(T0(),-(days||190)),key='bulk:'+since;
     if(S.bulkAt&&Date.now()-S.bulkAt<300000&&S.bulkKey===key)return;
-    const rows=[];let from=0;
-    for(let i=0;i<12;i++){
-      const {data,error}=await db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,safety_percentage,created_at,phase_id,selection_data,session_id,sessions!inner(session_date)').gte('sessions.session_date',since).order('created_at',{ascending:false}).range(from,from+999);
-      if(error)break;rows.push(...(data||[]));if(!data||data.length<1000)break;from+=1000;
-    }
+    const rows=await window.HalaqatiData.all(()=>db.from('recitation_entries').select('id,student_id,activity_type,pages_count,start_surah,start_ayah,end_surah,end_ayah,evaluation,mistakes,prompts,safety_percentage,created_at,phase_id,selection_data,session_id,sessions!inner(session_date)').gte('sessions.session_date',since).order('created_at',{ascending:false}).order('id'),()=>state.user?.id);
     const by=new Map(studentIds.map(id=>[id,[]]));
     rows.forEach(r=>{if(by.has(r.student_id))by.get(r.student_id).push({...r,session_date:r.sessions?.session_date})});
     by.forEach((v,k)=>S.recs.set(k,v));S.bulkAt=Date.now();S.bulkKey=key;S.latestRecs=rows;
