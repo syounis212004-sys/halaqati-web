@@ -144,6 +144,7 @@
       :`${staff()?NX.btn('تسميع اليوم',{onclick:`NSS.recite('${st.id}')`}):''}${NX.btn('الملف الشخصي',{kind:'tonal',onclick:`studentProfile('${st.id}')`})}${staff()?NX.btn('الخطة',{kind:'tonal',onclick:`openPlan('${st.id}')`}):''}`;
     return `<div class="ns-card ${open?'open':''} ${selected?'selected':''} ${removed?'removed':''}" data-stcard="${st.id}">
       <div class="ns-card-head">${selMode?`<input class="ns-check" type="checkbox" aria-label="تحديد ${h(st.full_name)}" ${selected?'checked':''} onchange="toggleStudentSelection('${st.id}',this.checked)">`:''}<button type="button" class="ns-card-main" onclick="NSS.toggle('${st.id}')" aria-expanded="${open?'true':'false'}">${avatar(st,46)}<span class="ns-card-t"><b>${h(st.full_name)}</b><small>${h(subtitle)}</small></span></button>${dup?NX.pill('مكرر','warning'):''}${NX.pill(h(stAr(st.status)),stKind(st.status))}<button type="button" class="nx-iconbtn" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" title="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" onclick="NSS.toggle('${st.id}')">${ic(open?'ExpandLess':'ExpandMore',24)}</button></div>
+      ${(!removed&&window.NXIdentity&&NXIdentity.missing(st))?`<div class="ns-idpill">${NX.pill('ناقص: '+NXIdentity.lacks(st),'warning')}</div>`:''}
       ${sn?`<div class="ns-plan-row"><span class="g">الخطة ${N(sn.pct)}%</span><span>ورد اليوم ${N(sn.daily)} ص</span></div>`:''}
       <div class="ns-card-more"><div class="ns-card-more-in">
         <p class="ns-soft">${h(more)}</p>${stats?`<p class="ns-stats">${h(stats)}</p>`:''}

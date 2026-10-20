@@ -1,7 +1,33 @@
 /* Halaqati v2.14.1 — shared classic runtime foundation. Loaded first; feature files intentionally remain classic scripts so existing global bindings stay compatible. */
 const SUPABASE_URL='https://xlxzwucqdtggkfwwqibk.supabase.co';
 const SUPABASE_KEY='sb_publishable_VZGYTedRpXfJdswijXoxig_F0Hva8ks';
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+/* RC27.41: PostgREST caps every response at "Max rows" (1000) whatever limit= is asked, so big reads (limit=5000/10000)
+   silently lost the newest rows. Any GET read asking for more than 1000 rows is fetched page by page (offset) with a
+   stable id order until the real end or the requested limit — the same fix as SupabaseApi.select in the app. */
+function halaqatiPagedFetch(input,init){
+  const raw=window.fetch.bind(window);
+  try{
+    const req=typeof input==='string'?null:input,url=new URL(typeof input==='string'?input:input.url),method=String(init?.method||req?.method||'GET').toUpperCase();
+    if(method!=='GET'||!url.pathname.includes('/rest/v1/')||url.pathname.includes('/rpc/'))return raw(input,init);
+    const lim=Number(url.searchParams.get('limit')),headers=new Headers(init?.headers||req?.headers||{}),acc=headers.get('Accept')||'';
+    if(!(lim>1000)||url.searchParams.has('offset')||headers.has('Range')||/pgrst\.object/.test(acc)||/count=/.test(headers.get('Prefer')||''))return raw(input,init);
+    return (async()=>{
+      const all=[];let off=0,stable=true,last=null;
+      while(off<lim){
+        const u=new URL(url.href),n=Math.min(1000,lim-off);u.searchParams.set('limit',String(n));u.searchParams.set('offset',String(off));
+        if(stable){const o=u.searchParams.get('order');u.searchParams.set('order',o?(/(^|,)id\./.test(o)?o:o+',id.asc'):'id.asc')}
+        let res=await raw(u.href,{...(init||{}),headers});
+        if(!res.ok&&res.status===400&&stable&&off===0){stable=false;u.searchParams.set('order',url.searchParams.get('order')||'');if(!url.searchParams.get('order'))u.searchParams.delete('order');res=await raw(u.href,{...(init||{}),headers})}
+        if(!res.ok)return res;
+        const rows=await res.clone().json();last=res;
+        if(!Array.isArray(rows))return res;
+        all.push(...rows);if(rows.length<n)break;off+=rows.length;
+      }
+      return new Response(JSON.stringify(all),{status:200,headers:{'content-type':'application/json'}});
+    })();
+  }catch(_e){return raw(input,init)}
+}
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:halaqatiPagedFetch}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';
 const APP_DEEP_LINK='com.mohammedsamir.halaqati://auth/callback';

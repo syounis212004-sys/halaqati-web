@@ -119,3 +119,18 @@ html[data-view="desktop"] .nx-dlg-foot{padding:14px 24px}
 @keyframes nxPulse{from{opacity:.55}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.nx-skel-card,.nx-dlg[open],.nx-menu{animation:none}}
 #fab,.fab{display:none!important}
+
+/* ---- RC27.47: approvals, signup, identity ---- */
+.nx-su{width:min(100%,520px);margin:auto;padding:20px;text-align:start}
+.nx-su-t{margin:0;font:700 22px/32px Cairo,sans-serif}
+.nx-su-retry{margin-top:12px}
+.nx-appr-grid{display:grid;gap:10px}
+html[data-view="desktop"] .nx-appr-grid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.nx-id-list{display:grid;max-height:60vh;overflow:auto;border-top:1px solid var(--line)}
+.nx-id-row{border-bottom:1px solid var(--line)}
+.nx-id-head{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 2px;border:0;background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer}
+.nx-id-top{padding:0}
+.nx-id-form{display:grid;gap:8px;padding:4px 2px 12px}
+.ns-idpill{margin:2px 0 4px}
+.nx-addchild{margin-top:8px}
+.nx-appr-home{margin-bottom:10px}

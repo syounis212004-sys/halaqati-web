@@ -60,6 +60,7 @@ import nativePhasesUrl from './features/native/phases.js?url';
 import nativeCommunityUrl from './features/native/community.js?url';
 import nativeCertificatesUrl from './features/native/certificates.js?url';
 import nativeHomeUrl from './features/native/home.js?url';
+import nativeApprovalsUrl from './features/native/approvals.js?url';
 import rc27PlansUrl from './features/rc27/plans.js?url';
 import certificatePdfUrl from './features/certificates/pdf.js?url';
 import certificateServerUrl from './features/certificates/server.js?url';
@@ -149,6 +150,7 @@ async function boot() {
   await loadClassicScript(nativeCommunityUrl, { id: 'halaqati-native-community' });
   await loadClassicScript(nativeCertificatesUrl, { id: 'halaqati-native-certificates' });
   await loadClassicScript(nativeHomeUrl, { id: 'halaqati-native-home' });
+  await loadClassicScript(nativeApprovalsUrl, { id: 'halaqati-native-approvals' });
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
   installReportLazyLoading();
   installImportLazyLoading();

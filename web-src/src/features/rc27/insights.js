@@ -315,6 +315,23 @@
     const rows=o.acts.length?o.acts.map(a=>`<div class="nh-act-row"><div class="nh-act-h"><b>${h(a.label)}</b><span>${a.has?`${num(a.done)} / ${num(a.target)} ص`:`${num(a.done)} ص`}</span></div>${a.has?`${NX.progress(a.pct)}<div class="nh-act-f"><span>${num(a.pct)}٪</span>${a.surplus>0.0001?`<em class="up">${NX.icon('TrendingUp',16)}+${num(a.surplus)} ص فوق الهدف</em>`:a.complete?'<em class="ok">مكتمل</em>':`<em>المتبقي ${num(a.remaining)} ص</em>`}</div>`:'<small>إنجاز مسجل · لم يحدد للخطة هدف سرد مستقل على هذا الخادم</small>'}</div>`).join(''):'<p class="nh-muted">لا توجد تفاصيل تقدم متاحة للخطة</p>';
     return `<section class="nh-plan"><div class="nh-plan-h"><div><b>${h(o.planTitle)}</b><small>${o.acts.length>1?'الحفظ والسرد محسوبان كلٌّ على حدة':'التقدم بحسب هدف هذا الشهر'}</small></div>${o.planComplete?NX.icon('CheckCircle',24):''}</div>${rows}</section>`;
   }
+  // RC27.44: last-7-days digest from the latest recitations already loaded (GuardianWeeklySummary)
+  function weeklyDigest(o){
+    const t=T0(),from=addDays(t,-6),rows=(o.latest||[]).filter(l=>{const d=String(l.date||'').slice(0,10);return d>=from&&d<=t}),q=rows.map(r=>r.quality).filter(v=>v!=null);
+    return {days:new Set(rows.map(r=>String(r.date).slice(0,10))).size,n:rows.length,pages:rows.reduce((s,r)=>s+(Number(r.pages)||0),0),quality:q.length?q.reduce((a,b)=>a+b,0)/q.length:null};
+  }
+  function weeklyText(o,d){
+    let t=`*ملخص الأسبوع — ${o.name}*\n`;
+    if(!d.n)return t+'لا توجد تسميعات مسجلة خلال آخر 7 أيام.';
+    t+=`• أيام التسميع: ${d.days} من 7\n• عدد التسميعات: ${d.n}\n• الصفحات: ${(Math.round(d.pages*10)/10)}\n`;
+    if(d.quality!=null)t+=`• متوسط الجودة: ${Math.round(d.quality*10)/10}٪\n`;
+    return t.trimEnd();
+  }
+  window.rc27ShareWeekly=function(sid){const o=OV[sid];if(!o)return;sendText(weeklyText(o,weeklyDigest(o)),'')};
+  function weeklyCard(o){
+    const d=weeklyDigest(o);
+    return NX.card(`<div class="nx-stack-s"><div class="nx-t-title-m">ملخص آخر 7 أيام</div><div class="nx-t-body-m">${d.n?`سمّع ${d.days} ${d.days===1?'يومًا':'أيام'} · ${d.n} تسميع · ${(Math.round(d.pages*10)/10)} ص${d.quality!=null?` · جودة ${Math.round(d.quality)}٪`:''}`:'لا توجد تسميعات مسجلة خلال الأسبوع الماضي.'}</div>${NX.btn('مشاركة الملخص',{kind:'text',icon:'Share',onclick:`rc27ShareWeekly('${G.sel}')`})}</div>`);
+  }
   function guardianHtml(){
     const kids=G.children||[],o=G.sel&&G.ov[G.sel];
     let top='';
@@ -329,6 +346,7 @@
       main+=todayCard(o);
       if(pr.length)main+=shell('success','EmojiEvents',pr[0],pr.slice(1).join(' · ')||'بارك الله فيه وزاده حرصًا',null,'',null,null);
       if(o.planTitle)main+=planCard(o);
+      main+=weeklyCard(o);
       main+=NX.metrics([NX.metric(o.mainLabel,num(o.monthMain)+' ص',{}),NX.metric('الحضور',`${o.present}/${o.sessions}`,{}),NX.metric('الجودة',o.quality!=null?num(o.quality)+'٪':'—',{})],3).replace('class="nx-metrics"','class="nx-metrics nh-gmetrics"');
       if(o.latest.length)main+=`<h3 class="nh-title m">آخر التسميعات</h3>`+o.latest.map(l=>`<div class="nh-rec"><div class="nh-rec-h"><b>${h(l.label)} · ${h(l.date)}</b><span>${num(l.pages)} ص${l.quality!=null?` · ${num(l.quality)}٪`:''}</span></div><small>${h(l.range)}</small></div>`).join('');
       side+=badgeCard(G.sel);
