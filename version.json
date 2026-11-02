@@ -1,7 +1,7 @@
 {
   "versionName": "2.81.0",
   "versionCode": 28100,
-  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
+  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
   "sha256": "6acb75d8b6e92002518ba26ca85ff2578130dae97d932c0e6301309446ea3f06",
   "native": true,
   "mandatory": false,
