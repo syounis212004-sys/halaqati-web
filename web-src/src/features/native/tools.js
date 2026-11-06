@@ -706,8 +706,8 @@
       <button class="nx-btn nx-text nt-center" type="button" onclick="toggleSignup(true)"><span>إنشاء حساب جديد</span></button>`;
     // sign up (keep #signupRole select for the logic + art)
     keep.signup.innerHTML=`<p class="nt-p">إنشاء الحساب لا يمنح الصلاحية مباشرة؛ ينتظر اعتماد المسؤول.</p>${field('signupName','الاسم الكامل','Person','text','autocomplete="name" required')}${field('signupPhone','رقم الجوال','Phone','tel','inputmode="tel" autocomplete="tel"')}
-      <div class="nt-roles" role="group">${[['guardian','ولي أمر'],['teacher','محفّظ الحلقة'],['supervisor','مشرف الحلقات']].map(([v,l])=>`<button type="button" class="nx-chip ${v==='guardian'?'on':''}" data-role="${v}" onclick="NT.authRole('${v}')"><span>${l}</span></button>`).join('')}</div>
-      <select id="signupRole" hidden><option value="guardian">ولي أمر</option><option value="teacher">محفّظ الحلقة</option><option value="supervisor">مشرف الحلقات</option></select>
+      <div class="nt-roles" role="group">${[['guardian','ولي أمر'],['teacher','محفّظ الحلقة'],['supervisor','مشرف الحلقات'],['observer','مانح']].map(([v,l])=>`<button type="button" class="nx-chip ${v==='guardian'?'on':''}" data-role="${v}" onclick="NT.authRole('${v}')"><span>${l}</span></button>`).join('')}</div>
+      <select id="signupRole" hidden><option value="guardian">ولي أمر</option><option value="teacher">محفّظ الحلقة</option><option value="supervisor">مشرف الحلقات</option><option value="observer">مانح</option></select>
       <div class="rc27-signup-art nt-roleart" id="rc27SignupArt"></div>
       ${field('signupEmail','البريد الإلكتروني','Email','email','autocomplete="email" required')}${field('signupPassword','كلمة المرور','Lock','password','minlength="6" autocomplete="new-password" required')}
       <button class="nx-btn nx-filled nx-full nt-act" type="submit"><span>إرسال طلب إنشاء الحساب</span></button>
@@ -723,7 +723,7 @@
       ${NX.btn('تحديث حالة الاعتماد',{full:true,onclick:'checkApproval()'})}${NX.btn('تعديل الاسم الكامل',{kind:'outlined',full:true,onclick:'openAccountNameDialog(false)'})}${NX.btn('تسجيل الخروج',{kind:'text',onclick:'logout()'})}`;
     // credits
     const cr=document.createElement('div');cr.className='nt-credits';
-    cr.innerHTML=`<div>${ic('Handyman',16)}<b>صُنع بأيدٍ شرقية</b></div><div class="m">${ic('LocationOn',16)}<span>الشرقية — خانيونس</span></div><div class="m s">${ic('Brush',15)}<span dir="ltr">Designed by : Dr. Mohammed Samir Abu Younis</span></div>`;
+    cr.innerHTML=`<div>${ic('Handyman',16)}<b>صُنع بأيدٍ شرقية</b></div><div class="m s">${ic('Brush',15)}<span dir="ltr">Designed by : Dr. Mohammed Samir Abu Younis</span></div>`;
     card.after(cr);
     const upd=()=>{
       const vis=id=>q('#'+id)&&!q('#'+id).classList.contains('hidden');

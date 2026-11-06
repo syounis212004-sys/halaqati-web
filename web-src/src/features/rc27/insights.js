@@ -270,16 +270,34 @@
   }
   // BadgeRules
   function badges(att,rec,today){
-    const earned=[];
-    let streak=0;for(const r of att.filter(x=>!x.c).sort((a,b)=>b.d.localeCompare(a.d))){if(r.s==='present'||r.s==='late')streak++;else if(r.s==='excused')continue;else break}
+    // RC52: harder, three scopes (day streaks / calendar month / three-month season). Levels 1 bronze, 2 silver, 3 gold.
+    const earned=[],STRONG=['excellent','very_good'],EXC=['excellent'];
     const lv=(v,steps)=>steps.filter(x=>v>=x).length;
-    const sl=lv(streak,[3,7,15]);if(sl)earned.push({key:'streak',title:'انتظام',detail:`${streak} جلسات متتالية`,level:sl});
-    let q=0;for(const r of rec.filter(x=>!x.c).sort((a,b)=>b.d.localeCompare(a.d))){if(POOR.includes(String(r.e||'').toLowerCase()))break;q++}
-    const ql=lv(q,[3,5,10]);if(ql)earned.push({key:'quality',title:'إتقان',detail:`${q} تسميعات متتالية بجودة`,level:ql});
-    const from=addDays(today,-30),pages=rec.filter(x=>!x.c&&x.d>=from).reduce((s,x)=>s+x.p,0),pl=lv(pages,[10,30,60]);
-    if(pl)earned.push({key:'pages',title:'اجتهاد',detail:`${Math.round(pages)} صفحة خلال 30 يومًا`,level:pl});
-    const ns=[3,7,15].find(x=>x>streak);
-    return {earned:earned.sort((a,b)=>b.level-a.level),next:ns?{title:'شارة الانتظام',remaining:ns-streak,unit:'جلسات متتالية'}:null};
+    let streak=0;for(const r of att.filter(x=>!x.c).sort((a,b)=>b.d.localeCompare(a.d))){if(r.s==='present'||r.s==='late')streak++;else if(r.s==='excused')continue;else break}
+    const sl=lv(streak,[10,20,40]);if(sl)earned.push({key:'streak',title:'انتظام',detail:`${streak} جلسة متتالية دون غياب`,level:sl,scope:'day'});
+    let q=0;for(const r of rec.filter(x=>!x.c).sort((a,b)=>b.d.localeCompare(a.d))){if(STRONG.includes(String(r.e||'').toLowerCase()))q++;else break}
+    const ql=lv(q,[8,15,30]);if(ql)earned.push({key:'quality',title:'إتقان',detail:`${q} تسميعًا متتاليًا بتقدير جيد جدًا فأعلى`,level:ql,scope:'day'});
+    const from=addDays(today,-30),pages=rec.filter(x=>!x.c&&x.d>=from).reduce((s2,x)=>s2+x.p,0),pl=lv(pages,[45,90,150]);
+    if(pl)earned.push({key:'pages',title:'اجتهاد',detail:`${Math.round(pages)} صفحة خلال 30 يومًا`,level:pl,scope:'day'});
+    const monthLv=ym=>{
+      const a=att.filter(x=>!x.c&&x.d.startsWith(ym)&&x.s!=='excused'),good=a.filter(x=>x.s==='present'||x.s==='late').length;
+      const cons=a.length<8?0:(good===a.length&&a.length>=12)?3:good*100>=a.length*95?2:good*100>=a.length*90?1:0;
+      const rc=rec.filter(x=>!x.c&&x.d.startsWith(ym)),rated=rc.filter(x=>x.e&&String(x.e).toLowerCase()!=='not_rated');
+      const poor=rated.filter(x=>POOR.includes(String(x.e).toLowerCase())).length,exc=rated.filter(x=>EXC.includes(String(x.e).toLowerCase())).length,share=rated.length>=10?exc/rated.length:-1;
+      const ql2=(share>=0.85&&poor===0)?3:(share>=0.70&&poor===0)?2:(share>=0.50&&poor<=1)?1:0;
+      const total=rc.reduce((s2,x)=>s2+x.p,0);
+      return {cons,ql:ql2,pg:lv(total,[25,40,60]),total};
+    };
+    const d0=new Date(today+'T00:00:00'),ymOf=k=>{const d=new Date(d0.getFullYear(),d0.getMonth()-k,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
+    const cur=monthLv(ymOf(0)),mn=`${d0.getMonth()+1}/${d0.getFullYear()}`;
+    if(cur.cons)earned.push({key:'m-consistency',title:'وسام الانتظام الشهري',detail:`حضور ${mn} دون تغيّب يُذكر`,level:cur.cons,scope:'month'});
+    if(cur.ql)earned.push({key:'m-quality',title:'وسام الإتقان الشهري',detail:'أغلب تسميعات هذا الشهر بتقدير ممتاز',level:cur.ql,scope:'month'});
+    if(cur.pg)earned.push({key:'m-pages',title:'وسام الحفظ الشهري',detail:`${Math.round(cur.total)} صفحة في الشهر`,level:cur.pg,scope:'month'});
+    const season=Math.min(...[0,1,2].map(k=>{const m=monthLv(ymOf(k));return Math.min(m.cons,m.ql,m.pg)}));
+    if(season>0)earned.push({key:'season',title:'وسام الموسم',detail:'ثلاثة أشهر متتالية بأوسمة الانتظام والإتقان والحفظ معًا',level:season,scope:'season'});
+    const np=[25,40,60].find(x=>x>cur.total),ns=[10,20,40].find(x=>x>streak);
+    const next=np?{title:'وسام الحفظ الشهري',remaining:Math.ceil(np-cur.total),unit:'صفحة هذا الشهر'}:ns?{title:'شارة الانتظام',remaining:ns-streak,unit:'جلسة متتالية'}:null;
+    return {earned:earned.sort((a,b)=>b.level-a.level),next};
   }
   const medal=l=>l===3?'🥇':l===2?'🥈':'🥉';
   const G={sel:null,children:null,raw:{},ov:{},bd:{},loading:true,stale:false,msg:null,busy:false};
@@ -288,9 +306,9 @@
   const gCachePut=(sid,j)=>{try{localStorage.setItem(gKey(sid),JSON.stringify(j))}catch(_e){}};
   async function loadBadges(sid){
     if(!online())return null;
-    const from=addDays(T0(),-90);
-    const [a,r]=await Promise.all([db.from('attendance_records').select('status,sessions!inner(session_date,status)').eq('student_id',sid).gte('sessions.session_date',from).limit(300),
-      db.from('recitation_entries').select('pages_count,evaluation,sessions!inner(session_date,status)').eq('student_id',sid).gte('sessions.session_date',from).limit(600)]);
+    const t0=new Date(T0()+'T00:00:00'),from=`${new Date(t0.getFullYear(),t0.getMonth()-3,1).getFullYear()}-${String(new Date(t0.getFullYear(),t0.getMonth()-3,1).getMonth()+1).padStart(2,'0')}-01`;
+    const [a,r]=await Promise.all([db.from('attendance_records').select('status,sessions!inner(session_date,status)').eq('student_id',sid).gte('sessions.session_date',from).limit(900),
+      db.from('recitation_entries').select('pages_count,evaluation,sessions!inner(session_date,status)').eq('student_id',sid).gte('sessions.session_date',from).limit(2000)]);
     if(a.error||r.error)return null;
     return badges((a.data||[]).filter(o=>o.sessions).map(o=>({d:o.sessions.session_date,s:o.status,c:o.sessions.status==='cancelled'})),(r.data||[]).filter(o=>o.sessions).map(o=>({d:o.sessions.session_date,p:Number(o.pages_count)||0,e:o.evaluation,c:o.sessions.status==='cancelled'})),T0());
   }
@@ -310,6 +328,38 @@
     const att={present:'حضر اليوم',late:'حضر اليوم (متأخر)',absent:'غائب اليوم',excused:'غائب بعذر اليوم'}[o.todayAtt]||(o.todayAtt?`الحضور: ${o.todayAtt}`:(o.todayExists===false?'لا توجد جلسة مسجلة اليوم':o.todayStarted===false?'جلسة اليوم لم تبدأ بعد':'لم يُسجَّل الحضور بعد'));
     const kind=o.tath?'التثبيت':'التسميع',kicker=[o.track,o.sub].filter(Boolean).join(' · ');
     return `<section class="nh-today"><div class="nh-today-t"><span class="nh-today-k">${h(kicker)}</span><h2>${h(o.name)}</h2><b>${h(o.todayRecited?`${att} · أتمّ ${kind}`:att)}</b>${o.todayRecited?`${o.todayRange?`<span class="nh-today-r">${h(o.todayRange)}</span>`:''}<span class="nh-today-p">${o.tath?'تثبيت':'تسميع'} اليوم: ${num(o.todayPages)} صفحة</span>`:`<small>${o.tath?'لم يُسجَّل تثبيت اليوم بعد':'لم يُسجَّل تسميع اليوم بعد'}</small>`}</div><span class="nh-today-art">${NX.icon('FamilyRestroom',34)}</span></section>`;
+  }
+  // RC52: "today at a glance" — today's ward, recited?, attendance, and the mistakes/prompts/quality of the latest recitation day.
+  function wardOf(sid){
+    try{
+      const st=(state.students||[]).find(x=>String(x.id)===String(sid));if(!st||typeof effectiveSmartPlans!=='function'||typeof smartPlanProgress!=='function')return null;
+      const plans=effectiveSmartPlans(st),pl=plans.find(p=>p.plan_type==='hifz')||plans[0];if(!pl)return null;
+      const a=(smartPlanProgress(pl,sid)||{}).assignment||{};
+      const kind={hifz:'حفظ',sard:'سرد',review:'مراجعة',tathbit:'تثبيت'}[pl.plan_type]||'مقرر';
+      if(a.ayahLabel)return `${kind}: ${a.ayahLabel}`;
+      if(Number(a.pages)>0.001&&a.startPage)return `${kind}: ص ${a.startPage}${a.endPage&&a.endPage!==a.startPage?'–'+a.endPage:''}`;
+      return null;
+    }catch(_e){return null}
+  }
+  function todayDetail(o,sid){
+    const att={present:['حاضر','ok'],late:['متأخر','warn'],absent:['غائب','bad'],excused:['غائب بعذر','warn']}[o.todayAtt]||[o.todayExists===false?'لا جلسة':'لم يُسجَّل','none'];
+    const last=(G.last||{})[sid],day=last?(last.isToday?'اليوم':`آخر يوم تسميع · ${last.date}`):'آخر يوم تسميع';
+    const tile=(l,v,t)=>`<div class="nh-dt ${t}"><b>${h(v)}</b><span>${h(l)}</span></div>`;
+    return `<section class="nh-tdetail"><h3 class="nh-title">نظرة اليوم</h3><div class="nh-ward"><small>مقرر اليوم</small><b>${h(wardOf(sid)||'لا يوجد مقرر اليوم')}</b></div>
+      <div class="nh-dts two">${tile('التسميع',o.todayRecited?'سمّع':'لم يسمّع',o.todayRecited?'ok':'none')}${tile('الحضور',att[0],att[1])}</div>
+      <small class="nh-dday">${h(day)}</small>
+      <div class="nh-dts">${tile('الأخطاء',last?String(last.mistakes):'—',last&&last.mistakes>3?'warn':'ok')}${tile('التنبيهات',last?String(last.prompts):'—','ok')}${tile('الجودة',last&&last.quality!=null?num(last.quality)+'٪':'—','ok')}</div></section>`;
+  }
+  async function loadLastDay(sid){
+    if(!online())return;
+    const m0=T0().slice(0,8)+'01';
+    const r=await db.from('recitation_entries').select('activity_type,pages_count,evaluation,mistakes,prompts,safety_percentage,sessions!inner(session_date,status)').eq('student_id',sid).gte('sessions.session_date',m0).neq('sessions.status','cancelled').limit(1500);
+    if(r.error)return;
+    const real=(r.data||[]).filter(x=>x.sessions&&x.activity_type!=='test'&&!((!x.evaluation||x.evaluation==='not_rated')&&!(Number(x.pages_count)>0)));
+    const by={};real.forEach(x=>{(by[x.sessions.session_date]=by[x.sessions.session_date]||[]).push(x)});
+    const days=Object.keys(by).sort();if(!days.length)return;
+    const day=days[days.length-1],rows=by[day],qs=rows.filter(x=>x.safety_percentage!=null).map(x=>+x.safety_percentage);
+    (G.last=G.last||{})[sid]={date:day,isToday:day===T0(),mistakes:rows.reduce((s2,x)=>s2+(+x.mistakes||0),0),prompts:rows.reduce((s2,x)=>s2+(+x.prompts||0),0),quality:qs.length?Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10:null};
   }
   function planCard(o){
     const rows=o.acts.length?o.acts.map(a=>`<div class="nh-act-row"><div class="nh-act-h"><b>${h(a.label)}</b><span>${a.has?`${num(a.done)} / ${num(a.target)} ص`:`${num(a.done)} ص`}</span></div>${a.has?`${NX.progress(a.pct)}<div class="nh-act-f"><span>${num(a.pct)}٪</span>${a.surplus>0.0001?`<em class="up">${NX.icon('TrendingUp',16)}+${num(a.surplus)} ص فوق الهدف</em>`:a.complete?'<em class="ok">مكتمل</em>':`<em>المتبقي ${num(a.remaining)} ص</em>`}</div>`:'<small>إنجاز مسجل · لم يحدد للخطة هدف سرد مستقل على هذا الخادم</small>'}</div>`).join(''):'<p class="nh-muted">لا توجد تفاصيل تقدم متاحة للخطة</p>';
@@ -344,6 +394,7 @@
     else if(o){
       const pr=praise(o);
       main+=todayCard(o);
+      main+=todayDetail(o,G.sel);
       if(pr.length)main+=shell('success','EmojiEvents',pr[0],pr.slice(1).join(' · ')||'بارك الله فيه وزاده حرصًا',null,'',null,null);
       if(o.planTitle)main+=planCard(o);
       main+=weeklyCard(o);
@@ -370,6 +421,7 @@
     if(fresh){G.ov[sid]=fresh;OV[sid]=fresh;G.stale=false;G.msg=null}
     else{G.stale=true;if(!G.ov[sid]&&online())G.msg='تعذر تحميل بيانات الطالب'}
     G.loading=false;paintGuardian();
+    try{await loadLastDay(sid);if(G.sel===sid)paintGuardian()}catch(_e){}
     try{const b=await loadBadges(sid);if(b&&G.sel===sid){G.bd[sid]=b;paintGuardian()}}catch(_e){}
     try{await loadSeasons(false);if(G.sel===sid)paintGuardian()}catch(_e){}
   }

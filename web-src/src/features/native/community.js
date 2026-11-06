@@ -463,20 +463,33 @@
   }
   const gTabs=()=>seg([['competition','المنافسة'],['achievements','الإنجازات']],G.view,'NCM.gView');
 
+  const AMN=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const aIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  function achRange(){
+    G.apMode=G.apMode||'month';G.apOff=G.apOff||0;G.apDays=G.apDays||30;
+    const now=new Date(todayS()+'T00:00:00');
+    if(G.apMode==='month'){const d=new Date(now.getFullYear(),now.getMonth()-G.apOff,1),end=new Date(d.getFullYear(),d.getMonth()+1,0);return {from:aIso(d),to:G.apOff===0?todayS():aIso(end),title:`إنجاز شهر ${AMN[d.getMonth()]} ${d.getFullYear()}`,label:`${AMN[d.getMonth()]} ${d.getFullYear()}`}}
+    const f=new Date(now);f.setDate(f.getDate()-(G.apDays-1));return {from:aIso(f),to:todayS(),title:`إنجاز آخر ${G.apDays} ${G.apDays===7?'أيام':'يومًا'}`,label:''};
+  }
+  const achKey=s=>{const r=achRange();return `${s.id}|${r.from}|${r.to}`};
+  NCM.aMode=v=>{G.apMode=v;render()};
+  NCM.aStep=d=>{const n=(G.apOff||0)+d;if(n<0||n>11)return;G.apOff=n;render()};
+  NCM.aDays=v=>{G.apDays=Number(v);render()};
   async function loadAch(){
-    const s=gStudent();if(!s||!online()||state.networkVerified===false||G.achLoading===s.id)return;
-    if(G.ach[s.id]&&Date.now()-G.ach[s.id].at<60000)return;
-    G.achLoading=s.id;const t=todayS();
+    const s=gStudent();if(!s||!online()||state.networkVerified===false||G.achLoading===achKey(s))return;
+    const key=achKey(s),rg=achRange();
+    if(G.ach[key]&&Date.now()-G.ach[key].at<60000)return;
+    G.achLoading=key;const t=todayS();
     try{
-      const [d,b]=await Promise.all([db.rpc('guardian_student_dashboard_range',{p_student_id:s.id,p_from:t.slice(0,4)+'-01-01',p_to:t}),db.rpc('rc182_refresh_student_badges_exact',{p_student_id:s.id,p_month:t.slice(0,8)+'01'})]);
+      const [d,b]=await Promise.all([db.rpc('guardian_student_dashboard_range',{p_student_id:s.id,p_from:rg.from,p_to:rg.to}),db.rpc('rc182_refresh_student_badges_exact',{p_student_id:s.id,p_month:t.slice(0,8)+'01'})]);
       if(d.error)throw d.error;
-      G.ach[s.id]={dash:d.data||{},badges:Array.isArray(b.data)?b.data:[],at:Date.now()};G.err='';
-    }catch(e){G.err=e?.message||'تعذر تحميل الإنجازات';G.ach[s.id]=G.ach[s.id]||{dash:{},badges:[],at:Date.now()}}
+      G.ach[key]={dash:d.data||{},badges:Array.isArray(b.data)?b.data:[],at:Date.now()};G.err='';
+    }catch(e){G.err=e?.message||'تعذر تحميل الإنجازات';G.ach[key]=G.ach[key]||{dash:{},badges:[],at:Date.now()}}
     G.achLoading='';if(state.page==='competition'&&G.view==='achievements')render();
   }
   function achievementsHtml(){
     const s=gStudent();if(s)setTimeout(loadAch,0);
-    const a=s?G.ach[s.id]:null,loading=s&&!a&&online();
+    const a=s?G.ach[achKey(s)]:null,loading=s&&!a&&online(),rg=achRange();
     let inner='';
     if(!s)inner=NX.empty('لا يوجد طالب مرتبط بهذا الحساب',{icon:'Person'});
     else if(loading)inner=NX.skeleton(4);
@@ -493,7 +506,8 @@
         ${bs.length?bs.map(b=>`<div class="nc-badge">${ic('EmojiEvents',24)}<div class="nc-grow"><b>${h(b.title||'إنجاز')}</b><small>${h(b.description||'')}</small></div><span class="nc-bm">${h(String(b.period_month||'').slice(0,7).replace('-','/'))}</span></div>`).join(''):'<p class="nx-muted">لا توجد شارة مستحقة بعد. ستظهر تلقائيًا عند تحقق شروطها.</p>'}</div>`;
     }
     return `<div class="nc-root nc-g">${gTabs()}${gOffline()}${NX.hero('إنجازات الطالب','إنجاز الابن في مساره، مع الحضور والجودة.',{icon:'EmojiEvents',badge:'الإنجازات'})}
-      <div class="nc-gpick">${gSelect(s)}</div>${G.err?NX.notice(h(G.err),'error'):''}<div class="nc-ach">${inner}</div></div>`;
+      <div class="nc-gpick">${gSelect(s)}</div>
+      <div class="nc-aper">${seg([['month','حسب الشهر'],['days','حسب الأيام']],G.apMode||'month','NCM.aMode')}${(G.apMode||'month')==='month'?`<div class="nc-mstep"><button type="button" class="nc-marrow" ${(G.apOff||0)<11?'':'disabled'} onclick="NCM.aStep(1)" aria-label="الشهر السابق">›</button><b>${h(rg.label)}</b><button type="button" class="nc-marrow" ${(G.apOff||0)>0?'':'disabled'} onclick="NCM.aStep(-1)" aria-label="الشهر التالي">‹</button></div>`:seg([['7','7 أيام'],['30','30 يومًا'],['90','90 يومًا']],String(G.apDays||30),'NCM.aDays')}<div class="nc-ptitle">${h(rg.title)}</div></div>${G.err?NX.notice(h(G.err),'error'):''}<div class="nc-ach">${inner}</div></div>`;
   }
   window.guardianCompetitionPage=guard(function(){return G.view==='achievements'?achievementsHtml():competitionHtml()});
   window.guardianAchievementsPage=guard(function(){G.view='achievements';return achievementsHtml()});

@@ -46,7 +46,8 @@
   const S=R.sp={tab:'cards'};
   const defaultPeriods=r=>r==='weekly'?'الأسبوع الأول\nالأسبوع الثاني\nالأسبوع الثالث\nالأسبوع الرابع':r==='monthly'?[0,1,2].map(k=>{const d=new Date();d.setMonth(d.getMonth()+k);return R.monthLabel(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`)}).join('\n'):'';
   R.page('support',{title:'الدعم والمانحون',roles:ADM,render:async()=>{
-    const seg=R.seg([['cards','بطاقات الدعم'],['donors','المانحون'],['news','أخبار واقتراحات']],S.tab,'RC50.spTab');
+    const seg=R.seg([['cards','البطاقات'],['donors','المانحون'],['news','أخبار'],['rewards','المكافآت']],S.tab,'RC50.spTab');
+    if(S.tab==='rewards')return seg+await R.rwAdminHtml();
     if(S.tab==='donors'){
       const donors=await R.rpc('rc48_donors');R.cache.donors=donors;const hs=state.halaqas||[];
       return `${seg}<p class="dn-muted">حدّد الحلقات التي يراها كل مانح. من لم تُحدَّد له حلقة يرى كل الحلقات.</p>${donors.map((d,i)=>{const names=hs.filter(h=>(d.halaqa_ids||[]).includes(h.id)).map(h=>h.name).join('، ');
@@ -64,7 +65,7 @@
       const pledges=pl.map(p=>{const pi=R.cache.spP.push({p,c})-1;
         return `<div class="dn-win"><b>${e(p.donor_name)}${p.anonymous?' (يظهر مجهولًا)':''}</b><small>${e(p.period)} · ${e(PSTATUS[p.status]||p.status)}</small>
           ${p.transfer_submitted_at?`<small class="dn-ok">إثبات التحويل: ${e(p.transfer_ref||'صورة مرفقة')}</small>`:p.status==='pledged'?'<small class="dn-muted">لم يرسل المانح إثبات التحويل بعد</small>':''}${p.proof_text?`<small>الإثبات: ${e(p.proof_text)}</small>`:''}
-          <div class="dn-actions">${p.status==='pledged'?R.btn('تأكيد الاستلام',`RC50.spConfirm(${pi})`,'tonal'):''}${p.status==='pledged'||p.status==='received'?R.btn('إثبات التسليم',`RC50.spDeliver(${pi})`,'tonal'):''}${p.has_transfer_image?R.btn('صورة الحوالة',`RC50.spProof(${pi},'transfer')`,'text'):''}${p.has_image?R.btn('صورة التسليم',`RC50.spProof(${pi},'delivery')`,'text'):''}${p.status==='pledged'||p.status==='received'?R.btn('إلغاء',`RC50.spCancel(${pi})`,'text'):''}</div></div>`}).join('');
+          <div class="dn-actions">${p.status==='pledged'?R.btn('تأكيد الاستلام',`RC50.spConfirm(${pi})`,'tonal'):''}${p.status==='pledged'||p.status==='received'?R.btn('إثبات التسليم',`RC50.spDeliver(${pi})`,'tonal'):''}${R.btn('المحادثة',`RC50.thread('pledge','${p.id}','${e(String(p.donor_name||'').replace(/'/g,''))} · ${e(String(p.period||'').replace(/'/g,''))}')`,'text')}${p.has_transfer_image?R.btn('صورة الحوالة',`RC50.spProof(${pi},'transfer')`,'text'):''}${p.has_image?R.btn('صورة التسليم',`RC50.spProof(${pi},'delivery')`,'text'):''}${p.status==='pledged'||p.status==='received'?R.btn('إلغاء',`RC50.spCancel(${pi})`,'text'):''}</div></div>`}).join('');
       return R.card(`<div class="dn-sec"><div><small class="dn-gold">${e(kind(c.kind)+' · '+rec(c.recurrence))}</small><h3>${e(c.title)}</h3></div><span class="dn-badge ${c.status==='open'?'on':''}">${c.status==='open'?'مفتوحة':'مغلقة'}</span></div>
         ${c.description?`<p>${e(c.description)}</p>`:''}<small class="dn-muted">${e([R.amount(c.amount,c.currency),c.amount_text,c.beneficiaries!=null?c.beneficiaries+' طالبًا مستفيدًا':'',c.halaqa_name].filter(Boolean).join(' · '))}</small>
         <div class="dn-chips">${per.map(p=>`<span class="dn-chip ${p.taken>=c.slots?'full':''}">${e(p.period)} · ${p.taken}/${c.slots}</span>`).join('')}</div>${pledges}

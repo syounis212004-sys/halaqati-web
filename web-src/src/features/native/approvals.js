@@ -11,7 +11,7 @@
   const today=()=>new Date().toISOString().slice(0,10);
   const online=()=>navigator.onLine&&state.networkVerified!==false&&!state.offline;
   const role=()=>state.profile?.role;
-  const ROLE_AR={guardian:'ولي أمر',teacher:'محفّظ',supervisor:'مشرف حلقات'};
+  const ROLE_AR={guardian:'ولي أمر',teacher:'محفّظ',supervisor:'مشرف حلقات',observer:'مانح'};
   const friendly=e=>{const m=String(e?.message||e||'');return /Could not find the function|PGRST202/i.test(m)?'لم يُطبَّق تحديث قاعدة البيانات الخاص بالاعتماد بعد. تواصل مع مسؤول النظام.':(m||'تعذر تنفيذ العملية')};
   async function rpc(name,args){const r=await db.rpc(name,args||{});if(r.error)throw r.error;return r.data}
   const latin=s=>String(s||'').replace(/[٠-٩]/g,c=>String(c.charCodeAt(0)-1632));
@@ -38,9 +38,9 @@
   // ---------- complete signup ----------
   const SU={role:'guardian',err:null,busy:false};
   function signupHtml(p){
-    const chips=NX.chips(['guardian','teacher','supervisor'].map(r=>({label:ROLE_AR[r],selected:SU.role===r,onclick:`NXSignup.role('${r}')`})),{wrap:true});
+    const chips=NX.chips(['guardian','teacher','supervisor','observer'].map(r=>({label:ROLE_AR[r],selected:SU.role===r,onclick:`NXSignup.role('${r}')`})),{wrap:true});
     const guardian=SU.role==='guardian'?`<p class="nx-confirm-text">ولي الأمر يربط ابنه برقم الهوية وتاريخ الميلاد. يمر الطلب بموافقة محفّظ الحلقة ثم تأكيد مسؤول النظام.</p>${NX.field('رقم هوية الطالب',{id:'nxSuNid',inputmode:'numeric'})}${NX.field('تاريخ ميلاد الطالب',{id:'nxSuDob',type:'date',max:today()})}`:'';
-    return `<div class="nx-stack"><h2 class="nx-su-t">إكمال الحساب</h2><p class="nx-confirm-text">أكمل بياناتك لإرسال طلب الاعتماد. ${SU.role==='guardian'?'سيراجع المحفّظ ثم المسؤول طلبك.':SU.role==='teacher'?'يعتمدك المشرف أو مسؤول النظام.':'يعتمدك مسؤول النظام.'}</p>
+    return `<div class="nx-stack"><h2 class="nx-su-t">إكمال الحساب</h2><p class="nx-confirm-text">أكمل بياناتك لإرسال طلب الاعتماد. ${SU.role==='guardian'?'سيراجع المحفّظ ثم المسؤول طلبك.':SU.role==='teacher'?'يعتمدك المشرف أو مسؤول النظام.':SU.role==='observer'?'حساب المانح لدعم المكرَّمين والكفالات. يعتمدك مسؤول النظام وتصلك رسالة عند الاعتماد.':'يعتمدك مسؤول النظام.'}</p>
       ${NX.field('الاسم الكامل',{id:'nxSuName',value:(p.full_name&&p.full_name!=='مستخدم جديد'&&!String(p.full_name).includes('@'))?p.full_name:''})}
       ${NX.field('رقم الجوال',{id:'nxSuPhone',type:'tel',inputmode:'tel'})}
       <div class="nx-t-title-s">نوع الحساب</div>${chips}${guardian}
@@ -52,7 +52,7 @@
     if(typeof hideAuthForms==='function')hideAuthForms();
     let box=document.getElementById('nxSignupPanel');
     if(!box){box=document.createElement('div');box.id='nxSignupPanel';box.className='approval-panel nx-su';(document.getElementById('pendingPanel')||document.getElementById('auth')).insertAdjacentElement('afterend',box)}
-    SU.role=['guardian','teacher','supervisor'].includes(p.requested_role)?p.requested_role:SU.role;
+    SU.role=['guardian','teacher','supervisor','observer'].includes(p.requested_role)?p.requested_role:SU.role;
     box.classList.remove('hidden');box.innerHTML=signupHtml(p);
   }
   function keepForm(){const g=id=>document.getElementById(id)?.value||'';return {name:g('nxSuName'),phone:g('nxSuPhone'),nid:g('nxSuNid'),dob:g('nxSuDob')}}

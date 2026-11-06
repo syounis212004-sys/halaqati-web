@@ -482,7 +482,7 @@ G.vSave=async function(){
    3) UsersScreen
    ============================================================ */
 const U={status:'pending',q:'',busy:null,msg:null};
-const roleAr=v=>({admin:'مسؤول النظام',supervisor:'مشرف الحلقات',teacher:'محفّظ الحلقة',guardian:'ولي أمر',student:'طالب'}[v]||'غير محدد');
+const roleAr=v=>({admin:'مسؤول النظام',observer:'مانح',supervisor:'مشرف الحلقات',teacher:'محفّظ الحلقة',guardian:'ولي أمر',student:'طالب'}[v]||'غير محدد');
 const uActive=u=>u.active!==false;
 function uBadge(u){
   if(u.role==='admin')return NX.pill('مسؤول','info',{cls:'ngm-badge'});
@@ -548,7 +548,7 @@ async function uRun(id,fn,success){
 const uFind=id=>(state.users||[]).find(u=>u.id===id);
 G.uAct=function(k,id){
   const u=uFind(id);if(!u||U.busy)return;
-  const req=['guardian','teacher','supervisor'].includes(u.requested_role)?u.requested_role:'guardian';
+  const req=['guardian','teacher','supervisor','observer'].includes(u.requested_role)?u.requested_role:'guardian';
   const approve=()=>chk(db.from('profiles').update({role:req,requested_role:req,approval_status:'approved',active:true,approved_at:new Date().toISOString(),approved_by:state.user?.id,rejection_reason:null}).eq('id',id));
   if(k==='approve')uRun(id,approve,'تم اعتماد الحساب');
   else if(k==='approve_again')uRun(id,approve,'تم اعتماد الحساب من جديد');

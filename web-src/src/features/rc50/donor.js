@@ -52,7 +52,7 @@
         return `<div class="dn-pod p${r}"><button type="button" class="dn-pod-btn" onclick="RC50.dWinner(${i})"><span class="dn-av m${r}">${e((w.name||'؟')[0])}</span><b>${e(w.name)}</b><small>${R.score(w.score)}</small></button><div class="dn-plinth">${r}</div></div>`}).join('')}</div>`};
     const cards=(data.groups||[]).map(g=>{const title=[A.scope==='halaqa'?g.halaqa_name:null,g.category_name].filter(Boolean).join(' · ');
       return R.card(`<small class="dn-gold">نجوم الشهر</small><h3>${e(title)}</h3>${(g.winners||[]).length?pods(g):'<p class="dn-muted">لم يستوفِ أحد شروط التكريم في هذه المجموعة هذا الشهر.</p>'}`)}).join('');
-    return `${topLine()}<div class="dn-pills-row">${R.pills(keys.map(k=>[k,R.monthLabel(k)]),A.month,'RC50.dMonth')}</div>${R.seg([['halaqa','حسب الحلقة'],['category','حسب الفئة']],A.scope,'RC50.dScope')}${cards||R.card(R.empty('لا توجد نتائج لهذا الشهر.'))}`;
+    return `${topLine()}${R.monthPicker(keys,A.month,'RC50.dMonth')}${R.seg([['halaqa','حسب الحلقة'],['category','حسب الفئة']],A.scope,'RC50.dScope')}${cards||R.card(R.empty('لا توجد نتائج لهذا الشهر.'))}`;
   }});
   R.dMonth=m=>{A.month=m;render()};
   R.dScope=s=>{A.scope=s;render()};
@@ -95,7 +95,7 @@
         ${p.transfer_submitted_at?`<p class="dn-ok">إثبات التحويل: ${e(p.transfer_ref||'صورة مرفقة')}</p>`:''}
         ${st==='delivered'&&p.beneficiaries!=null?`<p>استفاد منها ${e(p.beneficiaries)} طالبًا</p>`:''}
         ${p.proof_text?`<p>${e(p.proof_text)}</p>`:''}${p.thanks_text?`<div class="dn-thanks">💌 ${e(p.thanks_text)}</div>`:''}
-        <div class="dn-actions">${st==='pledged'||st==='received'?RC50.btn(p.transfer_submitted_at?'تحديث الإثبات':'أرسل إثبات التحويل',`RC50.dTransfer(${i})`):''}${p.has_image?RC50.btn('صورة التسليم',`RC50.dProof(${i})`,'tonal'):''}${st==='delivered'?RC50.btn('كفّل مرة أخرى',`RC50.dPledgeAgain(${i})`,'tonal'):''}${st==='pledged'?RC50.btn('إلغاء الكفالة',`RC50.dCancel(${i})`,'text'):''}</div>`)}).join('')}`:'';
+        <div class="dn-actions">${st==='pledged'||st==='received'?RC50.btn(p.transfer_submitted_at?'تحديث الإثبات':'أرسل إثبات التحويل',`RC50.dTransfer(${i})`):''}${p.has_image?RC50.btn('صورة التسليم',`RC50.dProof(${i})`,'tonal'):''}${RC50.btn('المحادثة',`RC50.thread('pledge','${p.id}','${e(String(p.title||'').replace(/'/g,''))}')`,'tonal')}${st==='delivered'?RC50.btn('كفّل مرة أخرى',`RC50.dPledgeAgain(${i})`,'tonal'):''}${st==='pledged'?RC50.btn('إلغاء الكفالة',`RC50.dCancel(${i})`,'text'):''}</div>`)}).join('')}`:'';
     const open=cards.map((c,i)=>{const per=c.periods||[],cov=per.filter(p=>p.taken>=c.slots).length,free=per.some(p=>p.taken<c.slots&&!p.mine);
       return R.card(`<small class="dn-gold">${e((KINDS[c.kind]||c.kind)+' · '+(REC[c.recurrence]||''))}</small><h3>${e(c.title)}</h3>${c.description?`<p>${e(c.description)}</p>`:''}
         <small class="dn-muted">${e([R.amount(c.amount,c.currency),c.amount_text,c.beneficiaries!=null?c.beneficiaries+' طالبًا مستفيدًا':'',c.halaqa_name].filter(Boolean).join(' · '))}</small>
