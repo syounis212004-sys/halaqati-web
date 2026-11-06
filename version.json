@@ -1,7 +1,7 @@
 {
   "versionName": "2.88.0",
   "versionCode": 28800,
-  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
+  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
   "sha256": "7633db7ac872852afbd57fb7b968d63c4b344af1539910bd9e5cadf80dbbea4d",
   "native": true,
   "mandatory": false,
