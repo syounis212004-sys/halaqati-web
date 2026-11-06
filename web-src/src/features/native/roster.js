@@ -669,12 +669,25 @@
   };
   NS.closeConfirm=function(){
     const se=curSession();if(!se)return;const c=listCtx(se),sm=c.summary;
-    const text=sm.unmarked>0?`يوجد طلاب لم يُرصدوا: ${sm.unmarked}. راجع الملخص قبل الإغلاق.`:'اكتمل رصد جميع الطلاب. راجع الملخص ثم أغلق الجلسة عندما تكون جاهزًا.';
+    const text=sm.unmarked>0?`يوجد طلاب لم يُرصدوا: ${sm.unmarked}. عند الإغلاق يُسجَّل غير المرصود غائبًا، ويُعتمد الحاضر بلا تسميع «لم يُسمّع».`:'اكتمل رصد جميع الطلاب. راجع الملخص ثم أغلق الجلسة عندما تكون جاهزًا.';
     const up=canManage()&&se.status==='open'?NX.btn('رفع الجلسة',{kind:'tonal',icon:'CloudUpload',onclick:"NX.closeDialog('nrSumDlg');NSR.upload()"}):'';
     NX.dialog('nrSumDlg','ملخص الجلسة قبل الإغلاق',`<p class="nx-confirm-text">${h(text)}</p>${strip(sm,c.lesson)}`,{cls:'nr-dlg-mid',footer:`${NX.btn(sm.unmarked>0?'العودة للرصد':'متابعة الجلسة',{kind:'text',onclick:"NX.closeDialog('nrSumDlg')"})}${up}${NX.btn(sm.unmarked>0?'إغلاق على أي حال':'إغلاق الجلسة',{onclick:`NSR.finish(${sm.unmarked===0})`})}`});
   };
+  /** RC40 smart close: a present student with no recitation is recorded «لم يُسمّع»; an unmarked student is recorded absent. */
+  function smartCloseApply(se){
+    const c=listCtx(se);let nr=0,ab=0;
+    c.all.forEach(st=>{
+      const state0=c.states.get(st.id);
+      try{
+        if((state0==='PRESENT'||state0==='LATE')&&!c.lesson){saveNoteLocal(st.id,se.id,{participation:NOT_RECITED});nr++}
+        else if(state0==='UNMARKED'){localAttendanceSave(st.id,se.id,'absent',{excuse_reason:null,arrival_minutes_late:0});ab++}
+      }catch(_e){}
+    });
+    if(nr||ab){try{syncSoon()}catch(_e){}try{setMessage(`إغلاق ذكي: ${nr} «لم يُسمّع» · ${ab} غائب`,'success')}catch(_e){}}
+  }
   NS.finish=function(celebrate){
     NX.closeDialog('nrSumDlg');
+    try{const se=curSession();if(se&&se.status==='open'&&canManage())smartCloseApply(se)}catch(_e){}
     if(celebrate){try{window.RC27Motion?.celebrate()}catch(_e){}}
     closeSessionRoster();
   };
