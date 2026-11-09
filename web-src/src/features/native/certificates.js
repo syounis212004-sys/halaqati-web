@@ -106,7 +106,7 @@
   function assetsHtml(){
     const s=CS.settings();
     const has=k=>!!s[k]&&s[k]!==DEF_LOGO[k];
-    return `<p class="nc-h">الصور محلية فقط</p><p class="nc-sub">لا يتم رفع الشعار أو التوقيع أو الختم أو ملف PDF إلى Supabase.</p><div class="nx-stack-s">${[['centerLogo','شعار المركز','AccountBalance'],['halaqaLogo','شعار الحلقة','AutoStories'],['teacherSignature','توقيع المحفظ','Draw'],['supervisorSignature','توقيع المشرف','Draw'],['stampImage','الختم الرسمي','Verified']].map(([k,l,i])=>assetRow(k,l,i,has(k))).join('')}</div>`;
+    return `<p class="nc-h">الصور محلية فقط</p><p class="ncc-sub">لا يتم رفع الشعار أو التوقيع أو الختم أو ملف PDF إلى Supabase.</p><div class="nx-stack-s">${[['centerLogo','شعار المركز','AccountBalance'],['halaqaLogo','شعار الحلقة','AutoStories'],['teacherSignature','توقيع المحفظ','Draw'],['supervisorSignature','توقيع المشرف','Draw'],['stampImage','الختم الرسمي','Verified']].map(([k,l,i])=>assetRow(k,l,i,has(k))).join('')}</div>`;
   }
 
   // ---------- issue / batch studio ----------
@@ -114,7 +114,7 @@
     return `<p class="nc-h">نوع الشهادة</p>${chipGrid((D.opts.type||[]).filter(o=>!(batch&&o.value==='rank')).map(o=>({label:h(o.label),selected:D.type===o.value,onclick:`certReset('${o.value}')`})),2)}`;
   }
   function bulkCard(batch){
-    return NX.card(`<div class="nx-row"><span class="nc-ic">${ic('Groups',24)}</span><div class="nx-grow"><b class="nc-t">الإصدار الجماعي</b><small class="nc-sub">الطلاب مرتّبون حسب الفئة؛ لكل طالب رقم رسمي وملف PDF مستقل محليًا</small></div><input type="checkbox" class="nx-switch" ${batch?'checked':''} aria-label="الإصدار الجماعي" onchange="NC.bulk(this.checked)"></div>`,{cls:'nx-emph'});
+    return NX.card(`<div class="nx-row"><span class="ncc-ic">${ic('Groups',24)}</span><div class="nx-grow"><b class="nc-t">الإصدار الجماعي</b><small class="ncc-sub">الطلاب مرتّبون حسب الفئة؛ لكل طالب رقم رسمي وملف PDF مستقل محليًا</small></div><input type="checkbox" class="nx-switch" ${batch?'checked':''} aria-label="الإصدار الجماعي" onchange="NC.bulk(this.checked)"></div>`,{cls:'nx-emph'});
   }
   function categoryOptions(){return [{value:'all',label:'جميع الفئات'}].concat((state.categories||[]).filter(c=>c.active!==false).map(c=>({value:c.id,label:c.name||'فئة'})))}
   function sortedStudents(opts){
@@ -140,7 +140,7 @@
   function batchRows(rows){
     if(!rows.length)return NX.empty('لا يوجد طلاب مطابقون',{icon:'SearchOff'});
     return rows.map(o=>{const r=o.r,st=studentOf(r.id),trk=st&&st.track_code==='tathbit'?'التثبيت':'الحفظ العام';
-      return `<label class="nx-card nc-brow ${r.checked?'on':''}"><input type="checkbox" class="nc-chk" ${r.checked?'checked':''} onchange="certBatchToggle('${h(r.id)}',this.checked)"><span class="nx-grow"><b>${h(r.name)}</b><small>${h(o.cat)}</small></span><em>${trk}</em></label>`}).join('');
+      return `<label class="nx-card ncc-brow ${r.checked?'on':''}"><input type="checkbox" class="nc-chk" ${r.checked?'checked':''} onchange="certBatchToggle('${h(r.id)}',this.checked)"><span class="nx-grow"><b>${h(r.name)}</b><small>${h(o.cat)}</small></span><em>${trk}</em></label>`}).join('');
   }
   function numberDate(D,batch){
     const pd=pendingDraft(),date=(pd&&/^\d{4}-\d{2}-\d{2}$/.test(pd.date||'')&&pd.date)||todayStr();
@@ -161,7 +161,7 @@
     }
     if(t==='rank'){
       const per=v.periodMode;
-      return `<div class="nc-rank"><div class="nc-two">${sel('المركز',D.opts.rank||[],v.rank,"certSet('rank',Number(this.value))")}${sel('الفئة',D.opts.categoryId||[],v.categoryId,"certSet('categoryId',this.value)")}</div>
+      return `<div class="ncc-rank"><div class="nc-two">${sel('المركز',D.opts.rank||[],v.rank,"certSet('rank',Number(this.value))")}${sel('الفئة',D.opts.categoryId||[],v.categoryId,"certSet('categoryId',this.value)")}</div>
         ${isProgram()?'':`<div class="nc-chips-row">${NX.chip('الحفظ العام',{selected:v.track!=='tathbit',check:false,onclick:"certSet('track','general_hifz');render()"})}${NX.chip('التثبيت',{selected:v.track==='tathbit',check:false,onclick:"certSet('track','tathbit');render()"})}</div>`}
         <div class="nc-two">${sel('الحلقة',D.opts.halaqaId||[],v.halaqaId,"certSet('halaqaId',this.value)")}${sel('الفترة',D.opts.periodMode||[],per,"certSet('periodMode',this.value);render()")}</div>
         <div class="nc-two">${per==='month'?NX.field('الشهر',{type:'month',value:v.periodMonth,onchange:"certSet('periodMonth',this.value)"}):per==='months'?NX.field('من شهر',{type:'month',value:v.periodFromMonth,onchange:"certSet('periodFromMonth',this.value)"})+NX.field('إلى شهر',{type:'month',value:v.periodToMonth,onchange:"certSet('periodToMonth',this.value)"}):NX.field('من',{type:'date',value:v.periodFrom,onchange:"certSet('periodFrom',this.value)"})+NX.field('إلى',{type:'date',value:v.periodTo,onchange:"certSet('periodTo',this.value)"})}</div>
@@ -170,19 +170,19 @@
     return '';
   }
   function rankResult(D){
-    if(D.rank)return `<div class="nc-rankres"><b>النتيجة حسب النقاط</b>${D.rank.length?D.rank.slice(0,3).map(r=>`<button type="button" onclick="certUseRank(${r.i})"><span class="nc-rn">${Number(r.i)+1}</span><strong>${h(r.name)}</strong><em>${h(r.meta)}</em></button>`).join(''):'<p class="nc-sub">لا توجد بيانات كافية.</p>'}</div>`;
+    if(D.rank)return `<div class="nc-rankres"><b>النتيجة حسب النقاط</b>${D.rank.length?D.rank.slice(0,3).map(r=>`<button type="button" onclick="certUseRank(${r.i})"><span class="nc-rn">${Number(r.i)+1}</span><strong>${h(r.name)}</strong><em>${h(r.meta)}</em></button>`).join(''):'<p class="ncc-sub">لا توجد بيانات كافية.</p>'}</div>`;
     if(D.rankNote)return NX.notice(h(D.rankNote),/جاري/.test(D.rankNote)?'info':'danger');
     return '';
   }
   function textsCard(D){
     const v=D.vals,s=CS.settings();
-    return NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('Description',24)}</span><div class="nx-grow"><b class="nc-t">نصوص وهوية الشهادة</b><small class="nc-sub">كل حقل قابل للتعديل مع استعادة الافتراضي.</small></div></div>
+    return NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('Description',24)}</span><div class="nx-grow"><b class="nc-t">نصوص وهوية الشهادة</b><small class="ncc-sub">كل حقل قابل للتعديل مع استعادة الافتراضي.</small></div></div>
       ${textField('عنوان الشهادة','title',v.title||'',1)}${textField('المقدمة','intro',v.intro||'',2)}${textField('نص الإنجاز','achievement',v.achievement||'',3)}${textField('الدعاء / الخاتمة','dua',v.dua||'',2)}
       <div class="nc-ident"><span>${ic('AccountBalance',18)}${h(s.centerName)}</span><span>${ic('AutoStories',18)}${h(s.halaqaName)}</span>${NX.btn('تعديل الهوية والتوقيعات',{kind:'text',small:true,onclick:"certTab('settings')"})}</div>`,{cls:'nx-emph nc-pad'});
   }
   function designTemplates(D){
     const v=D.vals;
-    return `<p class="nc-h">اختر قالبًا بصريًا</p><p class="nc-sub">النصوص لا تتغير عند تبديل القالب؛ الذي يتغير هو الإطار والزخرفة ولوحة الألوان فقط.</p>
+    return `<p class="nc-h">اختر قالبًا بصريًا</p><p class="ncc-sub">النصوص لا تتغير عند تبديل القالب؛ الذي يتغير هو الإطار والزخرفة ولوحة الألوان فقط.</p>
       <div class="nc-tplgrid">${Object.keys(TPL).map(k=>templateCard(k,D.tpl===k)).join('')}</div>
       ${slider('سماكة الإطار','style.borderWidth',1,6,v['style.borderWidth']??3,'px')}${slider('قوة الزخارف','style.ornamentOpacity',0,100,v['style.ornamentOpacity']??82,'%')}`;
   }
@@ -191,7 +191,7 @@
     return `<p class="nc-h">الخط</p>${chipGrid([['Cairo','Cairo'],['Tahoma','Tahoma'],['Arial','Arial'],['serif','Serif'],['custom','خط الجهاز']].map(([k,l])=>({label:l,selected:fam===k,onclick:`certSet('style.fontFamily','${k}');render()`})),3)}
       ${fam==='custom'?NX.field('اسم الخط المثبت على الجهاز',{value:v['style.customFont']||'',placeholder:'مثال: Noto Naskh Arabic',oninput:"certSet('style.customFont',this.value)"}):''}
       ${slider('حجم العنوان','style.titleSize',30,64,v['style.titleSize']??44,'px')}${slider('حجم اسم الطالب','style.studentSize',28,58,v['style.studentSize']??38,'px')}${slider('حجم نص الإنجاز','style.bodySize',15,28,v['style.bodySize']??20,'px')}${slider('حجم الشعارات','style.logoSize',100,230,v['style.logoSize']??168,'px')}
-      ${NX.divider()}<p class="nc-h">ألوان الشهادة</p><p class="nc-sub">اضغط اللون الجاهز أو اكتب HEX. زر الاستعادة يعيد لون القالب.</p>
+      ${NX.divider()}<p class="nc-h">ألوان الشهادة</p><p class="ncc-sub">اضغط اللون الجاهز أو اكتب HEX. زر الاستعادة يعيد لون القالب.</p>
       <div class="nc-colors">${colorField('primary','الرئيسي','#0b5f5b',v['style.primary'],D.tpl)}${colorField('accent','الذهبي','#c5a350',v['style.accent'],D.tpl)}${colorField('secondary','الثانوي','#8a4d22',v['style.secondary'],D.tpl)}${colorField('paper','الخلفية','#fbf7eb',v['style.paper'],D.tpl)}${colorField('ink','النص','#18211e',v['style.ink'],D.tpl)}</div>`;
   }
   function designElements(D){
@@ -203,7 +203,7 @@
   function designCard(D){
     const subs=[['templates','القوالب'],['typography','الخط والألوان'],['elements','العناصر'],['assets','الشعارات والصور']];
     const body=ui.dsub==='typography'?designTypography(D):ui.dsub==='elements'?designElements(D):ui.dsub==='assets'?designAssets():designTemplates(D);
-    return NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('Palette',24)}</span><div class="nx-grow"><b class="nc-t">استوديو تصميم الشهادة</b><small class="nc-sub">كل التخصيصات مباشرة، والملفات والصور تبقى محلية على الجهاز.</small></div></div>
+    return NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('Palette',24)}</span><div class="nx-grow"><b class="nc-t">استوديو تصميم الشهادة</b><small class="ncc-sub">كل التخصيصات مباشرة، والملفات والصور تبقى محلية على الجهاز.</small></div></div>
       ${chipGrid(subs.map(([k,l])=>({label:l,selected:ui.dsub===k,onclick:`NC.sub('${k}')`})),2)}<div class="nc-dbody">${body}</div>`,{cls:'nx-emph nc-pad'});
   }
   function previewCard(D){
@@ -212,10 +212,10 @@
   function actions(D,batch,B){
     if(batch){
       const n=B.rows.filter(r=>r.checked).length;
-      return `<div class="nc-actions">${NX.btn(B.busy&&n?'جاري إنشاء الشهادات…':`إصدار ${n||''} شهادة PDF`,{icon:'Groups',full:true,cls:'nc-primary',disabled:!n||B.busy,onclick:'certBatchIssue()'})}</div>`;
+      return `<div class="ncc-actions">${NX.btn(B.busy&&n?'جاري إنشاء الشهادات…':`إصدار ${n||''} شهادة PDF`,{icon:'Groups',full:true,cls:'nc-primary',disabled:!n||B.busy,onclick:'certBatchIssue()'})}</div>`;
     }
     const editing=D.num&&!/^مسودة/.test(D.num);
-    return `<div class="nc-actions">${NX.btn(D.busy?'جاري إنشاء الشهادة…':editing?'إنشاء النسخة المصححة بنفس الرقم':'إصدار وحفظ PDF',{icon:'WorkspacePremium',full:true,cls:'nc-primary',disabled:D.busy,onclick:'certSavePdf()'})}
+    return `<div class="ncc-actions">${NX.btn(D.busy?'جاري إنشاء الشهادة…':editing?'إنشاء النسخة المصححة بنفس الرقم':'إصدار وحفظ PDF',{icon:'WorkspacePremium',full:true,cls:'nc-primary',disabled:D.busy,onclick:'certSavePdf()'})}
       <div class="nx-row nc-btnrow">${NX.btn('طباعة',{kind:'tonal',icon:'Description',cls:'nx-grow',onclick:'certPrint()'})}${NX.btn('إصدار رسمي وحفظ في الأرشيف',{kind:'outlined',icon:'Archive',cls:'nx-grow',onclick:'certIssueToArchive(false)'})}</div>
       ${NX.btn('إعادة ضبط',{kind:'text',icon:'RestartAlt',full:true,onclick:`certReset('${D.type}')`})}</div>`;
   }
@@ -225,24 +225,24 @@
     return NX.chips([['issue','إصدار شهادة'],['batch','إصدار جماعي'],['archive','الأرشيف'],['templates','القوالب'],['settings','الإعدادات']].map(([k,l])=>({label:l,selected:cur===k,check:false,onclick:`certTab('${k}')`})),{});
   }
   function headerHtml(){
-    return `<div class="nc-head"><span class="nc-head-ic">${ic('WorkspacePremium',22)}</span><div class="nx-grow"><b>مركز الشهادات</b><small>تحرير · معاينة A4 · إصدار وأرشفة</small></div><span class="nc-ver">RC27.40</span></div>`;
+    return `<div class="ncc-head"><span class="nc-head-ic">${ic('WorkspacePremium',22)}</span><div class="nx-grow"><b>مركز الشهادات</b><small>تحرير · معاينة A4 · إصدار وأرشفة</small></div><span class="nc-ver">RC27.40</span></div>`;
   }
 
   // ---------- settings / templates tabs ----------
   function settingsHtml(){
     const s=CS.settings();
-    const identity=NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('AccountBalance',24)}</span><div class="nx-grow"><b class="nc-t">الهوية والتوقيعات</b><small class="nc-sub">تظهر في ترويسة الشهادة وتوقيعاتها.</small></div></div>
+    const identity=NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('AccountBalance',24)}</span><div class="nx-grow"><b class="nc-t">الهوية والتوقيعات</b><small class="ncc-sub">تظهر في ترويسة الشهادة وتوقيعاتها.</small></div></div>
       ${NX.field('اسم المركز',{id:'certSetCenter',value:s.centerName})}${NX.field('اسم الحلقة',{id:'certSetHalaqa',value:s.halaqaName})}${NX.field('المحفظ',{id:'certSetTeacher',value:s.teacher})}${NX.field('المشرف',{id:'certSetSupervisor',value:s.supervisor})}
       ${NX.btn('حفظ الإعدادات',{full:true,icon:'Save',onclick:'certSaveSettingsForm()'})}`,{cls:'nx-emph nc-pad'});
-    const assets=NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('Image',24)}</span><div class="nx-grow"><b class="nc-t">الشعارات والتوقيعات</b><small class="nc-sub">صور محلية تُضغط وتُحفظ على هذا الجهاز.</small></div></div>${assetsHtml()}`,{cls:'nx-emph nc-pad'});
-    const defaults=NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('Tune',24)}</span><div class="nx-grow"><b class="nc-t">الإعدادات الافتراضية</b></div></div>
+    const assets=NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('Image',24)}</span><div class="nx-grow"><b class="nc-t">الشعارات والتوقيعات</b><small class="ncc-sub">صور محلية تُضغط وتُحفظ على هذا الجهاز.</small></div></div>${assetsHtml()}`,{cls:'nx-emph nc-pad'});
+    const defaults=NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('Tune',24)}</span><div class="nx-grow"><b class="nc-t">الإعدادات الافتراضية</b></div></div>
       ${NX.select('القالب الافتراضي',Object.keys(TPL).map(k=>({value:k,label:TPL[k].label})),{id:'certDefaultTemplate',value:s.defaultTemplate})}${NX.field('الآية السفلية',{id:'certVerse',value:s.verse})}
       ${NX.notice('ملفات الصور والتوقيعات تحفظ محليًا على هذا الجهاز ولا ترفع إلى Supabase.','info')}
       <div class="nx-row nc-btnrow">${NX.btn('حفظ الإعدادات',{cls:'nx-grow',icon:'Save',onclick:'certSaveSettingsForm()'})}${NX.btn('استعادة الافتراضي',{kind:'outlined',cls:'nx-grow',icon:'RestartAlt',onclick:'NC.resetAll()'})}</div>`,{cls:'nx-emph nc-pad'});
     return `<div class="nx-stack">${identity}${assets}${defaults}</div>`;
   }
   function templatesHtml(D){
-    return `<div class="nx-stack">${NX.card(`<div class="nx-row nc-cardhead"><span class="nc-ic">${ic('Palette',24)}</span><div class="nx-grow"><b class="nc-t">قوالب الشهادات</b><small class="nc-sub">خمسة قوالب جاهزة، وكل قالب قابل لتغيير ألوانه وخطه وأحجامه قبل الإصدار.</small></div></div>${designTemplates(D)}`,{cls:'nx-emph nc-pad'})}${NX.notice('اختيار القالب هنا يضبط ألوان القالب الحالي فقط. ويمكن حفظ القالب المفضّل كافتراضي من الإعدادات.','info')}${NX.btn('الخط والألوان والعناصر',{kind:'tonal',full:true,icon:'Palette',onclick:"NC.sub('typography');certTab('issue')"})}</div>`;
+    return `<div class="nx-stack">${NX.card(`<div class="nx-row nc-cardhead"><span class="ncc-ic">${ic('Palette',24)}</span><div class="nx-grow"><b class="nc-t">قوالب الشهادات</b><small class="ncc-sub">خمسة قوالب جاهزة، وكل قالب قابل لتغيير ألوانه وخطه وأحجامه قبل الإصدار.</small></div></div>${designTemplates(D)}`,{cls:'nx-emph nc-pad'})}${NX.notice('اختيار القالب هنا يضبط ألوان القالب الحالي فقط. ويمكن حفظ القالب المفضّل كافتراضي من الإعدادات.','info')}${NX.btn('الخط والألوان والعناصر',{kind:'tonal',full:true,icon:'Palette',onclick:"NC.sub('typography');certTab('issue')"})}</div>`;
   }
 
   // ---------- archive ----------
@@ -262,7 +262,7 @@
   function offRow(c,compact){
     const [stT,stK]=statusOf(c),open=!compact&&ui.open.has(c.id),id=h(c.id);
     const meta=`${c.certificate_number} · ${c.series_key||c.certificate_type||''} · ${c.issue_date||''} · v${Math.max(1,Number(c.revision_count)||1)}`;
-    const det=open?`<div class="nc-arow-d">${c.status==='voided'&&c.void_reason?`<p class="nc-sub">سبب الإلغاء: ${h(c.void_reason)}</p>`:''}${c.legacy_partial?`<p class="nc-sub">شهادة قديمة: بيانات التصميم الأصلية غير مكتملة؛ لن نخترع نصًا أو أصلًا بصريًا مفقودًا.</p>`:''}
+    const det=open?`<div class="nc-arow-d">${c.status==='voided'&&c.void_reason?`<p class="ncc-sub">سبب الإلغاء: ${h(c.void_reason)}</p>`:''}${c.legacy_partial?`<p class="ncc-sub">شهادة قديمة: بيانات التصميم الأصلية غير مكتملة؛ لن نخترع نصًا أو أصلًا بصريًا مفقودًا.</p>`:''}
       <div class="nx-row nc-btnrow">${NX.btn('إنشاء نسخة مصححة',{kind:'outlined',cls:'nx-grow',disabled:!(c.status==='issued'&&!c.legacy_partial),onclick:`event.stopPropagation();NC.edit('${id}')`})}${NX.btn('المزيد…',{kind:'outlined',cls:'nx-grow',onclick:`event.stopPropagation();NC.manage('${id}')`})}</div></div>`:'';
     return `<div class="nx-card nx-click nc-arow ${open?'open':''} ${compact?'compact':''}" tabindex="0" role="button" onclick="${compact?`NC.manage('${id}')`:`NC.toggle('${id}')`}" onkeydown="if(event.key==='Enter')this.click()">
       <div class="nc-arow-h"><div class="nx-grow"><b class="nx-ellipsis">${h(nameOf(c))}</b><small class="nx-ellipsis" dir="auto">${h(meta)}</small></div>${NX.pill(stT,stK)}${c.legacy_partial?NX.pill('قديمة','warning'):''}
@@ -270,7 +270,7 @@
   }
   function archHead(){
     const o=official(),H=ui.hidden;
-    return `<div class="nx-row nc-archhead"><div class="nx-grow"><b class="nc-t">الأرشيف الرسمي للشهادات</b><small class="nc-sub">${o.filter(c=>c.status==='issued').length} سارية · ${o.filter(c=>c.status==='voided').length} ملغاة · ${o.filter(c=>H.has(c.id)).length} مخفية</small></div>
+    return `<div class="nx-row nc-archhead"><div class="nx-grow"><b class="nc-t">الأرشيف الرسمي للشهادات</b><small class="ncc-sub">${o.filter(c=>c.status==='issued').length} سارية · ${o.filter(c=>c.status==='voided').length} ملغاة · ${o.filter(c=>H.has(c.id)).length} مخفية</small></div>
       ${menuBtn([['newest','الأحدث'],['oldest','الأقدم'],['name','حسب الاسم'],['number','حسب الرقم']].map(([k,l])=>({label:l,icon:ui.sort===k?'Check':'',onclick:()=>{ui.sort=k;ui.limit=12;paint()}})),({oldest:'الأقدم',name:'الاسم',number:'الرقم'}[ui.sort])||'الأحدث','Tune')}
       ${NX.iconBtn('Refresh',{title:'تحديث',disabled:cen.loading,onclick:'NC.refresh()'})}</div>`;
   }
@@ -296,7 +296,7 @@
   function archSide(){
     const loc=CS.archive(),rows=localRows();
     const tools=`<button type="button" class="nc-fold" aria-expanded="${ui.tools}" onclick="NC.tools()">${ic('Settings',20)}<span class="nx-grow">أدوات الأرشيف</span>${ic(ui.tools?'ExpandLess':'ExpandMore',22)}</button>
-      ${ui.tools?`<div class="nc-foldbody"><div class="nx-row nc-btnrow">${NX.btn('تصدير JSON',{kind:'outlined',icon:'Download',cls:'nx-grow',onclick:'certExportArchive()'})}${NX.btn('استيراد JSON',{kind:'outlined',icon:'Archive',cls:'nx-grow',onclick:'certImportArchivePicker()'})}</div><p class="nc-sub">Supabase يحتفظ بالرقم الرسمي والنص/إعدادات كل إصدار فقط. ملفات PDF والصور والتواقيع تبقى على الجهاز.</p></div>`:''}`;
+      ${ui.tools?`<div class="nc-foldbody"><div class="nx-row nc-btnrow">${NX.btn('تصدير JSON',{kind:'outlined',icon:'Download',cls:'nx-grow',onclick:'certExportArchive()'})}${NX.btn('استيراد JSON',{kind:'outlined',icon:'Archive',cls:'nx-grow',onclick:'certImportArchivePicker()'})}</div><p class="ncc-sub">Supabase يحتفظ بالرقم الرسمي والنص/إعدادات كل إصدار فقط. ملفات PDF والصور والتواقيع تبقى على الجهاز.</p></div>`:''}`;
     const local=`<button type="button" class="nc-fold" aria-expanded="${ui.localOpen}" onclick="NC.localToggle()">${ic('Inventory2',20)}<span class="nx-grow">نسخ هذا الجهاز (${loc.length})</span>${ic(ui.localOpen?'ExpandLess':'ExpandMore',22)}</button>
       ${ui.localOpen?(rows.length?`<div class="nc-alist">${rows.map(x=>`<div class="nx-card nc-lrow"><div class="nx-grow"><b class="nx-ellipsis">${h(x.studentName)}</b><small class="nx-ellipsis" dir="auto">${h(x.number)} · ${h(x.typeLabel||'')} · ${h(x.date||'')}</small></div>
         ${NX.iconBtn('ContentCopy',{title:'إعادة إنشاء كنسخة جديدة',onclick:`NC.reuse('${h(x.id)}')`})}${x.uri?NX.iconBtn('Share',{title:'مشاركة',onclick:`certShareArchive('${h(x.id)}')`}):''}${NX.iconBtn('Inventory2',{title:'نقل للأرشيف المشترك',onclick:`NC.toCentral('${h(x.id)}')`})}${NX.iconBtn('DeleteOutline',{title:'حذف من هذا الجهاز',cls:'nc-del',onclick:`NC.delLocal('${h(x.id)}')`})}</div>`).join('')}</div>`:NX.empty('لا توجد شهادات مؤرشفة على هذا الجهاز',{icon:'Inventory2'})):''}`;
@@ -313,7 +313,7 @@
   // ---------- page ----------
   function afterMount(){
     try{
-      const shell=document.querySelector('.nc-root .cert-preview-shell');
+      const shell=document.querySelector('.ncc-root .cert-preview-shell');
       if(ro){ro.disconnect();ro=null}
       if(shell){CS.fitCertificatePreview();if(typeof ResizeObserver==='function'){ro=new ResizeObserver(()=>CS.fitCertificatePreview());ro.observe(shell)}}
     }catch(_e){}
@@ -343,13 +343,13 @@
     else if(cur==='settings')controls=settingsHtml();
     else controls=archFull();
     if(cur==='archive'){
-      aside=`<aside class="nc-aside"><div data-nc-arch="side">${archSide()}</div></aside>`;
+      aside=`<aside class="ncc-aside"><div data-nc-arch="side">${archSide()}</div></aside>`;
     }else{
       preview=`<div class="nc-preview">${previewCard(D)}${studio?actions(D,batch,B):''}</div>`;
-      aside=`<aside class="nc-aside">${archAside()}</aside>`;
+      aside=`<aside class="ncc-aside">${archAside()}</aside>`;
     }
     setTimeout(afterMount,40);setTimeout(afterMount,320);
-    return `<div class="nc-root" data-nc-tab="${cur}">${headerHtml()}${tabsHtml(cur)}${live()?'':NX.notice('أنت غير متصل: الإصدار الرسمي والأرشيف المشترك يحتاجان اتصالًا بالخادم.','warning')}<div class="nc-grid nc-t-${cur}"><div class="nc-controls">${controls}</div>${preview}${aside}</div></div>`;
+    return `<div class="ncc-root" data-nc-tab="${cur}">${headerHtml()}${tabsHtml(cur)}${live()?'':NX.notice('أنت غير متصل: الإصدار الرسمي والأرشيف المشترك يحتاجان اتصالًا بالخادم.','warning')}<div class="nc-grid nc-t-${cur}"><div class="nc-controls">${controls}</div>${preview}${aside}</div></div>`;
   }
 
   // ---------- capture of the legacy central archive (single fetch, structured rows) ----------
@@ -402,11 +402,11 @@
     },
     bcat(v){ui.bcat=v;re()},
     bq(v){ui.bq=v;const box=document.querySelector('[data-nc="blist"]');if(box){/* rebuild the list from DOM rows */
-      const q=v.trim().toLowerCase();box.querySelectorAll('.nc-brow').forEach(r=>{r.hidden=!!q&&!r.textContent.toLowerCase().includes(q)})}},
+      const q=v.trim().toLowerCase();box.querySelectorAll('.ncc-brow').forEach(r=>{r.hidden=!!q&&!r.textContent.toLowerCase().includes(q)})}},
     bsel(on){
-      const q=ui.bq.trim().toLowerCase(),ids=[...document.querySelectorAll('.nc-brow')].filter(r=>!r.hidden).map(r=>r.querySelector('input').getAttribute('onchange').match(/'([^']+)'/)[1])
+      const q=ui.bq.trim().toLowerCase(),ids=[...document.querySelectorAll('.ncc-brow')].filter(r=>!r.hidden).map(r=>r.querySelector('input').getAttribute('onchange').match(/'([^']+)'/)[1])
         .filter(id=>ui.bcat==='all'||String(studentOf(id)?.category_id)===String(ui.bcat));
-      silent(()=>{if(on)ids.forEach(id=>window.certBatchToggle(id,true));else document.querySelectorAll('.nc-brow.on').forEach(r=>window.certBatchToggle(r.querySelector('input').getAttribute('onchange').match(/'([^']+)'/)[1],false))});
+      silent(()=>{if(on)ids.forEach(id=>window.certBatchToggle(id,true));else document.querySelectorAll('.ncc-brow.on').forEach(r=>window.certBatchToggle(r.querySelector('input').getAttribute('onchange').match(/'([^']+)'/)[1],false))});
       re();
     },
     bulk(on){window.certTab(on?'batch':'issue')},

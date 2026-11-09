@@ -15,7 +15,7 @@
 
   // ---------- rules (sessionTypeAr, SessionWorkflowRules, MonthKey/MonthGrouping) ----------
   const TYPE_AR={tasmee:'تسميع',sard:'سرد',review:'مراجعة',test:'اختبار',tajweed:'التلاوة والتجويد',tilawah:'التلاوة والتجويد',lesson:'نشاط تربوي',other:'أخرى'};
-  const typeAr=t=>TYPE_AR[t]||t||'';
+  const typeAr=t=>TYPE_AR[t]||(t?'جلسة':'');
   window.sessionTypeAr=typeAr;
   const MANUAL_TYPES=['tasmee','sard','review','test','tilawah','lesson','other'];
   const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
