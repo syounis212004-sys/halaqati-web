@@ -142,11 +142,11 @@
     const acts=removed
       ?`${manage()?NX.btn('استعادة',{kind:'tonal',icon:'Restore',onclick:`restoreStudent('${st.id}')`}):''}${isOwner()?NX.btn('حذف نهائي',{kind:'danger',onclick:`NSS.purge('${st.id}')`}):''}`
       :`${staff()?NX.btn('تسميع اليوم',{onclick:`NSS.recite('${st.id}')`}):''}${NX.btn('الملف الشخصي',{kind:'tonal',onclick:`studentProfile('${st.id}')`})}${staff()?NX.btn('الخطة',{kind:'tonal',onclick:`openPlan('${st.id}')`}):''}`;
-    return `<div class="ns-card ${open?'open':''} ${selected?'selected':''} ${removed?'removed':''}" data-stcard="${st.id}">
-      <div class="ns-card-head">${selMode?`<input class="ns-check" type="checkbox" aria-label="تحديد ${h(st.full_name)}" ${selected?'checked':''} onchange="toggleStudentSelection('${st.id}',this.checked)">`:''}<button type="button" class="ns-card-main" onclick="NSS.toggle('${st.id}')" aria-expanded="${open?'true':'false'}">${avatar(st,46)}<span class="ns-card-t"><b>${h(st.full_name)}</b><small>${h(subtitle)}</small></span></button>${dup?NX.pill('مكرر','warning'):''}${NX.pill(h(stAr(st.status)),stKind(st.status))}<button type="button" class="nx-iconbtn" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" title="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" onclick="NSS.toggle('${st.id}')">${ic(open?'ExpandLess':'ExpandMore',24)}</button></div>
+    return `<div class="nst-card ${open?'open':''} ${selected?'selected':''} ${removed?'removed':''}" data-stcard="${st.id}">
+      <div class="nst-card-head">${selMode?`<input class="ns-check" type="checkbox" aria-label="تحديد ${h(st.full_name)}" ${selected?'checked':''} onchange="toggleStudentSelection('${st.id}',this.checked)">`:''}<button type="button" class="nst-card-main" onclick="NSS.toggle('${st.id}')" aria-expanded="${open?'true':'false'}">${avatar(st,46)}<span class="nst-card-t"><b>${h(st.full_name)}</b><small>${h(subtitle)}</small></span></button>${dup?NX.pill('مكرر','warning'):''}${NX.pill(h(stAr(st.status)),stKind(st.status))}<button type="button" class="nx-iconbtn" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" title="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" onclick="NSS.toggle('${st.id}')">${ic(open?'ExpandLess':'ExpandMore',24)}</button></div>
       ${(!removed&&window.NXIdentity&&NXIdentity.missing(st))?`<div class="ns-idpill">${NX.pill('ناقص: '+NXIdentity.lacks(st),'warning')}</div>`:''}
       ${sn?`<div class="ns-plan-row"><span class="g">الخطة ${N(sn.pct)}%</span><span>ورد اليوم ${N(sn.daily)} ص</span></div>`:''}
-      <div class="ns-card-more"><div class="ns-card-more-in">
+      <div class="nst-card-more"><div class="nst-card-more-in">
         <p class="ns-soft">${h(more)}</p>${stats?`<p class="ns-stats">${h(stats)}</p>`:''}
         ${acts?`<div class="ns-acts-row">${acts}</div>`:''}
         ${manage()?`<button type="button" class="nx-btn nx-text ns-edit-link" onclick="NSS.detail('${st.id}',true)">${ic('Edit',17)}<span>تعديل بيانات الطالب والانتساب</span></button>`:''}
@@ -231,9 +231,9 @@
       S.snap.clear();lazyReset();
       const C=ctx(),total=filtered(C).length;
       if(isDk()){
-        return `<div class="ns-page ns-dk"><div class="ns-dk-main">${toolbarDesktop(total)}<div id="nsList" class="ns-dk-list">${listHtml()}</div>${bulkHtml()}</div><aside class="ns-panel" id="nsPanel" aria-label="تفاصيل الطالب">${panelHtml()}</aside></div>`;
+        return `<div class="nst-page ns-dk"><div class="ns-dk-main">${toolbarDesktop(total)}<div id="nsList" class="ns-dk-list">${listHtml()}</div>${bulkHtml()}</div><aside class="ns-panel" id="nsPanel" aria-label="تفاصيل الطالب">${panelHtml()}</aside></div>`;
       }
-      return `<div class="ns-page">${toolbarPhone()}<div id="nsList">${listHtml()}</div>${bulkHtml()}</div>`;
+      return `<div class="nst-page">${toolbarPhone()}<div id="nsList">${listHtml()}</div>${bulkHtml()}</div>`;
     });
   }
   studentsPage=studentsPageNative;
@@ -253,9 +253,9 @@
   NSS.more=()=>{S.limit+=isDk()?200:60;refreshList()};
   NSS.toggle=id=>{
     const prev=S.expanded;S.expanded=prev===id?null:id;
-    document.querySelectorAll('.ns-card.open').forEach(c=>{c.classList.remove('open');const b=c.querySelector('.ns-card-main');if(b)b.setAttribute('aria-expanded','false')});
-    if(S.expanded){const c=document.querySelector(`.ns-card[data-stcard="${id}"]`);if(c){c.classList.add('open');const b=c.querySelector('.ns-card-main');if(b)b.setAttribute('aria-expanded','true')}}
-    document.querySelectorAll('.ns-card').forEach(c=>{const open=c.classList.contains('open'),btn=c.querySelector('.ns-card-head > .nx-iconbtn');if(btn){btn.innerHTML=ic(open?'ExpandLess':'ExpandMore',24);btn.title=btn.ariaLabel=open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}});
+    document.querySelectorAll('.nst-card.open').forEach(c=>{c.classList.remove('open');const b=c.querySelector('.nst-card-main');if(b)b.setAttribute('aria-expanded','false')});
+    if(S.expanded){const c=document.querySelector(`.nst-card[data-stcard="${id}"]`);if(c){c.classList.add('open');const b=c.querySelector('.nst-card-main');if(b)b.setAttribute('aria-expanded','true')}}
+    document.querySelectorAll('.nst-card').forEach(c=>{const open=c.classList.contains('open'),btn=c.querySelector('.nst-card-head > .nx-iconbtn');if(btn){btn.innerHTML=ic(open?'ExpandLess':'ExpandMore',24);btn.title=btn.ariaLabel=open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}});
   };
   NSS.sortBy=k=>{S.sort=S.sort&&S.sort.key===k?{key:k,dir:-S.sort.dir}:{key:k,dir:1};render()};
   NSS.selectAll=()=>{state.selectionMode=true;filtered(ctx()).forEach(s=>state.selectedStudents.add(s.id));render()};
@@ -345,7 +345,9 @@
     const D=S.det&&S.det.id===st.id?S.det:{loading:true,online:online(),raw:st,recs:[],att:[],track:st.track_code,status:st.status};
     const m=monthRow(st.id),recs=D.recs||[],att=D.att||[],hasData=!!m||recs.length>0||att.length>0;
     const sumBy=(f)=>recs.filter(f).reduce((a,r)=>a+Number(r.pages_count||0),0);
-    const hifz=m?Number(m.hifz_pages||0):sumBy(r=>r.activity_type==='new_hifz'),review=m?Number(m.review_pages||0):sumBy(r=>['review_near','review_far'].includes(r.activity_type)),sard=m?Number(m.sard_pages||0):sumBy(r=>r.activity_type==='sard');
+    // RC37: hifz and sard of the month = one stretch from the first ayah to the last ayah reached (repeats once), like the native card
+    const spanOf=t=>{const rows=recs.filter(r=>r.activity_type===t);return rows.length&&window.HalaqatiSpan?window.HalaqatiSpan.pages(rows):null};
+    const hifz=spanOf('new_hifz')??(m?Number(m.hifz_pages||0):sumBy(r=>r.activity_type==='new_hifz')),review=m?Number(m.review_pages||0):sumBy(r=>['review_near','review_far'].includes(r.activity_type)),sard=spanOf('sard')??(m?Number(m.sard_pages||0):sumBy(r=>r.activity_type==='sard'));
     const cnt=s=>att.filter(a=>a.status===s).length;
     const present=att.length?cnt('present')+cnt('late'):(m?Number(m.present_days||0):0),absent=att.length?cnt('absent'):(m?Number(m.absent_days||0):0),late=att.length?cnt('late'):(m?Number(m.late_days||0):0);
     const mv=v=>hasData?v:'—',d=new Date(),monthLabel=MONTHS[d.getMonth()]+' '+d.getFullYear(),raw=D.raw||st;
@@ -362,7 +364,7 @@
     }
     out+=NX.card(`<div class="nx-t-title-m">البيانات الأساسية</div>${line('المرحلة',raw.school_grade)}${line('جوال ولي الأمر',raw.guardian_phone)}${line('بريد ولي الأمر',raw.guardian_email)}${line('تاريخ الميلاد',raw.date_of_birth)}`,{cls:'ns-ecard'});
     const archived=D.status==='withdrawn';
-    out+=NX.card(`<div class="nx-t-title-m ns-b">إدارة الطالب</div><div class="ns-two">${NX.btn('تعديل البيانات',{kind:'outlined',full:true,onclick:`openStudent('${st.id}')`})}${NX.btn('ولي الأمر',{kind:'outlined',full:true,onclick:`NSS.guardianLink('${st.id}')`})}</div>${staff()&&!archived?NX.btn('الخطة',{kind:'tonal',full:true,icon:'AutoGraph',onclick:`openPlan('${st.id}')`}):''}${NX.btn(archived?'استعادة الطالب':'أرشفة / سحب الطالب',{kind:archived?'filled':'danger',full:true,disabled:D.saving,onclick:`NSS.archive('${st.id}')`})}<p class="ns-cap">الأرشفة لا تحذف الجلسات أو التسميعات أو التقارير؛ ويمكن استعادة الطالب لاحقًا.</p>`,{cls:'ns-ecard ns-stack'});
+    out+=NX.card(`<div class="nx-t-title-m ns-b">إدارة الطالب</div><div class="nst-two">${NX.btn('تعديل البيانات',{kind:'outlined',full:true,onclick:`openStudent('${st.id}')`})}${NX.btn('ولي الأمر',{kind:'outlined',full:true,onclick:`NSS.guardianLink('${st.id}')`})}</div>${staff()&&!archived?NX.btn('الخطة',{kind:'tonal',full:true,icon:'AutoGraph',onclick:`openPlan('${st.id}')`}):''}${NX.btn(archived?'استعادة الطالب':'أرشفة / سحب الطالب',{kind:archived?'filled':'danger',full:true,disabled:D.saving,onclick:`NSS.archive('${st.id}')`})}<p class="ns-cap">الأرشفة لا تحذف الجلسات أو التسميعات أو التقارير؛ ويمكن استعادة الطالب لاحقًا.</p>`,{cls:'ns-ecard ns-stack'});
     out+=`<div class="nx-t-title-m ns-h">آخر التسميعات</div>`;
     out+=recs.length?`<div class="ns-recs">${recs.slice(0,6).map(r=>recRow(r,true)).join('')}</div>`:NX.empty('لا توجد تسميعات مسجلة هذا الشهر',{icon:'MenuBook'});
     out+=NX.card(`<div class="nx-t-title-m ns-b">تعديل سريع</div>${NX.chips([['general_hifz','الحفظ العام'],['tathbit','التثبيت']].map(([k,l])=>({label:l,selected:D.track===k,check:false,onclick:`NSS.quick('track','${k}')`})),{wrap:true})}${NX.chips([['active','نشط'],['inactive','غير نشط'],['suspended','موقوف'],['withdrawn','منسحب']].map(([k,l])=>({label:l,selected:D.status===k,check:false,onclick:`NSS.quick('status','${k}')`})),{wrap:true})}${NX.btn(D.saving?'جاري الحفظ…':D.online?'حفظ التعديل':'حفظ محليًا',{full:true,disabled:D.saving,onclick:'NSS.quickSave()'})}`,{cls:'ns-ecard ns-stack'});
@@ -584,7 +586,7 @@
 
   function insight(sn,recs,att){
     const t=T(),ms=t.slice(0,8)+'01';
-    const mr=recs.filter(r=>((r.sessions&&r.sessions.session_date)||'')>=ms),q=mr.filter(r=>r.safety_percentage!=null);
+    const mr=recs.filter(r=>((r.sessions&&r.sessions.session_date)||'')>=ms),q=mr.filter(r=>r.safety_percentage!=null&&!(window.HalaqatiSpan&&window.HalaqatiSpan.isPlaceholder(r)));
     const avg=q.length?q.reduce((a,r)=>a+Number(r.safety_percentage),0)/q.length:null;
     const mistakes=mr.reduce((a,r)=>a+Number(r.mistakes||0),0),prompts=mr.reduce((a,r)=>a+Number(r.prompts||0),0);
     const c=s=>att.filter(a=>a.status===s).length,present=c('present'),late=c('late'),absent=c('absent'),excused=c('excused');
@@ -675,7 +677,7 @@
       const mems=((window.RC27&&window.RC27.memberships)||[]).filter(m=>m.student_id===st.id&&m.halaqa_id!==st.halaqa_id&&C.hq.has(m.halaqa_id));
       const progs=NX.card(`<div class="nx-t-title-m ns-b">الحلقة والبرامج</div><div class="ns-chips-row">${st.halaqa_id?`<span class="ns-badge">${ic('Groups',16)}${h(C.hname(st.halaqa_id))}</span>`:''}${mems.map(m=>`<span class="ns-badge">${h(C.hname(m.halaqa_id))} · ${m.status==='active'?'نشط':m.status==='completed'?'أتم البرنامج':h(m.status)}</span>`).join('')}</div>`,{cls:'ns-ecard ns-stack-s'});
       const recsC=`<div class="nx-t-title-m ns-h">آخر التسميعات</div>${P0.recs.length?`<div class="ns-recs">${P0.recs.slice(0,8).map(r=>recRow(r,false)).join('')}</div>`:NX.empty('لا توجد تسميعات مسجلة هذا الشهر',{icon:'MenuBook'})}`;
-      const buttons=`<div class="ns-two">${manage()?NX.btn('إدارة البيانات',{kind:'outlined',icon:'Edit',full:true,onclick:`NSS.detail('${st.id}',true)`}):''}${NX.btn('الخطة الذكية',{icon:'AutoGraph',full:true,onclick:"go('plans')"})}</div>`;
+      const buttons=`<div class="nst-two">${manage()?NX.btn('إدارة البيانات',{kind:'outlined',icon:'Edit',full:true,onclick:`NSS.detail('${st.id}',true)`}):''}${NX.btn('الخطة الذكية',{icon:'AutoGraph',full:true,onclick:"go('plans')"})}</div>`;
       const main=heroC+monthPhasesCard(st,sn,P0.recs)+progressCard(sn,st,eligible)+weekCard(sn,st,P0)+fourWeeks(sn,P0);
       const side=qa+guardianC+follow+note+last+progs+health;
       const offline=P0.online===false||!online()?NX.notice('وضع الأوفلاين: يعرض الملف ما هو محفوظ على الجهاز، وتظهر التسميعات والحضور بعد المزامنة.','warning'):'';

@@ -184,7 +184,9 @@
       const acc=studentRecs.filter(r=>recDate(r)<phase.start&&passing(r)&&okAct(String(r.activity_type).toLowerCase())&&r.end_surah&&r.end_ayah).sort((a,b)=>(recDate(a)+String(a.created_at||''))<(recDate(b)+String(b.created_at||''))?-1:1).at(-1);
       if(acc)hist=nextLoc({s:+acc.end_surah,a:+acc.end_ayah},pRoute);
     }
-    const start=hist||cfgStart(),hardTerm=explicitEnd||parentTerm,reverse=pRoute===ROUTE_NAS;
+    // RC34: a sard phase that starts from the last activity but has no earlier sard (and no range of its own) must not fall back to the hifz range
+    const sardNoRange=phase.type==='sard'&&!hist&&['last_sard','last_activity'].includes(phase.startMode)&&!phaseRow.range_start_surah&&!phaseRow.range_start_ayah&&!phaseRow.range_start_page&&!phaseRow.range_end_surah&&!phaseRow.range_end_ayah&&!phaseRow.range_end_page;
+    const start=sardNoRange?null:(hist||cfgStart()),hardTerm=sardNoRange?null:(explicitEnd||parentTerm),reverse=pRoute===ROUTE_NAS;
     const reachable=(s,tm)=>reverse?(s.s>tm.s||(s.s===tm.s&&s.a<=tm.a)):(globalAyah(s.s,s.a)<=globalAyah(tm.s,tm.a)),passesT=(c,tm)=>reverse?(c.s<tm.s||(c.s===tm.s&&c.a>tm.a)):(globalAyah(c.s,c.a)>globalAyah(tm.s,tm.a));
     let gen=null;
     if(phase.type==='hifz'&&start){
@@ -224,7 +226,7 @@
   const routeFor=(activity,primaryType,hifzRoute,sardRoute)=>activity==='hifz'?(hifzRoute||(primaryType==='hifz'?ROUTE_NAS:ROUTE_BAQ)):activity==='sard'?(sardRoute||(primaryType==='hifz'?ROUTE_NAS:ROUTE_BAQ)):activity==='tathbit'?(hifzRoute||ROUTE_BAQ):ROUTE_BAQ;
   const terminalSurah=(activity,route)=>route!==ROUTE_NAS?114:(['hifz','sard'].includes(activity)?2:activity==='tathbit'?1:114);
   function effectiveDailyPages(activity,eng,orig,min,planned,weekly,asgPages,asgKind){
-    const v=activity==='hifz'?Math.max(eng,orig,min,planned,weekly,asgKind==='hifz'?asgPages:0):activity==='sard'?Math.max(eng,planned):Math.max(eng,planned,weekly);
+    const v=activity==='hifz'?Math.max(eng,orig,min,planned,asgKind==='hifz'?asgPages:0):activity==='sard'?Math.max(eng,planned):Math.max(eng,planned,weekly);
     return Math.max(0,v);
   }
   function assignmentFromAnchor(row,recs,activity,requestedPages,o={}){

@@ -1,18 +1,18 @@
 /* RC27.40 native screens: certificates (CertificatesScreen twin). Colours only through apk.css tokens. */
-.nc-root{display:grid;gap:10px;padding-bottom:24px;min-width:0}
-.nc-head{display:flex;align-items:center;gap:10px;padding:0 4px}
+.ncc-root{display:grid;gap:10px;padding-bottom:24px;min-width:0}
+.ncc-head{display:flex;align-items:center;gap:10px;padding:0 4px}
 .nc-head-ic{width:38px;height:38px;border-radius:12px;background:var(--green);color:#fff;display:grid;place-items:center;flex:none}
-.nc-head b{display:block;font:800 16px/24px Cairo,sans-serif}.nc-head small{display:block;font:500 11px/16px Cairo,sans-serif;color:var(--muted)}
+.ncc-head b{display:block;font:800 16px/24px Cairo,sans-serif}.ncc-head small{display:block;font:500 11px/16px Cairo,sans-serif;color:var(--muted)}
 .nc-ver{border-radius:999px;padding:4px 9px;background:var(--nx-secondary-container);color:var(--on-primary-container,#0A4A3D);font:700 11px/16px Cairo,sans-serif}
 .nc-grid{display:grid;gap:12px;min-width:0;grid-template-columns:minmax(0,1fr)}
-.nc-controls,.nc-preview,.nc-aside{min-width:0}
-.nc-aside{display:none}
-.nc-t-archive .nc-aside{display:block}
+.nc-controls,.nc-preview,.ncc-aside{min-width:0}
+.ncc-aside{display:none}
+.nc-t-archive .ncc-aside{display:block}
 
 .nc-h{margin:2px 2px 0;font:700 14px/20px Cairo,sans-serif}
-.nc-sub{margin:0;font:400 12px/18px Cairo,sans-serif;color:var(--muted);display:block}
+.ncc-sub{margin:0;font:400 12px/18px Cairo,sans-serif;color:var(--muted);display:block}
 .nc-t{display:block;font:800 16px/24px Cairo,sans-serif}
-.nc-ic{width:46px;height:46px;border-radius:14px;background:var(--primary-container);color:var(--green);display:grid;place-items:center;flex:none}
+.ncc-ic{width:46px;height:46px;border-radius:14px;background:var(--primary-container);color:var(--green);display:grid;place-items:center;flex:none}
 .nc-cardhead{margin-bottom:2px}
 .nc-pad{display:grid;gap:12px;padding:14px}
 .nc-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -29,17 +29,17 @@
 
 /* bulk list */
 .nc-blist{display:grid;gap:8px}
-.nc-brow{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer}
-.nc-brow[hidden]{display:none}
-.nc-brow.on{border-color:var(--green);background:var(--primary-container)}
-.nc-brow b{display:block;font:600 14px/20px Cairo,sans-serif}.nc-brow small{display:block;font:500 12px/18px Cairo,sans-serif;color:var(--green)}
-.nc-brow em{font:500 12px Cairo,sans-serif;color:var(--muted);font-style:normal}
+.ncc-brow{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer}
+.ncc-brow[hidden]{display:none}
+.ncc-brow.on{border-color:var(--green);background:var(--primary-container)}
+.ncc-brow b{display:block;font:600 14px/20px Cairo,sans-serif}.ncc-brow small{display:block;font:500 12px/18px Cairo,sans-serif;color:var(--green)}
+.ncc-brow em{font:500 12px Cairo,sans-serif;color:var(--muted);font-style:normal}
 .nc-chk{width:22px;height:22px;accent-color:var(--green);flex:none;margin:0}
 
 /* ideal + rank */
 .nc-ideal{display:grid;gap:8px}
 .nc-score{margin:0;color:var(--green);font:700 14px Cairo,sans-serif}
-.nc-rank{display:grid;gap:10px}
+.ncc-rank{display:grid;gap:10px}
 .nc-rankres{display:grid;gap:6px;background:var(--nx-surface-var);border-radius:14px;padding:10px}
 .nc-rankres button{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 10px;cursor:pointer;font:500 13px Cairo,sans-serif;text-align:start;min-height:44px}
 .nc-rn{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font:800 12px Cairo,sans-serif}
@@ -88,9 +88,9 @@
 .nc-prev-h{display:grid;grid-template-columns:auto minmax(0,1fr) 44px;align-items:center;gap:8px}
 .nc-prev-h b{font:700 14px Cairo,sans-serif}.nc-pct{font-size:12px!important;color:var(--green)}
 .nc-prev .cert-preview-shell{background:var(--nx-surface-var);border:1px solid var(--outline);border-radius:12px;padding:6px;min-height:200px}
-.nc-actions{display:grid;gap:8px;margin-top:10px}
-.nc-actions .nc-btnrow{display:grid;grid-template-columns:1fr}
-.nc-actions .nx-btn{white-space:normal;text-align:center}
+.ncc-actions{display:grid;gap:8px;margin-top:10px}
+.ncc-actions .nc-btnrow{display:grid;grid-template-columns:1fr}
+.ncc-actions .nx-btn{white-space:normal;text-align:center}
 .nc-primary{min-height:52px;font-size:15px}
 
 /* archive */
@@ -115,26 +115,26 @@
 .nc-rev:hover{background:var(--nx-surface-var)}
 
 /* ---------------- desktop: three-column studio ---------------- */
-html[data-view="desktop"] .nc-root{gap:14px;max-width:1500px;margin-inline:auto}
-html[data-view="desktop"] .nc-head{padding:0}
-html[data-view="desktop"] .nc-root>.nx-chips{padding:2px 0}
+html[data-view="desktop"] .ncc-root{gap:14px;max-width:1500px;margin-inline:auto}
+html[data-view="desktop"] .ncc-head{padding:0}
+html[data-view="desktop"] .ncc-root>.nx-chips{padding:2px 0}
 html[data-view="desktop"] .nc-grid{align-items:start;gap:16px;grid-template-columns:minmax(340px,410px) minmax(0,1fr) minmax(290px,340px)}
-html[data-view="desktop"] .nc-aside{display:block;position:sticky;top:12px;max-height:calc(100vh - 100px);overflow:auto;padding-inline-end:2px;scrollbar-width:thin}
+html[data-view="desktop"] .ncc-aside{display:block;position:sticky;top:12px;max-height:calc(100vh - 100px);overflow:auto;padding-inline-end:2px;scrollbar-width:thin}
 html[data-view="desktop"] .nc-preview{position:sticky;top:12px;order:0}
 html[data-view="desktop"] .nc-controls{order:-1}
 html[data-view="desktop"] .nc-t-archive{grid-template-columns:minmax(0,1fr) minmax(300px,380px)}
-html[data-view="desktop"] .nc-t-archive .nc-aside{max-height:none;position:static}
+html[data-view="desktop"] .nc-t-archive .ncc-aside{max-height:none;position:static}
 html[data-view="desktop"] .nc-t-archive .nc-alist{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
-html[data-view="desktop"] .nc-t-archive .nc-aside .nc-alist{grid-template-columns:1fr}
+html[data-view="desktop"] .nc-t-archive .ncc-aside .nc-alist{grid-template-columns:1fr}
 html[data-view="desktop"] .nc-t-templates .nc-tplgrid,html[data-view="desktop"] .nc-t-issue .nc-tplgrid,html[data-view="desktop"] .nc-t-batch .nc-tplgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
 html[data-view="desktop"] .nc-t-settings .nc-controls .nx-stack{gap:14px}
-html[data-view="desktop"] .nc-brow:hover{background:var(--nx-surface-var)}
+html[data-view="desktop"] .ncc-brow:hover{background:var(--nx-surface-var)}
 html[data-view="desktop"] .nc-arow{cursor:pointer}
 html[data-view="desktop"] .nc-arow .nc-del,html[data-view="desktop"] .nc-arow .nx-iconbtn{opacity:.55;transition:opacity .15s}
 html[data-view="desktop"] .nc-arow:hover .nx-iconbtn,html[data-view="desktop"] .nc-arow:focus-within .nx-iconbtn{opacity:1}
 @media (min-width:1024px) and (max-width:1279px){
   html[data-view="desktop"] .nc-grid{grid-template-columns:minmax(320px,380px) minmax(0,1fr)}
-  html[data-view="desktop"] .nc-aside{grid-column:1 / -1;position:static;max-height:none}
-  html[data-view="desktop"] .nc-aside .nc-alist{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-view="desktop"] .ncc-aside{grid-column:1 / -1;position:static;max-height:none}
+  html[data-view="desktop"] .ncc-aside .nc-alist{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (prefers-reduced-motion:reduce){.nc-tpl{transition:none}}

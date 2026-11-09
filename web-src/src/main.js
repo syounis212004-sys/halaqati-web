@@ -29,6 +29,7 @@ import rc50AdminUrl from './features/rc50/admin.js?url';
 import rc50ShellUrl from './features/rc50/shell.js?url';
 import rc52RuntimeUrl from './features/rc52/runtime.js?url';
 import rc52StaffUrl from './features/rc52/staff.js?url';
+import rc52SpanUrl from './features/rc52/span.js?url';
 import rc27DataUrl from './features/rc27/data.js?url';
 import sessionServerUrl from './features/sessions/server.js?url';
 import coreRuntimeUrl from './core/runtime.js?url';
@@ -163,6 +164,7 @@ async function boot() {
   await loadClassicScript(rc50DonorUrl, { id: 'halaqati-rc50-donor' });
   await loadClassicScript(rc50AdminUrl, { id: 'halaqati-rc50-admin' });
   await loadClassicScript(rc50ShellUrl, { id: 'halaqati-rc50-shell' });
+  await loadClassicScript(rc52SpanUrl, { id: 'halaqati-rc52-span' });
   await loadClassicScript(rc52RuntimeUrl, { id: 'halaqati-rc52-runtime' });
   await loadClassicScript(rc52StaffUrl, { id: 'halaqati-rc52-staff' });
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });

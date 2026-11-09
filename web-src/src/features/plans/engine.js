@@ -401,7 +401,7 @@ const SPAN_NAS = 'reverse_surahs_forward_ayahs';
 function spanPosition(surah, ayah, route) { return ((route === SPAN_NAS ? 200 - surah : surah) * 1000) + ayah; }
 function spanCompletion(plan, relevant) {
   const provider = globalThis.rc27RouteLineKeys;
-  if (plan.plan_type !== 'hifz' || typeof provider !== 'function') return null;
+  if ((plan.plan_type !== 'hifz' && plan.plan_type !== 'sard') || typeof provider !== 'function') return null;
   const route = plan.settings?.route_direction || SPAN_NAS;
   const ayahLevel = relevant.filter((r) => isPassing(r, plan) && r.start_surah && r.start_ayah && r.end_surah && r.end_ayah);
   if (!ayahLevel.length) return null;
@@ -593,7 +593,7 @@ function calculateProgress({
   const lineKeys = planLineKeys(plan);
   const linePlan = lineKeys.length > 0;
   const originalDaily = plan.target_pages / totalDays;
-  const exactPagePlan = !linePlan && Number.isInteger(plan.range_start_page) && Number.isInteger(plan.range_end_page);
+  const exactPagePlan = !linePlan && plan.plan_type !== 'sard' && Number.isInteger(plan.range_start_page) && Number.isInteger(plan.range_end_page);
   const completion = buildCompletion(plan, studentId, recitations, sessions, events);
 
   const elapsedDates = allScheduleDates.filter((date) => compareDate(date, currentDate) <= 0);

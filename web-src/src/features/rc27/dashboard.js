@@ -106,7 +106,7 @@
       const attention=snaps.filter(it=>Number(it.sn.raw.behindBy)>0.01).map(it=>({studentId:it.student.id,studentName:it.student.full_name,reason:`متأخر عن الخطة · ${(Math.round(it.sn.raw.behindBy*10)/10).toFixed(1)} ص`}));
       const overTarget=snaps.filter(it=>Number(it.sn.raw.aheadBy)>0.01).map(it=>({studentId:it.student.id,studentName:it.student.full_name,reason:`تجاوز هدفه · +${(Math.round(it.sn.raw.aheadBy*10)/10).toFixed(1)} ص`}));
       const dedupe=a=>{const m=new Map;a.forEach(x=>{if(!m.has(x.studentId))m.set(x.studentId,x)});return [...m.values()]};
-      const latestSafety=new Map;recs.forEach(r=>{if(r.student_id&&!latestSafety.has(r.student_id))latestSafety.set(r.student_id,r.safety_percentage==null?100:Number(r.safety_percentage))});
+      const latestSafety=new Map;recs.forEach(r=>{if(r.student_id&&!latestSafety.has(r.student_id)&&!(window.HalaqatiSpan&&window.HalaqatiSpan.isPlaceholder(r)))latestSafety.set(r.student_id,r.safety_percentage==null?100:Number(r.safety_percentage))});
       const byStu=new Map(students.map(s=>[s.id,s]));
       const review=[...latestSafety.entries()].filter(([,v])=>v<78).map(([sid,v])=>byStu.has(sid)?{studentId:sid,studentName:byStu.get(sid).full_name,reason:`يحتاج مراجعة · ${v.toFixed(0)}%`}:null).filter(Boolean);
       Object.assign(D,{daily,heard:heard.size,pages,expected:daily.expected,notHeard,absentLate,attention:dedupe(attention),overTarget:dedupe(overTarget),review,alerts:snaps.filter(it=>Number(it.sn.raw.consecutiveMissed)>0).map(it=>`${it.student.full_name}: ${it.sn.raw.healthLabel}`),todaySessions:(state.sessions||[]).filter(s=>s.session_date===today&&s.status!=='cancelled').length,errors,loaded:true,at:Date.now()});
