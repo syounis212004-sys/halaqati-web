@@ -76,7 +76,7 @@
 
   /** Scale a fixed-size A4 sheet to the width of its viewport (phone = fit-to-width, zoom slider on top). */
   function fit(vp,zoom){
-    const sheet=vp.querySelector('.nr-sheet'),sc=vp.querySelector('.nr-scaler');if(!sheet||!sc)return;
+    const sheet=vp.querySelector('.nrp-sheet'),sc=vp.querySelector('.nr-scaler');if(!sheet||!sc)return;
     const land=(sheet.dataset.orientation||S.orientation)!=='portrait',pw=land?1120:792;
     const avail=Math.max(160,vp.clientWidth-(parseFloat(getComputedStyle(vp).paddingLeft)||0)*2);
     const s=Math.min(1,avail/pw)*((zoom||100)/100);
@@ -134,7 +134,7 @@
     const body=`<div class="nr-zoomrow"><span class="nr-zoomval">100%</span><input type="range" min="60" max="160" step="5" value="100" oninput="NR.zoomDlg(this.value)" aria-label="التكبير"></div><div class="nr-viewport nr-viewport-big" data-fit data-zoom="100"><div class="nr-scaler"></div></div>`;
     NX.dialog('nrZoomDlg','معاينة التقرير',body,{cls:'nr-wide-dlg'});
     const vp=document.querySelector('#nrZoomDlg .nr-viewport');vp.querySelector('.nr-scaler').appendChild(clone);
-    clone.classList.add('nr-sheet');
+    clone.classList.add('nrp-sheet');
     requestAnimationFrame(()=>{fit(vp,100);watch()});
   };
   NR.pdf=function(){
@@ -215,7 +215,7 @@
     const prog=isProg(),mode=state.reportMode||'month';
     const dates=mode==='day'?NX.field('اليوم',{type:'date',value:state.reportDay||tdy(),onchange:"state.reportDay=this.value;state.reportLoadedKey='';render()"})
       :mode==='month'?NX.field('الشهر',{type:'month',value:state.reportMonth||tdy().slice(0,7),onchange:"state.reportMonth=this.value;state.reportLoadedKey='';render()"})
-      :`<div class="nr-two">${NX.field('من',{type:'date',value:state.reportFrom,onchange:"state.reportFrom=this.value;state.reportLoadedKey='';render()"})}${NX.field('إلى',{type:'date',value:state.reportTo,onchange:"state.reportTo=this.value;state.reportLoadedKey='';render()"})}</div>`;
+      :`<div class="nrp-two">${NX.field('من',{type:'date',value:state.reportFrom,onchange:"state.reportFrom=this.value;state.reportLoadedKey='';render()"})}${NX.field('إلى',{type:'date',value:state.reportTo,onchange:"state.reportTo=this.value;state.reportLoadedKey='';render()"})}</div>`;
     const b=reportBounds();
     const summary=mode==='day'?`اليوم المختار: ${h(b.from)}`:mode==='month'?`الشهر المختار: ${h(monthLabel(String(b.from).slice(0,7)))}`:`الفترة: ${h(b.from)} ← ${h(b.to)}`;
     const halaqas=(state.halaqas||[]).filter(x=>x.active!==false);
@@ -250,7 +250,7 @@
       ${labelSm('اتجاه A4')}${chipRow([['landscape','أفقي A4'],['portrait','رأسي A4']],S.orientation,v=>`NR.style('orientation','${v}',true)`)}
       ${labelSm('الخط')}${chipRow([['Cairo','Cairo'],['sans-serif','Sans'],['serif','Serif'],['monospace','Mono']],S.font,v=>`NR.style('font','${v}',true)`)}
       ${labelSm(`حجم الخط <span class="nr-fsval">${pct}%</span>`)}
-      <input type="range" class="nr-range" min="75" max="145" step="5" value="${pct}" aria-label="حجم الخط" oninput="this.previousElementSibling.querySelector('.nr-fsval').textContent=this.value+'%';NR.style('scale',this.value/100)">
+      <input type="range" class="nrp-range" min="75" max="145" step="5" value="${pct}" aria-label="حجم الخط" oninput="this.previousElementSibling.querySelector('.nr-fsval').textContent=this.value+'%';NR.style('scale',this.value/100)">
       ${labelSm('الهوية اللونية')}${NX.chips(PALETTES.map((p,i)=>({label:`<i class="nr-dot" style="background:${p[0]}"></i>${p[2]}`,selected:S.primary===p[0],check:false,onclick:`NR.palette(${i})`})),{wrap:true})}
       ${labelSm('الشعارات')}${chipRow([['both','الشعاران'],['center','المركز'],['halaqa','الحلقة'],['none','بدون']],S.logo,v=>`NR.style('logo','${v}',true)`)}
       ${stu}
@@ -266,7 +266,7 @@
   function previewCard(){
     const rd=ready(),docHtml=(()=>{if(!rd)return '';try{return currentProfessionalReportHtml()}catch(e){return `<div class="report-empty-pro">تعذر إنشاء المعاينة: ${h(e?.message||e)}</div>`}})();
     const body=rd&&docHtml.trim()
-      ?`<div class="nr-viewport ${S.orientation==='portrait'?'portrait':'landscape'}" data-fit data-zoom="${S.zoom}"><div class="nr-scaler"><div class="nr-sheet" id="reportExportArea" data-orientation="${S.orientation}">${docHtml}</div></div></div>`
+      ?`<div class="nr-viewport ${S.orientation==='portrait'?'portrait':'landscape'}" data-fit data-zoom="${S.zoom}"><div class="nr-scaler"><div class="nrp-sheet" id="reportExportArea" data-orientation="${S.orientation}">${docHtml}</div></div></div>`
       :`<div class="nr-viewport nr-vp-empty">${state.reportLoading?NX.skeleton(2):`<div class="nr-ph">${ic('Visibility',28)}<p>بعد تجهيز التقرير ستظهر هنا عينة من البيانات قبل الحفظ.</p></div>`}</div>`;
     return NX.card(`
       <div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة A4 الحقيقية</div><div class="nx-t-body-s nx-muted">نفس HTML/CSS المستخدم في PDF النهائي.</div></div>${btn('تكبير',{kind:'outlined',icon:'OpenInFull',small:true,onclick:'NR.expand()',disabled:!rd})}</div>
@@ -327,7 +327,7 @@
       <div class="nr-cols">
         <div class="nr-side nx-stack">
           <section class="nr-sec"><div class="nx-t-title-m nr-h">نوع التقرير</div>${chipRow(PROG_TYPES,tab,v=>`rc27SetProgReport('tab','${v}')`)}</section>
-          ${NX.card(`<div class="nx-t-title-m nr-h">الفترة ونطاق البيانات</div><div class="nr-two">${NX.field('من',{type:'date',value:dates[0]||'',onchange:"rc27SetProgReport('from',this.value)"})}${NX.field('إلى',{type:'date',value:dates[1]||'',onchange:"rc27SetProgReport('to',this.value)"})}</div>`,{cls:'nx-emph nx-stack'})}
+          ${NX.card(`<div class="nx-t-title-m nr-h">الفترة ونطاق البيانات</div><div class="nrp-two">${NX.field('من',{type:'date',value:dates[0]||'',onchange:"rc27SetProgReport('from',this.value)"})}${NX.field('إلى',{type:'date',value:dates[1]||'',onchange:"rc27SetProgReport('to',this.value)"})}</div>`,{cls:'nx-emph nx-stack'})}
         </div>
         <div class="nr-main nx-stack">
           ${NX.card(`<div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة A4 الحقيقية</div><div class="nx-t-body-s nx-muted">نفس HTML/CSS المستخدم في PDF النهائي.</div></div></div><div class="nr-prog-doc"><div id="rc27ProgReport"><div class="nx-muted">جارٍ التحميل…</div></div></div>`,{cls:'nx-emph nr-preview nx-stack-s'})}
@@ -432,7 +432,7 @@
     const top=items.slice(0,3);
     const order=top.length===3?[1,0,2]:top.map((_,i)=>i);
     const podium=`<div class="nr-podium">${order.map(i=>{const x=top[i];return `<div class="nr-pod ${medal[i]}"><span class="nr-pod-ic">${ic(i===0?'EmojiEvents':'MilitaryTech',i===0?34:28)}</span>${NX.avatar(x.name,{size:52})}<b class="nx-ellipsis">${h(x.name)}</b><span class="nr-pod-v">${h(x.value)}${x.valueLabel?` <small>${h(x.valueLabel)}</small>`:''}</span><span class="nr-pod-step"><i>${i+1}</i></span></div>`}).join('')}</div>`;
-    const table=`<div class="nx-card nx-flat nr-tablewrap"><table class="nr-table"><thead><tr><th class="c">#</th><th>الطالب</th>${cols.map(c=>`<th class="c">${c}</th>`).join('')}</tr></thead><tbody>${items.map((x,i)=>`<tr><td class="c"><span class="nr-rk-n sm ${medal[i]||''}">${i+1}</span></td><td><div class="nr-name">${NX.avatar(x.name,{size:32})}<b>${h(x.name)}</b></div></td>${x.cells.map((c,j)=>`<td class="c ${j===x.cells.length-1?'strong':''}">${h(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const table=`<div class="nx-card nx-flat nr-tablewrap"><table class="nr-table"><thead><tr><th class="c">#</th><th>الطالب</th>${cols.map(c=>`<th class="c">${c}</th>`).join('')}</tr></thead><tbody>${items.map((x,i)=>`<tr><td class="c"><span class="nr-rk-n sm ${medal[i]||''}">${i+1}</span></td><td><div class="nrp-name">${NX.avatar(x.name,{size:32})}<b>${h(x.name)}</b></div></td>${x.cells.map((c,j)=>`<td class="c ${j===x.cells.length-1?'strong':''}">${h(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     return `<div class="nr-rk-phone nx-stack-s">${phone}</div><div class="nr-rk-desk">${podium}${table}</div>`;
   }
 
@@ -513,7 +513,7 @@
           <div id="qResult" class="qcalc-result"><span class="muted">المقدار المحسوب</span><div><strong>0</strong> صفحة</div></div>
           ${NX.card(`
             <div class="nx-t-title-s">الحاسبة السريعة بالصفحات</div>
-            <div class="nr-two">
+            <div class="nrp-two">
               ${NX.field('الصفحة الأولى',{html:'<input id="nrQ1" type="text" inputmode="numeric" maxlength="3" dir="ltr" oninput="NR.quick()" autocomplete="off">'})}
               ${NX.field('الصفحة الثانية',{html:'<input id="nrQ2" type="text" inputmode="numeric" maxlength="3" dir="ltr" oninput="NR.quick()" autocomplete="off">'})}
             </div>
