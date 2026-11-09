@@ -402,9 +402,30 @@
     }
     return {rows:[],loading:!hit||hit.loading};
   }
+  /** RC37: hifz and sard ranking pages = ONE stretch per student (first ayah → last ayah reached, repeats once), like the native app. */
+  function rkSpanMap(){
+    const t=effTrack();
+    if(!['hifz','sard'].includes(t)||progTrack()!=='general_hifz'||!window.HalaqatiSpan||!online())return null;
+    const period=rkPeriod(),day=RK.day||tdy(),month=RK.month||curMonth(),key=t+':'+period+':'+(period==='day'?day:month);
+    RK.span=RK.span||{};
+    const hit=RK.span[key];if(hit)return hit.map||null;
+    RK.span[key]={loading:true};
+    (async()=>{
+      try{
+        const from=period==='day'?day:month+'-01',to=period==='day'?day:(()=>{const [y,m]=month.split('-').map(Number);const d=new Date(y,m,0);return y+'-'+String(m).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
+        const r=await db.from('recitation_entries').select('student_id,activity_type,start_surah,start_ayah,end_surah,end_ayah,pages_count,sessions!inner(session_date,status)').eq('activity_type',t==='hifz'?'new_hifz':'sard').gte('sessions.session_date',from).lte('sessions.session_date',to).neq('sessions.status','cancelled').limit(10000);
+        if(r.error)throw r.error;
+        const by={};(r.data||[]).forEach(x=>{(by[x.student_id]=by[x.student_id]||[]).push(x)});
+        const map={};Object.keys(by).forEach(id=>{map[id]=window.HalaqatiSpan.pages(by[id])});
+        RK.span[key]={map};
+      }catch(_e){RK.span[key]={map:null}}
+      if(state.page==='ranking')render();
+    })();
+    return null;
+  }
   function sortRows(rows){
-    const ids=rkIds(),t=effTrack();
-    return rows.filter(x=>x.track===t&&ids.has(String(x.student_id))).sort((a,b)=>Number(b.points||0)-Number(a.points||0)||Number(b.pages||0)-Number(a.pages||0)||Number(a.penalty_per_page??999)-Number(b.penalty_per_page??999));
+    const ids=rkIds(),t=effTrack(),spanMap=rkSpanMap();
+    return rows.filter(x=>x.track===t&&ids.has(String(x.student_id))).map(x=>spanMap&&spanMap[x.student_id]!=null?{...x,pages:spanMap[x.student_id]}:x).sort((a,b)=>Number(b.points||0)-Number(a.points||0)||Number(b.pages||0)-Number(a.pages||0)||Number(a.penalty_per_page??999)-Number(b.penalty_per_page??999));
   }
 
   function rkFilters(prog){

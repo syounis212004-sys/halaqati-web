@@ -28,11 +28,27 @@
     return [today.slice(0,8)+'01',today];
   }
   const rank=a=>a.slice().sort((x,y)=>((y.sessions>0)-(x.sessions>0))||((y.att??-1)-(x.att??-1))||((y.quality??-1)-(x.quality??-1))||(y.ppS-x.ppS));
+  const EVAL_SAFETY={excellent:95,'ممتاز':95,very_good:85,'جيد جدا':85,'جيد جدًا':85,good:75,'جيد':75,acceptable:65,'مقبول':65,weak:50,'ضعيف':50,repeat:40,'إعادة':40};
+  function recSafety(x){
+    const ev=String(x.e||'').trim().toLowerCase(),unrated=!ev||ev==='not_rated'||ev==='null',sf=x.sf==null?NaN:Number(x.sf);
+    if(unrated&&!(sf>0)&&!(Number(x.p)>0))return null;
+    if(sf>=0&&sf<=100)return sf;
+    return EVAL_SAFETY[ev]??null;
+  }
+  // RC37: hifz and sard of a student are ONE stretch (first ayah → last ayah reached, repeats once); the other rows keep their pages
+  function spanAware(rows,groupOf){
+    const live=rows.filter(o=>o.sessions&&o.sessions.status!=='cancelled'),out=[],spanned=o=>o.activity_type==='new_hifz'||o.activity_type==='sard';
+    live.forEach(o=>{const g=groupOf(o);if(g==null)return;out.push({g,t:o.activity_type,p:spanned(o)?0:(Number(o.pages_count)||0),e:o.evaluation,sf:o.safety_percentage})});
+    const by=new Map;live.filter(spanned).forEach(o=>{const k=o.student_id+'|'+o.activity_type;(by.get(k)||by.set(k,[]).get(k)).push(o)});
+    by.forEach((list,k)=>{const last=list[list.length-1],g=groupOf(last);if(g==null)return;out.push({g,t:k.split('|')[1],p:window.HalaqatiSpan?window.HalaqatiSpan.pages(list):list.reduce((a,o)=>a+(Number(o.pages_count)||0),0),e:'',sf:null})});
+    return out;
+  }
   function compute(ids,studentsBy,sessions,att,rec){
     return ids.map(id=>{
       const a=att.filter(x=>x.g===id),pr=a.filter(x=>x.s==='present'||x.s==='late').length,ab=a.filter(x=>x.s==='absent').length,r=rec.filter(x=>x.g===id);
       const hifz=r.filter(x=>x.t==='new_hifz').reduce((s,x)=>s+x.p,0),rev=r.filter(x=>REVIEW.includes(x.t)).reduce((s,x)=>s+x.p,0),n=studentsBy[id]||0;
-      return {id,students:n,sessions:sessions.filter(x=>x.g===id).length,att:pr+ab>0?Math.round(pr*100/(pr+ab)):null,hifz,rev,ppS:n>0?(hifz+rev)/n:0,quality:r.length?Math.round(r.filter(x=>!POOR.includes(String(x.e||'').toLowerCase())).length*100/r.length):null};
+      const sv=r.map(recSafety).filter(v=>v!=null);   // RC29/RC35: average recitation safety; placeholders ignored
+      return {id,students:n,sessions:sessions.filter(x=>x.g===id).length,att:pr+ab>0?Math.round(pr*100/(pr+ab)):null,hifz,rev,ppS:n>0?(hifz+rev)/n:0,quality:sv.length?Math.round(sv.reduce((a,b)=>a+b,0)/sv.length):null};
     }).sort((a,b)=>b.ppS-a.ppS);
   }
   async function compareGroups(from,to,byCat){
@@ -41,14 +57,14 @@
     if(hs.length<2)return null;
     const hname=Object.fromEntries(hs.map(x=>[x.id,x.name])),stu=(window.RC27?.master?.students||state.students||[]).filter(s=>s.status==='active'&&hname[s.halaqa_id]);
     const f=q=>q.gte('sessions.session_date',from).lte('sessions.session_date',to);
-    const [at,rc,se]=await Promise.all([window.HalaqatiData.result(()=>f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')).order('session_id').order('student_id'),()=>state.user?.id),window.HalaqatiData.result(()=>f(db.from('recitation_entries').select('student_id,activity_type,pages_count,evaluation,sessions!inner(session_date,halaqa_id,status)')).order('id'),()=>state.user?.id),
+    const [at,rc,se]=await Promise.all([window.HalaqatiData.result(()=>f(db.from('attendance_records').select('student_id,status,sessions!inner(session_date,halaqa_id,status)')).order('session_id').order('student_id'),()=>state.user?.id),window.HalaqatiData.result(()=>f(db.from('recitation_entries').select('student_id,activity_type,start_surah,start_ayah,end_surah,end_ayah,pages_count,evaluation,safety_percentage,sessions!inner(session_date,halaqa_id,status)')).order('id'),()=>state.user?.id),
       window.HalaqatiData.result(()=>db.from('sessions').select('id,halaqa_id,session_date,status').gte('session_date',from).lte('session_date',to).order('id'),()=>state.user?.id)]);
     if(at.error||rc.error||se.error)throw (at.error||rc.error||se.error);
     const live=o=>o.sessions&&o.sessions.status!=='cancelled';
     if(!byCat){
       const per={};stu.forEach(s=>{per[s.halaqa_id]=(per[s.halaqa_id]||0)+1});
       const stats=compute(hs.map(x=>x.id),per,(se.data||[]).filter(s=>s.status!=='cancelled').map(s=>({g:s.halaqa_id})),
-        (at.data||[]).filter(live).map(o=>({g:o.sessions.halaqa_id,s:o.status})),(rc.data||[]).filter(live).map(o=>({g:o.sessions.halaqa_id,t:o.activity_type,p:Number(o.pages_count)||0,e:o.evaluation})));
+        (at.data||[]).filter(live).map(o=>({g:o.sessions.halaqa_id,s:o.status})),spanAware(rc.data||[],o=>o.sessions.halaqa_id));
       return {stats,names:hname};
     }
     const cr=await window.HalaqatiData.result(()=>db.from('student_categories').select('id,halaqa_id,name,active').order('name').order('id'),()=>state.user?.id);if(cr.error)throw cr.error;
@@ -56,7 +72,7 @@
     const catOf={};stu.forEach(s=>{if(s.category_id&&cname[s.category_id])catOf[s.id]=s.category_id});
     const keys=new Set,attR=[],recR=[];
     (at.data||[]).filter(live).forEach(o=>{const c=catOf[o.student_id];if(!c)return;keys.add(c+'|'+o.sessions.halaqa_id+'|'+o.sessions.session_date);attR.push({g:c,s:o.status})});
-    (rc.data||[]).filter(live).forEach(o=>{const c=catOf[o.student_id];if(!c)return;recR.push({g:c,t:o.activity_type,p:Number(o.pages_count)||0,e:o.evaluation})});
+    recR.push(...spanAware(rc.data||[],o=>catOf[o.student_id]||null));
     const sessions=[...keys].map(k=>({g:k.split('|')[0]})),per={};Object.values(catOf).forEach(c=>{per[c]=(per[c]||0)+1});
     return {stats:compute(Object.keys(per),per,sessions,attR,recR),names:cname};
   }
@@ -350,6 +366,24 @@
       <small class="nh-dday">${h(day)}</small>
       <div class="nh-dts">${tile('الأخطاء',last?String(last.mistakes):'—',last&&last.mistakes>3?'warn':'ok')}${tile('التنبيهات',last?String(last.prompts):'—','ok')}${tile('الجودة',last&&last.quality!=null?num(last.quality)+'٪':'—','ok')}</div></section>`;
   }
+  // RC45: the guardian sees the SAME plan figures as the teacher — target and done of the CURRENT phase (hifz or sard) come from the
+  // plan engine (quality-gated, inside the phase dates); the other phase keeps the month facts. Nothing changes when no snapshot exists.
+  async function unifyPlan(sid,o){
+    const P=window.RC27Phases;if(!P||!online()||typeof effectiveSmartPlans!=='function')return false;
+    try{
+      await P.load(false);await P.loadRecs([sid]);
+      const st=(state.students||[]).find(x=>String(x.id)===String(sid));if(!st)return false;
+      const plan=effectiveSmartPlans(st).find(p=>p.plan_type==='hifz'||p.plan_type==='sard');if(!plan)return false;
+      const sn=P.snapshot(plan,T0(),sid),pp=sn&&sn.phaseProgress;if(!pp||pp.target==null)return false;
+      const key=sn.phase&&(sn.phase.phase_type||sn.phase.type);if(key!=='hifz'&&key!=='sard')return false;
+      const a=o.acts.find(x=>x.key===key);if(!a)return false;
+      a.target=Number(pp.target);a.done=Number(pp.completed);
+      a.has=a.target>0.0001;a.pct=a.has?Math.min(100,a.done*100/a.target):0;a.remaining=a.has?Math.max(0,a.target-a.done):0;a.surplus=a.has?Math.max(0,a.done-a.target):0;a.complete=a.has&&a.done+0.0001>=a.target;
+      if(key==='hifz'&&!o.tath)o.monthMain=a.done;
+      const targeted=o.acts.filter(x=>x.has);o.planComplete=targeted.length>0&&targeted.every(x=>x.complete);
+      return true;
+    }catch(_e){return false}
+  }
   async function loadLastDay(sid){
     if(!online())return;
     const m0=T0().slice(0,8)+'01';
@@ -421,6 +455,7 @@
     if(fresh){G.ov[sid]=fresh;OV[sid]=fresh;G.stale=false;G.msg=null}
     else{G.stale=true;if(!G.ov[sid]&&online())G.msg='تعذر تحميل بيانات الطالب'}
     G.loading=false;paintGuardian();
+    try{if(G.ov[sid]&&await unifyPlan(sid,G.ov[sid])&&G.sel===sid)paintGuardian()}catch(_e){}
     try{await loadLastDay(sid);if(G.sel===sid)paintGuardian()}catch(_e){}
     try{const b=await loadBadges(sid);if(b&&G.sel===sid){G.bd[sid]=b;paintGuardian()}}catch(_e){}
     try{await loadSeasons(false);if(G.sel===sid)paintGuardian()}catch(_e){}

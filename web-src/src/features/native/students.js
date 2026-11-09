@@ -345,7 +345,9 @@
     const D=S.det&&S.det.id===st.id?S.det:{loading:true,online:online(),raw:st,recs:[],att:[],track:st.track_code,status:st.status};
     const m=monthRow(st.id),recs=D.recs||[],att=D.att||[],hasData=!!m||recs.length>0||att.length>0;
     const sumBy=(f)=>recs.filter(f).reduce((a,r)=>a+Number(r.pages_count||0),0);
-    const hifz=m?Number(m.hifz_pages||0):sumBy(r=>r.activity_type==='new_hifz'),review=m?Number(m.review_pages||0):sumBy(r=>['review_near','review_far'].includes(r.activity_type)),sard=m?Number(m.sard_pages||0):sumBy(r=>r.activity_type==='sard');
+    // RC37: hifz and sard of the month = one stretch from the first ayah to the last ayah reached (repeats once), like the native card
+    const spanOf=t=>{const rows=recs.filter(r=>r.activity_type===t);return rows.length&&window.HalaqatiSpan?window.HalaqatiSpan.pages(rows):null};
+    const hifz=spanOf('new_hifz')??(m?Number(m.hifz_pages||0):sumBy(r=>r.activity_type==='new_hifz')),review=m?Number(m.review_pages||0):sumBy(r=>['review_near','review_far'].includes(r.activity_type)),sard=spanOf('sard')??(m?Number(m.sard_pages||0):sumBy(r=>r.activity_type==='sard'));
     const cnt=s=>att.filter(a=>a.status===s).length;
     const present=att.length?cnt('present')+cnt('late'):(m?Number(m.present_days||0):0),absent=att.length?cnt('absent'):(m?Number(m.absent_days||0):0),late=att.length?cnt('late'):(m?Number(m.late_days||0):0);
     const mv=v=>hasData?v:'—',d=new Date(),monthLabel=MONTHS[d.getMonth()]+' '+d.getFullYear(),raw=D.raw||st;
@@ -584,7 +586,7 @@
 
   function insight(sn,recs,att){
     const t=T(),ms=t.slice(0,8)+'01';
-    const mr=recs.filter(r=>((r.sessions&&r.sessions.session_date)||'')>=ms),q=mr.filter(r=>r.safety_percentage!=null);
+    const mr=recs.filter(r=>((r.sessions&&r.sessions.session_date)||'')>=ms),q=mr.filter(r=>r.safety_percentage!=null&&!(window.HalaqatiSpan&&window.HalaqatiSpan.isPlaceholder(r)));
     const avg=q.length?q.reduce((a,r)=>a+Number(r.safety_percentage),0)/q.length:null;
     const mistakes=mr.reduce((a,r)=>a+Number(r.mistakes||0),0),prompts=mr.reduce((a,r)=>a+Number(r.prompts||0),0);
     const c=s=>att.filter(a=>a.status===s).length,present=c('present'),late=c('late'),absent=c('absent'),excused=c('excused');

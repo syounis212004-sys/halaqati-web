@@ -235,6 +235,12 @@
         out.prompts+=Number(r.prompts||0);
         out.recitationPoints+=Number(recPoints(r)||0);
       }
+      // RC37: hifz and sard are one continuous stretch (first ayah → last ayah reached), repeats counted once
+      if(window.HalaqatiSpan){
+        const hr=rr.filter(r=>recGroup(r,st)==='hifz'),sr=rr.filter(r=>recGroup(r,st)==='sard');
+        if(hr.length)out.hifzPages=window.HalaqatiSpan.pages(hr);
+        if(sr.length)out.sardPages=window.HalaqatiSpan.pages(sr);
+      }
       out.bonusPoints=pp.reduce((sum,x)=>sum+Number(x.points||0),0);
       out.points=out.recitationPoints+out.bonusPoints;
       out.totalPages=out.hifzPages+out.tathbitPages+out.reviewPages+out.sardPages+out.tilawahPages;

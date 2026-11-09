@@ -126,6 +126,7 @@ function overviewHtml(r){
     ${NX.progress(Math.min(100,Number(p.percentage)||0),{cls:'np-bar big'})}
     <div class="np-tiles">${tile('الهدف',`${plain(c.target)} ص`)}${tile('المنجز',`${plain(c.done)} ص`)}${c.surplus>.001?tile('الإنجاز الإضافي',`+${plain(c.surplus)} ص`):tile('المتبقي',`${plain(c.remaining)} ص`)}</div>
     <div class="np-metrics3"><div class="np-m"><b>${plain(req)} ص</b><span>مطلوب اليوم</span></div><div class="np-m"><b>${plain(done)} ص</b><span>المنجز اليوم</span></div><div class="np-m"><b>${plain(rem)} ص</b><span>المتبقي اليوم</span></div></div>
+    ${Number(p.plannedToday)>.001?`<small class="nx-muted np-why">أساسي ${plain(p.plannedToday)} ص${Number(p.recoveryShare)>.001?` + استدراك ${plain(p.recoveryShare)} ص`:''} = ${plain(req)} ص</small>`:''}
     ${c.completedEarly?`<div class="np-early">${ic('AutoAwesome',22)}<div><b>أتم الخطة مبكرًا</b><span>بقي ${c.daysLeft} يومًا على نهاية الخطة · الإنجاز الإضافي ${c.surplus>.001?`+${plain(c.surplus)} ص`:'يبدأ من التسميع التالي'}</span></div></div>`:''}
     ${wk&&wk.amount>0?`<div class="np-week"><div class="np-week-h">${ic('CalendarMonth',19)}<b>هذا الأسبوع</b><b>${plain(wk.amount)} ص</b></div><small>${h(smartPlanRangeText(wk.startPage,wk.endPage))}</small></div>`:''}
   </div>`;
