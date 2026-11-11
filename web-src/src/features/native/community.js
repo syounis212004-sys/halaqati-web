@@ -329,7 +329,7 @@
       ${NX.notice('مسؤول النظام يستطيع الإرسال لكل الحلقات أو حلقة/فئة/طالب. المشرف يرسل فقط للحلقات التي يشرف عليها.','info')}
       <div class="nc-form2">${NX.select('النطاق',scopes,{id:'ntScope',value:adm?'all':'halaqa',onchange:'refreshNotificationTargetOptions()'})}
       ${NX.select('المستهدف',[{value:'',label:'—'}],{id:'ntTarget'})}
-      ${NX.select('الجمهور',[{value:'guardians',label:'أولياء الأمور'},{value:'all',label:'كل المرتبطين'},{value:'teachers',label:'المحفّظون'}],{id:'ntAudience',value:'guardians'})}
+      ${NX.select('الجمهور',[{value:'guardians',label:'أولياء الأمور'},{value:'all',label:'كل المرتبطين'},{value:'teachers',label:'المحفّظون'},...(typeof isOwner==='function'&&isOwner()?[{value:'donors',label:'المانحون'},{value:'supervisors',label:'المشرفون'}]:[])],{id:'ntAudience',value:'guardians'})}
       ${NX.select('النوع',[{value:'manual',label:'إشعار عام'},{value:'achievement',label:'إنجاز / تهنئة'}],{id:'ntKind',value:'manual'})}</div>
       ${NX.field('العنوان',{id:'ntTitle',placeholder:'مثال: تنبيه مهم لأولياء الأمور'})}
       ${NX.field('نص الإشعار',{html:'<textarea id="ntBody" rows="4" maxlength="1200" placeholder="اكتب نص الإشعار"></textarea>'})}

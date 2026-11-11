@@ -31,6 +31,47 @@
     return R.welcome()+r;
   };
 
+  // ---------- offline-first visits (browser queue; the native app keeps its own outbox) ----------
+  const VQ='rc53_visit_queue';
+  const vqGet=()=>{try{return JSON.parse(localStorage.getItem(VQ)||'[]')}catch(_e){return[]}};
+  const vqSet=a=>{try{localStorage.setItem(VQ,JSON.stringify(a))}catch(_e){}};
+  const uuid=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)});
+  const isNet=err=>!navigator.onLine||/fetch|network|failed to|timeout|load failed/i.test(String(err&&(err.message||err)));
+  async function vqFlush(){
+    if(!navigator.onLine||typeof db==='undefined')return;
+    const q=vqGet();if(!q.length)return;
+    const rest=[];let blocked=false;
+    for(const op of q){
+      if(blocked){rest.push(op);continue}
+      try{
+        let r;
+        if(op.t==='ins')r=await db.from('supervisor_visits').upsert(op.row,{onConflict:'id'});
+        else if(op.t==='upd')r=await db.from('supervisor_visits').update(op.row).eq('id',op.id);
+        else r=await db.from('supervisor_visits').delete().eq('id',op.id);
+        if(r.error)throw r.error;
+      }catch(err){if(isNet(err)){blocked=true;rest.push(op)}/* a permanent error drops the operation */}
+    }
+    vqSet(rest);if(rest.length!==q.length){B.at=0;try{if(['visits','supervision','home'].includes(state.page))render()}catch(_e){}}
+  }
+  window.addEventListener('online',()=>setTimeout(vqFlush,800));
+  setInterval(()=>{if(['admin','supervisor'].includes(role()))vqFlush()},30000);
+  function applyQ(list){
+    const rows=new Map(list.map(v=>[v.id,{...v}])),pend=new Set();
+    vqGet().forEach(op=>{
+      if(op.t==='ins'){rows.set(op.row.id,{...(rows.get(op.row.id)||{}),...op.row});pend.add(op.row.id)}
+      else if(op.t==='upd'&&rows.has(op.id)){Object.assign(rows.get(op.id),op.row);pend.add(op.id)}
+      else if(op.t==='del'){rows.delete(op.id);pend.delete(op.id)}
+    });
+    pend.forEach(id=>{if(rows.has(id))rows.get(id)._pending=true});
+    return [...rows.values()].sort((a,b)=>String(b.visit_date||'').localeCompare(String(a.visit_date||''))||String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  }
+  function enqueue(op){
+    const q=vqGet();
+    if(op.t==='upd'){const ins=q.find(x=>x.t==='ins'&&x.row.id===op.id);if(ins){Object.assign(ins.row,op.row);vqSet(q);return}}
+    if(op.t==='del'){const k=q.findIndex(x=>x.t==='ins'&&x.row.id===op.id);if(k>=0){q.splice(k,1);vqSet(q.filter(x=>!(x.id===op.id)));return}}
+    q.push(op);vqSet(q);
+  }
+
   // ---------- data ----------
   const B={at:0,data:null};
   const ok=r=>{if(r&&r.error)throw r.error;return (r&&r.data)||[]};
@@ -43,12 +84,14 @@
     if(!force&&B.data&&Date.now()-B.at<20000)return B.data;
     if(typeof db==='undefined')throw new Error('لا يوجد اتصال بالخادم');
     const td=todayS(),ms=td.slice(0,8)+'01';
-    const [hq,links,staff,sess,visits]=await Promise.all([
+    await vqFlush();
+    const [hq,links,staff,sess,visits0]=await Promise.all([
       db.from('halaqas').select('id,name,active,halaqa_type,supervisor_id').eq('active',true).order('name').limit(200).then(ok),
       db.from('halaqa_teachers').select('halaqa_id,teacher_id').limit(1000).then(ok),
       staffProfiles(),
       db.from('sessions').select('id,halaqa_id,session_date,status,created_by').gte('session_date',ms).neq('status','cancelled').order('session_date',{ascending:false}).limit(1500).then(ok),
       db.from('supervisor_visits').select('*').order('visit_date',{ascending:false}).limit(300).then(ok)]);
+    const visits=applyQ(visits0);
     const todayS_=sess.filter(s=>s.session_date===td),ids=todayS_.map(s=>s.id);
     const [att,rec]=ids.length?await Promise.all([
       db.from('attendance_records').select('session_id,student_id,status').in('session_id',ids).limit(3000).then(ok),
@@ -150,21 +193,34 @@
   S3.visitSave=async()=>{
     const V=S3.visit,er=document.getElementById('s3VE');
     const row={halaqa_id:document.getElementById('s3VH').value,teacher_attendance:document.getElementById('s3VA').checked,organization_score:+document.getElementById('s3VO').value,teaching_score:+document.getElementById('s3VT').value,followup_score:+document.getElementById('s3VF').value,notes:document.getElementById('s3VN').value.trim()||null,action_items:document.getElementById('s3VX').value.trim()||null};
+    const id=V.id||uuid(),op=V.id?{t:'upd',id,row}:{t:'ins',row:{...row,id,supervisor_id:state.user.id,visit_date:todayS()}};
+    let queued=false;
     try{
-      if(!navigator.onLine)throw new Error('تسجيل الزيارة في الويب يحتاج اتصالًا بالإنترنت (التطبيق يحفظها بدون إنترنت)');
-      let r;if(V.id)r=await db.from('supervisor_visits').update(row).eq('id',V.id);else r=await db.from('supervisor_visits').insert({...row,supervisor_id:state.user.id,visit_date:todayS()});
-      if(r.error)throw r.error;R.closeSheet('s3Visit');R.toast('تم حفظ الزيارة');B.at=0;render();
-    }catch(err){er.textContent=err.message||'تعذر الحفظ'}
+      if(!navigator.onLine)throw new Error('offline');
+      const r=op.t==='ins'?await db.from('supervisor_visits').upsert(op.row,{onConflict:'id'}):await db.from('supervisor_visits').update(row).eq('id',id);
+      if(r.error)throw r.error;
+    }catch(err){if(isNet(err)){enqueue(op);queued=true}else{er.textContent=err.message||'تعذر الحفظ';return}}
+    R.closeSheet('s3Visit');R.toast(queued?'حُفظت الزيارة على هذا الجهاز وستُرسل عند عودة الإنترنت':'تم حفظ الزيارة');B.at=0;render();
   };
-  S3.visitDone=async id=>{try{const r=await db.from('supervisor_visits').update({action_done:true}).eq('id',id);if(r.error)throw r.error;B.at=0;render()}catch(err){R.toast(err.message||'تعذر التحديث')}};
+  S3.visitDone=async id=>{
+    const op={t:'upd',id,row:{action_done:true}};
+    try{if(!navigator.onLine)throw new Error('offline');const r=await db.from('supervisor_visits').update(op.row).eq('id',id);if(r.error)throw r.error}
+    catch(err){if(isNet(err))enqueue(op);else{R.toast(err.message||'تعذر التحديث');return}}
+    B.at=0;render();
+  };
   S3.visitDel=id=>{
     R.sheet('s3Del','حذف الزيارة',`<p>للتأكيد اكتب كلمة «حذف».</p><label class="dn-field"><input id="s3DT" oninput="document.getElementById('s3DB').disabled=this.value.trim()!=='حذف'" placeholder="حذف"></label>`,`${R.btn('إلغاء',"RC50.closeSheet('s3Del')",'text')}<button type="button" class="dn-btn" id="s3DB" disabled onclick="RC50.s3.visitDelGo('${e(id)}')">حذف الزيارة</button>`);
   };
-  S3.visitDelGo=async id=>{try{const r=await db.from('supervisor_visits').delete().eq('id',id);if(r.error)throw r.error;R.closeSheet('s3Del');R.toast('تم حذف الزيارة');B.at=0;render()}catch(err){R.toast(err.message||'تعذر الحذف')}};
+  S3.visitDelGo=async id=>{
+    let queued=false;
+    try{if(!navigator.onLine)throw new Error('offline');const r=await db.from('supervisor_visits').delete().eq('id',id);if(r.error)throw r.error;enqueue({t:'ins-cancel',id});}
+    catch(err){if(isNet(err)){enqueue({t:'del',id});queued=true}else{R.toast(err.message||'تعذر الحذف');return}}
+    R.closeSheet('s3Del');R.toast(queued?'سيُحذف عند عودة الإنترنت':'تم حذف الزيارة');B.at=0;render();
+  };
   const sc=(v,k)=>v[k]==null?'—':`${v[k]}/5`;
   R.page('visits',{title:'زيارات المشرف',roles:['admin','supervisor'],render:async()=>{
     const d=await load(true),hn=Object.fromEntries(d.halaqas.map(h=>[h.id,h.name]));
-    return `${R.btn('تسجيل زيارة جديدة',"RC50.s3.visitNew('')")}`+(d.visits.map(v=>`<article class="s3-card"><div class="s3-top"><b>${e(hn[v.halaqa_id]||'حلقة')}</b><small>${e(v.visit_date)}</small></div>
+    return `${R.btn('تسجيل زيارة جديدة',"RC50.s3.visitNew('')")}`+(d.visits.map(v=>`<article class="s3-card"><div class="s3-top"><b>${e(hn[v.halaqa_id]||'حلقة')}</b>${v._pending?'<span class="s3-pill warn">بانتظار الرفع</span>':''}<small>${e(v.visit_date)}</small></div>
       <small>التنظيم ${sc(v,'organization_score')} · التدريس ${sc(v,'teaching_score')} · المتابعة ${sc(v,'followup_score')}${v.teacher_attendance==null?'':v.teacher_attendance?' · المحفّظ حاضر':' · المحفّظ غائب'}</small>
       ${val(v.notes)?`<p>${e(val(v.notes))}</p>`:''}${val(v.action_items)?`<small>المطلوب: ${e(val(v.action_items))}${v.action_done?' ✓ نُفّذ':''}</small>`:''}
       <div class="s3-acts"><button type="button" class="dn-btn tonal" onclick="RC50.s3.visitEdit('${e(v.id)}')">تعديل</button>${val(v.action_items)&&!v.action_done?`<button type="button" class="dn-btn tonal" onclick="RC50.s3.visitDone('${e(v.id)}')">تم التنفيذ</button>`:''}<button type="button" class="dn-btn tonal s3-danger" onclick="RC50.s3.visitDel('${e(v.id)}')">حذف</button></div></article>`).join('')||R.card(R.empty('لا توجد زيارات مسجلة')));
@@ -276,5 +332,26 @@
     try{const ok_=await R.rpc('rc32_observer_resolve',{p_id:id,p_status:approve?'approved':'declined',p_note:note||null});
       if(ok_!==true)throw new Error('الطلب غير موجود أو تم الرد عليه سابقًا');R.closeSheet('s3Obs');R.toast(approve?'تمت الموافقة وأُبلغ المراقب':'تم رفض الطلب وأُبلغ المراقب');render()}
     catch(err){er.textContent=err.message||'تعذر التنفيذ'}
+  };
+
+  // ---------- notification centre: donors / supervisors (administrator only, via SQL function) ----------
+  const baseSend=window.sendManualNotification;
+  if(typeof baseSend==='function')window.sendManualNotification=async function(){
+    const a=document.getElementById('ntAudience')?.value;
+    if(a!=='donors'&&a!=='supervisors')return baseSend.apply(this,arguments);
+    const t=document.getElementById('ntTitle')?.value.trim(),b=document.getElementById('ntBody')?.value.trim();
+    if(!t||!b)return R.toast('اكتب عنوان الإشعار ونصه');
+    try{
+      const label=a==='donors'?'المانحون':'المشرفون',key='bc:'+uuid();
+      const prev=await R.rpc('rc53_broadcast_special',{p_audience:a,p_title:t,p_body:b,p_source_key:key,p_label:label,p_dry:true});
+      if(prev&&prev.error)throw new Error(prev.error);
+      if(!(prev&&prev.recipients>0))return R.toast('لا يوجد مستلمون لهذا الاختيار');
+      if(!confirm(`سيصل الإشعار إلى ${prev.recipients} (${label}). لا يمكن التراجع. متابعة؟`))return;
+      const r=await R.rpc('rc53_broadcast_special',{p_audience:a,p_title:t,p_body:b,p_source_key:key,p_label:label,p_dry:false});
+      if(r&&r.error)throw new Error(r.error);
+      R.toast(`تم إنشاء الإشعار لـ ${r.recipients||0} مستلم · داخل التطبيق`);
+      document.getElementById('ntTitle').value='';document.getElementById('ntBody').value='';
+      try{await refreshNotifications({silent:true})}catch(_e){}render();
+    }catch(err){R.toast(err.message||'تعذر الإرسال')}
   };
 })();

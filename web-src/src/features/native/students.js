@@ -9,8 +9,8 @@
   const ic=(n,s,c)=>typeof mi==='function'?mi(n,s,c):'';
   const $id=id=>document.getElementById(id);
   const isDk=()=>document.documentElement.getAttribute('data-view')==='desktop';
-  const manage=()=>typeof canManageStudents==='function'&&canManageStudents();
-  const staff=()=>typeof roleCanManage==='function'&&roleCanManage();
+  const manage=()=>typeof canManageStudents==='function'&&canManageStudents()&&state.profile?.role!=='supervisor';
+  const staff=()=>typeof roleCanManage==='function'&&roleCanManage()&&state.profile?.role!=='supervisor';
   const online=()=>navigator.onLine&&state.networkVerified!==false&&!state.offline;
   const N=v=>{v=Number(v);if(!isFinite(v))return '0';return Math.abs(v-Math.round(v))<.005?String(Math.round(v)):String(Math.round(v*10)/10)};
   const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
