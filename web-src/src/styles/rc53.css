@@ -18,3 +18,7 @@ body.dark .s3-pill.ok{background:#17402a;color:#a9e8bf}body.dark .s3-pill.warn{b
 /* clearer session roster cards: outline coloured by state */
 .nr-card{border:1.5px solid color-mix(in srgb,var(--primary,#0d5a49) 40%,var(--line,#ccc))}
 .nr-card.nr-st-absent{border-color:var(--st-bad-fg,#b3261e)}.nr-card.nr-st-excused{border-color:var(--st-warn-fg,#b8861b)}.nr-card.nr-st-recited{border-color:var(--primary,#0d5a49)}
+
+/* plans month row must wrap (it widened the whole page on phones) */
+.np-monthrow{flex-wrap:wrap!important;row-gap:2px}.np-monthrow>*{min-width:0}
+#content>*{min-width:0;max-width:100%}

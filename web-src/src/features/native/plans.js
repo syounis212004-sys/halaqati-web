@@ -229,7 +229,7 @@ function dashboard(){
     if(s.track!=='all'||s.perf!=='all')h1+=`<div class="np-active">${s.track!=='all'?`<button type="button" class="np-assist" onclick="NP.setTrack('all',1)">${s.track==='general_hifz'?'الحفظ العام':'التثبيت'} ×</button>`:''}${s.perf!=='all'?`<button type="button" class="np-assist" onclick="NP.perf('all')">${h(s.perf)} ×</button>`:''}<button type="button" class="np-assist" onclick="NP.clearFilters()">مسح الفلاتر</button></div>`;
     h1+=`<div class="np-health">${healthChip('blue',counts.blue||0,'متقدم')}${healthChip('green',counts.green||0,'على المسار')}${healthChip('yellow',counts.yellow||0,'يحتاج انتباه')}${healthChip('red',counts.red||0,'يحتاج متابعة')}<span class="np-grow"></span>${NX.iconBtn('Tune',{title:'إدارة الخطط',cls:'nx-tile np-tune',onclick:'NP.actions()'})}</div>`;
     h1+=`<div class="np-summary">${NX.metrics([NX.metric('المسارات الفعالة',rows.length,{icon:'TrackChanges'}),NX.metric('متوسط الإنجاز',plain(avg)+'%',{icon:'TrendingUp'}),NX.metric('بحاجة متابعة',behind,{icon:'WarningAmber'}),NX.metric('طلاب بلا خطة',noPlan.length,{icon:'PersonSearch'})],4)}</div>`;
-    const ev=(state.smartPlanEvents||[]).filter(x=>x.event_type==='auto_extension').slice(0,3);
+    const ev=[];
     if(ev.length)h1+=`<div class="np-gap np-stack">${ev.map(e=>{const pl=(state.smartPlans||[]).find(x=>x.id===e.plan_id),st=state.students.find(x=>x.id===e.student_id),pay=e.payload||{};return NX.notice(`تم تمديد «${h(pl?.title||'الخطة')}» للطالب ${h(st?.full_name||'—')} من ${h(pay.old_end_date||'—')} إلى ${h(pay.new_end_date||'—')} لأن العجز تجاوز سقف التعويض الآمن.`,'info')}).join('')}</div>`;
   }
   let list;
@@ -468,7 +468,7 @@ function editorHtml(){
      <div class="np-hid"><select id="spDailyCap"><option value="1.25">125%</option><option value="1.5" selected>150%</option><option value="1.75">175%</option><option value="2">200%</option></select></div>
      <label class="nx-field"><span>تنبيه التأخر بعد أيام دوام</span><input id="spDelayDays" type="number" min="1" max="30" value="3"></label>
      <label class="nx-switchrow"><span>لا يتقدم قبل اجتياز التقييم</span><input type="checkbox" class="nx-switch" id="spQualityGate" checked></label>
-     <label class="nx-switchrow"><span>تمديد نهاية الخطة تلقائياً</span><input type="checkbox" class="nx-switch" id="spAutoExtend" checked></label>
+     <input type="checkbox" id="spAutoExtend" style="display:none">
      <label class="nx-switchrow"><span>تنبيه التحضير المنزلي لولي الأمر</span><input type="checkbox" class="nx-switch" id="spHomePush" checked></label>
      <div class="np-hid"><select id="spMilestone"><option value="none" selected>none</option><option value="hizb">hizb</option><option value="juz">juz</option></select><input type="checkbox" id="spMilestoneApproval"></div>
    </section>

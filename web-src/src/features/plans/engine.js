@@ -114,7 +114,7 @@ function normalizePlan(input = {}) {
     schedule_weekdays: schedule.length ? schedule : [0, 1, 2, 3, 4],
     catch_up_weekday: catchUp,
     max_daily_multiplier: clamp(input.max_daily_multiplier || 1.5, 1, 3),
-    auto_extend: input.auto_extend !== false,
+    auto_extend: false,
     quality_gate_enabled: input.quality_gate_enabled !== false,
     minimum_evaluation: EVALUATION_RANK[input.minimum_evaluation] === undefined ? 'very_good' : input.minimum_evaluation,
     range_start_page: rangeStart,
@@ -529,6 +529,9 @@ function exactCumulativeQuota(targetPages, totalDays, elapsedDays) {
 
 function extendEndDate(planInput, pagesNeeded, dailyCapacity) {
   const plan = normalizePlan(planInput);
+  // RC57: plan end dates are never extended automatically.
+  return plan.end_date;
+  // eslint-disable-next-line no-unreachable
   if (!plan.auto_extend || pagesNeeded <= 0 || dailyCapacity <= 0) return plan.end_date;
   let remaining = pagesNeeded;
   let cursor = plan.end_date;
