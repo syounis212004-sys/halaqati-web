@@ -491,8 +491,8 @@ function uBadge(u){
   if(!uActive(u))return NX.pill('موقوف','danger',{cls:'ngm-badge'});
   return NX.pill('نشط','success',{cls:'ngm-badge'});
 }
-const uActs=u=>u.approval_status==='pending'?['approve','reject','delete']:u.approval_status==='rejected'?['approve_again','delete']:['toggle','role','delete'];
-const ACT={approve:['اعتماد','Check','tonal'],reject:['رفض','Cancel','outlined'],approve_again:['اعتماد من جديد','Check','tonal'],toggle:null,role:['تغيير الصلاحية','ManageAccounts','outlined'],delete:['حذف نهائي','DeleteForever','outlined']};
+const uActs=u=>u.approval_status==='pending'?['approve','reject','delete']:u.approval_status==='rejected'?['approve_again','delete']:['toggle',u.frozen?'unfreeze':'freeze','role',...(['teacher','supervisor'].includes(u.role)?['photo']:[]),'delete'];
+const ACT={approve:['اعتماد','Check','tonal'],reject:['رفض','Cancel','outlined'],approve_again:['اعتماد من جديد','Check','tonal'],toggle:null,role:['تغيير الصلاحية','ManageAccounts','outlined'],freeze:['تجميد','PauseCircle','outlined'],unfreeze:['فك التجميد','PlayCircle','outlined'],photo:['صورة','AccountCircle','outlined'],delete:['حذف نهائي','DeleteForever','outlined']};
 function uBtn(k,u,small){
   let [label,icon,kind]=k==='toggle'?[uActive(u)?'إيقاف':'تفعيل',uActive(u)?'PauseCircle':'PlayCircle','outlined']:ACT[k];
   if(k==='approve'&&U.busy===u.id)label='جاري…';
@@ -508,13 +508,13 @@ function uList(){
   const reqOf=u=>u.requested_role||u.role||'guardian';
   const cards=rows.map(u=>{
     const admin=u.role==='admin';
-    return `<div class="ngm-card ngm-ucard"><div class="ngm-row"><span class="ngm-uic">${ic('AccountCircle',26)}</span><div class="ngm-grow"><div class="ngm-name">${h(u.full_name||'مستخدم')}</div><div class="ngm-sub">${h(u.email||'—')}</div></div>${uBadge(u)}</div>
+    return `<div class="ngm-card ngm-ucard"><div class="ngm-row">${uAv(u)}<div class="ngm-grow"><div class="ngm-name">${h(u.full_name||'مستخدم')}</div><div class="ngm-sub">${h(u.email||'—')}</div></div>${uBadge(u)}</div>
       <div class="ngm-lab">${admin?'مسؤول النظام':`الصلاحية: ${roleAr(u.role)} · الطلب: ${roleAr(reqOf(u))}`}</div>
       ${u.rejection_reason?`<div class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</div>`:''}
       ${admin?'':`<div class="ngm-uacts">${uActs(u).map(k=>uBtn(k,u,false)).join('')}</div>`}</div>`}).join('');
   const trs=rows.map(u=>{
     const admin=u.role==='admin';
-    return `<tr><td><div class="ngm-ucell">${NX.avatar(u.full_name||'م')}<div><b>${h(u.full_name||'مستخدم')}</b><small>${h(u.phone||'')}</small></div></div></td>
+    return `<tr><td><div class="ngm-ucell">${u.avatar_path?uAv(u):NX.avatar(u.full_name||'م')}<div><b>${h(u.full_name||'مستخدم')}</b><small>${h(u.phone||'')}</small></div></div></td>
       <td class="ngm-mail">${h(u.email||'—')}</td>
       <td>${admin?'مسؤول النظام':`<div>${roleAr(u.role)}</div><small>الطلب: ${roleAr(reqOf(u))}</small>`}${u.rejection_reason?`<small class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</small>`:''}</td>
       <td>${uBadge(u)}</td><td><div class="ngm-racts">${admin?'—':uActs(u).map(k=>uBtn(k,u,true)).join('')}</div></td></tr>`}).join('');
@@ -553,8 +553,14 @@ G.uAct=function(k,id){
   if(k==='approve')uRun(id,approve,'تم اعتماد الحساب');
   else if(k==='approve_again')uRun(id,approve,'تم اعتماد الحساب من جديد');
   else if(k==='toggle')uRun(id,()=>chk(db.from('profiles').update({active:!uActive(u)}).eq('id',id)),uActive(u)?'تم إيقاف الحساب':'تم تفعيل الحساب');
+  else if(k==='freeze')uRun(id,()=>chk(db.from('profiles').update({frozen:true}).eq('id',id)),'تم تجميد الحساب');
+  else if(k==='unfreeze')uRun(id,()=>chk(db.from('profiles').update({frozen:false,frozen_reason:null}).eq('id',id)),'تم فك تجميد الحساب');
+  else if(k==='photo')uPhoto(id);
   else if(k==='reject')uReject(u);else if(k==='role')uRole(u);else if(k==='delete')uDelete(u);
 };
+/* RC53: staff photo (small JPEG data URL in profiles.avatar_path, same idea as the student photo). */
+function uPhoto(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{const data=await RC50.compressImage(f);uRun(id,()=>chk(db.from('profiles').update({avatar_path:data}).eq('id',id)),'تم تحديث الصورة')}catch(e){toast(err(e)||'تعذر قراءة الصورة')}};inp.click()}
+const uAv=u=>u.avatar_path&&String(u.avatar_path).startsWith('data:image/')?`<img class="s3-av" alt="" src="${u.avatar_path}">`:`<span class="ngm-uic">${ic('AccountCircle',26)}</span>`;
 function uReject(u){
   NX.dialog('ngmRej','رفض حساب '+(u.full_name||''),NX.field('سبب الرفض (اختياري)',{html:'<textarea id="ngmRejReason" rows="3"></textarea>'}),{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRej')"})}${NX.btn('رفض الحساب',{kind:'danger',onclick:`NGM.uRejectGo('${u.id}')`})}`});
 }

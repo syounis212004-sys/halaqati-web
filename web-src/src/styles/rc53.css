@@ -1,0 +1,20 @@
+/* Halaqati web 2.89.3 — RC53–RC56 look: outlined cards, role welcome card, slim offline strip, supervisor pages. */
+.s3-welcome{background:linear-gradient(135deg,var(--dn-em,#0d5a49),color-mix(in srgb,var(--dn-em,#0d5a49) 70%,#000));color:#fff;border-radius:20px;padding:16px 18px;margin:0 0 12px;display:grid;gap:5px;border:1px solid color-mix(in srgb,#d9b25f 55%,transparent)}
+.s3-welcome small{opacity:.85;font-size:13px}.s3-welcome b{font-size:17px;line-height:1.7;font-weight:700}.s3-welcome span{font-size:12.5px;opacity:.78}.s3-welcome p{margin:4px 0 0;font-size:14px}
+.s3-card{background:var(--dn-card,#fff);border:1.5px solid color-mix(in srgb,var(--dn-em,#0d5a49) 55%,transparent);border-radius:16px;padding:12px;margin:0 0 10px;display:grid;gap:6px;color:var(--dn-ink,inherit)}
+.s3-card.ok{border-color:var(--dn-em,#0d5a49)}.s3-card.warn{border-color:#b8861b}.s3-card.bad{border-color:#b3261e}
+.s3-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.s3-top>div{display:grid;gap:2px;min-width:0}.s3-card small{color:var(--dn-mut,#5b6b63)}
+.s3-pill{border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:700;white-space:nowrap;background:color-mix(in srgb,var(--dn-ink,#000) 8%,transparent)}
+.s3-pill.ok{background:#dcf2e3;color:#0e5a2c}.s3-pill.warn{background:#ffeebf;color:#6a4600}.s3-pill.bad{background:#fcdfdc;color:#8a1912}
+body.dark .s3-pill.ok{background:#17402a;color:#a9e8bf}body.dark .s3-pill.warn{background:#4a390c;color:#f5d97a}body.dark .s3-pill.bad{background:#5a1b17;color:#ffc2ba}
+.s3-prog{height:8px;border-radius:99px;background:color-mix(in srgb,var(--dn-ink,#000) 10%,transparent);overflow:hidden}.s3-prog i{display:block;height:100%;background:var(--dn-em,#0d5a49);border-radius:99px}
+.s3-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}.s3-acts .dn-btn{flex:1;min-height:42px;padding:8px 10px}
+.s3-line{display:flex;align-items:center;justify-content:space-between;gap:8px}.s3-row{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:start;cursor:pointer;width:100%}
+.s3-row>div{flex:1;display:grid;gap:2px;min-width:0}.s3-av{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none}.s3-av.ph{display:grid;place-items:center;background:var(--dn-soft,#dff1ea);color:var(--dn-em,#0d5a49);font-weight:800}
+.s3-more{display:grid;gap:5px;border-top:1px solid var(--dn-line,#e3e8e5);padding-top:8px}.s3-badtx{color:#b3261e!important}.s3-danger{color:#b3261e!important}
+.s3-support b{font-size:18px}.s3-support details{margin-top:6px}.s3-support summary{cursor:pointer;color:var(--dn-em,#0d5a49);font-weight:700}
+/* slim one-line offline strip */
+.offline-notice.s3-slim{padding:4px 12px!important;margin:0 0 8px!important;font-size:12.5px!important;line-height:1.5!important;border-radius:10px!important;min-height:0!important;text-align:center}
+/* clearer session roster cards: outline coloured by state */
+.nr-card{border:1.5px solid color-mix(in srgb,var(--primary,#0d5a49) 40%,var(--line,#ccc))}
+.nr-card.nr-st-absent{border-color:var(--st-bad-fg,#b3261e)}.nr-card.nr-st-excused{border-color:var(--st-warn-fg,#b8861b)}.nr-card.nr-st-recited{border-color:var(--primary,#0d5a49)}

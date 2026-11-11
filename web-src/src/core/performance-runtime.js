@@ -78,7 +78,7 @@ async function v230LoadDashboardData(){
     db.from('forum_posts').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false}).limit(80),
     db.from('forum_comments').select('*').order('created_at').limit(500)
   ];
-  if(roleCanAdmin())tasks.push(db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at').order('created_at',{ascending:false}));
+  if(roleCanAdmin())tasks.push(db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at,frozen,avatar_path').order('created_at',{ascending:false}));
   let rows=await withTimeout(Promise.allSettled(tasks),V230_SECONDARY_TIMEOUT,'v2.30 dashboard timeout').catch(()=>[]);
   ['announcements','goals','monthly','leaderDaily','leaderMonthly','dailySummary','forum','comments'].forEach((p,i)=>v230ApplyArray(p,rows[i]));
   if(!state.homeSelectedMonth)state.homeSelectedMonth=today().slice(0,7);
@@ -195,8 +195,8 @@ refreshFromServer=async function({renderAfter=true}={}){
   if(!(await ensureServerAuthSession({silent:true}))){state.offline=false;updateSyncBadge();return false}
   try{
     let res=await withTimeout(db.from('profiles').select('*').eq('id',state.user.id).single(),3500,'profile timeout');if(res.error)throw res.error;if(!res.data)throw new Error('profile missing');
-    let wasBlocked=state.profile?.approval_status!=='approved'||!state.profile?.active;
-    state.profile=res.data;saveOfflineAuth(state.user);maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active){showAccessStatus(state.profile);cacheSnapshot();return false}
+    let wasBlocked=state.profile?.approval_status!=='approved'||!state.profile?.active||(state.profile?.frozen&&state.profile?.role!=='admin');
+    state.profile=res.data;saveOfflineAuth(state.user);maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active||(state.profile.frozen&&state.profile.role!=='admin')){showAccessStatus(state.profile);cacheSnapshot();return false}
     if(readOfflineQueue().length){captureSyncSessionDependencies();await syncOfflineQueue({refreshAfter:false});if(readOfflineQueue().length)return false}
     await v230LoadCoreData(true);
     let appHidden=$('#app')?.classList.contains('hidden');if(appHidden){$('#pendingPanel')?.classList.add('hidden');showApp();if(wasBlocked)toast('تم اعتماد الحساب وفتح لوحة ولي الأمر')}else if(renderAfter)await v230RenderIfVisible();
@@ -212,10 +212,10 @@ boot=async function(user=null){
   if(!u&&!navigator.onLine){u=readOfflineAuth();verifiedInput=false}if(!u)return;
   state.user=u;if(verifiedInput)saveOfflineAuth(u);await prepareOfflineStorageForUser(u.id);
   let cached=restoreSnapshot();
-  if(cached&&state.profile){captureSyncSessionDependencies();maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active){showAccessStatus(state.profile);setTimeout(()=>refreshFromServer({renderAfter:true}),80);return}state.fastStarted=true;$('#pendingPanel').classList.add('hidden');showApp();updateSyncBadge();setTimeout(()=>refreshFromServer({renderAfter:true}),60);return}
+  if(cached&&state.profile){captureSyncSessionDependencies();maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active||(state.profile.frozen&&state.profile.role!=='admin')){showAccessStatus(state.profile);setTimeout(()=>refreshFromServer({renderAfter:true}),80);return}state.fastStarted=true;$('#pendingPanel').classList.add('hidden');showApp();updateSyncBadge();setTimeout(()=>refreshFromServer({renderAfter:true}),60);return}
   if(!(await internetReachable(true)))return toast('لا توجد نسخة محلية بعد. افتح التطبيق مرة واحدة مع الإنترنت لتحميل بيانات حسابك.');
   let res;try{res=await withTimeout(db.from('profiles').select('*').eq('id',u.id).single(),4000,'profile timeout')}catch(e){return toast('تعذر تحميل الحساب حالياً')}
-  if(res?.error||!res?.data)return toast('تعذر تحميل الحساب');state.profile=res.data;maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active){showAccessStatus(state.profile);return}
+  if(res?.error||!res?.data)return toast('تعذر تحميل الحساب');state.profile=res.data;maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active||(state.profile.frozen&&state.profile.role!=='admin')){showAccessStatus(state.profile);return}
   $('#pendingPanel').classList.add('hidden');state.opsLoading=true;
   try{let ok=await v230LoadCoreData(true);if(!ok)return toast('تعذر تحميل البيانات الأساسية حالياً');showApp();cacheSnapshot()}
   finally{state.opsLoading=false}

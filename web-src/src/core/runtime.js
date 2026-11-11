@@ -243,7 +243,7 @@ function enqueueOffline(op){
 }
 function resolveSessionId(id,map=readSessionMap()){return map[id]||id}
 function rememberRoster(id){state.offlineRosterCache[id]=cloneJson(state.sessionRoster);cacheSnapshot()}
-function offlineNotice(){let st=syncQueueStats();return (!state.networkVerified||state.offline||state.pendingSync)?`<div class="offline-notice"><b>${state.networkVerified?'بيانات محلية بانتظار المزامنة':'وضع العمل دون إنترنت'}</b><br>${state.pendingSync?`${state.pendingSync} عملية محفوظة بأمان في قاعدة الجهاز${st.failed?` · ${st.failed} تحتاج إعادة محاولة`:''}. ستتم المزامنة تلقائياً عند عودة الاتصال.`:'الحلقات والفئات والطلاب والجلسات والحضور والسلوك والتسميع متاحة من النسخة المحلية.'}</div>`:''}
+function offlineNotice(){let st=syncQueueStats();if(!(!state.networkVerified||state.offline||state.pendingSync))return '';let off=!state.networkVerified||state.offline;return `<div class="offline-notice s3-slim">${off?'لا يوجد اتصال حاليًا، لا تسجّل خروجًا، وسيُرسل كل شيء عند عودة النت':`${state.pendingSync} تغييرات بانتظار المزامنة${st.failed?` · ${st.failed} تحتاج إعادة محاولة`:''}`}</div>`}
 let deferredSyncNotificationQueue=[],deferredSyncNotificationActive=0;
 function queueDeferredSyncNotification(task){if(typeof task!=='function')return;deferredSyncNotificationQueue.push(task);drainDeferredSyncNotifications()}
 function drainDeferredSyncNotifications(){while(deferredSyncNotificationActive<3&&deferredSyncNotificationQueue.length){let task=deferredSyncNotificationQueue.shift();deferredSyncNotificationActive++;Promise.resolve().then(task).catch(e=>console.warn('deferred sync notification skipped',e)).finally(()=>{deferredSyncNotificationActive--;drainDeferredSyncNotifications()})}}

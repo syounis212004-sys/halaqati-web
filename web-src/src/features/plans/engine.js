@@ -592,6 +592,9 @@ function calculateProgress({
   const totalDays = Math.max(1, allScheduleDates.length);
   const lineKeys = planLineKeys(plan);
   const linePlan = lineKeys.length > 0;
+  // RC56: a range with fewer lines than the target must not shrink the quota (51 lines for a 30-page target made a student
+  // 7 pages behind look 7 pages ahead).
+  const quotaLines = Math.max(lineKeys.length, Math.ceil((Number(plan.target_pages) || 0) * 15));
   const originalDaily = plan.target_pages / totalDays;
   const exactPagePlan = !linePlan && plan.plan_type !== 'sard' && Number.isInteger(plan.range_start_page) && Number.isInteger(plan.range_end_page);
   const completion = buildCompletion(plan, studentId, recitations, sessions, events);
@@ -605,7 +608,7 @@ function calculateProgress({
   let plannedBeforeToday = Math.min(
     plan.target_pages,
     linePlan
-      ? cumulativeLineQuota(lineKeys.length, totalDays, priorDates.length)
+      ? cumulativeLineQuota(quotaLines, totalDays, priorDates.length)
       : exactPagePlan
         ? exactCumulativeQuota(plan.target_pages, totalDays, priorDates.length)
         : priorDates.length * originalDaily,
@@ -613,7 +616,7 @@ function calculateProgress({
   let expectedByNow = Math.min(
     plan.target_pages,
     linePlan
-      ? cumulativeLineQuota(lineKeys.length, totalDays, elapsedDates.length)
+      ? cumulativeLineQuota(quotaLines, totalDays, elapsedDates.length)
       : exactPagePlan
         ? exactCumulativeQuota(plan.target_pages, totalDays, elapsedDates.length)
         : elapsedDates.length * originalDaily,
@@ -623,7 +626,7 @@ function calculateProgress({
   // For line-based plans this can naturally be 0.5 page/day (or any exact
   // 15-line fraction) instead of the old hard-coded 1 page floor.
   const dynamicDailyMinimum = plan.plan_type === 'hifz'
-    ? round(linePlan ? (lineKeys.length / 15) / totalDays : originalDaily)
+    ? round(linePlan ? (quotaLines / 15) / totalDays : originalDaily)
     : 0;
   const customMinimumDaily = plan.plan_type === 'hifz' && plan.settings?.minimum_daily_mode === 'custom'
     ? Math.max(0, Number(plan.settings?.minimum_daily_pages || 0))
@@ -638,7 +641,7 @@ function calculateProgress({
   const completedToday = round(completion.dailyAmounts.get(currentDate) || 0);
   const futureRegularDates = allScheduleDates.filter((date) => compareDate(date, currentDate) >= 0);
   let dailyCap = linePlan
-    ? Math.max(1, Math.ceil((lineKeys.length / totalDays) * plan.max_daily_multiplier)) / 15
+    ? Math.max(1, Math.ceil((quotaLines / totalDays) * plan.max_daily_multiplier)) / 15
     : exactPagePlan
       ? Math.max(1, Math.ceil(originalDaily * plan.max_daily_multiplier))
       : originalDaily * plan.max_daily_multiplier;
@@ -651,7 +654,7 @@ function calculateProgress({
     if (isRegularPlanDay(plan, currentDate)) {
       const index = allScheduleDates.indexOf(currentDate);
       plannedToday = linePlan && index >= 0
-        ? lineQuota(lineKeys.length, totalDays, index)
+        ? lineQuota(quotaLines, totalDays, index)
         : exactPagePlan && index >= 0
           ? exactDailyQuota(plan.target_pages, totalDays, index)
           : originalDaily;

@@ -199,7 +199,7 @@ async function refreshAdminUsers({force=false,silent=true}={}){
   if(!navigator.onLine){state.adminUsersFromCache=true;state.adminUsersError='لا يوجد اتصال بالإنترنت';return false}
   let fresh=state.adminUsersUpdatedAt&&Date.now()-Date.parse(state.adminUsersUpdatedAt)<10000;
   if(!force&&fresh&&state.users.length&&!state.adminUsersFromCache)return true;
-  const fetchRows=async()=>{let q=db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at').order('created_at',{ascending:false});let r=await withTimeout(q,8500,'profiles timeout');if(r.error)throw r.error;return r.data||[]};
+  const fetchRows=async()=>{let q=db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at,frozen,avatar_path').order('created_at',{ascending:false});let r=await withTimeout(q,8500,'profiles timeout');if(r.error)throw r.error;return r.data||[]};
   try{
     let rows;
     try{rows=await fetchRows()}catch(e){if(!isNetworkError(e))throw e;await sleep(550);rows=await fetchRows()}
@@ -274,7 +274,7 @@ async function loadAll(forceNetwork=false){
     db.from('forum_comments').select('*').order('created_at').limit(500),db.from('app_settings').select('*').eq('id',1).single(),db.from('student_categories').select('*').order('min_age',{ascending:true,nullsFirst:false}).order('name'),
     db.from('halaqa_teachers').select('*'),db.from('halaqa_supervisors').select('*')
   ];
-  if(roleCanAdmin())queries.push(db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at').order('created_at',{ascending:false}));
+  if(roleCanAdmin())queries.push(db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at,frozen,avatar_path').order('created_at',{ascending:false}));
   let r;try{r=await withTimeout(Promise.all(queries),12000,'load timeout')}catch(e){state.networkVerified=false;state.offline=true;if(restoreSnapshot()){updateSyncBadge();return}throw e}
   let critical=r.slice(0,3).find(x=>x.error&&isNetworkError(x.error));if(critical&&restoreSnapshot()){state.networkVerified=false;state.offline=true;state.pendingSync=readOfflineQueue().length;updateSyncBadge();return}
   [state.halaqas,state.students,state.sessions,state.announcements,state.goals,state.monthly,state.leaderDaily,state.leaderMonthly,state.dailySummary,state.forum,state.comments]=r.slice(0,11).map(x=>x.data||[]);if(!state.homeSelectedMonth)state.homeSelectedMonth=today().slice(0,7);if(state.homeSelectedMonth===today().slice(0,7)){state.homeMonthly=[...state.monthly];state.homeMonthlyLoadedKey=state.homeSelectedMonth};
