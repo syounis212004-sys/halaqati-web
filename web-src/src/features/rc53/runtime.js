@@ -209,11 +209,12 @@
     const r=role(),items=prevNav.apply(this,arguments);
     if(r==='supervisor'){
       const nt=items.find(x=>x[0]==='notifications')||['notifications','الإشعارات'];
-      return [['home','الرئيسية'],nt,['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['community','الإعلانات والتواصل'],['settings','الإعدادات']];
+      return [['home','الرئيسية'],nt,['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['settings','الإعدادات']];
     }
     if(r==='admin'){
       const out=items.map(x=>x[0]==='supervision'?['supervision','متابعة المحفظين والمشرفين']:x),i=out.findIndex(x=>x[0]==='supervision');
       if(!out.some(x=>x[0]==='visits'))out.splice(i<0?out.length:i+1,0,['visits','زيارات المشرفين']);
+      if(!out.some(x=>x[0]==='observer_requests')){const a=out.findIndex(x=>x[0]==='approvals');out.splice(a<0?out.length:a+1,0,['observer_requests','طلبات المراقبين'])}
       return out;
     }
     return items;
@@ -257,4 +258,23 @@
   };
   const prevRender=window.render;
   window.render=async function(){const r=await prevRender.apply(this,arguments);if(state?.page==='settings')setTimeout(fillSupport,0);return r};
+
+  // ---------- admin: observer (donor) requests ----------
+  const KIND={reward:'مكافأة',honor:'تكريم',follow_up:'متابعة',other:'أخرى'},STAT={approved:['تمت الموافقة','ok'],declined:['لم تتم الموافقة','bad']};
+  R.page('observer_requests',{title:'طلبات المراقبين',roles:['admin'],render:async()=>{
+    let rows;try{rows=await R.rpc('rc32_observer_requests')||[]}catch(err){return R.card(R.empty(String(err.message||'').includes('rc32_')?'لم يُطبَّق تحديث قاعدة البيانات الخاص بالمراقب بعد.':(err.message||'تعذر تحميل الطلبات')))}
+    return rows.map(r=>{const st=STAT[r.status]||['بانتظار المدير','warn'];
+      return `<article class="s3-card ${st[1]}"><div class="s3-top"><div><b>${e(KIND[r.kind]||r.kind||'طلب')} · ${e(r.student_name||'طالب')}</b><small>${e(r.observer_name||'')} ${r.halaqa_name?'· '+e(r.halaqa_name):''}</small></div><span class="s3-pill ${st[1]}">${e(st[0])}</span></div>
+        ${val(r.note)?`<p>${e(val(r.note))}</p>`:''}${val(r.admin_note)?`<small>ردّ المدير: ${e(val(r.admin_note))}</small>`:''}
+        ${r.status==='pending'||!r.status?`<div class="s3-acts"><button type="button" class="dn-btn" onclick="RC50.s3.obsGo('${e(r.id)}',true)">موافقة</button><button type="button" class="dn-btn tonal s3-danger" onclick="RC50.s3.obsGo('${e(r.id)}',false)">رفض</button></div>`:''}</article>`}).join('')||R.card(R.empty('لا توجد طلبات من المراقبين'));
+  }});
+  S3.obsGo=(id,approve)=>{
+    R.sheet('s3Obs',approve?'الموافقة على الطلب':'رفض الطلب',`<label class="dn-field"><span>ملاحظة للمراقب (اختياري)</span><textarea id="s3ON" rows="2"></textarea></label><div class="dn-muted" id="s3OE"></div>`,`${R.btn('إلغاء',"RC50.closeSheet('s3Obs')",'text')}${R.btn('تأكيد',`RC50.s3.obsSend('${id}',${approve})`)}`);
+  };
+  S3.obsSend=async(id,approve)=>{
+    const note=document.getElementById('s3ON').value.trim(),er=document.getElementById('s3OE');
+    try{const ok_=await R.rpc('rc32_observer_resolve',{p_id:id,p_status:approve?'approved':'declined',p_note:note||null});
+      if(ok_!==true)throw new Error('الطلب غير موجود أو تم الرد عليه سابقًا');R.closeSheet('s3Obs');R.toast(approve?'تمت الموافقة وأُبلغ المراقب':'تم رفض الطلب وأُبلغ المراقب');render()}
+    catch(err){er.textContent=err.message||'تعذر التنفيذ'}
+  };
 })();

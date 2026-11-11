@@ -24,7 +24,9 @@ function rerender(){const r=typeof render==='function'?render():null;return Prom
 function withConfirm(fn){const c=window.confirm;window.confirm=()=>true;try{return fn()}finally{window.confirm=c}}
 
 /* ---------------------------------------------------------------- data helpers */
-function rowsFor(students){const out=[];for(const st of students)for(const plan of effectiveSmartPlans(st))out.push({student:st,plan,progress:smartPlanProgress(plan,st.id)});return out}
+/* RC58: students of programs (courses, qualifying, tajweed) never have smart plans; plans left over from before are hidden. */
+const isProgHalaqa=hid=>{const h=(state.halaqas||[]).find(x=>x.id===hid);return !!(h&&typeof rc27IsProgram==='function'&&rc27IsProgram(h))};
+function rowsFor(students){const out=[];for(const st of students){if(isProgHalaqa(st.halaqa_id))continue;for(const plan of effectiveSmartPlans(st))out.push({student:st,plan,progress:smartPlanProgress(plan,st.id)})}return out}
 function rowByKey(key){const [sid,pid]=String(key).split(':');const st=state.students.find(x=>String(x.id)===sid);if(!st)return null;const plan=effectiveSmartPlans(st).find(p=>String(p.id)===pid);if(!plan)return null;return {student:st,plan,progress:smartPlanProgress(plan,st.id)}}
 const keyOf=r=>`${r.student.id}:${r.plan.id}`;
 function phaseOf(plan,sid){try{const P=window.RC27Phases;if(!P||!P.S||!P.S.phases)return null;const phs=P.S.phases.filter(p=>p.plan_id===plan.id&&p.status!=='archived');if(!phs.length)return null;return P.activePhase(phs.map(P.enginePhase),P.S.states||[],sid,today())}catch(e){return null}}
@@ -199,7 +201,7 @@ function dashboard(){
   const s=S(),manage=canManage(),guardian=isGuardian();
   const halaqas=(state.halaqas||[]).filter(x=>x.active!==false);
   const students=activeStudents().filter(st=>state.smartPlanHalaqa==='all'||st.halaqa_id===state.smartPlanHalaqa);
-  const rows=rowsFor(students),withPlans=new Set(rows.map(x=>String(x.student.id))),noPlan=manage?students.filter(x=>!withPlans.has(String(x.id))):[];
+  const rows=rowsFor(students),withPlans=new Set(rows.map(x=>String(x.student.id))),noPlan=manage?students.filter(x=>!withPlans.has(String(x.id))&&!isProgHalaqa(x.halaqa_id)):[];
   const counts={};rows.forEach(x=>{const c=HK[x.progress.health]?x.progress.health:'green';counts[c]=(counts[c]||0)+1});
   const children=guardian?[...new Map(rows.map(x=>[x.student.id,x.student])).values()]:[];
   if(guardian&&(!s.child||!children.some(c=>c.id===s.child)))s.child=children[0]?.id||null;

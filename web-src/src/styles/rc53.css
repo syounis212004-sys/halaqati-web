@@ -22,3 +22,5 @@ body.dark .s3-pill.ok{background:#17402a;color:#a9e8bf}body.dark .s3-pill.warn{b
 /* plans month row must wrap (it widened the whole page on phones) */
 .np-monthrow{flex-wrap:wrap!important;row-gap:2px}.np-monthrow>*{min-width:0}
 #content>*{min-width:0;max-width:100%}
+/* grid columns must be allowed to shrink: auto columns sized to the widest card pushed the whole plans page sideways */
+.np-main,.np-list-wrap,.np-group{grid-template-columns:minmax(0,1fr)}.np-main>*,.np-list-wrap>*,.np-group>*{min-width:0}
