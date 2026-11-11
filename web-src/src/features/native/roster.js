@@ -323,7 +323,7 @@
         ${quick}
         <span class="nr-chev" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}">${ic(open?'ExpandLess':'ExpandMore',24)}</span>
       </div>
-      ${!lesson&&latest?`<div class="nr-latest">${ic('AutoStories',16)}<span>${h(actLabel(latest.activity_type))} · ${h(recRangeText(latest))} · ${plain(latest.pages_count)} ص</span></div>`:''}
+      ${!lesson&&latest&&!(open&&!isProgramSession(se)&&planSnapshots(sid,se.session_date).length)?`<div class="nr-latest">${ic('AutoStories',16)}<span>${h(actLabel(latest.activity_type))} · ${h(recRangeText(latest))} · ${plain(latest.pages_count)} ص</span></div>`:''}
       ${open?detailHtml(se,st):''}
     </article>`;
   }
