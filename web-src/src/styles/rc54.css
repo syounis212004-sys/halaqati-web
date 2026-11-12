@@ -23,3 +23,20 @@ a,button,select,summary,[onclick],.nx-chip,.nx-btn,.btn{touch-action:manipulatio
 @media (prefers-reduced-motion:reduce){.nx-btn:active,.btn:active,.nx-chip:active,.nx-iconbtn:active,.menu-btn:active,.mobile-nav button:active{transform:none}}
 /* cards that open details: smooth lift instead of a hard jump */
 .nx-card,.card,.student-card{transition:box-shadow .2s ease,transform .2s ease}
+/* ---- donor chats ---- */
+.ch-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 12px}
+.ch-head small{display:block;color:var(--muted,#6c7a74);font-size:12px}
+.ch-list{display:grid;gap:8px}
+.ch-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;background:var(--card,#fff);border:1px solid var(--line,#dfe7e2);cursor:pointer;touch-action:manipulation;transition:transform .14s cubic-bezier(.2,0,0,1),background-color .16s ease}
+.ch-row:active{transform:scale(.985)}
+.ch-row.unread{background:color-mix(in srgb,var(--green,#0b5d4f) 8%,var(--card,#fff));border-color:color-mix(in srgb,var(--green,#0b5d4f) 35%,var(--line,#dfe7e2))}
+.ch-av{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--primary-container,#d6ebe1);color:var(--green,#0b5d4f);font:800 18px/1 Cairo,sans-serif}
+.ch-main{flex:1;min-width:0;display:grid;gap:1px}
+.ch-main b{font:800 15px/22px Cairo,sans-serif}
+.ch-kind{font-size:11px;color:var(--muted,#6c7a74)}
+.ch-last{font-size:13px;color:var(--ink,#1c2a25);opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-meta{flex:none;display:grid;justify-items:end;gap:6px}
+.ch-meta small{font-size:11px;color:var(--muted,#6c7a74)}
+.ch-badge{font-style:normal;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#b3261e;color:#fff;font:700 12px/22px Cairo,sans-serif;text-align:center}
+.dn-chat{max-height:52vh;min-height:140px}
+.ch-donorbar{margin:0 0 10px}

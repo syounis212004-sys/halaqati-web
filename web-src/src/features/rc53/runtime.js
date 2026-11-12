@@ -270,6 +270,7 @@
     if(r==='admin'){
       const out=items.map(x=>x[0]==='supervision'?['supervision','متابعة المحفظين والمشرفين']:x),i=out.findIndex(x=>x[0]==='supervision');
       if(!out.some(x=>x[0]==='visits'))out.splice(i<0?out.length:i+1,0,['visits','زيارات المشرفين']);
+      if(!out.some(x=>x[0]==='chats')){const sp=out.findIndex(x=>x[0]==='support');out.splice(sp<0?out.length:sp+1,0,['chats','محادثات المانحين'])}
       if(!out.some(x=>x[0]==='observer_requests')){const a=out.findIndex(x=>x[0]==='approvals');out.splice(a<0?out.length:a+1,0,['observer_requests','طلبات المراقبين'])}
       return out;
     }
