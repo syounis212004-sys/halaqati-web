@@ -262,7 +262,8 @@
     const plans=plansForScope();
     const tools=w?`<div class="nph-tools">${NX.btn('إدارة جماعية للحفظ والسرد',{kind:'tonal',icon:'Groups',onclick:'rc27BulkCycle()'})}${NX.btn('قوالب المراحل',{kind:'tonal',icon:'BookmarkAdd',onclick:'rc27PhaseTemplates()'})}${NX.btn('بدء دورة شهر جديد',{kind:'tonal',icon:'CalendarMonth',onclick:'rc27StartMonth()'})}${NX.btn('ضبط نطاق الخطط',{kind:'tonal',icon:'Tune',onclick:'rc27RebaseOpen()'})}</div>`:'';
     const queue=q?NX.notice(`<div class="nph-queue">${ic('CloudUpload',20)}<span>${q} عملية على المراحل بانتظار الرفع</span>${navigator.onLine?NX.btn('رفع الآن',{kind:'text',small:true,onclick:'RC27Phases.flush()'}):''}</div>`,'warning'):'';
-    return `${NX.section('مراحل الخطط',NX.iconBtn('Refresh',{title:'تحديث',onclick:'rc27RefreshPhases()'}))}${queue}${tools}${plans.length?`<div class="nph-plans">${plans.map(planCard).join('')}</div>`:NX.empty('لا توجد خطط فعّالة لطلاب هذا النطاق.',{icon:'Timeline'})}`;
+    const adv=w?`${NX.btn(window.__nphAdv?'إخفاء الأدوات المتقدمة':'أدوات متقدمة: إنهاء جماعي، نقل الطلاب، القوالب',{kind:'text',full:true,onclick:'rc27ToggleAdv()'})}${window.__nphAdv?tools:''}`:'';
+    return `${NX.section('مراحل الخطط',NX.iconBtn('Refresh',{title:'تحديث',onclick:'rc27RefreshPhases()'}))}${queue}${adv}${plans.length?`<div class="nph-plans">${plans.map(planCard).join('')}</div>`:NX.empty('لا توجد خطط فعّالة لطلاب هذا النطاق.',{icon:'Timeline'})}`;
   }
   let ready=false;
   function paint(box){
@@ -422,6 +423,15 @@
       <div class="nx-notice nx-s-danger" id="nphErr" hidden></div>
     </div>`;
   }
+  window.rc27ToggleAdv=function(){window.__nphAdv=!window.__nphAdv;paint()};
+  // RC53 parity: "تعديل المرحلة" opens the editor of the student's current phase straight away.
+  window.rc27PhaseEditCurrent=async function(planId){
+    try{if(P().load)await P().load(false)}catch(_e){}
+    const plan=S().plans.find(p=>p.id===planId),phs=phasesOfPlan(planId);
+    if(!plan||!phs.length){if(window.NP?.phases)return NP.phases(planId);return}
+    const t=T0(),cur=phs.find(p=>{try{const sid=plan.student_id;return P().lifecycle(P().enginePhase(p),stateOf(p.id,sid),t)==='active'}catch(_e){return false}})||phs[0];
+    return window.rc27PhaseForm(planId,cur.id);
+  };
   window.rc27PhaseForm=async function(planId,phaseId,type){
     const plan=S().plans.find(p=>p.id===planId);if(!plan)return;
     await loadRecsFor([plan.student_id]);
