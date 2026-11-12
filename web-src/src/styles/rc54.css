@@ -1,0 +1,25 @@
+/* ---- web 2.89.11: one motion system ---- */
+/* page transition (View Transitions): only the content slides; top bar, drawer and bottom nav stay still */
+@media (prefers-reduced-motion:no-preference){
+  #content{view-transition-name:hl-page}
+  ::view-transition-group(root){animation:none}
+  ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+  ::view-transition-old(hl-page){animation:hlOut .14s cubic-bezier(.4,0,1,1) both}
+  ::view-transition-new(hl-page){animation:hlIn .32s cubic-bezier(.2,0,0,1) both}
+  html[data-vt="start"]{--hl-x:26px;--hl-y:0px}
+  html[data-vt="end"]{--hl-x:-26px;--hl-y:0px}
+  html[data-vt="up"]{--hl-x:0px;--hl-y:5vh}
+  @keyframes hlIn{from{opacity:0;transform:translate(var(--hl-x,0),var(--hl-y,0))}to{opacity:1;transform:none}}
+  @keyframes hlOut{to{opacity:0;transform:translate(calc(var(--hl-x,0px) * -.35),0)}}
+}
+/* the old per-child entrance replayed on every re-render (flicker); entrance now belongs to page changes only */
+#content>*{animation:none}
+#content{transition:none}
+/* touch feedback: immediate, no 300ms delay */
+a,button,select,summary,[onclick],.nx-chip,.nx-btn,.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.nx-btn,.btn,.nx-chip,.nx-iconbtn,.menu-btn,.mobile-nav button{transition:transform .14s cubic-bezier(.2,0,0,1),background-color .16s ease,box-shadow .16s ease,opacity .16s ease}
+.nx-btn:active,.btn:active,.nx-chip:active,.nx-iconbtn:active,.menu-btn:active{transform:scale(.96)}
+.mobile-nav button:active{transform:scale(.94)}
+@media (prefers-reduced-motion:reduce){.nx-btn:active,.btn:active,.nx-chip:active,.nx-iconbtn:active,.menu-btn:active,.mobile-nav button:active{transform:none}}
+/* cards that open details: smooth lift instead of a hard jump */
+.nx-card,.card,.student-card{transition:box-shadow .2s ease,transform .2s ease}

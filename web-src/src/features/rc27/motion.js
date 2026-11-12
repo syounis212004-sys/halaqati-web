@@ -152,7 +152,7 @@
   function navKind(){return OVERLAY.has(state.page)?'overlay':'tab'}
   function tabOrder(){try{return mobileNavItems().map(x=>x[0])}catch(_e){return []}}
   function transition(c){
-    if(reduced()){c.classList.remove('rc27-enter','rc27-t-start','rc27-t-end','rc27-t-up','rc27-t-detail');return}
+    if(reduced()||document.documentElement.classList.contains('vt-active')){c.classList.remove('rc27-enter','rc27-t-start','rc27-t-end','rc27-t-up','rc27-t-detail');lastPage=state.page;return}
     c.classList.remove('rc27-t-start','rc27-t-end','rc27-t-up','rc27-t-detail');void c.offsetWidth;
     if(lastPage!=null&&state.page!==lastPage){
       let cls;
