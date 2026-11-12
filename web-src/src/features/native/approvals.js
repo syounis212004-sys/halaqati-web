@@ -43,7 +43,7 @@
     return `<div class="nx-stack"><h2 class="nx-su-t">إكمال الحساب</h2><p class="nx-confirm-text">أكمل بياناتك لإرسال طلب الاعتماد. ${SU.role==='guardian'?'سيراجع المحفّظ ثم المسؤول طلبك.':SU.role==='teacher'?'يعتمدك المشرف أو مسؤول النظام.':SU.role==='observer'?'حساب المانح لدعم المكرَّمين والكفالات. يعتمدك مسؤول النظام وتصلك رسالة عند الاعتماد.':'يعتمدك مسؤول النظام.'}</p>
       ${NX.field('الاسم الكامل',{id:'nxSuName',value:(p.full_name&&p.full_name!=='مستخدم جديد'&&!String(p.full_name).includes('@'))?p.full_name:''})}
       ${NX.field('رقم الجوال',{id:'nxSuPhone',type:'tel',inputmode:'tel'})}
-      <div class="nx-t-title-s">نوع الحساب</div>${chips}${guardian}
+      <div class="nx-t-title-s">نوع الحساب</div><div class="nx-su-roles">${chips}</div>${guardian}
       ${SU.err?NX.notice(h(SU.err),'danger'):''}
       ${NX.btn(SU.busy?'جارٍ الإرسال…':'إرسال طلب الاعتماد',{full:true,disabled:SU.busy,onclick:'NXSignup.submit()'})}
       ${NX.btn('تسجيل الخروج',{kind:'text',onclick:'logout()'})}</div>`;

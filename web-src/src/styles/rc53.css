@@ -24,3 +24,16 @@ body.dark .s3-pill.ok{background:#17402a;color:#a9e8bf}body.dark .s3-pill.warn{b
 #content>*{min-width:0;max-width:100%}
 /* grid columns must be allowed to shrink: auto columns sized to the widest card pushed the whole plans page sideways */
 .np-main,.np-list-wrap,.np-group{grid-template-columns:minmax(0,1fr)}.np-main>*,.np-list-wrap>*,.np-group>*{min-width:0}
+
+/* ---- web fixes: full names, login on wide screens, signup role buttons ---- */
+.np-name,.nr-name{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;line-height:22px}
+.np-card .nx-chip,.nr-card .nx-chip{white-space:normal}
+html[data-view="desktop"]:has(#auth:not(.hidden)) #drawer,
+html[data-view="desktop"]:has(#auth:not(.hidden)) #backdrop,
+html[data-view="desktop"]:has(#auth:not(.hidden)) .fab{display:none!important}
+html[data-view="desktop"]:has(#auth:not(.hidden)) #app{margin-inline-start:0!important}
+#auth.auth{width:100%}
+#auth .auth-card{margin-inline:auto}
+.nx-su-roles .nx-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:visible}
+.nx-su-roles .nx-chip{justify-content:center;min-height:52px;width:100%;color:var(--ink);background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);font-weight:700}
+.nx-su-roles .nx-chip.on{background:var(--primary-container,#d6ebe1);color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
