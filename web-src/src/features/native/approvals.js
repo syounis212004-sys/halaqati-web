@@ -52,7 +52,7 @@
     if(typeof hideAuthForms==='function')hideAuthForms();
     let box=document.getElementById('nxSignupPanel');
     if(!box){box=document.createElement('div');box.id='nxSignupPanel';box.className='approval-panel nx-su';(document.getElementById('pendingPanel')||document.getElementById('auth')).insertAdjacentElement('afterend',box)}
-    SU.role=['guardian','teacher','supervisor','observer'].includes(p.requested_role)?p.requested_role:SU.role;
+    if(!SU.init){SU.init=true;if(['guardian','teacher','supervisor','observer'].includes(p.requested_role))SU.role=p.requested_role}
     box.classList.remove('hidden');box.innerHTML=signupHtml(p);
   }
   function keepForm(){const g=id=>document.getElementById(id)?.value||'';return {name:g('nxSuName'),phone:g('nxSuPhone'),nid:g('nxSuNid'),dob:g('nxSuDob')}}
