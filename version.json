@@ -1,7 +1,7 @@
 {
   "versionName": "2.89.18",
   "versionCode": 28918,
-  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
+  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
   "sha256": "38810974aae73f817688619c9a693e5911979787d74bd69cad70b49d1d9a7ef1",
   "native": true,
   "mandatory": false,
