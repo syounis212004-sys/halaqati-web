@@ -40,3 +40,11 @@ a,button,select,summary,[onclick],.nx-chip,.nx-btn,.btn{touch-action:manipulatio
 .ch-badge{font-style:normal;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#b3261e;color:#fff;font:700 12px/22px Cairo,sans-serif;text-align:center}
 .dn-chat{max-height:52vh;min-height:140px}
 .ch-donorbar{margin:0 0 10px}
+
+/* ---- web 2.89.13: stronger palette (parity with native RC62): deep emerald, clear red, solid status pills ---- */
+:root{--green:#0B6E4F;--green2:#0B7A55;--green3:#0B7A55;--danger:#C62828;--dn-em:#0B6E4F;--mint:#C9EEDC;--mint2:#E6F6EE;--dn-soft:rgba(11,110,79,.16);
+  --st-ok-bg:#0F7A4A;--st-ok-fg:#fff;--st-warn-bg:#F2B01E;--st-warn-fg:#2B1B00;--st-bad-bg:#C62828;--st-bad-fg:#fff;--st-info-bg:#1565C0;--st-info-fg:#fff;--st-neutral-bg:#56655E;--st-neutral-fg:#fff}
+body.dark{--danger:#FF8A80;--mint:#11654A;--mint2:#0E3B2D;--dn-soft:rgba(79,214,161,.18);
+  --st-ok-bg:#14804F;--st-ok-fg:#fff;--st-warn-bg:#E0A100;--st-warn-fg:#1A1200;--st-bad-bg:#C62828;--st-bad-fg:#fff;--st-info-bg:#1E6FD0;--st-info-fg:#fff;--st-neutral-bg:#4A5A53;--st-neutral-fg:#fff}
+.s3-pill.ok{background:#0F7A4A;color:#fff}.s3-pill.warn{background:#F2B01E;color:#2B1B00}.s3-pill.bad{background:#C62828;color:#fff}
+body.dark .s3-pill.ok{background:#14804F;color:#fff}body.dark .s3-pill.warn{background:#E0A100;color:#1A1200}body.dark .s3-pill.bad{background:#C62828;color:#fff}

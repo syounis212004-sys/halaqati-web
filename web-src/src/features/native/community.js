@@ -9,8 +9,8 @@
   const isDk=()=>document.documentElement.getAttribute('data-view')==='desktop';
   const online=()=>navigator.onLine!==false;
   const $id=i=>document.getElementById(i);
-  const fd=v=>{try{return new Date(v).toLocaleDateString('ar-EG-u-nu-latn')}catch(_e){return ''}};
-  const ft=v=>{try{const d=new Date(v);const p=n=>String(n).padStart(2,'0');return `\u2066${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}\u2069`}catch(_e){return String(v||'').slice(0,16).replace('T',' ')}};
+  const fd=v=>{try{return window.gazaFmt?gazaFmt.day(v):new Date(v).toLocaleDateString('ar-EG-u-nu-latn')}catch(_e){return ''}};
+  const ft=v=>{try{return window.gazaFmt?'\u2066'+gazaFmt.dateTime(v)+'\u2069':''}catch(_e){return ''}};
   const num=v=>{const r=Math.round(Number(v||0)*100)/100;return String(r)};
   const call=(n,...a)=>{try{return typeof window[n]==='function'?window[n](...a):undefined}catch(e){console.warn(e)}};
   const guard=fn=>function(){try{return fn.apply(this,arguments)}catch(e){console.error('community page',e);return NX.notice('تعذر عرض هذه الشاشة','error')}};

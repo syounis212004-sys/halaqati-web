@@ -2,6 +2,23 @@
    - one transition per page change (View Transitions API when available, the older slide as fallback)
    - re-rendering the SAME page never replays an entrance animation and keeps the scroll position
    - respects the OS "reduce motion" setting and the in-app "الحركة: مخففة" switch */
+/* Gaza time (Asia/Gaza), 12-hour clock, Latin digits — one formatter for every date the person reads. Storage stays UTC. */
+window.gazaFmt=(function(){
+  const tz='Asia/Gaza';
+  const parts=v=>{
+    const d=new Date(v);if(isNaN(d))return null;
+    const o={};
+    new Intl.DateTimeFormat('en-GB',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'numeric',minute:'2-digit',hourCycle:'h23'}).formatToParts(d).forEach(x=>{o[x.type]=x.value});
+    return o;
+  };
+  const clock=o=>{let h=(+o.hour)%24;const ap=h<12?'ص':'م';h=h%12||12;return String(h).padStart(2,'0')+':'+o.minute+' '+ap};
+  return {
+    dateTime:v=>{const o=parts(v);return o?`${o.year}-${o.month}-${o.day} ${clock(o)}`:String(v||'')},
+    short:v=>{const o=parts(v);return o?`${+o.day}/${+o.month} ${clock(o)}`:''},
+    time:v=>{const o=parts(v);return o?clock(o):''},
+    day:v=>{const o=parts(v);return o?`${o.year}-${o.month}-${o.day}`:''}
+  };
+})();
 (function(){
   if(window.__rc54Motion)return;window.__rc54Motion=true;
   const root=document.documentElement;

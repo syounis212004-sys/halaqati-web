@@ -64,7 +64,7 @@
         const d=await R.rpc('rc52_thread_get',{p_kind:kind,p_ref:ref});const ms=d.messages||[];
         const sig=ms.map(m=>m.id).join(',');
         if(sig!==R._th.last){R._th.last=sig;
-          box.innerHTML=ms.length?ms.map(m=>m.role==='system'?`<div class="dn-msg sys"><span>${e(m.body)}</span></div>`:`<div class="dn-msg ${m.mine?'mine':''}"><div>${e(m.body)}</div><small>${e(rs(m.created_at).slice(0,16).replace('T',' '))}</small></div>`).join(''):'<p class="dn-muted">لا توجد رسائل بعد.</p>';
+          box.innerHTML=ms.length?ms.map(m=>m.role==='system'?`<div class="dn-msg sys"><span>${e(m.body)}</span></div>`:`<div class="dn-msg ${m.mine?'mine':''}"><div>${e(m.body)}</div><small>${e(window.gazaFmt?gazaFmt.dateTime(m.created_at):rs(m.created_at).slice(0,16).replace('T',' '))}</small></div>`).join(''):'<p class="dn-muted">لا توجد رسائل بعد.</p>';
           box.scrollTop=box.scrollHeight;}
       }catch(err){if(!R._th.last)box.innerHTML=`<p class="dn-muted">${e(err.message)}</p>`}
       setTimeout(poll,8000);
@@ -75,7 +75,7 @@
     const t=document.getElementById('dnThIn'),v=t?.value.trim();if(!v||!R._th)return;
     try{await R.rpc('rc52_thread_post',{p_kind:R._th.kind,p_ref:R._th.ref,p_body:v});t.value='';R._th.last='';
       const d=await R.rpc('rc52_thread_get',{p_kind:R._th.kind,p_ref:R._th.ref}),box=document.getElementById('dnThread');
-      if(box){R._th.last=(d.messages||[]).map(m=>m.id).join(',');box.innerHTML=(d.messages||[]).map(m=>m.role==='system'?`<div class="dn-msg sys"><span>${e(m.body)}</span></div>`:`<div class="dn-msg ${m.mine?'mine':''}"><div>${e(m.body)}</div><small>${e(rs(m.created_at).slice(0,16).replace('T',' '))}</small></div>`).join('');box.scrollTop=box.scrollHeight}
+      if(box){R._th.last=(d.messages||[]).map(m=>m.id).join(',');box.innerHTML=(d.messages||[]).map(m=>m.role==='system'?`<div class="dn-msg sys"><span>${e(m.body)}</span></div>`:`<div class="dn-msg ${m.mine?'mine':''}"><div>${e(m.body)}</div><small>${e(window.gazaFmt?gazaFmt.dateTime(m.created_at):rs(m.created_at).slice(0,16).replace('T',' '))}</small></div>`).join('');box.scrollTop=box.scrollHeight}
     }catch(err){R.toast(err.message)}
   };
 

@@ -13,7 +13,7 @@ function canSendNotifications(){return ['admin','supervisor'].includes(state.pro
 function notificationUnreadCount(){return Number(state.notificationUnread||0)}
 function notificationKindAr(kind){return {attendance:'الحضور',recitation:'التسميع',behavior:'السلوك',announcement:'إعلان',achievement:'إنجاز',manual:'إشعار',system:'النظام'}[kind]||'إشعار'}
 function notificationKindIcon(kind){return {attendance:'✓',recitation:'۞',behavior:'●',announcement:'◉',achievement:'★',manual:'✦',system:'⚙'}[kind]||'•'}
-function notificationDate(v){try{return new Date(v).toLocaleString('ar-EG-u-nu-latn',{dateStyle:'medium',timeStyle:'short'})}catch{return String(v||'')}}
+function notificationDate(v){try{if(window.gazaFmt)return gazaFmt.dateTime(v);return new Date(v).toLocaleString('ar-EG-u-nu-latn',{dateStyle:'medium',timeStyle:'short'})}catch{return String(v||'')}}
 
 async function invokeNotify(body,{silent=false}={}){
   if(!navigator.onLine||!state.user?.id){if(!silent)toast('الإشعارات تحتاج اتصالاً بالإنترنت');return null}

@@ -9,7 +9,7 @@
   const KIND={direct:'محادثة عامة',reward:'طلب مكافأة',pledge:'كفالة / دعم'};
   const NEED_SQL='لم يُطبَّق تحديث قاعدة البيانات الخاص بالمحادثات (RC54) بعد.';
   const miss=err=>/rc54_|function .* does not exist|PGRST202/i.test(String(err&&err.message||err));
-  const when=t=>{try{const d=new Date(t),n=new Date();const hm=d.toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});return d.toDateString()===n.toDateString()?hm:d.toLocaleDateString('ar',{day:'numeric',month:'short'})+' '+hm}catch(_e){return ''}};
+  const when=t=>{try{return window.gazaFmt?gazaFmt.short(t):''}catch(_e){return ''}};
   const C=R.chat={cur:null};
 
   // ---------- push (best effort; the edge function only exists once it has been deployed) ----------
