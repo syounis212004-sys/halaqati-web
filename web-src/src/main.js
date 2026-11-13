@@ -35,6 +35,7 @@ import rc52SpanUrl from './features/rc52/span.js?url';
 import rc53RuntimeUrl from './features/rc53/runtime.js?url';
 import rc54MotionUrl from './features/rc54/motion.js?url';
 import rc54ChatUrl from './features/rc54/chat.js?url';
+import rc66ExamsUrl from './features/rc66/exams.js?url';
 import rc27DataUrl from './features/rc27/data.js?url';
 import sessionServerUrl from './features/sessions/server.js?url';
 import coreRuntimeUrl from './core/runtime.js?url';
@@ -175,6 +176,7 @@ async function boot() {
   await loadClassicScript(rc53RuntimeUrl, { id: 'halaqati-rc53-runtime' });
   await loadClassicScript(rc54MotionUrl, { id: 'halaqati-rc54-motion' });
   await loadClassicScript(rc54ChatUrl, { id: 'halaqati-rc54-chat' });
+  await loadClassicScript(rc66ExamsUrl, { id: 'halaqati-rc66-exams' });
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
   installReportLazyLoading();
   installImportLazyLoading();
