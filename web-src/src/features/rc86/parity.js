@@ -49,6 +49,34 @@
   const prevSvg=window.navSvg;
   if(typeof prevSvg==='function'){window.navSvg=function(p){if(p==='insights')return IC('Insights',24)||prevSvg('ranking');return prevSvg.apply(this,arguments)};window.iconFor=window.navSvg}
 
+
+  // ================= support / donors / rewards work offline (read once, kept on the device) =================
+  const STORED=new Set(['rc48_donors','rc49_support_cards','rc49_support_defaults','rc49_news_list','rc49_suggestions','rc49_my_pledges','rc52_settings','rc52_reward_options','rc52_my_rewards','rc52_admin_rewards']);
+  const WRITE=/(save|set_|confirm|cancel|deliver|pledge|decide|delete|submit|suggest|exclude|request)/;
+  const dirtyKey=()=>'rc86_rpc_dirty_'+(state.user?.id||'x');
+  const cycleStart=()=>{ // 20:00 Gaza time, same cycle rule as the app
+    const g=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Gaza'})),c=new Date(g);c.setHours(20,0,0,0);if(g<c)c.setDate(c.getDate()-1);
+    return Date.now()-(g-c)};
+  const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_e){return null}};
+  const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_e){}};
+  RC86.invalidateStored=()=>{try{localStorage.setItem(dirtyKey(),String(Date.now()))}catch(_e){}};
+  const baseRpc=R.rpc;
+  R.rpc=async function(name,args){
+    if(!STORED.has(name)){
+      const r=await baseRpc.apply(this,arguments);
+      if(WRITE.test(name))RC86.invalidateStored();
+      return r;
+    }
+    const key='rc86_rpc_'+(state.user?.id||'x')+'_'+name+'_'+(args?JSON.stringify(args):''),c=lsGet(key);
+    const dirty=Number(localStorage.getItem(dirtyKey())||0);
+    const stale=!c||c.at<cycleStart()||c.at<dirty;
+    if(c&&!stale)return c.data;
+    if(!online()){if(c)return c.data;throw new Error('لا توجد بيانات محفوظة بعد. افتح هذه الصفحة مرة واحدة وأنت متصل بالإنترنت.')}
+    try{const d=await baseRpc.apply(this,arguments);lsSet(key,{at:Date.now(),data:d});return d}
+    catch(err){if(c)return c.data;throw err}
+  };
+  document.addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#ntRefresh'))RC86.invalidateStored()},true);
+
   // ================= drawer (GoldenDrawerContent: search, «مفضلتي», collapsible groups with counts) =================
   const DG_TITLES=['إدارة الحلقة','التقارير والإنجاز','التواصل والأدوات','إدارة النظام','الحساب والإعدادات'];
   const DG_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,ranking:1,insights:1,competition:1,certificates:1,awards:1,support:1,donor_awards:1,donor_support:1,donor_impact:1,donor_stats:1,reports:1,supervision:1,visits:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};

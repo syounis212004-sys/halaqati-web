@@ -22,6 +22,27 @@ function soft(page){if(state.page===page&&!document.querySelector('dialog[open]'
 function setTitle(t){const e=$i('pageTitle');if(e)e.textContent=t}
 async function chk(p){const r=await p;if(r&&r.error)throw r.error;return r}
 const stop='event.stopPropagation();';
+/* RC86: rows saved by an older version hold the literal text "null"; never show it. */
+const cs=v=>v==null||String(v).trim()==='null'?'':String(v).trim();
+const isLogo=v=>typeof v==='string'&&v.startsWith('data:image/');
+/* RC86: a logo is compressed to a 384px JPEG under about 100 KB (same limit as the app). */
+function compressLogo(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();fr.onerror=()=>rej(new Error('تعذر قراءة الصورة'));
+    fr.onload=()=>{const img=new Image();img.onerror=()=>rej(new Error('صورة غير صالحة'));img.onload=()=>{
+      const k=Math.min(1,384/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+      let q=.85,out=c.toDataURL('image/jpeg',q);while(out.length>135000&&q>.4){q-=.1;out=c.toDataURL('image/jpeg',q)}res(out)};img.src=fr.result};
+    fr.readAsDataURL(file);
+  });
+}
+const hqPair=t=>t==='training'?['#1451A3','#3F8EE0']:t==='course'?['#B5471C','#E88A4B']:(t==='tajweed'||t==='tilawah')?['#0B6B7A','#2BB3C0']:t==='other'?['#5B3FA3','#8E6BE0']:['#084F39','#0B6E4F'];
+function endNotice(x){
+  if((x.halaqa_type||'regular')==='regular'||!cs(x.ends_on))return '';
+  const d=Math.round((new Date(String(x.ends_on).slice(0,10)+'T00:00:00')-new Date(new Date().toISOString().slice(0,10)+'T00:00:00'))/864e5);
+  if(d>7)return '';
+  return NX.notice(d<0?`انتهى تاريخ هذا البرنامج منذ ${-d} يومًا. أنهِه بالأرشفة أو مدّد تاريخه.`:d===0?'ينتهي هذا البرنامج اليوم.':`ينتهي هذا البرنامج بعد ${d} أيام.`,d<0?'warning':'info');
+}
 
 /* ================= shared small components ================= */
 const smallStat=(label,value)=>`<div class="ngm-stat"><b>${h(value)}</b><span>${h(label)}</span></div>`;
@@ -62,13 +83,14 @@ function hqData(x){
 }
 function hqMeta(x){
   if((x.halaqa_type||'regular')==='regular')return '';
-  const lab=(list,k)=>(list.find(e=>e[0]===k)||[0,k])[1];
-  return [x.program_specialization&&lab(SPECS,x.program_specialization),x.program_level&&lab(LEVELS,x.program_level),x.assessment_type&&x.assessment_type!=='none'&&lab(ASSESS,x.assessment_type)].filter(v=>v&&v!=='null').join(' · ');
+  const lab=(list,k)=>(list.find(e=>e[0]===k)||[0,k==='open'?'مستوى مفتوح':k==='general_hifz'?'حفظ عام':k])[1];
+  return [cs(x.program_specialization)&&lab(SPECS,x.program_specialization),cs(x.program_level)&&lab(LEVELS,x.program_level),cs(x.assessment_type)&&x.assessment_type!=='none'&&lab(ASSESS,x.assessment_type)].filter(v=>v&&v!=='null').join(' · ');
 }
 function hqKebab(x){
   const arc=isArch(x),act=x.active!==false;
   return NX.kebab([
     {label:'تعديل الحلقة',icon:'Edit',onclick:()=>G.hqEdit(x.id)},
+    {label:isLogo(x.logo_path)?'تغيير شعار الحلقة':'إضافة شعار للحلقة',icon:'AddPhotoAlternate',onclick:()=>G.logo(x.id)},
     {label:'تعيين الطاقم',icon:'GroupAdd',onclick:()=>G.staff(x.id)},
     {label:act?'إيقاف الحلقة':'تفعيل الحلقة',icon:act?'PauseCircle':'PlayCircle',onclick:()=>G.toggleActive(x.id)},
     {label:arc?'استعادة الحلقة من الأرشيف':'أرشفة الحلقة',icon:arc?'Restore':'Archive',onclick:()=>G.archive(x.id)},
@@ -76,18 +98,26 @@ function hqKebab(x){
   ],{title:'إجراءات الحلقة'});
 }
 function hqStatus(x){return isArch(x)?NX.pill('مؤرشفة','neutral'):x.active!==false?NX.pill('نشطة','success'):NX.pill('موقوفة','neutral')}
+function hqHead(x,big){
+  const type=x.halaqa_type||'regular',meta=hqMeta(x),g=hqPair(type),admin=isOwner();
+  const place=[cs(x.location),cs(x.schedule_text)].filter(Boolean).join(' · ')||'المكان والبرنامج غير محددين';
+  const logo=isLogo(x.logo_path)?`<img class="ngm-logo" src="${x.logo_path}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`;
+  const cam=admin?`<button type="button" class="ngm-cam" aria-label="إضافة أو تغيير شعار الحلقة" onclick="${stop}NGM.logo('${h(x.id)}')">${ic('AddPhotoAlternate',17)}</button>`:'';
+  return `<div class="ngm-hqhead" style="--g1:${g[0]};--g2:${g[1]}"><i class="ngm-waves" aria-hidden="true"></i>
+    <div class="ngm-logowrap">${logo}${cam}</div>
+    <div class="ngm-grow"><${big?'h3':'div'} class="ngm-hn">${h(x.name||'حلقة')}</${big?'h3':'div'}><span class="ngm-tp">${h(TYPE_LABEL(type))}</span>${meta?`<div class="ngm-hm">${h(meta)}</div>`:''}<div class="ngm-hm">${h(place)}</div></div>
+    <span class="ngm-hs">${hqStatus(x)}</span>${admin?`<span class="ngm-hk">${hqKebab(x)}</span>`:''}</div>`;
+}
 function hqCard(x,sel){
-  const d=hqData(x),admin=isOwner(),type=x.halaqa_type||'regular',meta=hqMeta(x);
-  const place=[x.location,x.schedule_text].filter(Boolean).join(' · ')||'المكان والبرنامج غير محددين';
+  const d=hqData(x),admin=isOwner(),type=x.halaqa_type||'regular';
   const teacherFallback=state.profile?.role==='teacher'?'حسب الربط':'غير معيّنين';
-  return `<div class="ngm-card ngm-hqcard ${sel?'sel':''}" data-id="${h(x.id)}" onclick="NGM.hqSel('${h(x.id)}')">
-    <div class="ngm-hq-top">${tile('Groups')}
-      <div class="ngm-grow"><div class="ngm-name">${h(x.name||'حلقة')}</div><div class="ngm-type">${h(TYPE_LABEL(type))}</div>${meta?`<div class="ngm-meta">${h(meta)}</div>`:''}<div class="ngm-sub">${h(place)}</div></div>
-      ${hqStatus(x)}${admin?hqKebab(x):''}</div>
-    <div class="ngm-full">
-      <div class="ngm-sub2">المشرفون: ${h(d.sNames||'غير معيّنين')}</div>
-      <div class="ngm-sub2">المحفّظون: ${h(d.tNames||teacherFallback)}</div>
-      <div class="ngm-stats">${smallStat('الطلاب',d.list.length)}${smallStat('الفئات',d.cats.length)}${smallStat('المشرفون',d.sIds.length)}</div>
+  return `<div class="ngm-card ngm-hqcard ngm-hq2 ${sel?'sel':''}" data-id="${h(x.id)}" onclick="NGM.hqSel('${h(x.id)}')">
+    ${hqHead(x,false)}
+    <div class="ngm-full ngm-hqbody">
+      <div class="ngm-sub2">${ic('SupervisorAccount',20)}<span>المشرفون: ${h(d.sNames||'غير معيّنين')}</span></div>
+      <div class="ngm-sub2">${ic('Person',20)}<span>المحفّظون: ${h(d.tNames||teacherFallback)}</span></div>
+      ${endNotice(x)}
+      <div class="ngm-stats ngm-stats-g"><div class="ngm-gs" style="--g1:#0B6E4F;--g2:#1FA37A"><b>${h(d.list.length)}</b><span>الطلاب</span></div><div class="ngm-gs" style="--g1:#9A6B00;--g2:#D9A94B"><b>${h(d.cats.length)}</b><span>الفئات</span></div><div class="ngm-gs" style="--g1:#1451A3;--g2:#3F8EE0"><b>${h(d.sIds.length)}</b><span>المشرفون</span></div></div>
       ${d.addIds.size?`<div class="ngm-lab ngm-pri">الانتساب: أساسي ${d.primary.length} · إضافي ${d.addIds.size}</div>`:''}
       <div class="ngm-lab">المسارات: حفظ عام ${d.general} · تثبيت ${d.tathbit}</div>
       ${(type!=='regular'||x.allow_secondary_members!==false)?NX.btn(type==='regular'?'الطلاب المنتسبون':'إدارة المشاركين في البرنامج',{kind:'tonal',full:true,icon:'GroupAdd',onclick:stop+`NGM.members('${x.id}')`}):''}
@@ -104,15 +134,15 @@ function hqDetail(x){
   const dates=type!=='regular'&&(x.starts_on||x.ends_on)?`${h(String(x.starts_on||'—').slice(0,10))} ← ${h(String(x.ends_on||'—').slice(0,10))}`:'';
   const cats=d.cats.map(c=>{const n=allStudents().filter(s=>stActive(s)&&s.category_id===c.id).length;const ages=[c.min_age,c.max_age].filter(v=>v!=null&&v!=='').join('–');return `<div class="ngm-catrow"><b>${h(c.name||'فئة')}</b><span>${[ages?`العمر ${h(ages)} سنة`:'',`${n} طالب`].filter(Boolean).join(' · ')}</span></div>`}).join('');
   return `<div class="ngm-d">
-    <div class="ngm-hq-top">${tile('Groups')}<div class="ngm-grow"><h3 class="ngm-d-name">${h(x.name||'حلقة')}</h3><div class="ngm-type">${h(TYPE_LABEL(type))}</div>${meta?`<div class="ngm-meta">${h(meta)}</div>`:''}</div>${hqStatus(x)}${admin?hqKebab(x):''}</div>
+    ${hqHead(x,true)}${endNotice(x)}
     ${NX.metrics([NX.metric('الطلاب',d.list.length,{icon:'School'}),NX.metric('الفئات',d.cats.length,{icon:'Groups'}),NX.metric('المشرفون',d.sIds.length,{icon:'Verified'}),NX.metric('المحفّظون',d.tIds.length,{icon:'Person'})],4)}
     <dl class="ngm-dl">
-      <div><dt>المكان</dt><dd>${h(x.location||'غير محدد')}</dd></div>
-      <div><dt>البرنامج</dt><dd>${h(x.schedule_text||'غير محدد')}</dd></div>
+      <div><dt>المكان</dt><dd>${h(cs(x.location)||'غير محدد')}</dd></div>
+      <div><dt>البرنامج</dt><dd>${h(cs(x.schedule_text)||'غير محدد')}</dd></div>
       ${dates?`<div><dt>مدة البرنامج</dt><dd>${dates}</dd></div>`:''}
       <div><dt>المشرفون</dt><dd>${h(d.sNames||'غير معيّنين')}</dd></div>
       <div><dt>المحفّظون</dt><dd>${h(d.tNames||teacherFallback)}</dd></div>
-      ${x.description?`<div class="wide"><dt>الوصف</dt><dd>${h(x.description)}</dd></div>`:''}
+      ${cs(x.description)?`<div class="wide"><dt>الوصف</dt><dd>${h(cs(x.description))}</dd></div>`:''}
     </dl>
     ${d.addIds.size?`<div class="ngm-lab ngm-pri">الانتساب: أساسي ${d.primary.length} · إضافي ${d.addIds.size}</div>`:''}
     <div class="ngm-tracks"><div><span>حفظ عام</span><b>${d.general}</b>${NX.progress(d.general/tot*100)}</div><div><span>تثبيت</span><b>${d.tathbit}</b>${NX.progress(d.tathbit/tot*100)}</div></div>
@@ -177,8 +207,8 @@ const hqValid=()=>F&&F.name.trim().length>=2&&(F.type==='regular'||F.ends>=F.sta
 G.hqEdit=function(id){
   if(!isOwner())return toast('هذه الصفحة لمسؤول النظام فقط');
   const c=id?hqFind(id):null;
-  F={id:c?.id||'',cur:c,name:c?.name||'',location:c?.location||'',schedule:c?.schedule_text||'',description:c?.description||'',
-    type:typeCanon(c?.halaqa_type||'regular'),kind:c?.program_kind||'',spec:c?.program_specialization||'',level:c?.program_level||'mixed',assess:c?.assessment_type||'none',
+  F={id:c?.id||'',cur:c,name:c?.name||'',location:cs(c?.location),schedule:cs(c?.schedule_text),description:cs(c?.description),logo:isLogo(c?.logo_path)?c.logo_path:null,
+    type:typeCanon(c?.halaqa_type||'regular'),kind:cs(c?.program_kind),spec:cs(c?.program_specialization),level:c?.program_level||'mixed',assess:c?.assessment_type||'none',
     affects:!!c?.affects_primary_plan,starts:String(c?.starts_on||'').slice(0,10)||todayStr(),ends:String(c?.ends_on||'').slice(0,10)||addMonthStr(),saving:false,error:''};
   hqDlg();
 };
@@ -193,6 +223,9 @@ function hqDlg(){
     <label class="ngm-switch"><span><b>يؤثر على الخطة الأساسية</b><small>فعّله فقط إذا كان إنجاز هذا البرنامج يجب أن يدخل في تقدم خطة الطالب الأساسية.</small></span><input type="checkbox" class="nx-switch" ${F.affects?'checked':''} onchange="NGM.hqSet('affects',this.checked,1)"></label>
     <div class="ngm-two">${NX.field('بداية البرنامج',{type:'date',value:F.starts,onchange:"NGM.hqSet('starts',this.value)"})}${NX.field('نهاية البرنامج',{type:'date',value:F.ends,onchange:"NGM.hqSet('ends',this.value)"})}</div>`:'';
   const body=`<div class="ngm-form">
+    <div class="ngm-logorow">${F.logo?`<img class="ngm-logo" src="${F.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
+      <label class="nx-btn nx-outlined ngm-filebtn">${F.logo?'تغيير الشعار':'إضافة شعار'}<input type="file" accept="image/*" hidden onchange="NGM.hqLogo(this)"></label>${F.logo?NX.btn('إزالة',{kind:'text',onclick:"NGM.hqLogoClear()"}):''}</div>
+    <small class="ngm-sub">يُضغط الشعار تلقائيًا إلى أقل من 100 كيلوبايت.</small>
     ${NX.field('اسم الحلقة',{value:F.name,oninput:"NGM.hqSet('name',this.value,1)"})}
     <div class="ngm-fl"><span>نوع الحلقة / البرنامج</span>${chipGrid(types.map(([k,l])=>({label:l,selected:F.type===k,onclick:`NGM.hqSet('type','${k}')`})))}</div>
     ${progBlock}
@@ -208,13 +241,37 @@ G.hqSet=function(k,v,quiet){
   if(quiet){const b=$i('ngmHqSave');if(b)b.disabled=F.saving||!hqValid();return}
   hqDlg();
 };
+G.hqLogo=async function(inp){
+  const f=inp.files&&inp.files[0];if(!f||!F)return;
+  try{F.logo=await compressLogo(f);F.error='';hqDlg()}catch(e){F.error=err(e)||'تعذر قراءة الصورة';hqDlg()}
+};
+G.hqLogoClear=function(){if(F){F.logo=null;hqDlg()}};
+/* the card badge: change the logo directly, without opening the whole edit form */
+let LG=null;
+G.logo=function(id){
+  if(!isOwner())return toast('إضافة الشعار لمسؤول النظام فقط');
+  const x=hqFind(id);if(!x)return;LG={id,name:x.name||'الحلقة',logo:isLogo(x.logo_path)?x.logo_path:null,saving:false,error:''};logoDlg();
+};
+function logoDlg(){
+  const body=`<div class="ngm-form"><div class="ngm-logorow">${LG.logo?`<img class="ngm-logo" src="${LG.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
+    <label class="nx-btn nx-outlined ngm-filebtn">${LG.logo?'تغيير الشعار':'إضافة شعار'}<input type="file" accept="image/*" hidden onchange="NGM.lgPick(this)"></label>${LG.logo?NX.btn('إزالة',{kind:'text',onclick:"NGM.lgClear()"}):''}</div>
+    <small class="ngm-sub">يُضغط الشعار تلقائيًا إلى أقل من 100 كيلوبايت.</small>${LG.error?`<div class="ngm-err">${h(LG.error)}</div>`:''}</div>`;
+  NX.dialog('ngmLogo','شعار '+LG.name,body,{cls:'ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmLogo')"})}${NX.btn(LG.saving?'جاري الحفظ…':'حفظ',{disabled:LG.saving,onclick:'NGM.lgSave()'})}`});
+}
+G.lgPick=async function(inp){const f=inp.files&&inp.files[0];if(!f||!LG)return;try{LG.logo=await compressLogo(f);LG.error=''}catch(e){LG.error=err(e)||'تعذر قراءة الصورة'}logoDlg()};
+G.lgClear=function(){if(LG){LG.logo=null;logoDlg()}};
+G.lgSave=async function(){
+  if(!LG||LG.saving)return;LG.saving=true;logoDlg();
+  try{await saveMasterLocal('halaqa',LG.id,{logo_path:LG.logo||null});NX.closeDialog('ngmLogo');toast(LG.logo?'حُفظ شعار الحلقة':'أُزيل شعار الحلقة');LG=null;render()}
+  catch(e){LG.saving=false;LG.error=err(e)||'تعذر حفظ الشعار';logoDlg()}
+};
 G.hqSave=async function(){
   if(!F||F.saving||!hqValid())return;
   F.saving=true;F.error='';hqDlg();
   const prog=F.type!=='regular',old=F.cur,t=s=>String(s||'').trim()||null;
   const obj={name:F.name.trim(),location:t(F.location),schedule_text:t(F.schedule),description:t(F.description),halaqa_type:F.type,
     program_kind:prog?t(F.kind):null,program_specialization:prog?(F.spec||defSpec(F.type)):null,program_level:prog?F.level:null,assessment_type:prog?F.assess:null,
-    affects_primary_plan:prog&&F.affects,starts_on:prog?F.starts:null,ends_on:prog?F.ends:null,allow_secondary_members:true,active:old?old.active!==false:true};
+    affects_primary_plan:prog&&F.affects,starts_on:prog?F.starts:null,ends_on:prog?F.ends:null,allow_secondary_members:true,active:old?old.active!==false:true,logo_path:F.logo||null};
   try{
     await saveMasterLocal('halaqa',F.id,obj);
     NX.closeDialog('ngmHq');HQ.msg=null;toast(F.id?'تم حفظ تعديل الحلقة':'تم إنشاء الحلقة');F=null;render()
@@ -242,8 +299,17 @@ function staffDlg(){
   NX.dialog('ngmStaff','طاقم '+ST.name,body,{cls:'ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmStaff')"})}${NX.btn(ST.saving?'جاري الحفظ…':'حفظ التعيينات',{disabled:ST.saving,onclick:'NGM.stSave()'})}`});
 }
 G.stSet=(k,id,on)=>{const s=ST[k];on?s.add(id):s.delete(id)};
-G.stSave=async function(){
+G.stSave=async function(confirmed){
   if(!ST||ST.saving)return;
+  /* RC86: a teacher works in ONE regular halaqa (any number of programs). Adding him to another regular halaqa moves him; ask first. */
+  const regular=hid=>{const x=hqFind(hid);return !x||(x.halaqa_type||'regular')==='regular'};
+  const cur=new Set((state.halaqaTeachers||[]).filter(l=>l.halaqa_id===ST.id).map(l=>l.teacher_id));
+  const moving=regular(ST.id)?[...ST.t].filter(t=>!cur.has(t)).map(t=>{
+    const l=(state.halaqaTeachers||[]).find(k=>k.teacher_id===t&&k.halaqa_id!==ST.id&&regular(k.halaqa_id));
+    if(!l)return null;const u=(state.users||[]).find(w=>w.id===t);return `${u?.full_name||'المحفّظ'} من «${hqFind(l.halaqa_id)?.name||'حلقة أخرى'}»`}).filter(Boolean):[];
+  if(moving.length&&confirmed!==true){
+    return NX.dialog('ngmMove','نقل محفّظ بين حلقتين',`<p class="nx-confirm-text">المحفّظ يعمل في حلقة عادية واحدة فقط، لذلك سيُنقل:</p><ul class="ngm-movelist">${moving.map(m=>`<li>${h(m)}</li>`).join('')}</ul><p class="nx-confirm-text">إلى «${h(ST.name)}». يبقى له كل ما يشارك فيه من برامج.</p>`,{cls:'ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmMove')"})}${NX.btn('نقل وحفظ',{onclick:"NX.closeDialog('ngmMove');NGM.stSave(true)"})}`});
+  }
   if(!online()||!hasDb()){ST.error='تعذر تحديث طاقم الحلقة: يلزم اتصال بالإنترنت';return staffDlg()}
   ST.saving=true;ST.error='';staffDlg();
   const hid=ST.id,wT=[...ST.t],wS=[...ST.s];

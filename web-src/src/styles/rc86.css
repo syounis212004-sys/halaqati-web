@@ -97,3 +97,44 @@
 .d86-row:hover .d86-fav{opacity:.8}.d86-fav.on{opacity:1}
 .d86-none{padding:16px;color:var(--muted)}
 .d86-av{flex:none;display:grid;place-items:center}
+/* ===== halaqa cards (management.js) ===== */
+.ngm-hq2{padding:0;overflow:hidden;gap:0;border-radius:24px}
+.ngm-hqhead{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;padding:14px 8px 20px 14px;background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff}
+.ngm-hqhead::before{content:"";position:absolute;inset:0;opacity:.12;background-image:var(--h86-girih);background-size:38px 38px;pointer-events:none}
+.ngm-waves{position:absolute;inset:0;pointer-events:none;background:
+ url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpath d='M0 62 Q50 50 100 62 T200 62 T300 62 T400 62 V100 H0Z' fill='white' fill-opacity='.13'/%3E%3Cpath d='M0 78 Q50 66 100 78 T200 78 T300 78 T400 78 V100 H0Z' fill='white' fill-opacity='.11'/%3E%3Cpath d='M0 90 Q50 82 100 90 T200 90 T300 90 T400 90 V100 H0Z' fill='white' fill-opacity='.09'/%3E%3C/svg%3E") bottom/100% 100% no-repeat}
+.ngm-hqhead>*{position:relative}
+.ngm-logowrap{position:relative;flex:none;width:70px;height:70px}
+.ngm-logo{width:62px;height:62px;border-radius:20px;object-fit:cover;background:#fff;border:3px solid #fff;display:block}
+.ngm-logo-ph{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--g1,#0B6E4F),var(--g2,#1FA37A))}
+.ngm-logo-ph svg{fill:#fff}
+.ngm-hqhead .ngm-logo-ph{border-color:#fff}
+.ngm-cam{position:absolute;inset-inline-end:0;bottom:0;width:28px;height:28px;border-radius:50%;border:0;background:var(--gold,#B8861B);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.ngm-cam svg{fill:#fff}
+.ngm-hn{font:800 16px/24px Cairo,sans-serif;color:#fff;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ngm-tp{display:inline-block;margin:3px 0;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.22);font:700 12px/18px Cairo,sans-serif;color:#fff}
+.ngm-hm{font:400 12px/18px Cairo,sans-serif;color:rgba(255,255,255,.92)}
+.ngm-hqhead .nx-pill{background:rgba(255,255,255,.24)!important;color:#fff!important}
+.ngm-hk .nx-iconbtn{color:#fff}
+.ngm-hqbody{padding:14px;gap:10px}
+.ngm-sub2{display:flex;align-items:flex-start;gap:8px;font:500 14px/20px Cairo,sans-serif}
+.ngm-sub2 svg{fill:var(--green);flex:none}
+.ngm-stats-g .ngm-gs{position:relative;overflow:hidden;border-radius:16px;padding:10px 4px;text-align:center;color:#fff;background:linear-gradient(135deg,var(--g1),var(--g2));display:flex;flex-direction:column;align-items:center}
+.ngm-stats-g .ngm-gs::before{content:"";position:absolute;inset:0;opacity:.16;background-image:var(--h86-girih);background-size:26px 26px}
+.ngm-stats-g .ngm-gs>*{position:relative}
+.ngm-stats-g .ngm-gs b{font:800 20px/28px Cairo,sans-serif;color:#fff}.ngm-stats-g .ngm-gs span{font:500 12px/16px Cairo,sans-serif;color:rgba(255,255,255,.95)}
+.ngm-logorow{display:flex;align-items:center;gap:12px}
+.ngm-filebtn{cursor:pointer;min-height:48px}
+.ngm-movelist{margin:6px 0;padding-inline-start:20px}
+html[data-view="desktop"] .ngm-hqcard.ngm-hq2{padding:0}
+html[data-view="desktop"] .ngm-hqcard.ngm-hq2 .ngm-hqbody{display:none}
+html[data-view="desktop"] .ngm-hqcard.ngm-hq2 .ngm-brief{padding:8px 14px 12px}
+/* ===== donors: one compact row ===== */
+.d86-donor{display:flex;align-items:stretch;width:100%;border:1px solid var(--line);border-radius:18px;background:var(--card);padding:0;margin:0 0 8px;cursor:pointer;overflow:hidden;text-align:start;color:var(--ink)}
+.d86-badge{position:relative;flex:none;width:62px;display:grid;place-items:center;color:#fff;font:800 22px Cairo,sans-serif;overflow:hidden}
+.d86-badge::before{content:"";position:absolute;inset:0;opacity:.22;background-image:var(--h86-girih);background-size:26px 26px}
+.d86-dt{flex:1;min-width:0;padding:9px 12px;display:grid;gap:1px}
+.d86-dt b{font:700 14px/20px Cairo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d86-dt small{font:500 12px/16px Cairo,sans-serif;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d86-dt em{font:600 12px/16px Cairo,sans-serif;font-style:normal;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d86-tune{flex:none;width:48px;display:grid;place-items:center}.d86-tune svg{fill:var(--ink)}

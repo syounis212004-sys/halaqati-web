@@ -196,7 +196,7 @@
     await ok(db.from('profiles').update({association_id:null}).eq('id',pid),'أُزيل '+p.full_name+' من الجمعية');reload();
   };
   K.detach=async hid=>{
-    const h=K.org.halaqas.find(x=>x.id===hid);if(!h||!confirm(`فصل ${h.name} عن الجمعية؟\nتصير الحلقة وطلابها غير تابعين لأي جمعية حتى تربطها بجمعية أخرى. لا يُحذف أي طالب أو تسميع.`))return;
+    const h=K.org.halaqas.find(x=>x.id===hid);if(!h||!confirm(`فصل ${h.name} عن الجمعية؟\nتصير الحلقة حلقة مستقلة: يراها مسؤول النظام فقط، إضافةً إلى من أُسند إليها مباشرة من مشرفين ومحفّظين. يبقى طلابها ومحفّظوها ومشرفوها كما هم، ولا يُحذف أي طالب أو تسميع. يمكنك ربطها بجمعية في أي وقت.`))return;
     if(await ok(db.from('halaqas').update({association_id:null,center_id:null}).eq('id',hid),'فُصلت '+h.name))await db.from('students').update({association_id:null}).eq('halaqa_id',hid);
     reload();
   };
@@ -216,7 +216,8 @@
       return `<details class="rc85-team"><summary>${band(g,`${R.avatar(m.avatar_path,m.full_name,46)}<div class="rc85-pt"><b>${e(m.full_name)}</b><small>${rl} · ${sum}</small></div><span class="rc85-chev">⌄</span>`)}</summary><div class="rc85-cbody">${hs.length?`<div class="rc85-chips">${hs.map(x=>`<span>${e(x)}</span>`).join('')}</div>`:(m.role!=='supervisor'?'<b style="color:#C62828">لم يُسنَد إلى حلقة بعد</b>':'')}${m.phone?`<a class="dn-btn tonal" style="display:block;text-align:center;margin-top:8px" href="tel:${e(m.phone)}">📞 ${e(m.phone)}</a>`:''}</div></details>`;
     };
     const all=p.data||[],sup=all.filter(m=>m.role==='supervisor'),tch=all.filter(m=>m.role==='teacher');
-    return `<h3>المشرفون (${sup.length})</h3>${sup.map(row).join('')||R.empty('لا يوجد مشرفون')}<h3>المحفّظون (${tch.length})</h3>${tch.map(row).join('')||R.empty('لا يوجد محفّظون')}`;
+    const hideSup=role()==='supervisor';/* RC86: supervisors are independent of each other */
+    return `${hideSup?'':`<h3>المشرفون (${sup.length})</h3>${sup.map(row).join('')||R.empty('لا يوجد مشرفون')}`}<h3>المحفّظون (${tch.length})</h3>${tch.map(row).join('')||R.empty('لا يوجد محفّظون')}`;
   }});
 
   // ---------------- navigation: structure page next to the team ----------------

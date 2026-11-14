@@ -50,8 +50,10 @@
     if(S.tab==='rewards')return seg+await R.rwAdminHtml();
     if(S.tab==='donors'){
       const donors=await R.rpc('rc48_donors');R.cache.donors=donors;const hs=state.halaqas||[];
+      const grad=['#0B6E4F,#1FA37A','#1451A3,#3F8EE0','#5B3FA3,#8E6BE0','#0B6B7A,#2BB3C0','#9C2F6B,#D1569A','#B5471C,#E88A4B','#9A6B00,#D9A94B'];
       return `${seg}<p class="dn-muted">حدّد الحلقات التي يراها كل مانح. من لم تُحدَّد له حلقة يرى كل الحلقات.</p>${donors.map((d,i)=>{const names=hs.filter(h=>(d.halaqa_ids||[]).includes(h.id)).map(h=>h.name).join('، ');
-        return R.card(`<b>${e(d.name)}</b><small class="dn-muted">${e(d.email||d.phone||'')}</small><p>${(d.halaqa_ids||[]).length?'يرى: '+e(names):'يرى: كل الحلقات'}</p><div class="dn-actions">${R.btn('تحديد الحلقات',`RC50.spAssign(${i})`,'tonal')}</div>`)}).join('')||R.card(R.empty('لا يوجد مانحون معتمدون بعد.'))}`;
+        const nm=String(d.name||'مانح'),g=grad[(nm.charCodeAt(0)+i)%grad.length];
+        return `<button type="button" class="d86-donor" onclick="RC50.spAssign(${i})"><span class="d86-badge" style="background:linear-gradient(135deg,${g})">${e(nm.trim().charAt(0).toUpperCase())}</span><span class="d86-dt"><b>${e(nm)}</b><small>${e(d.email||d.phone||'')}</small><em>${(d.halaqa_ids||[]).length?e(names):'كل الحلقات'}</em></span><span class="d86-tune" aria-label="تحديد الحلقات"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg></span></button>`}).join('')||R.card(R.empty('لا يوجد مانحون معتمدون بعد.'))}`;
     }
     if(S.tab==='news'){
       const [news,sug]=await Promise.all([R.rpc('rc49_news_list'),R.rpc('rc49_suggestions')]);R.cache.news=news;
