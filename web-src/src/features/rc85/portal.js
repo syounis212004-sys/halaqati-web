@@ -28,13 +28,14 @@
       if(!me()||typeof db==='undefined')return;
       const {data}=await db.from('profiles').select('id,avatar_path,is_platform_owner').eq('id',me()).limit(1);
       const row=(data||[])[0]||{};
-      window.__rc85Owner=!!row.is_platform_owner;
+      window.__rc85Owner=!!row.is_platform_owner;const had=K.myPhoto;
       K.myPhoto=isImg(row.avatar_path)?row.avatar_path:null;
       try{if(K.myPhoto)localStorage.setItem('rc85_me_photo_'+me(),K.myPhoto)}catch(_e){}
-      decorate();
+      decorate();if(!had&&K.myPhoto&&state.page==='home'&&window.nhRerender)window.nhRerender();if(window.RC86&&RC86.refreshOrg)RC86.refreshOrg();
     }catch(_e){}
   }
   const myPhoto=()=>{if(K.myPhoto)return K.myPhoto;try{return localStorage.getItem('rc85_me_photo_'+me())}catch(_e){return null}};
+  R.myPhoto=myPhoto;
   setTimeout(loadMe,1500);
   window.addEventListener('online',()=>setTimeout(loadMe,1200));
 

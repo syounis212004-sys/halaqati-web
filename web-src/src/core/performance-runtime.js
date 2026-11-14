@@ -117,8 +117,13 @@ loadRoleExtras=async function(){
 async function v230RefreshPhotoUrls(){
   if(v230PhotoRefreshPromise)return v230PhotoRefreshPromise;
   v230PhotoRefreshPromise=(async()=>{
-    let start=v230Now();state.photoUrls=state.photoUrls||{};if(state.demo||!state.networkVerified)return;
-    let rows=(state.students||[]).filter(s=>s.photo_path&&(!state.photoUrls[s.id]||v230PhotoMeta.get(s.id)!==s.photo_path));
+    let start=v230Now();state.photoUrls=state.photoUrls||{};
+    /* RC86: photos are stored inline as data URLs (same as the native app) — use them directly, online or offline. */
+    let all=((window.RC27&&RC27.master&&RC27.master.students)||state.students||[]),inl=0;
+    all.forEach(s=>{if(s&&s.photo_path&&String(s.photo_path).startsWith('data:image/')&&state.photoUrls[s.id]!==s.photo_path){state.photoUrls[s.id]=s.photo_path;v230PhotoMeta.set(s.id,s.photo_path);inl++}});
+    if(inl&&$('#app')&&!$('#app').classList.contains('hidden'))v230RenderIfVisible();
+    if(state.demo||!state.networkVerified)return;
+    let rows=all.filter(s=>s.photo_path&&!String(s.photo_path).startsWith('data:')&&(!state.photoUrls[s.id]||v230PhotoMeta.get(s.id)!==s.photo_path));
     for(let i=0;i<rows.length;i+=4){await Promise.all(rows.slice(i,i+4).map(async s=>{try{let {data}=await db.storage.from('student-photos').createSignedUrl(s.photo_path,3600);if(data?.signedUrl){state.photoUrls[s.id]=data.signedUrl;v230PhotoMeta.set(s.id,s.photo_path)}}catch(e){}}));await new Promise(r=>setTimeout(r,0))}
     v230Mark('photosMs',start);if(rows.length&&$('#app')&&!$('#app').classList.contains('hidden'))v230RenderIfVisible()
   })().finally(()=>{v230PhotoRefreshPromise=null});return v230PhotoRefreshPromise

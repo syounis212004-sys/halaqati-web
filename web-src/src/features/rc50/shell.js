@@ -37,7 +37,7 @@
   const baseHome=window.homePage;
   if(typeof baseHome==='function')window.homePage=function(){
     const r=baseHome.apply(this,arguments);
-    if(!isStaff()||typeof r!=='string')return r;
+    if(!isStaff()||typeof r!=='string'||['admin','teacher'].includes(state?.profile?.role))return r;/* RC86: staff home has the app's own «الوصول السريع» */
     const i=r.indexOf('</section>');
     return i>=0&&i<1800?r.slice(0,i+10)+grid()+r.slice(i+10):grid()+r;
   };

@@ -1,0 +1,99 @@
+/* Halaqati web RC86 — staff home exactly as the app (TodayHeroCard, OrgSummaryCard, HomeShortcuts), «المتابعة والمقارنة», student card. */
+:root{--h86-deep:linear-gradient(135deg,#084F39,#0B6E4F);--h86-gold:linear-gradient(135deg,#9A6B00,#D9A94B);
+  --h86-girih:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath d='M22 2l5.5 14.5L42 22l-14.5 5.5L22 42l-5.5-14.5L2 22l14.5-5.5z' fill='none' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E")}
+.h86 .nh-top{display:grid;gap:10px}
+/* TodayHeroCard */
+.nh-hero86{position:relative;overflow:hidden;border-radius:28px;padding:18px;background:var(--h86-deep);color:#fff;display:grid;gap:12px}
+.nh-hero86::before{content:"";position:absolute;inset:0;opacity:.16;background-image:var(--h86-girih);background-size:44px 44px;pointer-events:none}
+.nh-hero86>*{position:relative}
+.h86-wel{display:flex;align-items:flex-start;gap:12px}
+.h86-wt{flex:1;display:grid;gap:4px;min-width:0}
+.h86-wt small{font:600 14px/20px Cairo,sans-serif;color:rgba(255,255,255,.85)}
+.h86-verse{font-family:"Amiri",serif;font-size:1.12rem;line-height:30px;font-weight:700;color:#fff;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.h86-wt span{font:500 12px/16px Cairo,sans-serif;color:rgba(255,255,255,.75)}
+.h86-ph{flex:none;background:#fff;border-radius:50%;padding:2px;display:grid;place-items:center}
+.h86-ph .rc85-ph{display:block}
+.h86-sep{display:block;height:1px;background:rgba(255,255,255,.25)}
+.h86-msg{display:flex;align-items:center;gap:14px}
+.h86-msg>div{flex:1;min-width:0;display:grid;gap:2px}
+.h86-msg b{font:800 19px/27px Cairo,sans-serif;color:#fff}
+.h86-msg small{font:500 14px/20px Cairo,sans-serif;color:rgba(255,255,255,.95)}
+.h86-ic,.h86-gold{flex:none;width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:var(--h86-gold);color:#fff}
+.h86-ic svg,.h86-gold svg{fill:#fff}
+.h86-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.h86-nums span{display:flex;align-items:center;gap:8px;border-radius:16px;background:rgba(255,255,255,.16);padding:8px 14px;font:600 14px/20px Cairo,sans-serif}
+.h86-nums b{font:800 24px/32px Cairo,sans-serif;color:#fff}
+.h86-go{min-height:56px;border:0;border-radius:18px;background:#fff;color:#0B6E4F;font:800 16px/22px Cairo,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.h86-go svg{fill:currentColor}
+.h86-go:disabled{background:rgba(255,255,255,.92);color:#42564D;cursor:default}
+.h86-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid #42564D;border-top-color:transparent;animation:h86spin .8s linear infinite}
+@keyframes h86spin{to{transform:rotate(360deg)}}
+/* OrgSummaryCard */
+.h86-org{position:relative;overflow:hidden;width:100%;border:0;border-radius:24px;padding:16px;background:var(--h86-deep);color:#fff;display:flex;align-items:center;gap:12px;text-align:start;cursor:pointer}
+.h86-org::before{content:"";position:absolute;inset:0;opacity:.16;background-image:var(--h86-girih);background-size:42px 42px;pointer-events:none}
+.h86-org>*{position:relative}.h86-org>svg{fill:#fff}
+.h86-gold{width:54px;height:54px;border-radius:17px}
+.h86-orgt{flex:1;min-width:0;display:grid}
+.h86-orgt b{font:800 19px/27px Cairo,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h86-orgt small{font:500 14px/20px Cairo,sans-serif;color:rgba(255,255,255,.96)}
+/* HomeShortcuts */
+.h86-short h3{margin:2px 0 8px;font:700 16px/24px Cairo,sans-serif;color:var(--ink)}
+.h86-sg{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);gap:8px}
+.h86-sg button{border:0;background:transparent;display:grid;justify-items:center;gap:6px;padding:6px 0;cursor:pointer;color:var(--ink);transition:transform .12s}
+.h86-sg button:active{transform:scale(.95)}
+.h86-sg span{width:56px;height:56px;border-radius:18px;background:var(--green);display:grid;place-items:center}
+.h86-sg span svg{fill:#fff}
+.h86-sg b{font:600 12px/16px Cairo,sans-serif;white-space:nowrap}
+/* entry cards (insights, approvals) */
+.h86-entry{width:100%;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12);padding:14px;display:flex;align-items:center;gap:12px;text-align:start;cursor:pointer;color:var(--ink);margin:0}
+.h86-entry>svg:first-child{fill:var(--green)}
+.h86-entry span{flex:1;min-width:0;display:grid;gap:2px}
+.h86-entry b{font:700 15px/22px Cairo,sans-serif}.h86-entry small{font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
+#h86Appr:empty{display:none}
+.h86 .nh-rest{display:grid;gap:10px}
+.h86-quick{border-radius:16px!important;background:var(--nx-surface-var)!important;color:var(--ink)!important;min-height:48px}
+.h86 .nh-b2{grid-template-columns:1fr 1fr}
+/* «المتابعة والمقارنة» */
+.ins86{display:grid;gap:10px}
+.ins86-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg,transparent);z-index:2}
+.ins86-tabs button{border:0;background:transparent;min-height:48px;font:700 15px Cairo,sans-serif;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.ins86-tabs button.on{color:var(--green);border-bottom-color:var(--green)}
+#ins86Body{display:grid;gap:10px}
+.ins86-in{animation:ins86in .22s ease}
+@keyframes ins86in{from{opacity:0}to{opacity:1}}
+.fu86-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fu86{--a:var(--outline,#8a9a92);min-height:128px;border-radius:20px;background:var(--card);border:1.5px solid var(--a);padding:14px;display:grid;gap:8px;align-content:start;text-align:start;cursor:pointer;color:var(--ink)}
+.fu86-h{display:flex;align-items:center;justify-content:space-between}
+.fu86-h i{width:42px;height:42px;border-radius:50%;background:var(--a);display:grid;place-items:center}
+.fu86-h i svg{fill:#fff}
+.fu86-h b{font:800 36px/44px Cairo,sans-serif;color:var(--a)}
+.fu86 strong{font:700 14px/20px Cairo,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fu86 small{font:500 12px/16px Cairo,sans-serif;color:var(--muted)}
+.fu86-ok{--a:var(--green)}.fu86-danger{--a:#C62828}.fu86-warning{--a:#B8861B}.fu86-info{--a:#2F6FB3}
+.fu86-stamp{font:500 11px/16px Cairo,sans-serif;color:var(--muted)}
+.fu86-sum{margin:0 0 8px;color:var(--muted)}
+.fu86-list{max-height:420px;overflow:auto;display:grid}
+.fu86-row{display:flex;align-items:center;gap:8px;min-height:52px;border-bottom:1px solid var(--line);padding:4px 0}
+.fu86-row>div{flex:1;min-width:0;display:grid}
+.fu86-row b{font:700 14px/20px Cairo,sans-serif}.fu86-row small{font:400 12px/16px Cairo,sans-serif;color:var(--muted)}.fu86-row em{font:500 11px/14px Cairo,sans-serif;color:var(--muted);font-style:normal}
+.fu86-dlg .nx-full{margin-top:10px}
+/* student card (GoldenStudentCard) */
+.nst-card{border:1.5px solid color-mix(in srgb,var(--green) 45%,transparent);border-radius:16px;padding:6px 10px;gap:4px}
+.ns-info-dot{display:inline-grid;place-items:center;color:#B8861B;flex:none}.ns-info-dot svg{fill:currentColor}
+.nst-card .ns-idpill{margin:2px 0}
+@media (prefers-reduced-motion:reduce){.ins86-in{animation:none}.h86-spin{animation-duration:2s}}
+/* drawer (GoldenDrawerContent) */
+.d86-search{display:flex;align-items:center;gap:8px;margin:8px 0 4px;padding:0 12px;min-height:48px;border-radius:16px;background:var(--nx-surface-var);color:var(--muted)}
+.d86-search svg{fill:currentColor;flex:none}
+.d86-search input{flex:1;min-width:0;border:0;background:transparent;font:500 15px Cairo,sans-serif;color:var(--ink);outline:none}
+.d86-gh{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:transparent;cursor:pointer;text-align:start;border-radius:12px}
+.d86-gh svg{fill:var(--muted)}
+.d86-favt{color:var(--green)!important;font-weight:800!important}
+.d86-row{display:flex;align-items:center;gap:2px}
+.d86-row .dtile{flex:1;min-width:0}
+.d86-fav{flex:none;width:40px!important;min-width:40px;max-width:40px;height:40px;padding:0!important;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;opacity:.35}
+.d86-fav svg{fill:var(--muted)}
+.d86-fav.on{opacity:1}.d86-fav.on svg{fill:var(--gold,#B8861B)}
+.d86-row:hover .d86-fav{opacity:.8}.d86-fav.on{opacity:1}
+.d86-none{padding:16px;color:var(--muted)}
+.d86-av{flex:none;display:grid;place-items:center}

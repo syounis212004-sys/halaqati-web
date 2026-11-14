@@ -28,7 +28,7 @@
   const baseHome=window.homePage;
   if(typeof baseHome==='function')window.homePage=function(){
     const r=baseHome.apply(this,arguments);
-    if(typeof r!=='string'||role()==='supervisor')return r;
+    if(typeof r!=='string'||['supervisor','admin','teacher'].includes(role()))return r;/* RC86: greeting + verse live inside the day card */
     return R.welcome()+r;
   };
 

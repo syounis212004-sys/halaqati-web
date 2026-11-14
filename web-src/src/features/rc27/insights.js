@@ -82,10 +82,10 @@
   const fmtPct=v=>v==null?'—':v+'٪';
   const meter=(l,v)=>`<div class="nh-meter"><div><span>${l}</span><b>${fmtPct(v)}</b></div><i><u style="width:${v==null?0:v}%;background:${v==null?'var(--outline)':v>=75?'var(--green)':v>=50?'var(--gold)':'var(--danger)'}"></u></i></div>`;
   const chip=(on,fn,label)=>NX.chip(label,{selected:on,check:false,onclick:`event.stopPropagation();${fn}`});
-  const repaint=()=>{if(role()==='guardian'){if(document.getElementById('rc27GOv'))paintGuardian();return}if(state.page==='home'&&!(window.nhRerender&&window.nhRerender()))render()};
+  const repaint=()=>{if(role()==='guardian'){if(document.getElementById('rc27GOv'))paintGuardian();return}if(state.page==='insights'&&window.RC86&&RC86.paintInsights){RC86.paintInsights();return}if(state.page==='home'&&!(window.nhRerender&&window.nhRerender()))render()};
   window.rc27InsOpen=k=>{I.open[k]=!(I.open[k]??(k==='cmp'||k==='badges'));repaint()};
   window.rc27InsSet=(k,v)=>{I[k]=v;if(k==='period'||k==='cat'){I.cmpAt=0;loadCmp(true)}repaint()};
-  const rerender=()=>{if(state.page==='home'&&role()!=='guardian')repaint()};
+  const rerender=()=>{if((state.page==='home'||state.page==='insights')&&role()!=='guardian')repaint()};
 
   // ---------- inactive students (14+ days) ----------
   async function loadInactive(){

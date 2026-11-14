@@ -217,7 +217,7 @@
   let cnt={n:0,at:0};
   async function homeCard(){
     if(!online())return;
-    const put=()=>{const c=document.getElementById('content');if(!c||state.page!=='home'||c.querySelector('.nx-appr-home'))return;if(!cnt.n)return;
+    const put=()=>{const c=document.getElementById('content');if(!c||state.page!=='home'||c.querySelector('.nx-appr-home')||c.querySelector('#h86Appr'))return;if(!cnt.n)return;
       const el=document.createElement('div');el.className='nx-appr-home';el.innerHTML=NX.insight('info','PersonAdd','طلبات اعتماد بانتظارك',`${cnt.n} طلب بحاجة إلى مراجعتك`,{onclick:"go('approvals')",count:cnt.n});
       const host=c.querySelector('.dk-aside')||c.querySelector('.nh-aside')||c.firstElementChild;if(host)host.insertAdjacentElement(host.classList.contains('dk-aside')||host.classList.contains('nh-aside')?'afterbegin':'afterend',el)};
     if(Date.now()-cnt.at>60000){cnt.at=Date.now();try{const d=await rpc('rc_pending_requests');cnt.n=Array.isArray(d)?d.length:0}catch(_e){cnt.n=0}}

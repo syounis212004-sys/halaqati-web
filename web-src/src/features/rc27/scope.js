@@ -98,6 +98,27 @@
     RC.refs={students:state.students,sessions:state.sessions,monthly:state.monthly};RC.lastStu=new Set(state.students.map(x=>x.id));RC.lastSes=new Set(state.sessions.map(x=>x.id));
   }
   window.rc27ApplyScope=applyScope;
+  /* RC86: background loaders (v230FullLoad / refresh) replace state.students without passing through the loadAll wrapper,
+     which left every halaqa visible under the chosen one. Before each render, a fresh unscoped list becomes the new master. */
+  function scopeOk(){
+    const e=effective(),hs=e.hs,progIds=new Set(hs.filter(isProgram).map(x=>x.id)),regIds=new Set(hs.filter(x=>!isProgram(x)).map(x=>x.id));
+    if(e.selectedId){const mem=memberSet(e.selectedId);return s=>s.halaqa_id===e.selectedId||mem.has(s.id)}
+    if(e.mixed||(progIds.size&&regIds.size)){
+      if(e.kind==='program'){const mem=new Set((RC.memberships||[]).filter(m=>m.status==='active'&&progIds.has(m.halaqa_id)).map(m=>m.student_id));return s=>progIds.has(s.halaqa_id)||mem.has(s.id)}
+      return s=>regIds.has(s.halaqa_id);
+    }
+    return null;
+  }
+  function resyncScope(){
+    if(!RC.master||!state.profile||state.profile.role==='guardian')return;
+    const stuNew=state.students!==(RC.refs&&RC.refs.students),sesNew=state.sessions!==(RC.refs&&RC.refs.sessions);
+    if(!stuNew&&!sesNew)return;
+    const ok=scopeOk();if(!ok)return;
+    const leak=(state.students||[]).some(s=>!ok(s));
+    if(!leak)return;
+    RC.master={halaqas:state.halaqas,students:state.students,sessions:stuNew||sesNew?state.sessions:RC.master.sessions,goals:state.goals,monthly:state.monthly,leaderDaily:state.leaderDaily,leaderMonthly:state.leaderMonthly,dailySummary:state.dailySummary,homeMonthly:state.homeMonthly};
+    RC.refs=null;applyScope();
+  }
 
   async function afterLoad(){
     const fresh=!RC.refs||state.students!==RC.refs.students||state.sessions!==RC.refs.sessions;
@@ -131,6 +152,7 @@
   if(typeof render==='function'){
     const baseRender=render;
     render=async function(){
+      try{resyncScope()}catch(e){console.warn('rc27 resync',e)}
       const r=await baseRender.apply(this,arguments);
       try{
         const c=document.getElementById('content');

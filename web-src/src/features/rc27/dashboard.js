@@ -255,34 +255,38 @@
     const hs=homeState(D.loaded,off,waiting,D.heard,wait),seed=Math.floor(Date.now()/864e5),msg=pickMsg(p.role==='teacher',hs,seed,wait,D.absentLate.length,D.heard);
     const groups=followUpGroups(),all=[...new Map(groups.flatMap(g=>g.items).map(i=>[i.studentId,i])).values()];
     const analytic=['admin','supervisor','teacher'].includes(p.role);
-    // --- top: hero + actions
-    let top=compact?NX.card(`<b class="nh-compact-t">${h(msg.title)}</b>${msg.subtitle?`<small class="nh-compact-s">${h(msg.subtitle)}</small>`:''}`,{cls:'nh-compact'}):NX.hero(h(msg.title),h(msg.subtitle),{icon:HOME_ICON[msg.icon]||'Sync',cls:'nh-hero'});
-    let acts=NX.btn(off?'اليوم إجازة':waiting?'ابدأ جلسة اليوم':'فتح جلسة اليوم',{kind:'filled',icon:'PlayArrow',full:true,cls:'nh-act',disabled:!D.loaded||off,onclick:'rc27OpenToday()'});
-    if(showPlans())acts+=NX.btn('التحفيظ السريع',{kind:'tonal',full:true,cls:'nh-act nh-act2',onclick:'openQuickMemorization()'});
-    top+=`<div class="nh-actions">${acts}</div>`;
-    const showMore=!compact||O.showMore;
-    if(compact)top+=NX.btn(O.showMore?'إخفاء المؤشرات الإضافية':'عرض المؤشرات الإضافية',{kind:'text',full:true,onclick:'rc27ToggleMore()'});
-    // --- side: insight cards
-    const side=(showMore&&analytic)?`<div class="nh-cards">${orgCards()}</div>`:'';
+    // --- RC86: top exactly as the app (TodayHeroCard → OrgSummaryCard → HomeShortcuts → metrics → quick memorization → approvals → insights entry)
+    const R5=window.RC50||{},PHL=(R5.PH&&(R5.PH[p.role]||R5.PH.teacher))||[],ph=PHL.length?PHL[Math.floor(Date.now()/864e5)%PHL.length]:null;
+    const hr=new Date().getHours(),greet=hr>=4&&hr<=11?'صباح الخير':hr>=12&&hr<=16?'نهارك مبارك':hr>=17&&hr<=20?'مساء الخير':'ليلة مباركة';
+    const myPh=typeof R5.myPhoto==='function'?R5.myPhoto():null,avatar=typeof R5.avatar==='function'?R5.avatar(myPh,p.full_name,56):'';
+    const btnLabel=!D.loaded?'جارٍ تجهيز بيانات اليوم…':off?'اليوم إجازة':waiting?'ابدأ جلسة اليوم':'فتح جلسة اليوم';
+    let top=`<section class="nh-hero86">${(!compact&&ph)?`<div class="h86-wel"><div class="h86-wt"><small>${h(greet)}</small><b class="h86-verse">${h(ph[0])}</b><span>${h(ph[1])}</span></div><span class="h86-ph">${avatar}</span></div><i class="h86-sep"></i>`:''}<div class="h86-msg"><span class="h86-ic">${IC(HOME_ICON[msg.icon]||'Sync',30)}</span><div><b>${h(msg.title)}</b>${msg.subtitle?`<small>${h(msg.subtitle)}</small>`:''}</div></div>${(D.loaded&&!off)?`<div class="h86-nums"><span><b>${present}</b>حاضر اليوم</span><span><b>${wait}</b>بانتظارك</span></div>`:''}<button type="button" class="h86-go" ${(!D.loaded||off)?'disabled':''} onclick="rc27OpenToday()">${!D.loaded?'<i class="h86-spin"></i>':IC('PlayArrow',22)}<span>${h(btnLabel)}</span></button></section>`;
+    if(p.role==='admin'||p.role==='supervisor')top+=`<div id="h86Org">${window.RC86&&RC86.orgCard?RC86.orgCard():''}</div>`;
+    top+=window.RC86&&RC86.shortcuts?RC86.shortcuts(showPlans()):'';
+    const showMore=true,side='';
     // --- rest
     let rest='';
-    const errs=Object.values(D.errors).slice(0,1);
-    errs.forEach(m=>{rest+=NX.notice('بقيت البيانات السابقة ظاهرة. '+h(m),'warning')});
     if(!D.loaded)rest+=NX.skeleton(2);
     else rest+=NX.metrics([NX.metric('حاضر اليوم',present,{icon:'HowToReg',onclick:'rc27OpenToday()'}),NX.metric('أتمّ التسميع',D.heard,{icon:'TaskAlt',onclick:"go('reports')"}),NX.metric('بانتظارك',wait,{icon:'HourglassTop',onclick:"go('follow_up')"})],3);
+    if(showPlans())rest+=NX.btn('التحفيظ السريع',{kind:'tonal',full:true,cls:'nh-wide h86-quick',onclick:'openQuickMemorization()'});
+    if(analytic)rest+=`<div id="h86Appr">${window.RC86&&RC86.apprCard?RC86.apprCard():''}</div><button type="button" class="h86-entry" onclick="go('insights')">${IC('Leaderboard',24)}<span><b>المتابعة والمقارنة</b><small>الغياب المتكرر، الطلاب المنقطعون، الخطط المتأخرة، ومقارنة الحلقات</small></span>${IC('ChevronLeft',22)}</button>`;
+    const pendBlocked=0;
+    const errs=Object.values(D.errors).slice(0,1);
+    errs.forEach(m=>{rest+=NX.notice('بقيت البيانات السابقة ظاهرة. '+h(m),'warning')});
     rest+=nhTitle('المتابعة اليومية');
     if(!D.loaded)rest+=NX.skeleton(1);
     else if(off||waiting)rest+=NX.card(`<div class="nh-banner"><b class="nh-banner-t">${h(d.title)}</b><span class="nh-banner-s">${h(d.subtitle)}</span><span class="nh-banner-n ${off?'':'sm'}">${off?'لم يسمّع اليوم: 0 · غائب اليوم: 0':'لن يُحسب أي طالب كـ«لم يسمّع» أو «غائب» قبل بدء الجلسة.'}</span></div>`,{cls:'nh-bannercard'});
     else rest+=`<div class="nh-bgrid nh-b2">${bucketCard('danger','لم يسمّع اليوم',D.notHeard,'nh')}${bucketCard('warning','غائب اليوم',D.absentLate,'ab')}</div>`;
-    if(showPlans())rest+=nhTitle('متابعة الخطة')+`<div class="nh-bgrid nh-b3">${bucketCard('warning','متأخر عن الخطة',D.attention,'at')}${bucketCard('info','يحتاج مراجعة',D.review,'rv')}${bucketCard('success','تجاوز هدفه',D.overTarget,'ot')}</div>`;
+    if(showPlans())rest+=nhTitle('متابعة الخطة')+`<div class="nh-bgrid nh-b2">${bucketCard('warning','متأخر عن الخطة',D.attention,'at')}${bucketCard('info','يحتاج مراجعة',D.review,'rv')}${bucketCard('success','تجاوز هدفه',D.overTarget,'ot')}</div>`;
     rest+=`<div class="nh-titlerow">${nhTitle('طلاب يحتاجون متابعة')}${all.length?NX.btn('فتح المتابعة',{kind:'text',onclick:"go('follow_up')"}):''}</div>`;
     groups.forEach(g=>{rest+=`<div class="nh-grp">${h(g.title)}</div><div class="nh-fulist">${g.items.slice(0,compact?2:4).map(followItem).join('')}</div>`});
     if(!all.length&&D.loaded)rest+=NX.empty('لا توجد تنبيهات متابعة حاليًا',{icon:'TaskAlt'});
     rest+=NX.btn('الإحصائيات والترتيب',{kind:'outlined',full:true,cls:'nh-wide',onclick:"go('ranking')"});
     const pend=typeof readOfflineQueue==='function'?readOfflineQueue().length:0;
     if(pend)rest+=NX.btn(`مزامنة ${pend} عملية معلقة`,{kind:'outlined',full:true,cls:'nh-wide',onclick:'openSyncStatusDialog()'});
-    return `<div class="nh nh-home ${side?'':'nh-solo'}"><div class="nh-top">${top}</div>${side?`<aside class="nh-side">${side}</aside>`:''}<div class="nh-rest">${rest}</div></div>`;
+    return `<div class="nh nh-home nh-solo h86"><div class="nh-top">${top}</div><div class="nh-rest">${rest}</div></div>`;
   }
+  window.rc27HomeHtml=()=>homeHtml();window.rc27OrgLoad=async f=>{const c=ensureDashboardOwner();if(f)c.org.at=0;await loadOrg();return c.org};
   window.rc27ToggleMore=()=>{O.showMore=!O.showMore;if(!window.nhRerender())render()};
   window.nhRerender=function(){
     const el=document.querySelector('.nh-home');

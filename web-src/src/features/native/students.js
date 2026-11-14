@@ -143,11 +143,10 @@
       ?`${manage()?NX.btn('استعادة',{kind:'tonal',icon:'Restore',onclick:`restoreStudent('${st.id}')`}):''}${isOwner()?NX.btn('حذف نهائي',{kind:'danger',onclick:`NSS.purge('${st.id}')`}):''}`
       :`${staff()?NX.btn('تسميع اليوم',{onclick:`NSS.recite('${st.id}')`}):''}${NX.btn('الملف الشخصي',{kind:'tonal',onclick:`studentProfile('${st.id}')`})}${staff()?NX.btn('الخطة',{kind:'tonal',onclick:`openPlan('${st.id}')`}):''}`;
     return `<div class="nst-card ${open?'open':''} ${selected?'selected':''} ${removed?'removed':''}" data-stcard="${st.id}">
-      <div class="nst-card-head">${selMode?`<input class="ns-check" type="checkbox" aria-label="تحديد ${h(st.full_name)}" ${selected?'checked':''} onchange="toggleStudentSelection('${st.id}',this.checked)">`:''}<button type="button" class="nst-card-main" onclick="NSS.toggle('${st.id}')" aria-expanded="${open?'true':'false'}">${avatar(st,64)}<span class="nst-card-t"><b>${h(st.full_name)}</b><small>${h(subtitle)}</small></span></button>${dup?NX.pill('مكرر','warning'):''}${NX.pill(h(stAr(st.status)),stKind(st.status))}<button type="button" class="nx-iconbtn" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" title="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" onclick="NSS.toggle('${st.id}')">${ic(open?'ExpandLess':'ExpandMore',24)}</button></div>
-      ${(!removed&&window.NXIdentity&&NXIdentity.missing(st))?`<div class="ns-idpill">${NX.pill('ناقص: '+NXIdentity.lacks(st),'warning')}</div>`:''}
+      <div class="nst-card-head">${selMode?`<input class="ns-check" type="checkbox" aria-label="تحديد ${h(st.full_name)}" ${selected?'checked':''} onchange="toggleStudentSelection('${st.id}',this.checked)">`:''}<button type="button" class="nst-card-main" onclick="NSS.toggle('${st.id}')" aria-expanded="${open?'true':'false'}">${avatar(st,64)}<span class="nst-card-t"><b>${h(st.full_name)}</b><small>${h(subtitle)}</small></span></button>${dup?NX.pill('مكرر','warning'):''}${(!removed&&st.status==='active'&&window.NXIdentity&&NXIdentity.missing(st))?`<span class="ns-info-dot" title="بيانات الربط بولي الأمر غير مكتملة؛ افتح التفاصيل" aria-label="بيانات الربط بولي الأمر غير مكتملة">${ic('Info',18)}</span>`:''}${st.status!=='active'?NX.pill(h(stAr(st.status)),'info'):''}<button type="button" class="nx-iconbtn" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" title="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}" onclick="NSS.toggle('${st.id}')">${ic(open?'ExpandLess':'ExpandMore',24)}</button></div>
       ${sn?`<div class="ns-plan-row"><span class="g">الخطة ${N(sn.pct)}%</span><span>ورد اليوم ${N(sn.daily)} ص</span></div>`:''}
       <div class="nst-card-more"><div class="nst-card-more-in">
-        <p class="ns-soft">${h(more)}</p>${stats?`<p class="ns-stats">${h(stats)}</p>`:''}
+        ${(!removed&&st.status==='active'&&window.NXIdentity&&NXIdentity.missing(st))?`<div class="ns-idpill">${NX.pill('ناقص: '+NXIdentity.lacks(st),'warning')}</div>`:''}<p class="ns-soft">${h(more)}</p>${stats?`<p class="ns-stats">${h(stats)}</p>`:''}
         ${acts?`<div class="ns-acts-row">${acts}</div>`:''}
         ${manage()?`<button type="button" class="nx-btn nx-text ns-edit-link" onclick="NSS.detail('${st.id}',true)">${ic('Edit',17)}<span>تعديل بيانات الطالب والانتساب</span></button>`:''}
       </div></div></div>`;
@@ -627,7 +626,8 @@
     const vals=[['الهدف',target],['المطلوب',pr.plannedByToday],['المنجز',pr.completed],[ahead?'الزائد':'المتبقي',ahead?pr.aheadBy:pr.remaining]];
     const frac=target<=0?0:Math.max(0,Math.min(1,Number(pr.completed)/target))*100;
     const a=pr.assignment;
-    return NX.card(body+`<div class="ns-minis four">${vals.map(([l,v])=>miniMetric(l,N(v)+' ص')).join('')}</div>${NX.progress(frac)}${a&&Number(a.pages)>0?`<p class="ns-cap">المقرر القادم: ${h(typeof smartPlanRangeText==='function'&&a.startPage!=null?smartPlanRangeText(a.startPage,a.endPage):(a.ayahLabel||'المقرر الذكي'))} · ${N(a.pages)} ص</p>`:''}`,{cls:'ns-ecard ns-stack'});
+    const od=Number(pr.originalDaily||0),why=(od>.001&&Number(pr.plannedByToday)>0)?`<p class="ns-cap nx-muted">المطلوب = ${N(od)} ص يوميًا × ${N(Number(pr.plannedByToday)/od)} يوم دوام مضى (من ${N(target/od)} يوم في الخطة)${ahead?'، والزائد = المنجز − المطلوب':''}</p>`:'';
+    return NX.card(body+`<div class="ns-minis four">${vals.map(([l,v])=>miniMetric(l,N(v)+' ص')).join('')}</div>${NX.progress(frac)}${why}${a&&Number(a.pages)>0?`<p class="ns-cap">المقرر القادم: ${h(typeof smartPlanRangeText==='function'&&a.startPage!=null?smartPlanRangeText(a.startPage,a.endPage):(a.ayahLabel||'المقرر الذكي'))} · ${N(a.pages)} ص</p>`:''}`,{cls:'ns-ecard ns-stack'});
   }
   function weekCard(sn,st,P0){
     const t=T(),ws=addD(t,-P(t).getDay()),{phases,states}=phaseData(sn,st);
