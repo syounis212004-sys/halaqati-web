@@ -20,13 +20,13 @@
 
   // ================= menus (RoleNavigationPolicy.drawerItems) =================
   const DRAWER={
-    admin:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','إدارة الحلقات والفئات'],['community','الإعلانات ومنتدى الحلقة'],['sessions','الجلسات اليومية'],['students','الطلاب'],['plans','الخطط الذكية'],['certificates','الشهادات'],['exams','الاختبارات'],['awards','التكريم الشهري'],['support','الدعم والمانحون'],['chats','محادثات المانحين'],['observer_requests','طلبات المانحين'],['reports','التقارير'],['quran','حاسبة القرآن'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['data','الاستيراد والتصدير'],['supervision','متابعة المحفظين والمشرفين'],['visits','زيارات المشرفين'],['approvals','طلبات الاعتماد'],['org','الهيكل الإداري'],['team','فريق الجمعية'],['users','الحسابات والصلاحيات'],['settings','الإعدادات']],
-    supervisor:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['exams','الاختبارات'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['org','الهيكل الإداري'],['team','فريق الجمعية'],['settings','الإعدادات']],
+    admin:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','إدارة الحلقات والفئات'],['community','الإعلانات ومنتدى الحلقة'],['sessions','الجلسات اليومية'],['students','الطلاب'],['plans','الخطط الذكية'],['certificates','الشهادات'],['exams','الاختبارات'],['awards','التكريم الشهري'],['support','الدعم والمانحون'],['chats','محادثات المانحين'],['observer_requests','طلبات المانحين'],['reports','التقارير'],['quran','حاسبة القرآن'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['data','الاستيراد والتصدير'],['supervision','متابعة المحفظين والمشرفين'],['visits','زيارات المشرفين'],['approvals','طلبات الاعتماد'],['org','الهيكل الإداري'],['staff','كادر الحلقات'],['users','الحسابات والصلاحيات'],['settings','الإعدادات']],
+    supervisor:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['exams','الاختبارات'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['org','الهيكل الإداري'],['staff','كادر الحلقات'],['settings','الإعدادات']],
     teacher:[['home','الرئيسية'],['notifications','الإشعارات'],['community','الإعلانات ومنتدى الحلقة'],['halaqas','حلقتي والفئات'],['sessions','الجلسات اليومية'],['students','طلابي'],['plans','الخطط الذكية'],['certificates','الشهادات'],['exams','الاختبارات'],['reports','التقارير'],['quran','حاسبة القرآن'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['data','تصدير البيانات'],['approvals','طلبات أولياء الأمور'],['settings','الإعدادات']],
     guardian:[['home','الرئيسية'],['notifications','الإشعارات'],['community','الإعلانات ومنتدى الحلقة'],['plans','خطط أبنائي الذكية'],['exams','اختبارات أبنائي'],['reports','تقارير أبنائي'],['competition','إحصائيات ومنافسة'],['ranking','الإنجازات'],['profile','ملف الطالب'],['settings','الإعدادات']],
     observer:[['home','الرئيسية'],['donor_awards','المكرَّمون'],['donor_support','الدعم'],['donor_impact','أثري'],['donor_stats','الإحصاءات'],['notifications','الإشعارات'],['settings','الإعدادات']]
   };
-  const ADDED=new Set(['insights']);
+  const ADDED=new Set(['insights','staff']);
   const prevNav=window.navItems;
   window.navItems=function(){
     const prev=prevNav.apply(this,arguments)||[],r=role(),list=DRAWER[r];
@@ -49,6 +49,60 @@
   const prevSvg=window.navSvg;
   if(typeof prevSvg==='function'){window.navSvg=function(p){if(p==='insights')return IC('Insights',24)||prevSvg('ranking');return prevSvg.apply(this,arguments)};window.iconFor=window.navSvg}
 
+
+
+  // ================= shared photo helper (same limits as the app: ≤ ~100 KB JPEG, square for people) =================
+  RC86.photo=function(file,{size=384,square=true,limit=110000}={}){
+    return new Promise((res,rej)=>{
+      const fr=new FileReader();fr.onerror=()=>rej(new Error('تعذر قراءة الصورة'));
+      fr.onload=()=>{const img=new Image();img.onerror=()=>rej(new Error('صورة غير صالحة'));img.onload=()=>{
+        let side=size;
+        for(let attempt=0;attempt<6;attempt++){
+          const c=document.createElement('canvas'),x=c.getContext('2d');
+          if(square){const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;c.width=c.height=side;x.fillStyle='#fff';x.fillRect(0,0,side,side);x.drawImage(img,sx,sy,m,m,0,0,side,side)}
+          else{const k=Math.min(1,side/Math.max(img.width,img.height));c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height)}
+          for(let q=.85;q>=.4;q-=.1){const out=c.toDataURL('image/jpeg',q);if(out.length<=limit){return res(out)}}
+          side=Math.round(side*.85);
+        }
+        rej(new Error('تعذر تصغير الصورة بما يكفي. اختر صورة أخرى.'));
+      };img.src=fr.result};
+      fr.readAsDataURL(file);
+    });
+  };
+  // initial letter for the avatar fallback: skips titles (Dr., د., أ., …) so «Dr. mohammed» gives M, not D
+  RC86.initial=function(name){
+    const t=String(name||'').trim().split(/\s+/).filter(Boolean),skip=/^(dr|prof|eng|mr|mrs|ms|د|أ|م|أ\.د|الشيخ|الأستاذ|الدكتور|المهندس)\.?$/i;
+    const w=t.find(x=>!skip.test(x))||t[0]||'';return (w.charAt(0)||'؟').toUpperCase();
+  };
+  R.avatar=(photo,name,size)=>{
+    const sz=size||44,img=typeof photo==='string'&&photo.startsWith('data:image/');
+    return img?`<img class="rc85-ph" src="${photo}" alt="" style="width:${sz}px;height:${sz}px">`
+      :`<span class="rc85-ph rc85-ini" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.44)}px">${e(RC86.initial(name))}</span>`;
+  };
+
+  // ================= top bar: menu · bell · «more» (refresh + search live inside it), like the app =================
+  if(!window.__h86tb){window.__h86tb=1;
+    const menu=()=>{
+      const m=document.getElementById('h86Menu');if(m){m.remove();return}
+      const b=document.getElementById('h86More');if(!b)return;
+      const items=[['Refresh','تحديث',()=>{const r=document.getElementById('ntRefresh');if(window.NT&&NT.refresh)NT.refresh(r);else if(typeof refreshFromServer==='function')refreshFromServer({renderAfter:true})}],['Search','بحث',()=>{if(typeof openGlobalSearch==='function')openGlobalSearch()}]];
+      const el=document.createElement('div');el.id='h86Menu';el.className='h86-menu';el.setAttribute('role','menu');
+      el.innerHTML=items.map(([i,l],k)=>`<button type="button" role="menuitem" data-k="${k}">${IC(i,22)}<span>${e(l)}</span></button>`).join('');
+      document.body.appendChild(el);
+      const r=b.getBoundingClientRect();el.style.top=(r.bottom+6)+'px';el.style.left=Math.max(8,Math.min(r.left,innerWidth-el.offsetWidth-8))+'px';
+      el.querySelectorAll('button').forEach(x=>x.onclick=()=>{el.remove();items[+x.dataset.k][2]()});
+      setTimeout(()=>document.addEventListener('click',function off(ev){if(!el.contains(ev.target)){el.remove()}document.removeEventListener('click',off)},{once:true}),0);
+    };
+    RC86.installTopbar=function(){
+      const tb=document.querySelector('#app .topbar');if(!tb||document.getElementById('h86More'))return;
+      const b=document.createElement('button');b.type='button';b.id='h86More';b.className='h86-more';b.setAttribute('aria-label','المزيد');b.setAttribute('aria-haspopup','menu');b.innerHTML=IC('MoreVert',24);
+      b.addEventListener('click',ev=>{ev.stopPropagation();menu()});
+      const bell=document.getElementById('notificationBell');(bell||tb.lastElementChild).after(b);
+    };
+    const baseRender2=window.render;
+    window.render=async function(){const r=await baseRender2.apply(this,arguments);try{RC86.installTopbar()}catch(_e){}return r};
+    setTimeout(()=>{try{RC86.installTopbar()}catch(_e){}},1500);
+  }
 
   // ================= support / donors / rewards work offline (read once, kept on the device) =================
   const STORED=new Set(['rc48_donors','rc49_support_cards','rc49_support_defaults','rc49_news_list','rc49_suggestions','rc49_my_pledges','rc52_settings','rc52_reward_options','rc52_my_rewards','rc52_admin_rewards']);
@@ -79,11 +133,11 @@
 
   // ================= drawer (GoldenDrawerContent: search, «مفضلتي», collapsible groups with counts) =================
   const DG_TITLES=['إدارة الحلقة','التقارير والإنجاز','التواصل والأدوات','إدارة النظام','الحساب والإعدادات'];
-  const DG_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,ranking:1,insights:1,competition:1,certificates:1,awards:1,support:1,donor_awards:1,donor_support:1,donor_impact:1,donor_stats:1,reports:1,supervision:1,visits:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
+  const DG_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,ranking:1,insights:1,staff:3,competition:1,certificates:1,awards:1,support:1,donor_awards:1,donor_support:1,donor_impact:1,donor_stats:1,reports:1,supervision:1,visits:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
   const DQ={q:'',col:new Set()};
   const favKey=()=>'rc86_drawer_fav_'+(state.user?.id||'x');
   const favs=()=>{try{return new Set(JSON.parse(localStorage.getItem(favKey())||'[]'))}catch(_e){return new Set()}};
-  const ICON_FIX={exams:'Quiz',chats:'Forum',observer_requests:'PersonAdd',org:'AccountTree',team:'Groups',visits:'EventAvailable',approvals:'PersonAdd',insights:'Insights'};
+  const ICON_FIX={exams:'Quiz',chats:'Forum',observer_requests:'PersonAdd',org:'AccountTree',team:'Groups',staff:'Groups',visits:'EventAvailable',approvals:'PersonAdd',insights:'Insights'};
   const svgPrev=window.navSvg;
   if(typeof svgPrev==='function'){
     const fallback=String(svgPrev('__rc86_none__')||'');
@@ -161,7 +215,7 @@
     if(canOpen('insights'))items.push(['insights','المتابعة','Insights']);
     items.push(['ranking','الترتيب','EmojiEvents'],['quran','المصحف','MenuBook']);
     if(canOpen('org'))items.push(['org','الهيكل','AccountTree']);
-    if(canOpen('team'))items.push(['team','الفريق','Groups']);
+    if(canOpen('staff'))items.push(['staff','الكادر','Groups']);
     if(r==='admin')items.push(['awards','التكريم','Star'],['support','الدعم','Favorite']);
     const cols=items.length%4===0?4:3;
     return `<section class="h86-short"><h3>الوصول السريع</h3><div class="h86-sg" style="--cols:${cols}">${items.map(([p,l,i])=>`<button type="button" onclick="go('${p}')"><span>${IC(i,28)}</span><b>${e(l)}</b></button>`).join('')}</div></section>`;
@@ -288,5 +342,56 @@
     setTimeout(()=>{loadFU(false);loadRouteDone();if(window.RC27Insights)RC27Insights.load()},0);
     return `<div class="ins86"><div class="ins86-tabs" role="tablist"><button type="button" role="tab" class="${FU.tab===0?'on':''}" aria-selected="${FU.tab===0}" onclick="RC86.insTab(0)">المتابعة</button><button type="button" role="tab" class="${FU.tab===1?'on':''}" aria-selected="${FU.tab===1}" onclick="RC86.insTab(1)">المقارنة</button></div><div id="ins86Body" class="ins86-in">${insightsBody()}</div></div>`;
   }});
+
+  // ================= «كادر الحلقات»: supervisors + teachers in one directory (replaces «فريق الجمعية») =================
+  const KS=RC86.ks={q:'',f:'all',open:{},data:null,at:0};
+  async function loadStaff(force){
+    if(!force&&KS.data&&Date.now()-KS.at<45000)return;
+    const td=T0(),ms=td.slice(0,8)+'01';
+    const d=await R.rpc('rc53_staff_overview',{p_from:ms,p_to:td});
+    KS.data=Array.isArray(d)?d:[];KS.at=Date.now();
+  }
+  const studentsIn=hid=>master('students').filter(s=>s.status==='active'&&s.halaqa_id===hid).length;
+  const staffInfo=m=>{
+    const hs=m.halaqas||[],sup=m.role==='supervisor',stu=sup?0:hs.reduce((a,x)=>a+studentsIn(x.id),0);
+    return {hs,sup,stu,none:!hs.length,off:m.active===false||m.frozen};
+  };
+  const KG={sup:'#9A6B00,#D9A94B',tch:'#0B6E4F,#1FA37A',off:'#2F4A5C,#5C8097'};
+  function staffCard(m){
+    const i=staffInfo(m),g=i.off?KG.off:i.sup?KG.sup:KG.tch,open=!!KS.open[m.id];
+    const role=m.frozen?'مجمَّد':m.active===false?'موقوف':i.sup?'مشرف':'محفّظ';
+    const sum=i.none?'بلا حلقة':`${countAr(i.hs.length,'حلقة','حلقة واحدة','حلقتان','حلقات')}${i.sup?'':` · ${i.stu} طالبًا`}`;
+    const ph=String(m.phone||'').replace(/[^\d+]/g,''),adm=role==='admin'||state.profile?.role==='admin';
+    const stats=i.sup?`<span><b>${Number(m.visits_made||0)}</b>زيارات الشهر</span><span><b>${Number(m.visits_received||0)}</b>زيارات لحلقاته</span>`:`<span><b>${Number(m.session_days||0)}</b>أيام جلسات</span><span><b>${Number(m.recitations||0)}</b>تسميعات</span>`;
+    return `<details class="k86-card" ${open?'open':''} ontoggle="RC86.ks.open['${m.id}']=this.open"><summary style="background:linear-gradient(135deg,${g})"><span class="k86-av">${R.avatar(m.avatar_path,m.full_name,48)}</span><span class="k86-t"><b>${e(m.full_name||'—')}</b><small>${e(role)} · ${e(sum)}</small></span>${i.none&&!i.off?'<i class="k86-warn">بلا حلقة</i>':''}${IC('ExpandMore',22)}</summary>
+      <div class="k86-b">
+        ${i.hs.length?`<div class="k86-chips">${i.hs.map(x=>`<button type="button" class="k86-chip" onclick="go('halaqas')">${e(x.name)}</button>`).join('')}</div>`:`<p class="k86-none">لم يُسنَد إلى حلقة بعد.</p>`}
+        <div class="k86-stats">${stats}<span><b>${m.last_session?e(String(m.last_session).slice(5)):'—'}</b>آخر جلسة</span></div>
+        <div class="k86-acts">${ph?`<a class="k86-btn" href="tel:${ph}">${IC('Phone',18)}<span>اتصال</span></a><a class="k86-btn" target="_blank" rel="noopener" href="https://wa.me/${ph.replace(/^\+/,'')}">${IC('Share',18)}<span>واتساب</span></a>`:'<small class="k86-none">لا يوجد رقم هاتف</small>'}${adm?`<button type="button" class="k86-btn" onclick="go('halaqas')">${IC('GroupAdd',18)}<span>إسناد حلقات</span></button>`:''}</div>
+      </div></details>`;
+  }
+  function staffList(){
+    const all=KS.data||[],q=KS.q.trim().toLowerCase();
+    const rows=all.filter(m=>{const i=staffInfo(m);return (!q||String(m.full_name||'').toLowerCase().includes(q))&&(KS.f==='all'||(KS.f==='sup'&&i.sup)||(KS.f==='tch'&&!i.sup)||(KS.f==='none'&&i.none))});
+    const sup=rows.filter(m=>m.role==='supervisor'),tch=rows.filter(m=>m.role!=='supervisor');
+    if(!rows.length)return R.card(R.empty(all.length?'لا يوجد من يطابق البحث.':'لا يوجد مشرفون ولا محفّظون بعد.'));
+    return (sup.length?`<h3 class="k86-h">المشرفون (${sup.length})</h3>${sup.map(staffCard).join('')}`:'')+(tch.length?`<h3 class="k86-h">المحفّظون (${tch.length})</h3>${tch.map(staffCard).join('')}`:'');
+  }
+  function staffPage(){
+    const all=KS.data||[],ns=all.filter(m=>m.role==='supervisor').length,nt=all.length-ns,nn=all.filter(m=>staffInfo(m).none&&!staffInfo(m).off).length;
+    const chip=(k,l,n)=>`<button type="button" class="k86-fc ${KS.f===k?'on':''}" onclick="RC86.ksF('${k}')">${l} <b>${n}</b></button>`;
+    return `<div class="k86"><div class="k86-tiles"><div style="--g:#9A6B00,#D9A94B"><b>${ns}</b><span>مشرفون</span></div><div style="--g:#0B6E4F,#1FA37A"><b>${nt}</b><span>محفّظون</span></div><div style="--g:${nn?'#A81E1E,#E0584F':'#2F4A5C,#5C8097'}"><b>${nn}</b><span>بلا حلقة</span></div></div>
+      <div class="k86-bar"><input class="k86-q" type="search" placeholder="بحث بالاسم" value="${e(KS.q)}" oninput="RC86.ksQ(this.value)" aria-label="بحث بالاسم"></div>
+      <div class="nx-chips k86-fcs">${chip('all','الكل',all.length)}${chip('sup','المشرفون',ns)}${chip('tch','المحفّظون',nt)}${chip('none','بلا حلقة',nn)}</div>
+      <div id="k86List">${staffList()}</div></div>`;
+  }
+  RC86.ksQ=v=>{KS.q=v;const b=document.getElementById('k86List');if(b)b.innerHTML=staffList()};
+  RC86.ksF=f=>{KS.f=f;const c=document.getElementById('content');if(c){c.innerHTML=staffPage()}};
+  R.page('staff',{title:'كادر الحلقات',roles:['admin','supervisor'],render:async()=>{
+    try{await loadStaff(false)}catch(err){if(!KS.data)return R.card(R.empty(err.message||'تعذر تحميل الكادر'))}
+    return staffPage();
+  }});
+  R.pages.team=R.pages.staff;
+
   window.addEventListener('halaqati:sessionchange',()=>{FU.at=0;RD.at=0;OS.at=0;AP.at=0});
 })();

@@ -278,11 +278,13 @@
   }
   function summaryHtml(se){
     const c=listCtx(se),sm=c.summary;
-    const l1=c.lesson?`شارك ${sm.recited} · غائب ${sm.absent}`:`سمّع ${sm.recited} · لم يُسمّع ${sm.notRecited} · غائب ${sm.absent}`;
-    return `<div class="nr-summary"><div class="nr-summary-t"><b>${l1}</b><span>غير مرصود ${sm.unmarked} · حاضر ${sm.present}</span></div>
+    const tile=(n,l,cls)=>`<div class="r90-t ${cls}"><b>${n}</b><span>${l}</span></div>`;
+    const tiles=c.lesson
+      ?tile(sm.recited,'شارك','ok')+tile(sm.absent,'غائب','bad')+tile(sm.present,'حاضر','info')+tile(sm.unmarked,'غير مرصود','mute')
+      :tile(sm.recited,'سمّع','ok')+tile(sm.notRecited,'لم يُسمّع','warn')+tile(sm.absent,'غائب','bad')+tile(sm.present,'حاضر','info')+tile(sm.unmarked,'غير مرصود','mute');
+    return `<div class="nr-summary r90-sum"><div class="r90-tiles">${tiles}</div>
       <div class="nr-summary-strip">${strip(sm,c.lesson)}</div>
-      ${NX.btn('خيارات الجلسة',{kind:'tonal',icon:'Tune',onclick:'NSR.openFilters()',cls:'nr-filter-btn'})}</div>
-      <div class="nr-count">المعروض: ${c.list.length} من ${c.all.length}</div>`;
+      ${NX.btn(`خيارات الجلسة · ${c.list.length === c.all.length ? c.all.length : c.list.length+' من '+c.all.length}`,{kind:'tonal',icon:'Tune',onclick:'NSR.openFilters()',cls:'nr-filter-btn'})}</div>`;
   }
   const STATUS_FILTERS=[['all','الكل'],['unmarked','لم يُرصد'],['not_recited','لم يُسمّع'],['present_pending','حاضر بلا تسميع'],['recited','تم التسميع'],['absent','الغياب']];
   function deskFiltersHtml(se){
@@ -317,7 +319,7 @@
       </div>`;
     return `<article class="nr-card nr-st-${stt.toLowerCase()} ${open?'open':''} ${blocked?'is-blocked':''}" id="roster_${h(sid)}" data-roster-name="${h(norm(st.full_name))}">
       <div class="nr-card-main" role="button" tabindex="0" aria-expanded="${open}" onclick="NSR.toggle('${h(sid)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();NSR.toggle('${h(sid)}')}">
-        <span class="nr-av">${h((String(st.full_name||'').trim()[0])||'ط')}</span>
+        ${(()=>{const ph=state.photoUrls&&state.photoUrls[st.id];return ph?`<img class="nr-av nr-av-ph" src="${h(ph)}" alt="">`:`<span class="nr-av">${h((window.RC86&&RC86.initial?RC86.initial(st.full_name):String(st.full_name||'').trim()[0])||'ط')}</span>`})()}
         <div class="nr-id"><b class="nr-name">${h(st.full_name)}</b><span class="nr-sub ${blocked?'bad':''}">${h(sub)}</span></div>
         ${syncLabel?`<span class="nr-sync ${blocked?'bad':''}" title="${h(syncLabel)}">${ic(blocked?'ErrorOutline':'CloudUpload',22)}</span>`:''}
         ${quick}

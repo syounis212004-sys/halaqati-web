@@ -1,0 +1,30 @@
+:root{
+  --t-size-topbar:44px;
+  --t-size-tab:48px;
+  --t-size-tile:64px;
+  --t-size-avatarSm:40px;
+  --t-size-avatarMd:56px;
+  --t-size-avatarLg:72px;
+  --t-size-touchMin:48px;
+  --t-radius-chip:50px;
+  --t-radius-card:22px;
+  --t-radius-tile:16px;
+  --t-radius-sheet:28px;
+  --t-space-xs:4px;
+  --t-space-sm:8px;
+  --t-space-md:12px;
+  --t-space-lg:16px;
+  --t-space-xl:24px;
+  --t-font-title:18px;
+  --t-font-body:14px;
+  --t-font-label:12px;
+  --t-font-small:11px;
+  --t-font-verse:20px;
+  --t-tone-present:#0B8F5E;
+  --t-tone-absent:#D64545;
+  --t-tone-excused:#D98A00;
+  --t-tone-late:#2F6FDE;
+  --t-tone-neutral:#6B7A75;
+  --t-family-main:'Cairo',system-ui,sans-serif;
+  --t-family-verse:'Cairo',system-ui,sans-serif;
+}

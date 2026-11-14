@@ -83,12 +83,29 @@
     if(state?.page!=='settings')return;
     const box=document.getElementById('content');if(!box||box.querySelector('.rc85-set'))return;
     const s=shape(),opt=(k,l)=>`<button type="button" class="rc85-chip ${s===k?'on':''}" onclick="RC50.k85.setShape('${k}')">${l}</button>`;
-    let html=`<div class="card rc85-set"><h3>الصور</h3><div class="muted">شكل صور الطلاب والفريق على هذا الجهاز.</div><div class="rc85-chips2">${opt('ring','حلقة')}${opt('circle','دائرة')}${opt('rounded','مربع مدوّر')}</div>`;
+    const mine=myPhoto(),nm=state.profile?.full_name||'';
+    let html=`<div class="card rc85-set"><h3>صورتي</h3><div class="rc86-mine"><span class="rc86-mine-av">${R.avatar(mine,nm,76)}</span><div class="rc86-mine-b"><label class="dn-btn tonal rc86-file">${mine?'تغيير صورتي':'إضافة صورتي'}<input type="file" accept="image/*" hidden onchange="RC50.k85.myPick(this)"></label>${mine?'<button type="button" class="dn-btn" onclick="RC50.k85.myClear()">إزالة</button>':''}</div></div><div class="muted">تظهر صورتك في بطاقة الترحيب والقائمة الجانبية وقوائم الكادر. تُقصّ مربعة وتُضغط تلقائيًا.</div><h3 style="margin-top:16px">الصور</h3><div class="muted">شكل صور الطلاب والفريق على هذا الجهاز.</div><div class="rc85-chips2">${opt('ring','حلقة')}${opt('circle','دائرة')}${opt('rounded','مربع مدوّر')}</div>`;
     if(role()==='admin')html+=`<div class="settings-row" style="margin-top:10px"><div><b>إظهار صور المكرَّمين للمانحين</b><div class="muted">يرى المانحون صور الطلاب المكرَّمين فقط؛ أطفئه لإخفائها</div></div><input id="rc85DonorPh" type="checkbox" onchange="RC50.k85.setDonorPhotos(this)"></div>`;
     html+='</div>';
     const div=document.createElement('div');div.innerHTML=html;box.insertBefore(div.firstElementChild,box.children[1]||null);
     if(role()==='admin')db.from('app_settings').select('donor_show_photos').limit(1).then(({data})=>{const c=document.getElementById('rc85DonorPh');if(c)c.checked=!(data&&data[0]&&data[0].donor_show_photos===false)});
   }
+  K.myPick=async inp=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    try{
+      const data=await window.RC86.photo(f,{size:384,square:true});
+      const {error}=await db.from('profiles').update({avatar_path:data}).eq('id',me());
+      if(error)throw new Error(error.message||'تعذر حفظ الصورة');
+      K.myPhoto=data;try{localStorage.setItem('rc85_me_photo_'+me(),data)}catch(_e){}
+      R.toast('حُفظت صورتك');render();
+    }catch(err){R.toast(err.message||'تعذر حفظ الصورة')}
+  };
+  K.myClear=async()=>{
+    const {error}=await db.from('profiles').update({avatar_path:null}).eq('id',me());
+    if(error)return R.toast(error.message||'تعذر الإزالة');
+    K.myPhoto=null;try{localStorage.removeItem('rc85_me_photo_'+me())}catch(_e){}
+    R.toast('أُزيلت صورتك');render();
+  };
   K.setShape=k=>{try{localStorage.setItem(SHAPE_KEY,k)}catch(_e){}applyShape();const b=document.querySelector('.rc85-set');b&&b.remove();settingsCards()};
   K.setDonorPhotos=async el=>{const on=!!el.checked;el.disabled=true;const {error}=await db.from('app_settings').update({donor_show_photos:on}).eq('id',1);el.disabled=false;if(error){el.checked=!on;R.toast(error.message)}else R.toast(on?'تظهر صور المكرَّمين للمانحين':'أُخفيت صور المكرَّمين عن المانحين')};
 
@@ -136,12 +153,13 @@
     if(owner&&!a){
       return band('deep',`<div class="rc85-ht"><h2>إدارة النظام</h2><small>أنت: مسؤول النظام · تربط الجمعيات ومسؤوليها</small></div><div class="rc85-stats">${stat('جمعيات',o.assocs.length)}${stat('مسؤولو جمعيات',o.assocs.reduce((s,x)=>s+x.admins.length,0))}${stat('حلقات',o.assocs.reduce((s,x)=>s+x.halaqat,0))}${stat('طلاب',o.assocs.reduce((s,x)=>s+x.students,0))}</div>`)
         +`<div class="rc85-sec"><b>الجمعيات (${o.assocs.length})</b><button type="button" class="dn-btn tonal" onclick="RC50.k85.addAssoc()">إضافة جمعية</button></div>`
-        +(o.assocs.length?o.assocs.map(x=>`<button type="button" class="rc85-assoc" onclick="RC50.k85.openAssoc('${x.id}')">${band('deep',`${x.logo_path&&isImg(x.logo_path)?`<img class="rc85-logo" src="${x.logo_path}" alt="">`:'<span class="rc85-logo">🕌</span>'}<div class="rc85-pt"><b>${e(x.name)}</b><small>${x.admins[0]?'المسؤول: '+e(x.admins[0].full_name):'لم يُعيَّن مسؤول بعد'}</small></div><span>‹</span>`)}<div class="rc85-stats light">${stat('مشرفون',x.sups.length)}${stat('مراكز',x.centers.length)}${stat('حلقات',x.halaqat)}${stat('محفّظون',x.teachers.length)}${stat('طلاب',x.students)}</div></button>`).join(''):missing('لا توجد جمعيات بعد. أضف أول جمعية ثم عيّن مسؤولها.'));
+        +(o.assocs.length?o.assocs.map(x=>`<button type="button" class="rc85-assoc" onclick="RC50.k85.openAssoc('${x.id}')">${band('deep',`${x.logo_path&&isImg(x.logo_path)?`<img class="rc85-logo" src="${x.logo_path}" alt="">`:'<span class="rc85-logo">🕌</span>'}<div class="rc85-pt"><b>${e(x.name)}</b><small>${x.admins[0]?'المسؤول: '+e(x.admins[0].full_name):'لم يُعيَّن مسؤول بعد'}</small></div><span>‹</span>`)}<div class="rc85-stats light">${stat('مشرفون',x.sups.length)}${stat('مراكز',x.centers.length)}${stat('حلقات',x.halaqat)}${stat('محفّظون',x.teachers.length)}${stat('طلاب',x.students)}</div></button>`).join(''):missing('لا توجد جمعيات بعد. أضف أول جمعية ثم عيّن مسؤولها.'))
+        +(()=>{const ind=o.halaqas.filter(h=>!h.association_id);return ind.length?`<div class="rc85-sec"><b>حلقات مستقلة (${ind.length})</b></div><div class="dn-card"><small class="dn-muted">لا تتبع أي جمعية. يراها مسؤول النظام ومن أُسند إليها مباشرة من مشرفين ومحفّظين.</small>${ind.map(h=>`<div class="rc85-hrow"><span class="rc85-hn"><b>${e(h.name)}</b><small>${h.students} طالبًا · ${h.teachers.length?e(h.teachers.map(t=>t.full_name).join('، ')):'<span style="color:#C62828">بلا محفّظ</span>'}</small></span><button type="button" class="dn-btn tonal" onclick="RC50.k85.attach('${h.id}')">ربط بجمعية</button></div>`).join('')}</div>`:''})();
     }
     if(!a)return R.card(R.empty('لم تُربط بجمعية بعد.'));
     const hs=x=>[...a.centers.flatMap(c=>c.halaqat),...a.loose].filter(h=>(x.role==='teacher'?h.teachers:h.sups).some(p=>p.id===x.id)).map(h=>h.name);
     const halaqaRow=h=>`<div class="rc85-hrow"><span class="rc85-hn"><b>${e(h.name)}</b><small>${h.students} طالبًا · المحفّظ: ${h.teachers.length?e(h.teachers.map(t=>t.full_name).join('، ')):'<span style="color:#C62828">لم يُعيَّن</span>'}</small></span>${canEdit&&a.centers.length?`<button type="button" class="dn-link" onclick="RC50.k85.move('${h.id}')">نقل</button>`:''}${owner?`<button type="button" class="rc85-x dark" title="فصل عن الجمعية" onclick="RC50.k85.detach('${h.id}')">✕</button>`:''}</div>`;
-    const center=c=>`<details class="rc85-center" ${K.open[c.id]?'open':''} ontoggle="RC50.k85.open['${c.id}']=this.open"><summary>${band(c.kind==='mosque'?'gold':'emerald',`<span class="rc85-logo">${c.logo_path&&isImg(c.logo_path)?`<img src="${c.logo_path}" alt="">`:'🏛'}</span><div class="rc85-pt"><b>${e(c.name)}</b><small>${c.kind==='mosque'?'مسجد':'مركز'} · ${countAr(c.halaqat.length,'حلقة','حلقة واحدة','حلقتان','حلقات')}</small></div>${canEdit?`<button type="button" class="rc85-x" title="حذف" onclick="event.preventDefault();RC50.k85.delCenter('${c.id}')">✕</button>`:''}`)}</summary><div class="rc85-cbody">${c.halaqat.map(halaqaRow).join('')||'<small class="dn-muted">لا توجد حلقات هنا بعد.</small>'}</div></details>`;
+    const center=c=>`<details class="rc85-center" ${K.open[c.id]?'open':''} ontoggle="RC50.k85.open['${c.id}']=this.open"><summary>${band(c.kind==='mosque'?'gold':'emerald',`<span class="rc85-logo">${c.logo_path&&isImg(c.logo_path)?`<img src="${c.logo_path}" alt="">`:'🏛'}</span><div class="rc85-pt"><b>${e(c.name)}</b><small>${c.kind==='mosque'?'مسجد':'مركز'} · ${countAr(c.halaqat.length,'حلقة','حلقة واحدة','حلقتان','حلقات')}</small></div>${canEdit?`<button type="button" class="rc85-x" title="تعديل الاسم والشعار" onclick="event.preventDefault();RC50.k85.editCenter('${c.id}')">✎</button><button type="button" class="rc85-x" title="حذف" onclick="event.preventDefault();RC50.k85.delCenter('${c.id}')">✕</button>`:''}`)}</summary><div class="rc85-cbody">${c.halaqat.map(halaqaRow).join('')||'<small class="dn-muted">لا توجد حلقات هنا بعد.</small>'}</div></details>`;
     return `${owner?`<button type="button" class="dn-link" onclick="RC50.k85.openAssoc(null)">‹ كل الجمعيات</button>`:''}`
       +band('deep',`<div class="rc85-ht"><h2>${e(a.name)}</h2><small>أنت: ${owner?'مسؤول النظام':(role()==='admin'?'مسؤول الجمعية':'مشرف الحلقات')}</small></div>${canEdit?`<button type="button" class="rc85-x" title="تعديل الاسم" onclick="RC50.k85.renameAssoc('${a.id}')">✎</button>`:''}<div class="rc85-stats">${stat('مشرفون',a.sups.length)}${stat('مراكز',a.centers.length)}${stat('حلقات',a.halaqat)}${stat('محفّظون',a.teachers.length)}${stat('طلاب',a.students)}</div>`)
       +sectionH(1,'مسؤول الجمعية','deep',owner?'تعيين':null,"RC50.k85.pick('admin')")
@@ -160,12 +178,40 @@
   const reload=()=>{K.orgAt=0;render()};
   const ok=async(p,msg)=>{const r=await p;if(r&&r.error){R.toast(r.error.message||'تعذر تنفيذ العملية');return false}R.toast(msg);return true};
   K.openAssoc=id=>{K.assoc=id;render()};
-  K.addAssoc=()=>{const n=(prompt('اسم الجمعية')||'').trim();if(n)ok(db.from('associations').insert({name:n}),'أُضيفت جمعية '+n).then(reload)};
-  K.renameAssoc=id=>{const a=K.org.assocs.find(x=>x.id===id),n=(prompt('اسم الجمعية',a?a.name:'')||'').trim();if(n)ok(db.from('associations').update({name:n}).eq('id',id),'حُفظ الاسم').then(reload)};
-  K.addCenter=()=>{
-    R.sheet('rc85Center','إضافة مركز أو مسجد',`<label class="dn-field"><span>الاسم</span><input id="rc85CName" class="dn-in"></label><label class="dn-field"><span>النوع</span><select id="rc85CKind" class="dn-in"><option value="center">مركز</option><option value="mosque">مسجد</option></select></label>`,R.btn('حفظ','RC50.k85.saveCenter()'));
+  /* RC90: association / centre add + edit in one sheet (name, kind, logo) instead of the browser's prompt() box */
+  K.ef=null;
+  function entityDlg(){
+    const f=K.ef,isC=f.kind==='center';
+    const logo=f.logo?`<img class="ngm-logo" src="${f.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${isC?'🏛':'🕌'}</span>`;
+    R.sheet('rc85Ent',(f.id?'تعديل ':'إضافة ')+(isC?'مركز أو مسجد':'جمعية'),
+      `<label class="dn-field"><span>الاسم</span><input id="rc85EName" class="dn-in" value="${e(f.name)}" oninput="RC50.k85.ef.name=this.value"></label>
+       ${isC?`<label class="dn-field"><span>النوع</span><select class="dn-in" onchange="RC50.k85.ef.ckind=this.value"><option value="center" ${f.ckind==='center'?'selected':''}>مركز</option><option value="mosque" ${f.ckind==='mosque'?'selected':''}>مسجد</option></select></label>`:''}
+       <div class="ngm-logorow">${logo}<label class="dn-btn tonal rc86-file">${f.logo?'تغيير الشعار':'إضافة شعار'}<input type="file" accept="image/*" hidden onchange="RC50.k85.efPick(this)"></label>${f.logo?`<button type="button" class="dn-btn" onclick="RC50.k85.efClear()">إزالة</button>`:''}</div>
+       <small class="dn-muted">يُضغط الشعار تلقائيًا إلى أقل من 100 كيلوبايت.</small>`,
+      R.btn('حفظ','RC50.k85.entitySave()'));
+  }
+  K.entity=(kind,id)=>{
+    const src=id?(kind==='assoc'?K.org.assocs.find(x=>x.id===id):K.org.assocs.flatMap(a=>a.centers).find(x=>x.id===id)):null;
+    K.ef={kind,id:id||null,name:src?src.name:'',ckind:(src&&src.kind)||'center',logo:src&&isImg(src.logo_path)?src.logo_path:null};entityDlg();
   };
-  K.saveCenter=()=>{const n=(document.getElementById('rc85CName')?.value||'').trim(),k=document.getElementById('rc85CKind')?.value||'center';if(!n)return;R.closeSheet('rc85Center');ok(db.from('centers').insert({name:n,kind:k,active:true,association_id:K.assoc}),'أُضيف '+n).then(reload)};
+  K.efPick=async inp=>{const f=inp.files&&inp.files[0];if(!f||!K.ef)return;try{K.ef.logo=await window.RC86.photo(f,{size:384,square:false})}catch(err){R.toast(err.message||'تعذر قراءة الصورة')}entityDlg()};
+  K.efClear=()=>{if(K.ef){K.ef.logo=null;entityDlg()}};
+  K.entitySave=async()=>{
+    const f=K.ef;if(!f)return;const name=(f.name||'').trim();if(name.length<2)return R.toast('اكتب الاسم (حرفان فأكثر)');
+    R.closeSheet('rc85Ent');
+    if(f.kind==='assoc'){const row={name,logo_path:f.logo||null};await ok(f.id?db.from('associations').update(row).eq('id',f.id):db.from('associations').insert(row),f.id?'حُفظت الجمعية':'أُضيفت جمعية '+name)}
+    else{const row={name,kind:f.ckind,logo_path:f.logo||null};await ok(f.id?db.from('centers').update(row).eq('id',f.id):db.from('centers').insert({...row,active:true,association_id:K.assoc}),f.id?'حُفظ المركز':'أُضيف '+name)}
+    reload();
+  };
+  K.addAssoc=()=>K.entity('assoc',null);
+  K.renameAssoc=id=>K.entity('assoc',id);
+  K.editCenter=id=>K.entity('center',id);
+  K.attach=hid=>{
+    const list=(K.org.assocs||[]);
+    R.sheet('rc85Attach','ربط الحلقة بجمعية',list.length?`<label class="dn-field"><span>الجمعية</span><select id="rc85AttachSel" class="dn-in">${list.map(x=>`<option value="${x.id}">${e(x.name)}</option>`).join('')}</select></label><small class="dn-muted">يتبع طلاب الحلقة جمعيتها تلقائيًا.</small>`:'<p class="dn-muted">أضف جمعية أولًا.</p>',list.length?R.btn('ربط',`RC50.k85.attachGo('${hid}')`):'');
+  };
+  K.attachGo=async hid=>{const v=document.getElementById('rc85AttachSel')?.value;R.closeSheet('rc85Attach');if(!v)return;await ok(db.from('halaqas').update({association_id:v,center_id:null}).eq('id',hid),'رُبطت الحلقة بالجمعية');reload()};
+  K.addCenter=()=>K.entity('center',null);
   K.delCenter=id=>{if(confirm('حذف المركز؟ تبقى الحلقات وتصير «غير مرتبطة بمركز». لا يُحذف أي طالب أو حلقة.'))ok(db.from('centers').delete().eq('id',id),'حُذف المركز').then(reload)};
   K.move=hid=>{
     const a=K.org.assocs.find(x=>x.id===K.assoc);if(!a)return;

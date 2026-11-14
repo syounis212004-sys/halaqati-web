@@ -30,7 +30,10 @@
   /* header texts of the existing pro-table for each Kotlin column key */
   const HEAD={rank:['#','الترتيب'],student:['الطالب'],category:['الفئة'],hifz:['الحفظ','حفظ'],tathbit:['التثبيت','تثبيت'],review:['المراجعة','مراجعة'],sard:['السرد','سرد'],attendance:['الحضور','حضور'],absence:['الغياب','غياب','غائب'],absent:['غائب','الغياب','غياب'],points:['النقاط','نقاط'],pages:['الصفحات','صفحات'],quality:['الجودة','تقييم'],present:['حاضر'],late:['متأخر'],excused:['بعذر'],sessions:['إجمالي التسجيلات','التسجيلات'],date:['التاريخ'],activity:['النوع'],range:['النطاق'],mistakes:['الأخطاء','أخطاء'],prompts:['النقرات','نقرات'],evaluation:['التقييم','تقييم']};
   const PALETTES=[['#0d3b2f','#1c302a','الأخضر'],['#12345b','#1d2c40','الأزرق'],['#5a3825','#35251d','البني'],['#342b5f','#29233e','البنفسجي']];
-  const S=NR.S={title:'',footer:'',orientation:'landscape',font:'Cairo',scale:1,primary:'#0d3b2f',text:'#1c302a',logo:'both',zoom:100,cols:{}};
+  const S=NR.S={title:'',footer:'',orientation:'landscape',font:'Cairo',scale:1,primary:'#0d3b2f',text:'#1c302a',logo:'both',zoom:100,cols:{},open:{}};
+  /* RC90: long filter groups fold into one row (title + a one-line summary); the open state survives re-rendering */
+  NR.acc=function(k,o){S.open[k]=!!o};
+  const acc=(key,title,sum,inner)=>`<details class="nr-acc" ${S.open[key]?'open':''} ontoggle="NR.acc('${key}',this.open)"><summary><span class="nr-acc-t">${title}</span><small class="nr-acc-s">${sum}</small>${ic('ExpandMore',22)}</summary><div class="nr-acc-b nx-stack">${inner}</div></details>`;
   const visibleCols=t=>{if(!S.cols[t])S.cols[t]=new Set((COLS[t]||COLS.halaqa).map(x=>x[0]));return S.cols[t]};
   const typeTitle=t=>{try{return reportTypeTitle(t)}catch(_e){return 'تقرير حلقتي'}};
 
@@ -193,15 +196,16 @@
   const MODES=[['day','يوم محدد'],['month','شهر محدد'],['range','فترة']];
   const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const monthLabel=ym=>{const [y,m]=String(ym||'').split('-');return MONTHS[(+m||1)-1]+' '+y};
-  const chipRow=(items,cur,fn,wrap=true)=>NX.chips(items.map(([v,l,i])=>({label:l,selected:cur===v,check:false,icon:i,onclick:fn(v)})),{wrap});
+  const chipRow=(items,cur,fn,wrap=false)=>NX.chips(items.map(([v,l,i])=>({label:l,selected:cur===v,check:false,icon:i,onclick:fn(v)})),{wrap});
   const labelSm=t=>`<div class="nr-lbl">${t}</div>`;
 
   function comparisonCard(){
     if(state.reportMode!=='month'||typeof opsAggregateCompare!=='function'||!ready())return '';
     let rows;try{rows=opsAggregateCompare()}catch(_e){return ''}
+    const r1=v=>{v=Math.round(Number(v||0)*10)/10;return Number.isInteger(v)?String(v):v.toFixed(1)};
     const body=rows.map(([l,cur,prev,inverse,suf],i)=>{
-      const d=Number(cur||0)-Number(prev||0),fav=inverse?d<=0:d>=0,sign=d>=0?'+':'';
-      return `${i?NX.divider():''}<div class="nr-cmp"><span class="nr-cmp-l">${l}</span><b dir="ltr">${num(prev)}${suf} ← ${num(cur)}${suf}</b><em class="${fav?'good':'bad'}" dir="ltr">${sign}${num(Math.round(d*100)/100)}${suf} ${d>=0?'↑':'↓'}</em></div>`;
+      const d=Number(cur||0)-Number(prev||0),fav=inverse?d<=0:d>=0,sign=d>=0?'+':'',mx=Math.max(Number(cur||0),Number(prev||0),1e-9);
+      return `${i?NX.divider():''}<div class="nr-cmp"><span class="nr-cmp-l">${String(l).replace(/\s*\/\s*/g,' / ')}</span><b dir="ltr">${r1(prev)}${suf} ← ${r1(cur)}${suf}</b><em class="${fav?'good':'bad'}" dir="ltr">${sign}${r1(d)}${suf} ${d>=0?'↑':'↓'}</em><span class="nr-cmp-bars" aria-hidden="true"><i style="width:${Math.round(Number(prev||0)/mx*100)}%"></i><i class="cur ${fav?'good':'bad'}" style="width:${Math.round(Number(cur||0)/mx*100)}%"></i></span></div>`;
     }).join('');
     return NX.card(`<div class="nx-t-title-l">هذا الشهر مقابل الشهر الماضي</div><div class="nr-cmps">${body}</div>`,{cls:'nx-emph nr-compare'});
   }
@@ -222,14 +226,17 @@
     const hal=NX.select('الحلقة',[{value:'all',label:prog?'جميع البرامج':'جميع الحلقات'},...halaqas.map(x=>({value:x.id,label:x.name||'حلقة'}))],{value:state.reportHalaqa||'all',onchange:"state.reportHalaqa=this.value;state.reportLoadedKey='';render()"});
     const msg=state.reportError?NX.notice(h(state.reportError),/^تعذر/.test(state.reportError)&&!ready()?'error':'warning')
       :ready()?NX.notice(`تم تجهيز البيانات: ${statsRows().length} طالب · ${(state.reportData?.sessions||[]).length} لقاء`,'success'):'';
-    return NX.card(`
-      <div class="nx-t-title-m nr-h">الفترة ونطاق البيانات</div>
-      ${chipRow(MODES,mode,v=>`setReportMode('${v}')`)}
+    const halName=halaqas.find(x=>x.id===(state.reportHalaqa||'all'))?.name||(prog?'جميع البرامج':'جميع الحلقات');
+    const trackName={all:'جميع المسارات',general_hifz:'الحفظ العام',tathbit:'التثبيت'}[state.reportTrack||'all'];
+    const sumTxt=[mode==='day'?h(b.from):mode==='month'?h(monthLabel(String(b.from).slice(0,7))):`${h(b.from)} ← ${h(b.to)}`,h(halName),prog?'':h(trackName)].filter(Boolean).join(' · ');
+    const inner=`${chipRow(MODES,mode,v=>`setReportMode('${v}')`)}
       <div class="nr-datebox">${ic('DateRange',20)}<span class="nx-grow">${summary}</span>${ic('EditCalendar',20)}</div>
       ${dates}
       ${prog?'':labelSm('المسار')+chipRow([['all','جميع المسارات'],['general_hifz','الحفظ العام'],['tathbit','التثبيت']],state.reportTrack||'all',v=>`NR.set('reportTrack','${v}')`)}
       ${hal}
-      ${labelSm('نوع اللقاء')}${chipRow(prog?PROG_SESSION:SESSION_TYPES,state.reportSessionType||'all',v=>`NR.set('reportSessionType','${v}')`)}
+      ${labelSm('نوع اللقاء')}${chipRow(prog?PROG_SESSION:SESSION_TYPES,state.reportSessionType||'all',v=>`NR.set('reportSessionType','${v}')`)}`;
+    return NX.card(`
+      ${acc('period','الفترة ونطاق البيانات',sumTxt,inner)}
       ${btn(state.reportLoading?'جاري تجهيز التقرير…':'تجهيز التقرير',{icon:'Refresh',full:true,onclick:'loadSelectedReport()',disabled:state.reportLoading,cls:'nr-prepare'})}
       ${state.reportLoading?NX.progress(60,{cls:'nr-indet'}):''}
       ${msg}`,{cls:'nx-emph nr-period nx-stack'});
@@ -242,20 +249,18 @@
       {label:'تاريخ الميلاد',selected:!!state.reportIncludeBirthDate,check:false,onclick:`NR.flag('reportIncludeBirthDate',${!state.reportIncludeBirthDate})`},
       {label:'اسم المحفظ',selected:!!state.reportIncludeTeacher,check:false,onclick:`NR.flag('reportIncludeTeacher',${!state.reportIncludeTeacher})`},
       {label:'صورة الطالب',selected:!!state.reportIncludePhotos,check:false,onclick:`NR.flag('reportIncludePhotos',${!state.reportIncludePhotos})`}],{wrap:true})}`:'';
-    return NX.card(`
-      <div class="nr-ctl-head">${ic('Tune',22)}<span class="nx-t-title-m">تخصيص استوديو التقارير</span></div>
-      <p class="nx-muted nx-t-body-s nr-note">المعاينة والـPDF يستخدمان نفس قالب HTML/CSS المتجهي.</p>
-      ${NX.field('عنوان التقرير',{html:`<input type="text" maxlength="120" value="${h(S.title)}" placeholder="${h(typeTitle(type))}" oninput="NR.style('title',this.value)">`})}
+    const fontName={Cairo:'القاهرة','sans-serif':'بسيط',serif:'كلاسيكي',monospace:'ثابت العرض'}[S.font]||S.font;
+    const inner=`${NX.field('عنوان التقرير',{html:`<input type="text" maxlength="120" value="${h(S.title)}" placeholder="${h(typeTitle(type))}" oninput="NR.style('title',this.value)">`})}
       ${NX.field('تذييل التقرير',{html:`<input type="text" maxlength="180" value="${h(S.footer)}" placeholder="حلقتي · النظام الرسمي لإدارة ومتابعة حلقات القرآن الكريم" oninput="NR.style('footer',this.value)">`})}
-      ${labelSm('اتجاه A4')}${chipRow([['landscape','أفقي A4'],['portrait','رأسي A4']],S.orientation,v=>`NR.style('orientation','${v}',true)`)}
-      ${labelSm('الخط')}${chipRow([['Cairo','Cairo'],['sans-serif','Sans'],['serif','Serif'],['monospace','Mono']],S.font,v=>`NR.style('font','${v}',true)`)}
+      ${labelSm('اتجاه الصفحة')}${chipRow([['landscape','أفقي'],['portrait','رأسي']],S.orientation,v=>`NR.style('orientation','${v}',true)`)}
+      ${labelSm('الخط')}${chipRow([['Cairo','القاهرة'],['sans-serif','بسيط'],['serif','كلاسيكي'],['monospace','ثابت العرض']],S.font,v=>`NR.style('font','${v}',true)`)}
       ${labelSm(`حجم الخط <span class="nr-fsval">${pct}%</span>`)}
       <input type="range" class="nrp-range" min="75" max="145" step="5" value="${pct}" aria-label="حجم الخط" oninput="this.previousElementSibling.querySelector('.nr-fsval').textContent=this.value+'%';NR.style('scale',this.value/100)">
-      ${labelSm('الهوية اللونية')}${NX.chips(PALETTES.map((p,i)=>({label:`<i class="nr-dot" style="background:${p[0]}"></i>${p[2]}`,selected:S.primary===p[0],check:false,onclick:`NR.palette(${i})`})),{wrap:true})}
+      ${labelSm('اللون')}<div class="nr-swatches" role="radiogroup" aria-label="اللون">${PALETTES.map((p,i)=>`<button type="button" role="radio" aria-checked="${S.primary===p[0]}" aria-label="${h(p[2])}" title="${h(p[2])}" class="nr-sw ${S.primary===p[0]?'on':''}" style="--c:${p[0]}" onclick="NR.palette(${i})"></button>`).join('')}<small class="nx-muted">${h((PALETTES.find(p=>p[0]===S.primary)||[])[2]||'')}</small></div>
       ${labelSm('الشعارات')}${chipRow([['both','الشعاران'],['center','المركز'],['halaqa','الحلقة'],['none','بدون']],S.logo,v=>`NR.style('logo','${v}',true)`)}
       ${stu}
-      ${labelSm('الأعمدة الظاهرة')}${NX.chips(cols.map(([k,l])=>({label:l,selected:vis.has(k),check:false,onclick:`NR.col('${k}')`})),{wrap:true})}
-    `,{cls:'nx-emph nr-controls nx-stack'});
+      ${labelSm('الأعمدة الظاهرة')}${NX.chips(cols.map(([k,l])=>({label:l,selected:vis.has(k),check:false,onclick:`NR.col('${k}')`})),{wrap:true})}`;
+    return NX.card(acc('ctl','تخصيص التقرير',`${S.orientation==='portrait'?'رأسي':'أفقي'} · ${h(fontName)} · ${pct}%`,inner),{cls:'nx-emph nr-controls nx-stack'});
   }
 
   const statsRows=()=>{try{return reportStatsRows()||[]}catch(_e){return []}};
@@ -269,7 +274,7 @@
       ?`<div class="nr-viewport ${S.orientation==='portrait'?'portrait':'landscape'}" data-fit data-zoom="${S.zoom}"><div class="nr-scaler"><div class="nrp-sheet" id="reportExportArea" data-orientation="${S.orientation}">${docHtml}</div></div></div>`
       :`<div class="nr-viewport nr-vp-empty">${state.reportLoading?NX.skeleton(2):`<div class="nr-ph">${ic('Visibility',28)}<p>بعد تجهيز التقرير ستظهر هنا عينة من البيانات قبل الحفظ.</p></div>`}</div>`;
     return NX.card(`
-      <div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة A4 الحقيقية</div><div class="nx-t-body-s nx-muted">نفس HTML/CSS المستخدم في PDF النهائي.</div></div>${btn('تكبير',{kind:'outlined',icon:'OpenInFull',small:true,onclick:'NR.expand()',disabled:!rd})}</div>
+      <div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة الصفحة</div><div class="nx-t-body-s nx-muted">كما سيظهر في الملف النهائي.</div></div>${btn('تكبير',{kind:'outlined',icon:'OpenInFull',small:true,onclick:'NR.expand()',disabled:!rd})}</div>
       <div class="nr-zoomrow"><span class="nr-zoomval">${S.zoom}%</span><input type="range" min="75" max="120" step="5" value="${S.zoom}" oninput="NR.zoom(this.value)" aria-label="تكبير المعاينة"></div>
       ${body}`,{cls:'nx-emph nr-preview nx-stack-s'});
   }
@@ -309,7 +314,7 @@
   function studio(){
     const has=ready()&&!state.reportLoading&&(state.reportType==='recitations'?((state.reportData?.recitations||[]).length>0||statsRows().length>0):statsRows().length>0);
     return `<div class="nr-root nr-studio">
-      ${NX.hero('استوديو التقارير','محرك 2.44 المستعاد: ستة أنواع تقارير، معاينة حقيقية، وPDF متجهي A4 من نفس القالب.',{icon:'Assessment',badge:'Chromium Vector'})}
+      ${NX.hero('استوديو التقارير','اختر النوع والفترة، ثم عاين التقرير واحفظه PDF أو شاركه.',{icon:'Assessment'})}
       ${comparisonCard()}
       <div class="nr-cols">
         <div class="nr-side nx-stack">${typeCard()}${periodCard()}${controlsCard()}</div>
@@ -323,14 +328,14 @@
     const tab=(/class="active"[^>]*rc27SetProgReport\('tab','(\w+)'\)/.exec(prevHtml)||[])[1]||'attendance';
     const dates=[...String(prevHtml).matchAll(/type="date" value="([^"]*)"/g)].map(m=>m[1]);
     return `<div class="nr-root nr-studio nr-prog">
-      ${NX.hero('تقارير البرنامج','الحضور ونتائج التقييم وتقرير الدورة.',{icon:'Assessment',badge:'Chromium Vector'})}
+      ${NX.hero('تقارير البرنامج','الحضور ونتائج التقييم وتقرير الدورة.',{icon:'Assessment'})}
       <div class="nr-cols">
         <div class="nr-side nx-stack">
           <section class="nr-sec"><div class="nx-t-title-m nr-h">نوع التقرير</div>${chipRow(PROG_TYPES,tab,v=>`rc27SetProgReport('tab','${v}')`)}</section>
           ${NX.card(`<div class="nx-t-title-m nr-h">الفترة ونطاق البيانات</div><div class="nrp-two">${NX.field('من',{type:'date',value:dates[0]||'',onchange:"rc27SetProgReport('from',this.value)"})}${NX.field('إلى',{type:'date',value:dates[1]||'',onchange:"rc27SetProgReport('to',this.value)"})}</div>`,{cls:'nx-emph nx-stack'})}
         </div>
         <div class="nr-main nx-stack">
-          ${NX.card(`<div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة A4 الحقيقية</div><div class="nx-t-body-s nx-muted">نفس HTML/CSS المستخدم في PDF النهائي.</div></div></div><div class="nr-prog-doc"><div id="rc27ProgReport"><div class="nx-muted">جارٍ التحميل…</div></div></div>`,{cls:'nx-emph nr-preview nx-stack-s'})}
+          ${NX.card(`<div class="nx-row nr-prev-head"><div class="nx-grow"><div class="nx-t-title-m">معاينة الصفحة</div><div class="nx-t-body-s nx-muted">كما سيظهر في الملف النهائي.</div></div></div><div class="nr-prog-doc"><div id="rc27ProgReport"><div class="nx-muted">جارٍ التحميل…</div></div></div>`,{cls:'nx-emph nr-preview nx-stack-s'})}
           <div class="nr-export">${btn('طباعة / حفظ PDF',{icon:'PictureAsPdf',full:true,onclick:'rc27PrintProgReport()',cls:'nr-pdf'})}</div>
         </div>
       </div>

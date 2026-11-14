@@ -26,16 +26,7 @@ const stop='event.stopPropagation();';
 const cs=v=>v==null||String(v).trim()==='null'?'':String(v).trim();
 const isLogo=v=>typeof v==='string'&&v.startsWith('data:image/');
 /* RC86: a logo is compressed to a 384px JPEG under about 100 KB (same limit as the app). */
-function compressLogo(file){
-  return new Promise((res,rej)=>{
-    const fr=new FileReader();fr.onerror=()=>rej(new Error('تعذر قراءة الصورة'));
-    fr.onload=()=>{const img=new Image();img.onerror=()=>rej(new Error('صورة غير صالحة'));img.onload=()=>{
-      const k=Math.min(1,384/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
-      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
-      let q=.85,out=c.toDataURL('image/jpeg',q);while(out.length>135000&&q>.4){q-=.1;out=c.toDataURL('image/jpeg',q)}res(out)};img.src=fr.result};
-    fr.readAsDataURL(file);
-  });
-}
+function compressLogo(file){return window.RC86.photo(file,{size:384,square:false})}
 const hqPair=t=>t==='training'?['#1451A3','#3F8EE0']:t==='course'?['#B5471C','#E88A4B']:(t==='tajweed'||t==='tilawah')?['#0B6B7A','#2BB3C0']:t==='other'?['#5B3FA3','#8E6BE0']:['#084F39','#0B6E4F'];
 function endNotice(x){
   if((x.halaqa_type||'regular')==='regular'||!cs(x.ends_on))return '';
@@ -573,11 +564,12 @@ function uList(){
   if(!rows.length)return NX.empty('لا توجد حسابات في هذا التصنيف',{icon:'AccountCircle'});
   const reqOf=u=>u.requested_role||u.role||'guardian';
   const cards=rows.map(u=>{
-    const admin=u.role==='admin';
-    return `<div class="ngm-card ngm-ucard"><div class="ngm-row">${uAv(u)}<div class="ngm-grow"><div class="ngm-name">${h(u.full_name||'مستخدم')}</div><div class="ngm-sub">${h(u.email||'—')}</div></div>${uBadge(u)}</div>
-      <div class="ngm-lab">${admin?'مسؤول النظام':`الصلاحية: ${roleAr(u.role)} · الطلب: ${roleAr(reqOf(u))}`}</div>
+    const admin=u.role==='admin',open=!!(U.open&&U.open[u.id]);
+    return `<details class="ngm-card ngm-ucard ngm-uacc" ${open?'open':''} ontoggle="NGM.uOpen('${u.id}',this.open)"><summary>${uAv(u)}<span class="ngm-grow"><span class="ngm-name">${h(u.full_name||'مستخدم')}</span><span class="ngm-sub">${admin?'مسؤول النظام':h(roleAr(u.role))}</span></span>${uBadge(u)}<span class="ngm-uchev">${ic('ExpandMore',22)}</span></summary>
+      <div class="ngm-ubody"><div class="ngm-sub ngm-mail1">${h(u.email||'—')}${u.phone?' · '+h(u.phone):''}</div>
+      <div class="ngm-lab">${admin?'':`الطلب: ${roleAr(reqOf(u))}`}</div>
       ${u.rejection_reason?`<div class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</div>`:''}
-      ${admin?'':`<div class="ngm-uacts">${uActs(u).map(k=>uBtn(k,u,false)).join('')}</div>`}</div>`}).join('');
+      ${admin?'':`<div class="ngm-uacts ngm-uacts-s">${uActs(u).map(k=>uBtn(k,u,true)).join('')}</div>`}</div></details>`}).join('');
   const trs=rows.map(u=>{
     const admin=u.role==='admin';
     return `<tr><td><div class="ngm-ucell">${u.avatar_path?uAv(u):NX.avatar(u.full_name||'م')}<div><b>${h(u.full_name||'مستخدم')}</b><small>${h(u.phone||'')}</small></div></div></td>
@@ -601,6 +593,8 @@ window.usersPage=async function(){
     <div class="ngm-utools">${NX.search(U.q,'بحث بالاسم أو البريد',{oninput:'NGM.uQ(this.value)',cls:'ngm-usearch'})}<div class="ngm-uchips">${chips}</div>${NX.btn('ربط ولي الأمر بالطالب',{kind:'outlined',icon:'FamilyRestroom',cls:'ngm-ulink',onclick:'NGM.gl()'})}</div>
     ${roNote}${msg}<div id="ngmUList">${uList()}</div></div>`;
 };
+U.open=U.open||{};
+G.uOpen=(id,o)=>{U.open[id]=!!o};
 G.uStatus=k=>{U.status=k;render()};
 G.uQ=v=>{U.q=v;const e=$i('ngmUList');if(e)e.innerHTML=uList()};
 G.uRetry=async()=>{try{await refreshAdminUsers({force:true,silent:false})}catch(_e){}render()};
@@ -625,8 +619,8 @@ G.uAct=function(k,id){
   else if(k==='reject')uReject(u);else if(k==='role')uRole(u);else if(k==='delete')uDelete(u);
 };
 /* RC53: staff photo (small JPEG data URL in profiles.avatar_path, same idea as the student photo). */
-function uPhoto(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{const data=await RC50.compressImage(f);uRun(id,()=>chk(db.from('profiles').update({avatar_path:data}).eq('id',id)),'تم تحديث الصورة')}catch(e){toast(err(e)||'تعذر قراءة الصورة')}};inp.click()}
-const uAv=u=>u.avatar_path&&String(u.avatar_path).startsWith('data:image/')?`<img class="s3-av" alt="" src="${u.avatar_path}">`:`<span class="ngm-uic">${ic('AccountCircle',26)}</span>`;
+function uPhoto(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{const data=await window.RC86.photo(f,{size:384,square:true});uRun(id,()=>chk(db.from('profiles').update({avatar_path:data}).eq('id',id)),'تم تحديث الصورة')}catch(e){toast(err(e)||'تعذر قراءة الصورة')}};inp.click()}
+const uAv=u=>u.avatar_path&&String(u.avatar_path).startsWith('data:image/')?`<img class="s3-av" alt="" src="${u.avatar_path}">`:`<span class="ngm-uic ngm-uinit">${h((window.RC86&&RC86.initial)?RC86.initial(u.full_name):'؟')}</span>`;
 function uReject(u){
   NX.dialog('ngmRej','رفض حساب '+(u.full_name||''),NX.field('سبب الرفض (اختياري)',{html:'<textarea id="ngmRejReason" rows="3"></textarea>'}),{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRej')"})}${NX.btn('رفض الحساب',{kind:'danger',onclick:`NGM.uRejectGo('${u.id}')`})}`});
 }

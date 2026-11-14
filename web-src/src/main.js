@@ -26,6 +26,7 @@ import './styles/rc52.css';
 import './styles/rc53.css';
 import './styles/rc54.css';
 import './styles/rc85.css';
+import './styles/tokens.css';
 import './styles/rc86.css';
 import rc50RuntimeUrl from './features/rc50/runtime.js?url';
 import rc50DonorUrl from './features/rc50/donor.js?url';

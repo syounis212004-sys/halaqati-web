@@ -222,7 +222,10 @@
 
   // ---------- tabs ----------
   function tabsHtml(cur){
-    return NX.chips([['issue','إصدار شهادة'],['batch','إصدار جماعي'],['archive','الأرشيف'],['templates','القوالب'],['settings','الإعدادات']].map(([k,l])=>({label:l,selected:cur===k,check:false,onclick:`certTab('${k}')`})),{});
+    /* RC90: real tabs (icon + name, the archive shows its count) instead of a loose chip row */
+    let n=0;try{n=official().length}catch(_e){}
+    const T=[['issue','إصدار شهادة','WorkspacePremium'],['batch','إصدار جماعي','Groups'],['archive','الأرشيف'+(n?` (${n})`:''),'Inventory2'],['templates','القوالب','Description'],['settings','الإعدادات','Settings']];
+    return `<div class="c90-tabs" role="tablist">${T.map(([k,l,i])=>`<button type="button" role="tab" aria-selected="${cur===k}" class="c90-tab ${cur===k?'on':''}" onclick="certTab('${k}')">${ic(i,20)}<span>${l}</span></button>`).join('')}</div>`;
   }
   function headerHtml(){
     return `<div class="ncc-head"><span class="nc-head-ic">${ic('WorkspacePremium',22)}</span><div class="nx-grow"><b>مركز الشهادات</b><small>تحرير · معاينة A4 · إصدار وأرشفة</small></div><span class="nc-ver">RC27.40</span></div>`;
