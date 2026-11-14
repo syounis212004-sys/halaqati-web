@@ -569,9 +569,10 @@ G.uRejectGo=function(id){
   uRun(id,()=>chk(db.from('profiles').update({approval_status:'rejected',active:false,rejection_reason:reason||null}).eq('id',id)),'تم رفض طلب الحساب');
 };
 let RL=null;
-function uRole(u){RL={id:u.id,name:u.full_name||'',role:['guardian','teacher','supervisor'].includes(u.role)?u.role:'guardian'};roleDlg()}
+const RL_ROLES=()=>['guardian','teacher','supervisor','observer'].concat(window.__rc85Owner?['admin']:[]);
+function uRole(u){RL={id:u.id,name:u.full_name||'',role:RL_ROLES().includes(u.role)?u.role:'guardian'};roleDlg()}
 function roleDlg(){
-  NX.dialog('ngmRole','صلاحية '+RL.name,`<div class="ngm-rolelist">${['guardian','teacher','supervisor'].map(v=>NX.chip(roleAr(v),{selected:RL.role===v,onclick:`NGM.rSet('${v}')`})).join('')}</div>`,{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRole')"})}${NX.btn('حفظ',{onclick:'NGM.rGo()'})}`});
+  NX.dialog('ngmRole','صلاحية '+RL.name,`<div class="ngm-rolelist">${RL_ROLES().map(v=>NX.chip(v==='admin'?'مسؤول جمعية':roleAr(v),{selected:RL.role===v,onclick:`NGM.rSet('${v}')`})).join('')}</div>${RL.role==='admin'?'<p class="nx-t-body-s" style="margin-top:8px">يدير جمعية كاملة. بعد الحفظ عيّنه على جمعية من «الهيكل الإداري».</p>':''}`,{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRole')"})}${NX.btn('حفظ',{onclick:'NGM.rGo()'})}`});
 }
 G.rSet=v=>{RL.role=v;roleDlg()};
 G.rGo=function(){

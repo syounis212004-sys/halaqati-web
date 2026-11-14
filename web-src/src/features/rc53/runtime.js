@@ -19,6 +19,7 @@
     observer:[['﴿وَمَا أَنفَقْتُم مِّن شَيْءٍ فَهُوَ يُخْلِفُهُ ۖ وَهُوَ خَيْرُ الرَّازِقِينَ﴾','سورة سبأ ٣٩'],['«مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ»','رواه مسلم'],['«الدَّالُّ عَلَى الْخَيْرِ كَفَاعِلِهِ»','رواه الترمذي'],['«إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ»','رواه مسلم'],['﴿مَّن ذَا الَّذِي يُقْرِضُ اللَّهَ قَرْضًا حَسَنًا فَيُضَاعِفَهُ لَهُ أَضْعَافًا كَثِيرَةً﴾','سورة البقرة ٢٤٥'],['«أَحَبُّ النَّاسِ إِلَى اللَّهِ أَنْفَعُهُمْ لِلنَّاسِ»','رواه الطبراني'],['جزاك الله خيرًا؛ دعمك يصل إلى حلقة تُحفَّظ فيها آيات كتاب الله.','كلمة طيبة'],['ما تدعمه اليوم يبقى أثره في صدور الحفظة غدًا بإذن الله.','كلمة طيبة']],
     guardian:[['﴿وَالَّذِينَ يَقُولُونَ رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ﴾','سورة الفرقان ٧٤'],['«مَنْ قَرَأَ الْقُرْآنَ وَعَمِلَ بِمَا فِيهِ أُلْبِسَ وَالِدَاهُ تَاجًا يَوْمَ الْقِيَامَةِ»','رواه أبو داود'],['﴿وَأْمُرْ أَهْلَكَ بِالصَّلَاةِ وَاصْطَبِرْ عَلَيْهَا﴾','سورة طه ١٣٢'],['«خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ»','رواه الترمذي'],['«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»','رواه البخاري'],['﴿يَا أَيُّهَا الَّذِينَ آمَنُوا قُوا أَنفُسَكُمْ وَأَهْلِيكُمْ نَارًا﴾','سورة التحريم ٦'],['كلمة تشجيع منك الليلة تضيف إلى حفظ ابنك أكثر مما تتصور.','كلمة طيبة'],['المراجعة اليومية القصيرة أثبتُ من الحفظ الطويل المتقطع.','كلمة طيبة']]
   };
+  R.PH=PH;
   const greeting=()=>{const h=new Date().getHours();return h>=4&&h<=11?'صباح الخير':h<=16&&h>=12?'نهارك مبارك':h>=17&&h<=20?'مساء الخير':'ليلة مباركة'};
   R.welcome=(detail)=>{
     const list=PH[role()]||PH.teacher,day=Math.floor(Date.now()/86400000),p=list[day%list.length];
@@ -271,7 +272,7 @@
       const out=items.map(x=>x[0]==='supervision'?['supervision','متابعة المحفظين والمشرفين']:x),i=out.findIndex(x=>x[0]==='supervision');
       if(!out.some(x=>x[0]==='visits'))out.splice(i<0?out.length:i+1,0,['visits','زيارات المشرفين']);
       if(!out.some(x=>x[0]==='chats')){const sp=out.findIndex(x=>x[0]==='support');out.splice(sp<0?out.length:sp+1,0,['chats','محادثات المانحين'])}
-      if(!out.some(x=>x[0]==='observer_requests')){const a=out.findIndex(x=>x[0]==='approvals');out.splice(a<0?out.length:a+1,0,['observer_requests','طلبات المراقبين'])}
+      if(!out.some(x=>x[0]==='observer_requests')){const a=out.findIndex(x=>x[0]==='chats');out.splice(a<0?out.length:a+1,0,['observer_requests','طلبات المانحين'])}
       return out;
     }
     return items;
@@ -318,7 +319,7 @@
 
   // ---------- admin: observer (donor) requests ----------
   const KIND={reward:'مكافأة',honor:'تكريم',follow_up:'متابعة',other:'أخرى'},STAT={approved:['تمت الموافقة','ok'],declined:['لم تتم الموافقة','bad']};
-  R.page('observer_requests',{title:'طلبات المراقبين',roles:['admin'],render:async()=>{
+  R.page('observer_requests',{title:'طلبات المانحين',roles:['admin'],render:async()=>{
     let rows;try{rows=await R.rpc('rc32_observer_requests')||[]}catch(err){return R.card(R.empty(String(err.message||'').includes('rc32_')?'لم يُطبَّق تحديث قاعدة البيانات الخاص بالمراقب بعد.':(err.message||'تعذر تحميل الطلبات')))}
     return rows.map(r=>{const st=STAT[r.status]||['بانتظار المدير','warn'];
       return `<article class="s3-card ${st[1]}"><div class="s3-top"><div><b>${e(KIND[r.kind]||r.kind||'طلب')} · ${e(r.student_name||'طالب')}</b><small>${e(r.observer_name||'')} ${r.halaqa_name?'· '+e(r.halaqa_name):''}</small></div><span class="s3-pill ${st[1]}">${e(st[0])}</span></div>

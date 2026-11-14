@@ -430,7 +430,7 @@
 
   function rkFilters(prog){
     const period=rkPeriod();
-    const parts=[`<div class="nr-ctl-head">${ic('Tune',22)}<span class="nx-t-title-s">فلترة النتائج</span></div>`];
+    const parts=[];
     if(prog)parts.push('<p class="nx-muted nx-t-body-s nr-note">ترتيب البرنامج: متوسط درجة التلاوة والتجويد، ثم الحضور، ثم عدد التسميعات، ثم النقاط</p>');
     else{
       parts.push(labelSm('المسار')+chipRow([['general_hifz','الحفظ العام'],['tathbit','التثبيت']],progTrack(),v=>`NR.rkSet('program','${v}')`));
@@ -442,14 +442,17 @@
         ?NX.field('اليوم',{type:'date',value:RK.day||tdy(),max:tdy(),onchange:"NR.rkSet('day',this.value||'')"})
         :NX.select('الشهر',monthOptions(),{value:RK.month||curMonth(),onchange:"NR.rkSet('month',this.value)"}));
     }
-    return NX.card(parts.join(''),{cls:'nx-emph nr-rk-filters nx-stack-s'});
+    /* web 2.89.32: the filters fold into one summary line (track · activity · period); tap to open them */
+    const sum=[prog?'البرامج':(progTrack()==='tathbit'?'التثبيت':'الحفظ العام'),prog?null:({hifz:'الحفظ',review:'المراجعة',sard:'السرد'}[effTrack()]||''),period==='day'?(RK.day||tdy()):(((monthOptions().find(o=>(o.value||o[0])===(RK.month||curMonth()))||{}).label)||RK.month||curMonth())].filter(Boolean).join(' · ');
+    return `<details class="nx-card nx-emph nr-rk-filters nr-rk-fold" ${window.__rkFold?'open':''} ontoggle="window.__rkFold=this.open"><summary class="nr-ctl-head" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">${ic('Tune',22)}<span style="flex:1;display:grid"><small class="nx-muted">الفلترة</small><b class="nx-t-title-s">${h(sum)}</b></span>${ic(window.__rkFold?'ExpandLess':'ExpandMore',22)}</summary><div class="nx-stack-s" style="margin-top:8px">${parts.join('')}</div></details>`;
   }
 
   /** common renderer: items = [{name,sub,value,valueLabel,cells:[…]}], cols = table headers after name */
   function rkList(items,cols,emptyText){
     if(!items.length)return NX.empty(emptyText,{icon:'EmojiEvents'});
     const medal=['gold','silver','bronze'];
-    const phone=items.map((x,i)=>`<div class="nx-card nx-emph nr-rk-row"><span class="nr-rk-n">${i+1}</span><div class="nx-grow"><b class="nx-ellipsis nx-t-title-m">${h(x.name)}</b><small class="nx-muted nx-t-body-s">${h(x.sub)}</small></div><div class="nr-rk-v"><b>${h(x.value)}</b>${x.valueLabel?`<small>${h(x.valueLabel)}</small>`:''}</div></div>`).join('');
+    const ph=x=>{const u=x.id&&state.photoUrls&&state.photoUrls[x.id];return u?`<img src="${u}" alt="" class="rc85-ph" style="width:44px;height:44px">`:''};
+    const phone=items.map((x,i)=>`<div class="nx-card nx-emph nr-rk-row"><span class="nr-rk-n">${i+1}</span>${ph(x)}<div class="nx-grow"><b class="nx-ellipsis nx-t-title-m">${h(x.name)}</b><small class="nx-muted nx-t-body-s">${h(x.sub)}</small></div><div class="nr-rk-v"><b>${h(x.value)}</b>${x.valueLabel?`<small>${h(x.valueLabel)}</small>`:''}</div></div>`).join('');
     const top=items.slice(0,3);
     const order=top.length===3?[1,0,2]:top.map((_,i)=>i);
     const podium=`<div class="nr-podium">${order.map(i=>{const x=top[i];return `<div class="nr-pod ${medal[i]}"><span class="nr-pod-ic">${ic(i===0?'EmojiEvents':'MilitaryTech',i===0?34:28)}</span>${NX.avatar(x.name,{size:52})}<b class="nx-ellipsis">${h(x.name)}</b><span class="nr-pod-v">${h(x.value)}${x.valueLabel?` <small>${h(x.valueLabel)}</small>`:''}</span><span class="nr-pod-step"><i>${i+1}</i></span></div>`}).join('')}</div>`;
@@ -459,7 +462,7 @@
 
   function rankingPageRegular(){
     const {rows,loading}=rkRows(),sorted=sortRows(rows);
-    const items=sorted.map(x=>({name:x.full_name||'طالب',sub:`${n2(x.pages)} ص · ${x.mistakes||0} أخطاء · ${x.prompts||0} نقرات`,value:n2(x.points),valueLabel:'نقطة',cells:[n2(x.pages),String(x.mistakes||0),String(x.prompts||0),x.penalty_per_page==null?'—':n2(x.penalty_per_page),n2(x.points)]}));
+    const items=sorted.map(x=>({id:x.student_id,name:x.full_name||'طالب',sub:`${n2(x.pages)} ص · ${x.mistakes||0} أخطاء · ${x.prompts||0} نقرات`,value:n2(x.points),valueLabel:'نقطة',cells:[n2(x.pages),String(x.mistakes||0),String(x.prompts||0),x.penalty_per_page==null?'—':n2(x.penalty_per_page),n2(x.points)]}));
     const notices=(!online()?NX.notice('وضع دون اتصال: يتم عرض البيانات المحلية المحفوظة ويمكن تغيير الفلاتر دون الحاجة للاتصال.','warning'):'')+(RK.err?NX.notice(h(RK.err),'warning'):'');
     const body=loading?NX.skeleton(4):rkList(items,['الصفحات','الأخطاء','النقرات','خصم/صفحة','النقاط'],online()?'لا توجد بيانات لهذا المسار والفترة':'لا توجد بيانات محلية محفوظة لهذه الفترة بعد');
     return `<div class="nr-root nr-ranking"><div class="nr-rk-cols"><div class="nr-rk-side nx-stack-s">${rkFilters(false)}</div><div class="nr-rk-main nx-stack-s">${notices}${loading?NX.progress(60,{cls:'nr-indet'}):''}${body}</div></div></div>`;

@@ -15,23 +15,45 @@
   const safe=async(fn,fb)=>{try{return await fn()}catch(err){console.warn(err);return fb}};
 
   // ================= summary home =================
+  // web 2.89.32 (native RC83): this month so far by default, with last month one tap away; trend arrows, attendance ring,
+  // a 6-month hifz line, winners' photos (rc83_donor_award_photos honours the owner's "show photos" setting).
+  const monthsBack=k=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-k);return ym(d)};
+  R.repCache=R.repCache||{};
+  const report=async m=>{const c=R.repCache[m],cur=monthsBack(0),last=monthsBack(1);if(c&&(m!==cur&&m!==last||Date.now()-c.at<30*60000))return c.v;const v=await safe(()=>R.rpc('rc49_donor_report',{p_month:m+'-01'}),null);if(v)R.repCache[m]={v,at:Date.now()};return v};
+  R.photoCache=R.photoCache||{};
+  R.awardPhotos=async m=>{if(!m)return {};if(R.photoCache[m])return R.photoCache[m];const v=await safe(()=>R.rpc('rc83_donor_award_photos',{p_month:m+'-01'}),{});R.photoCache[m]=v&&typeof v==='object'?v:{};return R.photoCache[m]};
+  R.av=(w,cls,photos)=>{const p=photos&&photos[w.student_id];return p&&String(p).startsWith('data:image/')?`<img class="dn-av ${cls} rc85-ph" src="${p}" alt="">`:`<span class="dn-av ${cls}">${e((w.name||'؟')[0])}</span>`};
+  const trend=(now,base,pr)=>{const b=(Number(base)||0)*pr;if(b<=.5)return '';const p=Math.round(((Number(now)||0)-b)/b*100);return `<small class="rc85-trend ${p>=0?'up':'down'}">${p>=0?'▲ '+p:'▼ '+(-p)}٪</small>`};
+  const ttile=(l,v,t)=>`<div class="dn-tile"><b>${v}</b><span>${l}</span>${t||''}</div>`;
+  const ring=p=>`<div class="dn-tile"><svg viewBox="0 0 44 44" width="52" height="52" style="display:block;margin:auto"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--primary,#0B6E4F)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(Number(p)||0)*1.131} 200" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" font-size="11" font-weight="800" fill="currentColor">${p==null?'—':p+'٪'}</text></svg><span>حضور</span></div>`;
+  const spark=vals=>{if(vals.length<2)return '';const W=300,H=56,top=Math.max(1,...vals),st=W/(vals.length-1);const pts=vals.map((v,i)=>[W-i*st,H-4-(v/top)*(H-8)]);
+    return `<small class="dn-muted" style="font-weight:700">صفحات الحفظ · آخر ${vals.length} أشهر</small><svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--primary,#0B6E4F)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--primary,#0B6E4F)"/>`).join('')}</svg>`};
+  R.dView=R.dView||'cur';
+  R.dSetView=v=>{R.dView=v;render()};
   R.page('home',{title:'الرئيسية',roles:OBS,render:async()=>{
-    const rm=lastMonth();
+    const cur=R.dView!=='prev',shown=monthsBack(cur?0:1),baseM=monthsBack(cur?1:2);
     const months=await safe(()=>R.rpc('rc46_award_months'),[]);
     const latest=months[0]?String(months[0].month).slice(0,7):null;
-    const [payload,report,cards,mine,news]=await Promise.all([
+    const hist=[5,4,3,2,1,0].map(monthsBack);
+    const [payload,reps,cards,mine,news,photos]=await Promise.all([
       latest?safe(()=>R.rpc('rc46_donor_awards',{p_month:latest+'-01',p_scope:'halaqa'}),null):null,
-      safe(()=>R.rpc('rc49_donor_report',{p_month:rm+'-01'}),null),
-      safe(()=>R.rpc('rc49_support_cards'),[]),safe(()=>R.rpc('rc49_my_pledges'),[]),safe(()=>R.rpc('rc49_news_list'),[])]);
+      Promise.all(hist.map(report)),
+      safe(()=>R.rpc('rc49_support_cards'),[]),safe(()=>R.rpc('rc49_my_pledges'),[]),safe(()=>R.rpc('rc49_news_list'),[]),R.awardPhotos(latest)]);
+    const byM=Object.fromEntries(hist.map((m,i)=>[m,reps[i]])),rep=byM[shown],base=byM[baseM];
+    const now=new Date(),pr=cur?now.getDate()/new Date(now.getFullYear(),now.getMonth()+1,0).getDate():1;
     const groups=payload?.groups||[];
     const names=[...new Set(groups.map(g=>g.halaqa_name).filter(Boolean))];
     const stars=groups.map(g=>({w:(g.winners||[]).find(x=>x.rank===1),cat:g.category_name})).filter(x=>x.w);
     const needProof=mine.filter(p=>(p.status==='pledged'||p.status==='received')&&!p.transfer_submitted_at).length;
     const delivered=mine.filter(p=>p.status==='delivered'),ben=delivered.reduce((s,p)=>s+(Number(p.beneficiaries)||0),0);
     const sec=(t,act,go,inner)=>R.card(`<div class="dn-sec"><h3>${e(t)}</h3><button type="button" class="dn-link" onclick="go('${go}')">${e(act)} ‹</button></div>${inner}`);
-    return `${topLine()}${R.hero('<small>السلام عليكم ورحمة الله</small><h2>شكرًا لدعمك 🌿</h2>',[names.length?`حلقتك: ${e(names.join('، '))}`:'', '«خيرُكم من تعلّم القرآنَ وعلّمه» — بفضل الله ثم بدعمك تُثمر الحلقة.'].filter(Boolean))}
-    ${report?sec('ملخص حلقتك · '+R.monthLabel(rm),'الإحصاءات','donor_stats',`<div class="dn-tiles">${R.tile('طالبًا',report.students)}${R.tile('جلسة',report.sessions)}${R.tile('مكرَّمون',report.winners)}</div><div class="dn-tiles">${R.tile('صفحة حفظ',R.num(report.hifz_pages))}${R.tile('صفحة مراجعة',R.num(report.review_pages))}${R.tile('حضور',report.attendance_pct==null?'—':report.attendance_pct+'%')}</div>`):''}
-    ${sec('نجوم الشهر','كل المكرَّمين','donor_awards',stars.length?`<small class="dn-muted">${e(R.monthLabel(latest))}</small>${stars.map(s=>`<div class="dn-row"><span class="dn-av gold">${e((s.w.name||'؟')[0])}</span><div><b>${e(s.w.name)}</b><small>${e(s.cat)} · ${R.score(s.w.score)}</small></div></div>`).join('')}`:'<p class="dn-muted">لم يُعتمد تكريم بعد. سيصلك إشعار عند اعتماد المدير.</p>')}
+    const P=(R.PH&&R.PH.observer)||[['«إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ»','رواه مسلم']],ph=P[Math.floor(Date.now()/864e5)%P.length];
+    const hero=`<section class="rc85-dhero"><div class="rc85-dhero-top"><div><small>السلام عليكم ورحمة الله</small><h2>شكرًا لدعمك</h2></div><span class="rc85-dhero-ic">♥</span></div>${names.length?`<span class="rc85-pill">حلقتك: ${e(names.join('، '))}</span>`:''}<blockquote><b>${e(ph[0])}</b><cite>— ${e(ph[1])}</cite></blockquote></section>`;
+    const seg=`<div class="rc85-seg"><button type="button" class="${cur?'on':''}" onclick="RC50.dSetView('cur')">هذا الشهر</button><button type="button" class="${cur?'':'on'}" onclick="RC50.dSetView('prev')">الشهر الماضي</button></div>`;
+    const summary=rep?`${seg}<div class="dn-tiles">${R.tile('طالبًا',rep.students)}${R.tile('جلسة',rep.sessions)}${R.tile('مكرَّمون',cur?'—':rep.winners)}</div><div class="dn-tiles">${ttile('صفحة حفظ',R.num(rep.hifz_pages),base?trend(rep.hifz_pages,base.hifz_pages,pr):'')}${ttile('صفحة مراجعة',R.num(rep.review_pages),base?trend(rep.review_pages,base.review_pages,pr):'')}${ring(rep.attendance_pct)}</div>${base?`<small class="dn-muted">${cur?'الأسهم: مقارنة بالفترة نفسها من الشهر الماضي (تقريبية)':'الأسهم: مقارنة بالشهر الذي قبله'}</small>`:''}${spark(hist.map(m=>byM[m]).filter(Boolean).map(r=>Number(r.hifz_pages)||0))}`:`${seg}<p class="dn-muted">لا توجد بيانات لهذا الشهر بعد.</p>`;
+    return `${topLine()}${hero}
+    ${sec('ملخص حلقتك · '+R.monthLabel(shown)+(cur?' (حتى اليوم)':''),'الإحصاءات','donor_stats',summary)}
+    ${sec('نجوم الشهر','كل المكرَّمين','donor_awards',stars.length?`<small class="dn-muted">${e(R.monthLabel(latest))}</small>${stars.map(s=>`<div class="dn-row">${R.av(s.w,'gold',photos)}<div><b>${e(s.w.name)}</b><small>${e(s.cat)} · ${R.score(s.w.score)}</small></div></div>`).join('')}`:'<p class="dn-muted">لم يُعتمد تكريم بعد. سيصلك إشعار عند اعتماد المدير.</p>')}
     ${sec('الدعم','افتح الدعم','donor_support',`<p>${cards.length?cards.length+' بطاقة دعم مفتوحة تنتظر كفلاء.':'لا توجد بطاقات دعم مفتوحة الآن.'}</p>${needProof?`<div class="dn-alert">لديك ${needProof} كفالة تنتظر إرسال إثبات التحويل.</div>`:''}`)}
     ${sec('أثري','التفاصيل','donor_impact',`<div class="dn-tiles">${R.tile('كفالة',mine.length)}${R.tile('وصلت',delivered.length)}${R.tile('طالب استفاد',ben)}</div>`)}
     ${news.length?sec('آخر أخبار الحلقة','أثري','donor_impact',news.slice(0,2).map(n=>`<div class="dn-news"><b>${e(n.title)}</b>${n.body?`<p>${e(n.body)}</p>`:''}</div>`).join('')):''}`;
@@ -44,14 +66,14 @@
     if(!months.length)return `${topLine()}${R.card(R.empty('لم يُعتمد تكريم أي شهر بعد. سيصلك إشعار عند اعتماد المدير.'))}`;
     const keys=months.map(m=>String(m.month).slice(0,7));
     if(!A.month||!keys.includes(A.month))A.month=keys[0];
-    const data=await R.rpc('rc46_donor_awards',{p_month:A.month+'-01',p_scope:A.scope});
+    const [data,photos]=await Promise.all([R.rpc('rc46_donor_awards',{p_month:A.month+'-01',p_scope:A.scope}),R.awardPhotos(A.month)]);
     R.cache.winners=[];
     const pods=g=>{
       const by={};(g.winners||[]).forEach(w=>{by[w.rank]=w});
       return `<div class="dn-podium">${[2,1,3].map(r=>{const w=by[r];if(!w)return '<div class="dn-pod"></div>';const i=R.cache.winners.push(w)-1;
-        return `<div class="dn-pod p${r}"><button type="button" class="dn-pod-btn" onclick="RC50.dWinner(${i})"><span class="dn-av m${r}">${e((w.name||'؟')[0])}</span><b>${e(w.name)}</b><small>${R.score(w.score)}</small></button><div class="dn-plinth">${r}</div></div>`}).join('')}</div>`};
+        return `<div class="dn-pod p${r}"><button type="button" class="dn-pod-btn" onclick="RC50.dWinner(${i})">${R.av(w,'m'+r,photos)}<b>${e(w.name)}</b><small>${R.score(w.score)}</small><small class="rc85-lvl m${r}">${['','ذهبي','فضي','برونزي'][r]}</small></button><div class="dn-plinth">${r}</div></div>`}).join('')}</div>`};
     const cards=(data.groups||[]).map(g=>{const title=[A.scope==='halaqa'?g.halaqa_name:null,g.category_name].filter(Boolean).join(' · ');
-      return R.card(`<small class="dn-gold">نجوم الشهر</small><h3>${e(title)}</h3>${(g.winners||[]).length?pods(g):'<p class="dn-muted">لم يستوفِ أحد شروط التكريم في هذه المجموعة هذا الشهر.</p>'}`)}).join('');
+      return R.card(`<small class="dn-gold">نجوم الشهر</small><h3>${e(title)}</h3>${(g.winners||[]).length?pods(g):'<p class="dn-muted">لم يستوفِ أحد شروط التكريم في هذه المجموعة هذا الشهر.</p>'}`)}).join('')+(data.groups&&data.groups.length?R.card('<h3>كيف احتُسب التكريم؟</h3><p>تُجمع خمسة معايير في درجة من 100، ويعتمد المدير النتيجة بعد انتهاء الشهر.</p><div class="rc85-chips">'+['الحفظ','السرد','الحضور','السلوك','جودة التسميع'].map(c=>'<span>'+c+'</span>').join('')+'</div><small class="dn-muted">المستويات: ذهبي للمركز الأول، فضي للثاني، برونزي للثالث.</small>'):'');
     return `${topLine()}${R.monthPicker(keys,A.month,'RC50.dMonth')}${R.seg([['halaqa','حسب الحلقة'],['category','حسب الفئة']],A.scope,'RC50.dScope')}${cards||R.card(R.empty('لا توجد نتائج لهذا الشهر.'))}`;
   }});
   R.dMonth=m=>{A.month=m;render()};

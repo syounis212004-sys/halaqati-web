@@ -88,17 +88,17 @@
       const startedIds=new Set(sessionsToday.filter(s=>!['planned','draft'].includes(String(s.status).toLowerCase())).map(s=>s.id));
       // heard today + pages
       const heard=new Set;let pages=0;
-      if(daily.count)recs.forEach(r=>{if(!startedIds.has(r.session_id))return;if(daily.expected.has(r.student_id))heard.add(r.student_id);pages+=Number(r.pages_count)||0});
+      if(daily.count)recs.forEach(r=>{if(!startedIds.has(r.session_id))return;if(r.student_id)heard.add(r.student_id);pages+=Number(r.pages_count)||0});/* web 2.89.32: everyone recited today counts, not only the students the plan scheduled */
       const notHeard=daily.count?students.filter(s=>daily.expected.has(s.id)&&!heard.has(s.id)).map(s=>({studentId:s.id,studentName:s.full_name,reason:'لم يسمّع اليوم'})):[];
       // absence today
-      let absentLate=D.absentLate;
+      let absentLate=D.absentLate,presentIds=D.presentIds||new Set;
       if(!daily.count)absentLate=[];
       else{
         try{
           if(!online)throw new Error('offline');
           const ids=[...startedIds],byId=new Map(students.map(s=>[s.id,s]));
           const r=ids.length?await window.HalaqatiData.result(()=>db.from('attendance_records').select('id,session_id,student_id,status').in('session_id',ids).order('session_id').order('student_id'),()=>state.user?.id):{data:[]};if(r.error)throw r.error;
-          const seen=new Map;(r.data||[]).forEach(row=>{const st=byId.get(row.student_id);if(st&&daily.expected.has(row.student_id)&&['absent','excused'].includes(String(row.status).toLowerCase()))seen.set(st.id,{studentId:st.id,studentName:st.full_name,reason:'غائب اليوم'})});
+          const seen=new Map;presentIds=new Set;(r.data||[]).forEach(row=>{const st=byId.get(row.student_id),stt=String(row.status).toLowerCase();if(['present','late'].includes(stt))presentIds.add(row.student_id);if(st&&['absent','excused'].includes(stt))seen.set(st.id,{studentId:st.id,studentName:st.full_name,reason:'غائب اليوم'})});
           absentLate=[...seen.values()];
         }catch(e){if(e.message!=='offline')errors.attendance=e.message||String(e)}
       }
@@ -109,7 +109,7 @@
       const latestSafety=new Map;recs.forEach(r=>{if(r.student_id&&!latestSafety.has(r.student_id)&&!(window.HalaqatiSpan&&window.HalaqatiSpan.isPlaceholder(r)))latestSafety.set(r.student_id,r.safety_percentage==null?100:Number(r.safety_percentage))});
       const byStu=new Map(students.map(s=>[s.id,s]));
       const review=[...latestSafety.entries()].filter(([,v])=>v<78).map(([sid,v])=>byStu.has(sid)?{studentId:sid,studentName:byStu.get(sid).full_name,reason:`يحتاج مراجعة · ${v.toFixed(0)}%`}:null).filter(Boolean);
-      Object.assign(D,{daily,heard:heard.size,pages,expected:daily.expected,notHeard,absentLate,attention:dedupe(attention),overTarget:dedupe(overTarget),review,alerts:snaps.filter(it=>Number(it.sn.raw.consecutiveMissed)>0).map(it=>`${it.student.full_name}: ${it.sn.raw.healthLabel}`),todaySessions:(state.sessions||[]).filter(s=>s.session_date===today&&s.status!=='cancelled').length,errors,loaded:true,at:Date.now()});
+      Object.assign(D,{daily,heard:heard.size,heardIds:heard,presentIds,pages,expected:daily.expected,notHeard,absentLate,attention:dedupe(attention),overTarget:dedupe(overTarget),review,alerts:snaps.filter(it=>Number(it.sn.raw.consecutiveMissed)>0).map(it=>`${it.student.full_name}: ${it.sn.raw.healthLabel}`),todaySessions:(state.sessions||[]).filter(s=>s.session_date===today&&s.status!=='cancelled').length,errors,loaded:true,at:Date.now()});
     }catch(e){D.errors={dashboard:e.message||String(e)};D.loaded=true}
     finally{D.busy=false}
     if(state.page==='home'||state.page==='follow_up'){const c=document.getElementById('content');if(c&&state.page==='home')render();else if(state.page==='follow_up')render()}
@@ -251,7 +251,7 @@
   function homeHtml(){
     ensureDashboardOwner();
     const p=state.profile,compact=prefs().homeStyle==='compact',d=D.daily;
-    const off=d?.mode==='OFF_DAY',waiting=d?.mode==='NO_SESSION_YET',exp=d?D.expected.size:0,present=d?.count?Math.max(0,exp-D.absentLate.length):0,wait=d?.count?Math.max(0,present-D.heard):0;
+    const off=d?.mode==='OFF_DAY',waiting=d?.mode==='NO_SESSION_YET',absIds=new Set(D.absentLate.map(x=>x.studentId)),heardIds=D.heardIds||new Set,presentSet=new Set([...(D.presentIds||[]),...heardIds,...[...(D.expected||[])].filter(x=>!absIds.has(x))]),present=d?.count?presentSet.size:0,wait=d?.count?[...presentSet].filter(x=>!heardIds.has(x)).length:0;
     const hs=homeState(D.loaded,off,waiting,D.heard,wait),seed=Math.floor(Date.now()/864e5),msg=pickMsg(p.role==='teacher',hs,seed,wait,D.absentLate.length,D.heard);
     const groups=followUpGroups(),all=[...new Map(groups.flatMap(g=>g.items).map(i=>[i.studentId,i])).values()];
     const analytic=['admin','supervisor','teacher'].includes(p.role);

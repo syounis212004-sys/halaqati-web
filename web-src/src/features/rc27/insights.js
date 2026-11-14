@@ -343,7 +343,7 @@
   function todayCard(o){
     const att={present:'حضر اليوم',late:'حضر اليوم (متأخر)',absent:'غائب اليوم',excused:'غائب بعذر اليوم'}[o.todayAtt]||(o.todayAtt?`الحضور: ${o.todayAtt}`:(o.todayExists===false?'لا توجد جلسة مسجلة اليوم':o.todayStarted===false?'جلسة اليوم لم تبدأ بعد':'لم يُسجَّل الحضور بعد'));
     const kind=o.tath?'التثبيت':'التسميع',kicker=[o.track,o.sub].filter(Boolean).join(' · ');
-    return `<section class="nh-today"><div class="nh-today-t"><span class="nh-today-k">${h(kicker)}</span><h2>${h(o.name)}</h2><b>${h(o.todayRecited?`${att} · أتمّ ${kind}`:att)}</b>${o.todayRecited?`${o.todayRange?`<span class="nh-today-r">${h(o.todayRange)}</span>`:''}<span class="nh-today-p">${o.tath?'تثبيت':'تسميع'} اليوم: ${num(o.todayPages)} صفحة</span>`:`<small>${o.tath?'لم يُسجَّل تثبيت اليوم بعد':'لم يُسجَّل تسميع اليوم بعد'}</small>`}</div><span class="nh-today-art">${NX.icon('FamilyRestroom',34)}</span></section>`;
+    return `<section class="nh-today"><div class="nh-today-t"><span class="nh-today-k">${h(kicker)}</span><h2>${h(o.name)}</h2><b>${h(o.todayRecited?`${att} · أتمّ ${kind}`:att)}</b>${o.todayRecited?`${o.todayRange?`<span class="nh-today-r">${h(o.todayRange)}</span>`:''}<span class="nh-today-p">${o.tath?'تثبيت':'تسميع'} اليوم: ${num(o.todayPages)} صفحة</span>`:`<small>${o.tath?'لم يُسجَّل تثبيت اليوم بعد':'لم يُسجَّل تسميع اليوم بعد'}</small>`}<div class="nh-ward rc85-ward"><small>مقرر اليوم</small><b>${h(wardOf(G.sel)||'لا يوجد مقرر اليوم')}</b></div></div><span class="nh-today-art rc85-child" data-sid="${h(G.sel||'')}">${NX.icon('FamilyRestroom',34)}</span></section>`;
   }
   // RC52: "today at a glance" — today's ward, recited?, attendance, and the mistakes/prompts/quality of the latest recitation day.
   function wardOf(sid){
@@ -361,8 +361,7 @@
     const att={present:['حاضر','ok'],late:['متأخر','warn'],absent:['غائب','bad'],excused:['غائب بعذر','warn']}[o.todayAtt]||[o.todayExists===false?'لا جلسة':'لم يُسجَّل','none'];
     const last=(G.last||{})[sid],day=last?(last.isToday?'اليوم':`آخر يوم تسميع · ${last.date}`):'آخر يوم تسميع';
     const tile=(l,v,t)=>`<div class="nh-dt ${t}"><b>${h(v)}</b><span>${h(l)}</span></div>`;
-    return `<section class="nh-tdetail"><h3 class="nh-title">نظرة اليوم</h3><div class="nh-ward"><small>مقرر اليوم</small><b>${h(wardOf(sid)||'لا يوجد مقرر اليوم')}</b></div>
-      <div class="nh-dts two">${tile('التسميع',o.todayRecited?'سمّع':'لم يسمّع',o.todayRecited?'ok':'none')}${tile('الحضور',att[0],att[1])}</div>
+    return `<section class="nh-tdetail"><h3 class="nh-title">جودة آخر تسميع</h3>
       <small class="nh-dday">${h(day)}</small>
       <div class="nh-dts">${tile('الأخطاء',last?String(last.mistakes):'—',last&&last.mistakes>3?'warn':'ok')}${tile('التنبيهات',last?String(last.prompts):'—','ok')}${tile('الجودة',last&&last.quality!=null?num(last.quality)+'٪':'—','ok')}</div></section>`;
   }
