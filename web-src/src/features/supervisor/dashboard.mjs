@@ -54,7 +54,7 @@ export function welcome({ greeting, name, avatar, quote, source }, e) {
 
 const argument = (value, e) => e(JSON.stringify(String(value ?? "")));
 const alertAction = (h, e) =>
-  `RC50.s3.alert(${argument(h.tids[0] || "", e)},${argument(h.names[0] || "", e)},${argument(h.id, e)},${argument(h.state === "none" ? "1" : "", e)})`;
+  `RC50.s3.alert(${argument(h.tids.join(","), e)},${argument(h.names.join("، "), e)},${argument(h.id, e)},${argument(h.state === "none" ? "1" : "", e)})`;
 
 export function halaqaCard(
   h,
