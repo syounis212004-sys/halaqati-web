@@ -188,7 +188,7 @@
     const sub=owner?`${countAr(OS.assoc,'جمعية','جمعية واحدة','جمعيتان','جمعيات')} · ${countAr(OS.halaqat,'حلقة','حلقة واحدة','حلقتان','حلقات')}`
       :`${countAr(OS.halaqat,'حلقة','حلقة واحدة','حلقتان','حلقات')} · ${countAr(OS.staff,'عضو','عضو واحد','عضوان','أعضاء')}`;
     if(!OS.at)setTimeout(()=>RC86.refreshOrg(),0);
-    return `<button type="button" class="h86-org" onclick="go('org')"><span class="h86-gold">${IC(owner?'Public':'AccountTree',28)}</span><span class="h86-orgt"><b>${e(owner?'إدارة الجمعيات':(OS.name||'الجمعية'))}</b><small>${e(sub)}</small></span>${IC('ChevronLeft',24)}</button>`;
+    return `<button type="button" class="h86-org" onclick="go('org')"><span class="h86-gold">${IC(owner?'Public':'AccountTree',28)}</span><span class="h86-orgt"><b>${e(owner?'إدارة الجمعيات':(OS.name||'حلقاتي'))}</b><small>${e(sub)}</small></span>${IC('ChevronLeft',24)}</button>`;
   };
   RC86.refreshOrg=async function(){
     if(OS.busy||!online())return;OS.busy=true;

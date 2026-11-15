@@ -6,6 +6,13 @@
   ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
   ::view-transition-old(hl-page){animation:hlOut .14s cubic-bezier(.4,0,1,1) both}
   ::view-transition-new(hl-page){animation:hlIn .32s cubic-bezier(.2,0,0,1) both}
+  /* RC91: the bars are separate groups that never animate, so no page snapshot slides over (or duplicates) them */
+  .topbar{view-transition-name:hl-top}
+  #mobileNav{view-transition-name:hl-nav}
+  #fab{view-transition-name:hl-fab}
+  ::view-transition-group(hl-top),::view-transition-group(hl-nav),::view-transition-group(hl-fab),
+  ::view-transition-new(hl-top),::view-transition-new(hl-nav),::view-transition-new(hl-fab){animation:none}
+  ::view-transition-old(hl-top),::view-transition-old(hl-nav),::view-transition-old(hl-fab){display:none}
   html[data-vt="start"]{--hl-x:26px;--hl-y:0px}
   html[data-vt="end"]{--hl-x:-26px;--hl-y:0px}
   html[data-vt="up"]{--hl-x:0px;--hl-y:5vh}
