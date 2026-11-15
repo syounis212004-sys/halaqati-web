@@ -1,9 +1,3 @@
-body.sv-shell {
-  --sv-accent: #0b6e4f;
-}
-body.dark.sv-shell {
-  --sv-accent: #8fddbf;
-}
 /* Supervisor workspace. All colors and geometry are scoped; other roles keep their shell. */
 .sv-dashboard {
   --sv-brand: #0b6e4f;
@@ -480,136 +474,9 @@ body.dark .sv-status[data-state="open"] {
   background: #403617;
   color: #f1d887;
 }
-html body.sv-shell #mobileNav.sv-nav {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0;
-  border: 1px solid var(--line);
-  border-radius: 22px !important;
-  padding: 6px 4px !important;
-  bottom: calc(10px + env(safe-area-inset-bottom));
-  min-height: 68px;
-  background: var(--card) !important;
-  box-shadow: 0 6px 24px #102b2514 !important;
-}
-html body.sv-shell #mobileNav .sv-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  width: 100%;
-  min-height: 54px;
-  padding: 5px 2px;
-  border: 0;
-  border-radius: 15px;
-  background: transparent;
-  color: var(--muted);
-  font:
-    600 10px/1.5 Cairo,
-    sans-serif;
-  cursor: pointer;
-}
-html body.sv-shell #mobileNav .sv-tab.on {
-  background: var(--mint2, #e0f0e8);
-  color: var(--sv-accent, var(--green));
-}
-html body.sv-shell #mobileNav .sv-tab > span {
-  display: block;
-  font:
-    600 10px/1.5 Cairo,
-    sans-serif;
-  white-space: nowrap;
-}
-html[data-view="desktop"] body.sv-shell #mobileNav.sv-nav {
-  display: none !important;
-}
-html body.sv-shell .topbar .sv-icon {
-  fill: none;
-  stroke: currentColor;
-}
-body.sv-shell #content {
-  padding-block-end: 110px;
-}
-body.sv-shell .topbar {
-  box-shadow: none;
-  border-block-end: 1px solid var(--line);
-}
-body.sv-shell #pageTitle {
-  font:
-    700 19px/1.5 Cairo,
-    sans-serif;
-}
-body.sv-shell #roleLabel {
-  font:
-    400 11px/1.5 Cairo,
-    sans-serif;
-}
-body.sv-shell .topbar .menu-btn,
-body.sv-shell .notification-bell,
-body.sv-shell .h86-more {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  background: var(--card);
-  box-shadow: none;
-}
-body.sv-shell #nav .sv-menu-group {
-  padding: 12px 0;
-  border-block-end: 1px solid var(--line);
-}
-body.sv-shell #nav .sv-menu-group h2 {
-  color: var(--muted);
-  font:
-    600 11px/1.6 Cairo,
-    sans-serif;
-  margin: 0 14px 8px;
-}
-body.sv-shell #nav .sv-menu-group button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 48px;
-  border: 0;
-  border-radius: 12px;
-  margin: 2px 0;
-  padding: 10px 14px;
-  font:
-    600 13px/1.7 Cairo,
-    sans-serif;
-  color: var(--ink);
-  background: transparent;
-  text-align: start;
-  cursor: pointer;
-}
-body.sv-shell #nav .sv-menu-group button.active {
-  background: var(--mint2, #e0f0e8);
-  color: var(--sv-accent, var(--green));
-}
-body.sv-shell #drawer {
-  font-family: Cairo, sans-serif;
-}
-body.sv-shell .h86-menu {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 6px;
-  box-shadow: 0 8px 28px #102b2522;
-}
-body.sv-shell .h86-menu button {
-  min-height: 46px;
-  font:
-    600 13px Cairo,
-    sans-serif;
-  border-radius: 10px;
-}
-.sv-dashboard button:focus-visible,
-body.sv-shell #nav button:focus-visible,
-body.sv-shell .sv-tab:focus-visible {
-  outline: 3px solid var(--sv-accent, var(--green));
-  outline-offset: 3px;
+.sv-dashboard button:focus-visible {
+  outline: 3px solid var(--sv-accent, #0b6e4f);
+  outline-offset: 2px;
 }
 @media (min-width: 700px) {
   .sv-dashboard {
@@ -677,16 +544,12 @@ body.sv-shell .sv-tab:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sv-dashboard *,
-  body.sv-shell .sv-tab {
+  .sv-dashboard * {
     animation: none !important;
     transition: none !important;
   }
 }
 
-body.sv-shell #content > .sv-circle + .sv-circle {
-  margin-block-start: 14px;
-}
 
 /* ===== متابعة المحفظين ===== */
 .sv-supervision {

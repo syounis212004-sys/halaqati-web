@@ -180,34 +180,6 @@ for (const width of process.env.CAPTURE_BEFORE
   if (!process.env.CAPTURE_BEFORE) {
     assert.equal(await page.locator(".sv-dashboard").count(), 1);
     await checkAccessibility(page, `light-${width}`);
-    assert.equal(
-      await page.locator("#nav button").count(),
-      await page.evaluate(() => navItems().length),
-      "all authorized menu destinations are retained",
-    );
-    if (width < 1000) {
-      assert.equal(await page.locator("#mobileNav .sv-tab:visible").count(), 5);
-      assert.ok(
-        await page
-          .locator("#mobileNav .sv-tab")
-          .evaluateAll((buttons) =>
-            buttons.every(
-              (button) =>
-                button.getBoundingClientRect().width >= 44 &&
-                button.getBoundingClientRect().width <= innerWidth / 4,
-            ),
-          ),
-        "five distinct, tappable navigation slots",
-      );
-      assert.ok(
-        await page
-          .locator("#mobileNav .sv-tab>span")
-          .evaluateAll((labels) =>
-            labels.every((label) => getComputedStyle(label).display !== "none"),
-          ),
-        "navigation labels stay visible",
-      );
-    }
     assert.ok((await page.locator("#content").innerText()).includes("44"));
     await page.getByRole("button", { name: "تنبيه", exact: true }).click();
     assert.ok(
@@ -251,32 +223,6 @@ for (const width of process.env.CAPTURE_BEFORE
       animations: "disabled",
     });
     await checkAccessibility(page, `dark-${width}`);
-    await page.evaluate(() => toggleDrawer(true));
-    await page.waitForFunction(() => {
-      const r = document.getElementById("drawer").getBoundingClientRect();
-      return r.right <= innerWidth + 1 && r.left >= -1;
-    });
-    await page.evaluate(() => scrollTo(0, 0));
-    await page.screenshot({
-      path: `${output}/menu-${width}.png`,
-      fullPage: true,
-      animations: "disabled",
-    });
-    assert.ok(
-      await page.locator("#nav button").evaluateAll((buttons) =>
-        buttons.every((button) => {
-          const r = button.getBoundingClientRect();
-          return r.left >= 0 && r.right <= innerWidth + 1;
-        }),
-      ),
-      "drawer actions stay inside the viewport",
-    );
-    await page.keyboard.press("Escape");
-    assert.ok(
-      !(await page
-        .locator("#drawer")
-        .evaluate((element) => element.classList.contains("open"))),
-    );
     await page.evaluate(() => {
       const sizes = [...document.querySelectorAll(".sv-dashboard *")].map(
         (el) => [el, parseFloat(getComputedStyle(el).fontSize)],
@@ -295,16 +241,6 @@ for (const width of process.env.CAPTURE_BEFORE
       fullPage: true,
       animations: "disabled",
     });
-    await page.evaluate(() => {
-      state.profile.role = "teacher";
-      buildNav();
-      buildMobileNav();
-    });
-    assert.equal(
-      await page.locator("body.sv-shell").count(),
-      0,
-      "supervisor chrome is removed when the role changes",
-    );
   }
   failures.push(...errors.map((error) => `${width}: ${error}`));
   await context.close();
