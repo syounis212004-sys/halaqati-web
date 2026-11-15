@@ -1,6 +1,6 @@
 {
   "name": "halaqati-vite-capacitor",
-  "version": "2.90.3-web.1",
+  "version": "2.90.2-web.1",
   "private": true,
   "description": "حلقاتي — ويب متجاوب مع عقود أندرويد RC27.39",
   "scripts": {
@@ -64,8 +64,7 @@
     "check:v2440": "node scripts/v2440-sync-refresh-check.mjs",
     "test": "node --test scripts/*.test.mjs",
     "check:parity": "npm run check:legacy && node --test scripts/*.test.mjs && node scripts/offline-queue-stability-vm-smoke.mjs && node scripts/v2410-certificates-vm-smoke.mjs",
-    "check:browser": "node scripts/browser-parity.mjs && node scripts/browser-behavior.mjs",
-    "check:supervisor": "node --test scripts/supervisor-dashboard.test.mjs && node scripts/supervisor-browser.mjs"
+    "check:browser": "node scripts/browser-parity.mjs && node scripts/browser-behavior.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
