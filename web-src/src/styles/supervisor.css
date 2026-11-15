@@ -687,3 +687,225 @@ body.sv-shell .sv-tab:focus-visible {
 body.sv-shell #content > .sv-circle + .sv-circle {
   margin-block-start: 14px;
 }
+
+/* ===== متابعة المحفظين ===== */
+.sv-supervision {
+  gap: 16px;
+}
+.sv-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.sv-kpi {
+  display: grid;
+  gap: 2px;
+  padding: 14px 12px;
+  border: 1px solid var(--sv-line);
+  border-radius: 16px;
+  background: var(--card);
+  text-align: start;
+}
+.sv-kpi strong {
+  font: 800 28px/1.3 Cairo, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.sv-kpi span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.sv-kpi[data-tone="ok"] strong {
+  color: var(--sv-accent, #0b6e4f);
+}
+.sv-kpi[data-tone="bad"] strong {
+  color: #b3261e;
+}
+body.dark .sv-kpi[data-tone="bad"] strong {
+  color: #ffb4ab;
+}
+.sv-supervision .dn-seg {
+  margin: 0;
+}
+.sv-people {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+}
+.sv-people > .s3-card,
+.sv-people > .dn-pills-row {
+  grid-column: 1 / -1;
+}
+.sv-person {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--sv-line);
+  border-radius: 18px;
+  background: var(--card);
+}
+.sv-person-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.sv-person-av {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--mint2, #e0f0e8);
+  color: var(--sv-accent, #0b6e4f);
+  font: 800 18px Cairo, sans-serif;
+}
+.sv-person-id {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+.sv-person-id strong {
+  font: 700 15px/1.6 Cairo, sans-serif;
+  overflow-wrap: anywhere;
+}
+.sv-person-id small {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.sv-chev {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.sv-chev.open {
+  transform: rotate(-90deg);
+}
+.sv-person-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+  font: 700 12px/1.7 Cairo, sans-serif;
+}
+.sv-pill[data-tone="ok"] {
+  background: #dcf2e3;
+  color: #0e5a2c;
+}
+.sv-pill[data-tone="warn"] {
+  background: #ffeebf;
+  color: #6a4600;
+}
+.sv-pill[data-tone="bad"] {
+  background: #fcdfdc;
+  color: #8a1912;
+}
+.sv-pill[data-today="none"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #d9a49f;
+  color: #8a1912;
+}
+.sv-pill[data-today="open"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #d8bd6a;
+  color: #6a4600;
+}
+.sv-pill[data-today="closed"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #9fd1b6;
+  color: #0e5a2c;
+}
+body.dark .sv-pill[data-tone="ok"] {
+  background: #17402a;
+  color: #a9e8bf;
+}
+body.dark .sv-pill[data-tone="warn"] {
+  background: #4a390c;
+  color: #f5d97a;
+}
+body.dark .sv-pill[data-tone="bad"] {
+  background: #5a1b17;
+  color: #ffc2ba;
+}
+body.dark .sv-pill[data-today] {
+  color: var(--ink);
+}
+.sv-person-line,
+.sv-person-more p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.sv-person-more {
+  display: grid;
+  gap: 6px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--sv-line);
+}
+.sv-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 4px;
+}
+.sv-facts div {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.sv-facts dt {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.sv-facts dd {
+  margin: 0;
+  font: 800 16px/1.5 Cairo, sans-serif;
+}
+.sv-warn-text {
+  color: #b3261e !important;
+  font-weight: 700;
+}
+.sv-person-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sv-person-actions .sv-button:only-child {
+  grid-column: 1 / -1;
+}
+@media (max-width: 380px) {
+  .sv-person-actions {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv-chev {
+    transition: none;
+  }
+}

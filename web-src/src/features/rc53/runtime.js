@@ -115,7 +115,7 @@
     });
     const mDays=new Set(sess.map(s=>s.session_date)).size,byC={};
     sess.forEach(s=>{const o=byC[s.created_by]=byC[s.created_by]||{n:0,d:new Set,c:0,last:''};o.n++;o.d.add(s.session_date);if(s.status==='closed')o.c++;if(s.session_date>o.last)o.last=s.session_date});
-    B.data={halaqas,visits,staff,byC,mDays,ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
+    B.data={halaqas,visits,staff,byC,mDays,sess:sess.map(x=>({halaqa_id:x.halaqa_id,session_date:x.session_date,status:x.status,created_by:x.created_by,id:x.id})),ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
   }
   const stLabel={none:'لم تبدأ الجلسة',open:'الجلسة جارية',closed:'انتهت الجلسة'};
   const rate=(a,b)=>b<=0?0:Math.min(100,Math.round(a*100/b));
@@ -221,30 +221,42 @@
   // ---------- staff monitor (supervision) ----------
   R.page('supervision',{title:'متابعة المحفظين',roles:['admin','supervisor'],render:async()=>{
     const d=await load(true),adm=role()==='admin';if(!adm&&S3.tabv==='supervisors')S3.tabv='teachers';
-    const sups=d.staff.filter(p=>p.role==='supervisor'),tchs=d.staff.filter(p=>p.role==='teacher'),hn=Object.fromEntries(d.halaqas.map(h=>[h.id,h.name]));
-    const rowsT=tchs.map(p=>{const o=d.byC[p.id]||{n:0,d:new Set,c:0,last:''},ov=d.ov[p.id]||{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id)),
-      days=ov.session_days!=null?+ov.session_days:o.d.size,pct=d.mDays>0?rate(days,d.mDays):null,vr=d.visits.filter(v=>ids.has(v.halaqa_id)&&v.visit_date>=todayS().slice(0,8)+'01');
+    const U=window.SupervisorUI,month=todayS().slice(0,8)+'01';
+    const myIds=new Set(d.halaqas.map(h=>h.id)),linked=new Set((d.links||[]).filter(l=>myIds.has(l.halaqa_id)).map(l=>l.teacher_id));
+    // A supervisor follows only the teachers of his own halaqas; the administrator sees everyone.
+    const sups=d.staff.filter(p=>p.role==='supervisor'),tchs=d.staff.filter(p=>p.role==='teacher'&&(adm||linked.has(p.id)));
+    const scope=(d.sess||[]).filter(s=>adm||myIds.has(s.halaqa_id));
+    const monthDays=new Set(scope.map(s=>s.session_date)).size||d.mDays||0;
+    const photo=p=>p.avatar_path&&String(p.avatar_path).startsWith('data:image/')?p.avatar_path:null;
+    const rowsT=tchs.map(p=>{
+      const ov=d.ov[p.id]||{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
+      // credit a teacher for sessions of his own halaqas as well as the ones he created
+      const mine=(d.sess||[]).filter(s=>s.created_by===p.id||ids.has(s.halaqa_id));
+      const days=Math.max(ov.session_days!=null?+ov.session_days:0,new Set(mine.map(s=>s.session_date)).size);
+      const sessions=Math.max(ov.sessions!=null?+ov.sessions:0,mine.length),closed=Math.max(ov.closed_sessions!=null?+ov.closed_sessions:0,mine.filter(s=>s.status==='closed').length);
+      const denom=Math.max(monthDays,days),pct=hs.length&&denom>0?rate(days,denom):null;
+      const vr=d.visits.filter(v=>ids.has(v.halaqa_id)&&v.visit_date>=month);
       const sc_=vr.map(v=>['organization_score','teaching_score','followup_score'].filter(k=>v[k]!=null).map(k=>+v[k])).filter(a=>a.length).map(a=>a.reduce((x,y)=>x+y,0)/a.length);
-      return {p,hs,pct,sessions:ov.sessions!=null?+ov.sessions:o.n,days,closed:ov.closed_sessions!=null?+ov.closed_sessions:o.c,rec:ov.recitations,last:ov.last_session||o.last||'—',vr:vr.length,score:sc_.length?sc_.reduce((x,y)=>x+y,0)/sc_.length:null,
-        open:d.visits.filter(v=>ids.has(v.halaqa_id)&&val(v.action_items)&&!v.action_done).length}});
-    const rowsS=sups.map(p=>{const mine=(state.halaqas||[]).filter(h=>h.supervisor_id===p.id),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=todayS().slice(0,8)+'01'),vis=new Set(made.map(v=>v.halaqa_id));
-      return {p,total:mine.length,visited:mine.filter(h=>vis.has(h.id)).length,made:made.length,last:made[0]?.visit_date||'—'}});
-    const lab=pct=>pct==null?['لا بيانات','']:pct>=80?['ممتاز','ok']:pct>=50?['جيد','warn']:['يحتاج متابعة','bad'];
-    const av=p=>p.avatar_path&&String(p.avatar_path).startsWith('data:image/')?`<img class="s3-av" alt="" src="${p.avatar_path}">`:`<span class="s3-av ph">${e((p.full_name||'؟').trim()[0]||'؟')}</span>`;
+      const states=hs.map(h=>h.state),today=!states.length?'none':states.includes('none')?'none':states.includes('open')?'open':'closed';
+      const lastS=mine.map(s=>s.session_date).sort().pop();
+      return {id:p.id,name:p.full_name||'محفّظ',photo:photo(p),phone:val(p.phone),halaqat:hs,pct,sessions,days,monthDays:denom,closed,rec:ov.recitations,today,
+        last:lastS||ov.last_session||'—',visits:vr.length,score:sc_.length?sc_.reduce((x,y)=>x+y,0)/sc_.length:null,
+        openActions:d.visits.filter(v=>ids.has(v.halaqa_id)&&val(v.action_items)&&!v.action_done).length}});
+    const rowsS=sups.map(p=>{const mine=(state.halaqas||[]).filter(h=>h.supervisor_id===p.id),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=month),vis=new Set(made.map(v=>v.halaqa_id));
+      const visited=mine.filter(h=>vis.has(h.id)).length;
+      return {id:p.id,name:p.full_name||'مشرف',photo:photo(p),total:mine.length,visited,pct:mine.length?rate(visited,mine.length):null,made:made.length,last:made[0]?.visit_date||'—'}});
     const tabs=[['teachers','المحفظون'],...(adm?[['supervisors','المشرفون']]:[]),['compare','المقارنة']];
     let body='';
-    if(S3.tabv==='teachers')body=rowsT.map(r=>{const [l,c]=lab(r.pct),o=S3.open===r.p.id;return `<article class="s3-card ${c}"><button type="button" class="s3-row" onclick="RC50.s3.toggle('${e(r.p.id)}')">${av(r.p)}<div><b>${e(r.p.full_name)}</b><small>${e(r.hs.map(h=>h.name).join('، ')||'بلا حلقة')}</small></div><span class="s3-pill ${c}">${e(r.pct==null?l:`${l} · ${r.pct}%`)}</span></button>
-      ${o?`<div class="s3-more"><small>جلسات الشهر: ${r.sessions} · أيام النشاط: ${r.days} من ${d.mDays} · جلسات مُنهاة: ${r.closed}</small><small>التسميعات: ${r.rec==null?'—':r.rec} · آخر جلسة: ${e(r.last)}</small><small>زيارات المشرف له هذا الشهر: ${r.vr}${r.score!=null?` · متوسط التقييم ${num1(r.score)}/5`:''}</small>${r.open?`<small class="s3-badtx">إجراءات مطلوبة منه لم تُنفّذ: ${r.open}</small>`:''}${val(r.p.phone)?`<small>الهاتف: ${e(r.p.phone)}</small>`:''}
-        <div class="s3-acts"><button type="button" class="dn-btn tonal" onclick="RC50.s3.alert('${e(r.p.id)}','${e(r.p.full_name)}','${e(r.hs[0]?.id||'')}','')">إرسال تنبيه</button>${r.hs[0]?`<button type="button" class="dn-btn tonal" onclick="RC50.s3.visitNew('${e(r.hs[0].id)}')">تسجيل زيارة</button>`:''}</div></div>`:''}</article>`}).join('')||R.card(R.empty('لا يوجد محفظون'));
-    else if(S3.tabv==='supervisors')body=rowsS.map(r=>{const pct=r.total?rate(r.visited,r.total):null,[l,c]=lab(pct),o=S3.open===r.p.id;return `<article class="s3-card ${c}"><button type="button" class="s3-row" onclick="RC50.s3.toggle('${e(r.p.id)}')">${av(r.p)}<div><b>${e(r.p.full_name)}</b><small>${r.total} حلقة تحت إشرافه</small></div><span class="s3-pill ${c}">${e(pct==null?l:`${l} · ${pct}%`)}</span></button>
-      ${o?`<div class="s3-more"><small>حلقات زارها هذا الشهر: ${r.visited} من ${r.total} · عدد الزيارات: ${r.made} · آخر زيارة: ${e(r.last)}</small><div class="s3-acts"><button type="button" class="dn-btn tonal" onclick="RC50.s3.alert('${e(r.p.id)}','${e(r.p.full_name)}','','')">إرسال تنبيه</button></div></div>`:''}</article>`}).join('')||R.card(R.empty('لا يوجد مشرفون'));
+    if(S3.tabv==='teachers')body=rowsT.map(r=>U.teacherCard(r,{e,num1,open:S3.open===r.id})).join('')||R.card(R.empty('لا يوجد محفظون في حلقاتك بعد'));
+    else if(S3.tabv==='supervisors')body=rowsS.map(r=>U.supervisorCard(r,{e,open:S3.open===r.id})).join('')||R.card(R.empty('لا يوجد مشرفون'));
     else{
-      const M={commit:['التزام المحفظين',rowsT.map(r=>[r.p.full_name,r.pct||0,r.pct==null?'—':r.pct+'%'])],recited:['التسميع اليوم',d.halaqas.map(h=>[h.name,rate(h.recited,h.students),`${rate(h.recited,h.students)}% (${h.recited} من ${h.students})`])],sessions:['جلسات الشهر',d.halaqas.map(h=>[h.name,h.monthSessions,h.monthSessions+' جلسة'])],visit:['تقييم الزيارات',d.halaqas.filter(h=>h.lastScore!=null).map(h=>[h.name,h.lastScore*20,num1(h.lastScore)+' من 5'])]};
+      const M={commit:['التزام المحفظين',rowsT.filter(r=>r.pct!=null).map(r=>[r.name,r.pct,r.pct+'%'])],recited:['التسميع اليوم',d.halaqas.map(h=>[h.name,rate(h.recited,h.students),`${rate(h.recited,h.students)}% (${h.recited} من ${h.students})`])],sessions:['جلسات الشهر',d.halaqas.map(h=>[h.name,h.monthSessions,h.monthSessions+' جلسة'])],visit:['تقييم الزيارات',d.halaqas.filter(h=>h.lastScore!=null).map(h=>[h.name,h.lastScore*20,num1(h.lastScore)+' من 5'])]};
       const rk=(M[S3.metricv]||M.commit)[1].slice().sort((a,b)=>b[1]-a[1]),top=Math.max(1,...rk.map(x=>x[1]));
       body=R.pills(Object.entries(M).map(([k,v])=>[k,v[0]]),S3.metricv,'RC50.s3.metric')+(rk.map((x,i)=>`<article class="s3-card ${i===0?'ok':''}"><div class="s3-top"><b>${i+1}. ${e(x[0])}</b><small>${e(x[2])}</small></div><div class="s3-prog"><i style="width:${Math.round(x[1]/top*100)}%"></i></div></article>`).join('')||R.card(R.empty('لا توجد بيانات كافية للمقارنة بعد')));
     }
-    const g=rowsT.filter(r=>(r.pct||0)>=80).length,lo=rowsT.filter(r=>r.pct!=null&&r.pct<50).length;
-    return `<div class="dn-tiles">${R.tile('المحفظون',tchs.length)}${R.tile('ملتزمون',g)}${R.tile('يحتاجون متابعة',lo)}</div>${R.seg(tabs,S3.tabv,'RC50.s3.tab')}${body}`;
+    const assigned=rowsT.filter(r=>r.pct!=null),g=assigned.filter(r=>r.pct>=80).length,lo=assigned.filter(r=>r.pct<50).length;
+    const kpis=U.stat(tchs.length,'المحفظون','',e)+U.stat(g,'ملتزمون','ok',e)+U.stat(lo,'يحتاجون متابعة',lo?'bad':'',e);
+    return U.page({kpis,seg:R.seg(tabs,S3.tabv,'RC50.s3.tab'),body});
   }});
   S3.toggle=id=>{S3.open=S3.open===id?null:id;render()};S3.tab=v=>{S3.tabv=v;S3.open=null;render()};S3.metric=v=>{S3.metricv=v;render()};
 
