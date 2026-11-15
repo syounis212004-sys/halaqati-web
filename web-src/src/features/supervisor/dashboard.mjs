@@ -65,6 +65,7 @@ export function halaqaCard(
 
 export function dashboard(
   {
+    programs = [],
     halaqas,
     pending,
     stale,
@@ -94,5 +95,6 @@ export function dashboard(
     <div class="sv-stats">${metric("halaqas", `${started}/${halaqas.length}`, "بدأت جلساتها", !halaqas.length ? "بانتظار إسناد حلقة" : pending.length ? `${e(pending.length)} بانتظار البدء` : "الجميع على الموعد")}${metric("visits", weekVisits, "زيارات الأسبوع", "خلال آخر 7 أيام")}${metric("supervision", openActions, "إجراءات للمتابعة", "من زياراتك السابقة")}</div>
     ${attention.length ? `<section class="sv-attention" aria-labelledby="svAttentionTitle"><header><span>${icon("alert")}</span><div><h2 id="svAttentionTitle">تحتاج متابعتك</h2><p>خطوة بسيطة تُحدث فرقًا اليوم</p></div><span class="sv-count">${attention.length}</span></header><ul>${attentionRows}</ul></section>` : `<section class="sv-all-clear">${icon("approvals")}<div><strong>${halaqas.length ? "أمور حلقاتك على ما يرام" : "أهلًا بك في لوحة المتابعة"}</strong><p>${halaqas.length ? "لا توجد تنبيهات متابعة حاليًا." : "ستظهر حلقاتك هنا بعد إسنادها إليك."}</p></div></section>`}
     <section class="sv-circles"><div class="sv-section-heading"><div><h2>حلقات اليوم <span class="sv-count">${halaqas.length}</span></h2></div><button type="button" class="sv-text-button" onclick="go('halaqas')">عرض الكل ${icon("arrow", 16)}</button></div><div class="sv-circle-grid">${halaqas.map(renderCircle).join("") || '<div class="sv-empty">لا توجد حلقات مسندة إليك بعد.</div>'}</div></section>
+    ${programs.length ? `<section class="sv-circles"><div class="sv-section-heading"><div><h2>البرامج <span class="sv-count">${programs.length}</span></h2></div><button type="button" class="sv-text-button" onclick="go('programs')">عرض الكل ${icon("arrow", 16)}</button></div><div class="sv-circle-grid">${programs.map((p) => `<article class="s3-card sv-circle"><div class="sv-circle-head"><span class="sv-circle-icon">${icon("halaqas")}</span><div><h3>${e(p.name)}</h3><p>${e(p.kind)} · ${e(p.names.join("، ") || "بلا محفّظ")}</p></div></div><div class="sv-circle-status"><span>مشاركون <bdi>${e(p.students)}</bdi></span><span>جلسات الشهر <bdi>${e(p.monthSessions)}</bdi></span></div></article>`).join("")}</div></section>` : ""}
   </div>`;
 }

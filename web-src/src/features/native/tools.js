@@ -50,7 +50,7 @@
      2. DRAWER  (GoldenDrawerContent: header, grouped rows, footer)  — no sync row, exactly like drawerItems()
      ===================================================================================================== */
   const GROUP_TITLES=['الأساسي','المتابعة والإنجاز','التواصل والأدوات','الإدارة','الحساب والنظام'];
-  const GROUP_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,ranking:1,competition:1,certificates:1,reports:1,supervision:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
+  const GROUP_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,programs:0,ranking:1,competition:1,certificates:1,reports:1,supervision:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
   const ROLE_SCENE={admin:'role_admin',supervisor:'role_supervisor',teacher:'role_teacher',guardian:'role_guardian'};
   function drawerHead(){
     tryDo(()=>{

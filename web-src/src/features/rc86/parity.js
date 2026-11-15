@@ -21,7 +21,7 @@
   // ================= menus (RoleNavigationPolicy.drawerItems) =================
   const DRAWER={
     admin:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','إدارة الحلقات والفئات'],['community','الإعلانات ومنتدى الحلقة'],['sessions','الجلسات اليومية'],['students','الطلاب'],['plans','الخطط الذكية'],['certificates','الشهادات'],['exams','الاختبارات'],['awards','التكريم الشهري'],['support','الدعم والمانحون'],['chats','محادثات المانحين'],['observer_requests','طلبات المانحين'],['reports','التقارير'],['quran','حاسبة القرآن'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['data','الاستيراد والتصدير'],['supervision','متابعة المحفظين والمشرفين'],['visits','زيارات المشرفين'],['approvals','طلبات الاعتماد'],['org','الهيكل الإداري'],['staff','كادر الحلقات'],['users','الحسابات والصلاحيات'],['settings','الإعدادات']],
-    supervisor:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['exams','الاختبارات'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['org','الهيكل الإداري'],['staff','كادر الحلقات'],['settings','الإعدادات']],
+    supervisor:[['home','الرئيسية'],['notifications','الإشعارات'],['halaqas','الحلقات'],['programs','البرامج'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['exams','الاختبارات'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['org','الهيكل الإداري'],['staff','كادر الحلقات'],['settings','الإعدادات']],
     teacher:[['home','الرئيسية'],['notifications','الإشعارات'],['community','الإعلانات ومنتدى الحلقة'],['halaqas','حلقتي والفئات'],['sessions','الجلسات اليومية'],['students','طلابي'],['plans','الخطط الذكية'],['certificates','الشهادات'],['exams','الاختبارات'],['reports','التقارير'],['quran','حاسبة القرآن'],['ranking','الترتيب والإحصائيات'],['insights','المتابعة والمقارنة'],['data','تصدير البيانات'],['approvals','طلبات أولياء الأمور'],['settings','الإعدادات']],
     guardian:[['home','الرئيسية'],['notifications','الإشعارات'],['community','الإعلانات ومنتدى الحلقة'],['plans','خطط أبنائي الذكية'],['exams','اختبارات أبنائي'],['reports','تقارير أبنائي'],['competition','إحصائيات ومنافسة'],['ranking','الإنجازات'],['profile','ملف الطالب'],['settings','الإعدادات']],
     observer:[['home','الرئيسية'],['donor_awards','المكرَّمون'],['donor_support','الدعم'],['donor_impact','أثري'],['donor_stats','الإحصاءات'],['notifications','الإشعارات'],['settings','الإعدادات']]
@@ -133,11 +133,11 @@
 
   // ================= drawer (GoldenDrawerContent: search, «مفضلتي», collapsible groups with counts) =================
   const DG_TITLES=['إدارة الحلقة','التقارير والإنجاز','التواصل والأدوات','إدارة النظام','الحساب والإعدادات'];
-  const DG_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,ranking:1,insights:1,staff:3,competition:1,certificates:1,awards:1,support:1,donor_awards:1,donor_support:1,donor_impact:1,donor_stats:1,reports:1,supervision:1,visits:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
+  const DG_OF={home:0,sessions:0,students:0,plans:0,halaqas:0,programs:0,ranking:1,insights:1,staff:3,competition:1,certificates:1,awards:1,support:1,donor_awards:1,donor_support:1,donor_impact:1,donor_stats:1,reports:1,supervision:1,visits:1,profile:1,community:2,quran:2,data:2,notifications:4,settings:4};
   const DQ={q:'',col:new Set()};
   const favKey=()=>'rc86_drawer_fav_'+(state.user?.id||'x');
   const favs=()=>{try{return new Set(JSON.parse(localStorage.getItem(favKey())||'[]'))}catch(_e){return new Set()}};
-  const ICON_FIX={exams:'Quiz',chats:'Forum',observer_requests:'PersonAdd',org:'AccountTree',team:'Groups',staff:'Groups',visits:'EventAvailable',approvals:'PersonAdd',insights:'Insights'};
+  const ICON_FIX={programs:'School',exams:'Quiz',chats:'Forum',observer_requests:'PersonAdd',org:'AccountTree',team:'Groups',staff:'Groups',visits:'EventAvailable',approvals:'PersonAdd',insights:'Insights'};
   const svgPrev=window.navSvg;
   if(typeof svgPrev==='function'){
     const fallback=String(svgPrev('__rc86_none__')||'');

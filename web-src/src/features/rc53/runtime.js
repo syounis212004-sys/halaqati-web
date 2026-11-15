@@ -107,20 +107,25 @@
     const by={};staff.forEach(p=>by[p.id]=p);
     const stu=(state.students||[]).filter(s=>s.status==='active');
     const sh={};todayS_.forEach(s=>sh[s.id]=s.halaqa_id);
-    const halaqas=hq.filter(h=>{const t=val(h.halaqa_type);return !t||t==='regular'}).map(h=>{
+    const isProg=h=>{const t=val(h.halaqa_type);return !!t&&t!=='regular'};
+    const progIds=hq.filter(isProg).map(h=>h.id),mem={};
+    if(progIds.length){try{const r=await db.from('student_halaqa_memberships').select('halaqa_id,student_id,status').in('halaqa_id',progIds).eq('status','active');(r.data||[]).forEach(m=>{mem[m.halaqa_id]=(mem[m.halaqa_id]||0)+1})}catch(_e){}}
+    const mkRow=h=>{
       const tids=[...new Set(links.filter(l=>l.halaqa_id===h.id).map(l=>l.teacher_id))];
       const mine=todayS_.filter(s=>s.halaqa_id===h.id),sid=new Set(mine.map(s=>s.id));
       const state_=!mine.length?'none':mine.every(s=>s.status==='closed')?'closed':'open';
       const a=att.filter(x=>sid.has(x.session_id));
       const lastV=visits.find(v=>v.halaqa_id===h.id),sc=lastV?['organization_score','teaching_score','followup_score'].filter(k=>lastV[k]!=null).map(k=>+lastV[k]):[];
-      return {id:h.id,name:h.name||'حلقة',tids,names:tids.map(i=>by[i]?.full_name||'محفّظ'),students:stu.filter(s=>s.halaqa_id===h.id).length,state:state_,
+      const prog=isProg(h),monthS=sess.filter(s=>s.halaqa_id===h.id);
+      return {id:h.id,supervisor_id:h.supervisor_id||null,name:h.name||(prog?'برنامج':'حلقة'),prog,kind:prog?((window.RC27_TYPE_AR||{})[h.halaqa_type]||'برنامج'):'حلقة',starts:h.starts_on||null,ends:h.ends_on||null,last:monthS.map(s=>s.session_date).sort().pop()||null,tids,names:tids.map(i=>by[i]?.full_name||'محفّظ'),students:prog?(mem[h.id]||0):stu.filter(s=>s.halaqa_id===h.id).length,state:state_,
         present:a.filter(x=>x.status==='present'||x.status==='late').length,absent:a.filter(x=>x.status==='absent').length,excused:a.filter(x=>x.status==='excused').length,
         recited:new Set(rec.filter(x=>sh[x.session_id]===h.id).map(x=>x.student_id)).size,monthSessions:sess.filter(s=>s.halaqa_id===h.id).length,
         lastVisit:lastV?.visit_date||null,lastScore:sc.length?sc.reduce((x,y)=>x+y,0)/sc.length:null};
-    });
+    };
+    const allRows=hq.map(mkRow),halaqas=allRows.filter(h=>!h.prog),programs=allRows.filter(h=>h.prog);
     const mDays=new Set(sess.map(s=>s.session_date)).size,byC={};
     sess.forEach(s=>{const o=byC[s.created_by]=byC[s.created_by]||{n:0,d:new Set,c:0,last:''};o.n++;o.d.add(s.session_date);if(s.status==='closed')o.c++;if(s.session_date>o.last)o.last=s.session_date});
-    B.data={halaqas,visits,myVisits:visits.filter(v=>v.supervisor_id===me),supLinks,staff,byC,mDays,sess:sess.map(x=>({halaqa_id:x.halaqa_id,session_date:x.session_date,status:x.status,created_by:x.created_by,id:x.id})),ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
+    B.data={halaqas,programs,all:allRows,visits,myVisits:visits.filter(v=>v.supervisor_id===me),supLinks,staff,byC,mDays,sess:sess.map(x=>({halaqa_id:x.halaqa_id,session_date:x.session_date,status:x.status,created_by:x.created_by,id:x.id})),ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
   }
   const stLabel={none:'لم تبدأ الجلسة',open:'الجلسة جارية',closed:'انتهت الجلسة'};
   const rate=(a,b)=>b<=0?0:Math.min(100,Math.round(a*100/b));
@@ -136,7 +141,7 @@
     const d=await load(false),ns=d.halaqas.filter(h=>h.state==='none'),started=d.halaqas.length-ns.length;
     const stale=d.halaqas.filter(h=>(daysSince(h.lastVisit)??999)>14),open=(d.myVisits||d.visits).filter(v=>val(v.action_items)&&!v.action_done).length;
     const wk=(d.myVisits||d.visits).filter(v=>(daysSince(v.visit_date)??999)<=7).length;
-    return window.SupervisorUI.dashboard({halaqas:d.halaqas,pending:ns,stale,started,weekVisits:wk,openActions:open,welcome:R.welcome()},{escape:e,renderCircle:h=>hCard(h,false)});
+    return window.SupervisorUI.dashboard({programs:d.programs,halaqas:d.halaqas,pending:ns,stale,started,weekVisits:wk,openActions:open,welcome:R.welcome()},{escape:e,renderCircle:h=>hCard(h,false)});
   };
   R.pages.home={title:'الرئيسية',roles:[...(donorHome?.roles||['observer']),'supervisor'],render:async()=>role()==='supervisor'?supHome():(R.welcome()+await donorHome.render()),after:donorHome?.after};
 
@@ -180,7 +185,7 @@
   S3.visitNew=hid=>{S3.visit={id:null,hid:hid||'',org:3,teach:3,follow:3,att:true,notes:'',actions:''};visitDlg()};
   S3.visitEdit=id=>{const v=(B.data?.visits||[]).find(x=>x.id===id);if(!v)return;S3.visit={id,hid:v.halaqa_id,org:v.organization_score??3,teach:v.teaching_score??3,follow:v.followup_score??3,att:v.teacher_attendance!==false,notes:val(v.notes),actions:val(v.action_items)};visitDlg()};
   function visitDlg(){
-    const V=S3.visit,hs=(B.data?.halaqas||[]).map(h=>[h.id,h.name]);if(!V.hid&&hs[0])V.hid=hs[0][0];
+    const V=S3.visit,hs=(B.data?.all||B.data?.halaqas||[]).map(h=>[h.id,h.prog?h.name+' (برنامج)':h.name]);if(!V.hid&&hs[0])V.hid=hs[0][0];
     R.sheet('s3Visit',V.id?'تعديل الزيارة':'زيارة إشرافية',`<label class="dn-field"><span>الحلقة</span><select id="s3VH">${hs.map(([i,n])=>`<option value="${e(i)}" ${i===V.hid?'selected':''}>${e(n)}</option>`).join('')}</select></label>
       <label class="dn-field"><span><input type="checkbox" id="s3VA" ${V.att?'checked':''}> المحفّظ حاضر</span></label>
       <div class="dn-tiles"><label class="dn-field"><span>التنظيم</span>${sel('s3VO',V.org)}</label><label class="dn-field"><span>التدريس</span>${sel('s3VT',V.teach)}</label><label class="dn-field"><span>المتابعة</span>${sel('s3VF',V.follow)}</label></div>
@@ -216,12 +221,18 @@
   };
   const sc=(v,k)=>v[k]==null?'—':`${v[k]}/5`;
   R.page('visits',{title:'زيارات المشرف',roles:['admin','supervisor'],render:async()=>{
-    const d=await load(true),hn=Object.fromEntries(d.halaqas.map(h=>[h.id,h.name]));
+    const d=await load(true),hn=Object.fromEntries(d.all.map(h=>[h.id,h.name]));
     return `${R.btn('تسجيل زيارة جديدة',"RC50.s3.visitNew('')")}`+(d.visits.map(v=>`<article class="s3-card"><div class="s3-top"><b>${e(hn[v.halaqa_id]||'حلقة')}</b>${v._pending?'<span class="s3-pill warn">بانتظار الرفع</span>':''}<small>${e(v.visit_date)}</small></div>
       <small>التنظيم ${sc(v,'organization_score')} · التدريس ${sc(v,'teaching_score')} · المتابعة ${sc(v,'followup_score')}${v.teacher_attendance==null?'':v.teacher_attendance?' · المحفّظ حاضر':' · المحفّظ غائب'}</small>
       ${val(v.notes)?`<p>${e(val(v.notes))}</p>`:''}${val(v.action_items)?`<small>المطلوب: ${e(val(v.action_items))}${v.action_done?' ✓ نُفّذ':''}</small>`:''}
       <div class="s3-acts"><button type="button" class="dn-btn tonal" onclick="RC50.s3.visitEdit('${e(v.id)}')">تعديل</button>${val(v.action_items)&&!v.action_done?`<button type="button" class="dn-btn tonal" onclick="RC50.s3.visitDone('${e(v.id)}')">تم التنفيذ</button>`:''}<button type="button" class="dn-btn tonal s3-danger" onclick="RC50.s3.visitDel('${e(v.id)}')">حذف</button></div></article>`).join('')||R.card(R.empty('لا توجد زيارات مسجلة')));
   }});
+
+  // ---------- programs (training courses, tajweed/tilawah programs) ----------
+  R.page('programs',{title:'البرامج',roles:['supervisor'],render:async()=>{
+    const d=await load(false);return window.SupervisorUI.programsPage(d.programs,{e,daysSince,today:todayS()});
+  }});
+  S3.programs=()=>go('programs');
 
   // ---------- staff monitor (supervision) ----------
   R.page('supervision',{title:'متابعة المحفظين',roles:['admin','supervisor'],render:async()=>{
@@ -234,7 +245,7 @@
     const monthDays=new Set(scope.map(s=>s.session_date)).size||d.mDays||0;
     const photo=p=>p.avatar_path&&String(p.avatar_path).startsWith('data:image/')?p.avatar_path:null;
     const rowsT=tchs.map(p=>{
-      const ov=d.ov[p.id]||{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
+      const ov=d.ov[p.id]||{},hs=d.all.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
       // credit a teacher for sessions of his own halaqas as well as the ones he created
       const mine=(d.sess||[]).filter(s=>s.created_by===p.id||ids.has(s.halaqa_id));
       const days=Math.max(ov.session_days!=null?+ov.session_days:0,new Set(mine.map(s=>s.session_date)).size);
@@ -247,7 +258,7 @@
       return {id:p.id,name:p.full_name||'محفّظ',photo:photo(p),phone:val(p.phone),halaqat:hs,pct,sessions,days,monthDays:denom,closed,rec:ov.recitations,today,
         last:lastS||ov.last_session||'—',visits:vr.length,score:sc_.length?sc_.reduce((x,y)=>x+y,0)/sc_.length:null,
         openActions:d.visits.filter(v=>ids.has(v.halaqa_id)&&val(v.action_items)&&!v.action_done).length}});
-    const rowsS=sups.map(p=>{const mine=d.halaqas.filter(h=>h.supervisor_id===p.id||(d.supLinks||[]).some(l=>l.halaqa_id===h.id&&l.supervisor_id===p.id)),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=month),vis=new Set(made.map(v=>v.halaqa_id));
+    const rowsS=sups.map(p=>{const mine=(d.all||d.halaqas).filter(h=>h.supervisor_id===p.id||(d.supLinks||[]).some(l=>l.halaqa_id===h.id&&l.supervisor_id===p.id)),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=month),vis=new Set(made.map(v=>v.halaqa_id));
       const visited=mine.filter(h=>vis.has(h.id)).length;
       return {id:p.id,name:p.full_name||'مشرف',photo:photo(p),total:mine.length,visited,pct:mine.length?rate(visited,mine.length):null,made:made.length,last:made[0]?.visit_date||'—'}});
     const tabs=[['teachers','المحفظون'],...(adm?[['supervisors','المشرفون']]:[]),['compare','المقارنة']];
@@ -267,14 +278,14 @@
 
   // ---------- navigation ----------
   const origSvg=window.navSvg;
-  window.navSvg=function(p){return origSvg.call(this,p==='visits'?'supervision':p)};
+  window.navSvg=function(p){return origSvg.call(this,p==='visits'?'supervision':p==='programs'?'halaqas':p)};
   window.iconFor=window.navSvg;
   const prevNav=window.navItems;
   window.navItems=function(){
     const r=role(),items=prevNav.apply(this,arguments);
     if(r==='supervisor'){
       const nt=items.find(x=>x[0]==='notifications')||['notifications','الإشعارات'];
-      return [['home','الرئيسية'],nt,['halaqas','الحلقات'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['settings','الإعدادات']];
+      return [['home','الرئيسية'],nt,['halaqas','الحلقات'],['programs','البرامج'],['supervision','متابعة المحفظين'],['visits','الزيارات'],['sessions','الجلسات اليومية'],['students','الطلاب'],['reports','التقارير'],['ranking','الترتيب والإحصائيات'],['community','الإعلانات والتواصل'],['approvals','طلبات المحفّظين'],['settings','الإعدادات']];
     }
     if(r==='admin'){
       const out=items.map(x=>x[0]==='supervision'?['supervision','متابعة المحفظين والمشرفين']:x),i=out.findIndex(x=>x[0]==='supervision');

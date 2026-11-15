@@ -135,3 +135,20 @@ test("welcome escapes profile and quotation content while retaining an inline av
   assert.ok(html.includes("قول &amp; نص"));
   assert.match(html, /data-supervisor-avatar aria-hidden="true"><span>س/);
 });
+
+import { programsPage, teacherCard } from "../src/features/supervisor/supervision.mjs";
+
+test("programs page shows progress, participants and escapes names", () => {
+  const p = { id: "p1", name: "دورة <تأهيلية>", kind: "برنامج تدريب", starts: "2026-10-04", ends: "2027-01-31", tids: ["t1"], names: ['أ "ب"'], students: 14, monthSessions: 3, recited: 0, last: "2026-11-03", state: "none" };
+  const html = programsPage([p], { e, today: "2026-11-15" });
+  assert.match(html, /aria-valuenow="\d+"/);
+  assert.ok(!html.includes("NaN"));
+  assert.ok(!html.includes("<تأهيلية>"));
+  assert.match(html, /14/);
+});
+
+test("a teacher without a halaqa is not flagged as needing follow-up", () => {
+  const html = teacherCard({ id: "t", name: "علاء", halaqat: [], pct: null, sessions: 0, days: 0, monthDays: 8, closed: 0, rec: 0, today: "none", last: "—", visits: 0, score: null, openActions: 0 }, { e, num1: String, open: false });
+  assert.match(html, /بلا حلقة/);
+  assert.ok(!html.includes("يحتاج متابعة"));
+});

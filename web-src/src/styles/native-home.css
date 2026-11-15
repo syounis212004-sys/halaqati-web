@@ -119,7 +119,7 @@ html[dir=rtl] .nh-fhead svg.mi{transform:none}
 .nh-scope-n{flex:1;min-width:0;font:700 14px/20px Cairo,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .nh-scope-c{font:500 12px/18px Cairo,sans-serif;color:var(--green)}
 .rc27-scope.nh-scope select{position:absolute;inset:0;width:100%;height:100%;min-width:0;opacity:0;cursor:pointer;z-index:2;font-size:16px}
-.rc27-scope.nh-scope .rc27-kinds{display:flex;gap:8px;margin-top:8px}
+.rc27-scope.nh-scope .rc27-kinds{display:flex;gap:8px;margin-top:8px;position:relative;z-index:3}
 
 /* ---------- guardian home ---------- */
 .nh-gwrap{display:block}

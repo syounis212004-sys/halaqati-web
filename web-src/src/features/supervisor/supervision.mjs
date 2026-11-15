@@ -83,3 +83,38 @@ export function supervisorCard(r, ctx) {
 export function page({ kpis, seg, body }) {
   return `<div class="sv-dashboard sv-supervision"><div class="sv-kpis">${kpis}</div>${seg}<div class="sv-people">${body}</div></div>`;
 }
+
+// ---------- البرامج (الدورات وبرامج التلاوة والتجويد) ----------
+const dayNo = (iso) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 864e5);
+
+function timeline(p, today) {
+  if (!p.starts || !p.ends) return null;
+  const total = dayNo(p.ends) - dayNo(p.starts) + 1;
+  if (total <= 0) return null;
+  const done = Math.min(total, Math.max(0, dayNo(today) - dayNo(p.starts) + 1));
+  const phase = today < p.starts ? "لم يبدأ بعد" : today > p.ends ? "انتهى" : "جارٍ";
+  return { total, done, pct: Math.round((done * 100) / total), phase };
+}
+
+export function programCard(p, { e, today }) {
+  const tl = timeline(p, today);
+  const s = TODAY[p.state];
+  const alert = `RC50.s3.alert(${arg(p.tids[0] || "", e)},${arg(p.names[0] || "", e)},${arg(p.id, e)},${arg(p.state === "none" ? "1" : "", e)})`;
+  return `<article class="sv-person sv-program">
+    <div class="sv-person-head sv-static"><span class="sv-person-av" aria-hidden="true">${icon("halaqas", 22)}</span><span class="sv-person-id"><strong>${e(p.name)}</strong><small>${e(p.names.join("، ") || "لم يُسنَد محفّظ بعد")}</small></span></div>
+    <div class="sv-person-state"><span class="sv-pill">${e(p.kind)}</span>${tl ? `<span class="sv-pill" data-tone="${tl.phase === "جارٍ" ? "ok" : "warn"}">${e(tl.phase)}</span>` : ""}${s ? `<span class="sv-pill" data-today="${s[1]}">${e(s[0])}</span>` : ""}</div>
+    ${tl ? `<div class="sv-progress" role="progressbar" aria-label="تقدم ${e(p.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${tl.pct}"><span style="width:${tl.pct}%"></span></div><p class="sv-person-line">اليوم <bdi>${e(tl.done)}</bdi> من <bdi>${e(tl.total)}</bdi> · من <bdi>${e(p.starts)}</bdi> إلى <bdi>${e(p.ends)}</bdi></p>` : ""}
+    <dl class="sv-facts">${fact("المشاركون", p.students, e)}${fact("جلسات الشهر", p.monthSessions, e)}${fact("سُمّع اليوم", p.recited, e)}${fact("آخر جلسة", p.last || "—", e)}</dl>
+    <div class="sv-person-actions"><button type="button" class="sv-button sv-button-tonal" ${p.tids.length ? "" : "disabled"} onclick='${alert}'>${icon("notifications", 18)}تنبيه المحفّظ</button><button type="button" class="sv-button sv-button-primary" onclick="RC50.s3.visitNew(${arg(p.id, e)})">${icon("visits", 18)}تسجيل زيارة</button></div>
+  </article>`;
+}
+
+export function programsPage(programs, ctx) {
+  const { e } = ctx;
+  const members = programs.reduce((n, p) => n + p.students, 0);
+  const month = programs.reduce((n, p) => n + p.monthSessions, 0);
+  const body = programs.length
+    ? programs.map((p) => programCard(p, ctx)).join("")
+    : `<div class="sv-empty">لا توجد برامج مسندة إليك. تظهر هنا الدورات وبرامج التلاوة والتجويد التي تشرف عليها.</div>`;
+  return `<div class="sv-dashboard sv-supervision"><div class="sv-kpis">${stat(programs.length, "البرامج", "", e)}${stat(members, "المشاركون", "", e)}${stat(month, "جلسات الشهر", "", e)}</div><div class="sv-people">${body}</div></div>`;
+}

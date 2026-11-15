@@ -775,3 +775,29 @@ body.dark .sv-pill[data-today] {
     transition: none;
   }
 }
+.sv-static {
+  cursor: default;
+}
+.sv-program .sv-person-av {
+  color: var(--sv-accent, #0b6e4f);
+}
+
+/* Visits, daily sessions and comparison cards share the same calm card language as the new screens. */
+.s3-card {
+  border: 1px solid var(--sv-line, var(--line, #dfe7e2));
+  border-radius: 18px;
+  padding: 14px 16px;
+  gap: 8px;
+}
+.s3-card.ok {
+  border-color: color-mix(in srgb, #1f8a5f 45%, var(--sv-line, #dfe7e2));
+}
+.s3-card.warn {
+  border-color: color-mix(in srgb, #c8940f 55%, var(--sv-line, #dfe7e2));
+}
+.s3-card.bad {
+  border-color: color-mix(in srgb, #c4382d 50%, var(--sv-line, #dfe7e2));
+}
+.s3-card small {
+  line-height: 1.8;
+}
