@@ -1047,3 +1047,90 @@ body.dark .sv-todo[data-done="1"] {
 .sv-facts-3 div:last-child:nth-child(odd) {
   grid-column: auto;
 }
+
+/* ===== Teacher evaluation metrics ===== */
+.sv-metrics {
+  display: grid;
+  gap: 9px;
+  padding-block: 4px;
+}
+.sv-pm {
+  display: grid;
+  grid-template-columns: 96px 1fr 42px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.sv-pm > span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.sv-pm b {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.sv-pm[data-tone="ok"] i {
+  background: linear-gradient(90deg, #5fb88f, #0b6e4f);
+}
+.sv-pm[data-tone="warn"] i {
+  background: linear-gradient(90deg, #e3c56b, #c8940f);
+}
+.sv-pm[data-tone="bad"] i {
+  background: linear-gradient(90deg, #e58f86, #c4382d);
+}
+.sv-pm[data-tone="idle"] {
+  opacity: 0.55;
+}
+@media (max-width: 360px) {
+  .sv-pm {
+    grid-template-columns: 78px 1fr 40px;
+  }
+}
+
+/* ===== Motion: one orchestrated moment (bars fill in), press feedback, reduced-motion safe ===== */
+@keyframes sv-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.sv-progress > span,
+.sv-meter-bar > i {
+  transform-origin: 100% 50%;
+  animation: sv-fill 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+html:not([dir="rtl"]) .sv-progress > span,
+html:not([dir="rtl"]) .sv-meter-bar > i {
+  transform-origin: 0 50%;
+}
+body.sv-role .sv-button,
+body.sv-role .sv-person-head,
+body.sv-role .sv-stat,
+body.sv-role .nx-btn,
+body.sv-role .nx-chip,
+body.sv-role .nst-card,
+body.sv-role .dn-btn {
+  transition: transform 0.14s cubic-bezier(0.4, 0, 0.2, 1), filter 0.14s, box-shadow 0.14s;
+}
+body.sv-role .sv-button:active,
+body.sv-role .sv-stat:active,
+body.sv-role .nx-btn:active,
+body.sv-role .nx-chip:active,
+body.sv-role .dn-btn:active {
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv-progress > span,
+  .sv-meter-bar > i {
+    animation: none;
+  }
+  body.sv-role .sv-button:active,
+  body.sv-role .sv-stat:active,
+  body.sv-role .nx-btn:active,
+  body.sv-role .nx-chip:active,
+  body.sv-role .dn-btn:active {
+    transform: none;
+  }
+}
