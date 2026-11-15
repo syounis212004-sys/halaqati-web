@@ -57,13 +57,6 @@
   function decorate(){
     const box=document.getElementById('content');if(!box)return;
     const w=box.querySelector('.s3-welcome');
-    const supervisorPhoto=w?.querySelector('[data-supervisor-avatar]');
-    if(supervisorPhoto){
-      const photo=myPhoto()||null,name=state.profile?.full_name||'';
-      if(supervisorPhoto.dataset.name!==name||(supervisorPhoto.querySelector('img')?.getAttribute('src')||null)!==photo){
-        supervisorPhoto.dataset.name=name;supervisorPhoto.innerHTML=R.avatar(photo,name,56);
-      }
-    }
     const hero=box.querySelector('.nh-hero');
     const today=box.querySelector('.nh-today');
     if(w&&!w.dataset.rc85){
