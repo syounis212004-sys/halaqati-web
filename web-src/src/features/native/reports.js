@@ -456,12 +456,14 @@
   function rkList(items,cols,emptyText){
     if(!items.length)return NX.empty(emptyText,{icon:'EmojiEvents'});
     const medal=['gold','silver','bronze'];
-    const ph=x=>{const u=x.id&&state.photoUrls&&state.photoUrls[x.id];return u?`<img src="${u}" alt="" class="rc85-ph" style="width:44px;height:44px">`:''};
+    const photoOf=(id,name)=>{const c=id&&state.photoUrls&&state.photoUrls[id];if(c)return c;if(!id&&!name)return '';const st=[...((window.RC27&&RC27.master&&RC27.master.students)||[]),...(state.students||[])].find(x=>id?String(x.id)===String(id):x.full_name===name);const p=st&&st.photo_path;return typeof p==='string'&&p.startsWith('data:image/')?p:''};
+    const ph=x=>{const u=photoOf(x.id,x.name);return u?`<img src="${u}" alt="" class="rc85-ph" style="width:44px;height:44px">`:`<span class="rc85-ph" aria-hidden="true" style="width:44px;height:44px">${h((x.name||'ط').trim()[0]||'ط')}</span>`};
+    const av=(x,size)=>{const u=photoOf(x.id,x.name);return u?`<img src="${u}" alt="" class="rc85-ph" style="width:${size}px;height:${size}px">`:NX.avatar(x.name,{size})};
     const phone=items.map((x,i)=>`<div class="nx-card nx-emph nr-rk-row"><span class="nr-rk-n">${i+1}</span>${ph(x)}<div class="nx-grow"><b class="nx-ellipsis nx-t-title-m">${h(x.name)}</b><small class="nx-muted nx-t-body-s">${h(x.sub)}</small></div><div class="nr-rk-v"><b>${h(x.value)}</b>${x.valueLabel?`<small>${h(x.valueLabel)}</small>`:''}</div></div>`).join('');
     const top=items.slice(0,3);
     const order=top.length===3?[1,0,2]:top.map((_,i)=>i);
-    const podium=`<div class="nr-podium">${order.map(i=>{const x=top[i];return `<div class="nr-pod ${medal[i]}"><span class="nr-pod-ic">${ic(i===0?'EmojiEvents':'MilitaryTech',i===0?34:28)}</span>${NX.avatar(x.name,{size:52})}<b class="nx-ellipsis">${h(x.name)}</b><span class="nr-pod-v">${h(x.value)}${x.valueLabel?` <small>${h(x.valueLabel)}</small>`:''}</span><span class="nr-pod-step"><i>${i+1}</i></span></div>`}).join('')}</div>`;
-    const table=`<div class="nx-card nx-flat nr-tablewrap"><table class="nr-table"><thead><tr><th class="c">#</th><th>الطالب</th>${cols.map(c=>`<th class="c">${c}</th>`).join('')}</tr></thead><tbody>${items.map((x,i)=>`<tr><td class="c"><span class="nr-rk-n sm ${medal[i]||''}">${i+1}</span></td><td><div class="nrp-name">${NX.avatar(x.name,{size:32})}<b>${h(x.name)}</b></div></td>${x.cells.map((c,j)=>`<td class="c ${j===x.cells.length-1?'strong':''}">${h(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const podium=`<div class="nr-podium">${order.map(i=>{const x=top[i];return `<div class="nr-pod ${medal[i]}"><span class="nr-pod-ic">${ic(i===0?'EmojiEvents':'MilitaryTech',i===0?34:28)}</span>${av(x,52)}<b class="nx-ellipsis">${h(x.name)}</b><span class="nr-pod-v">${h(x.value)}${x.valueLabel?` <small>${h(x.valueLabel)}</small>`:''}</span><span class="nr-pod-step"><i>${i+1}</i></span></div>`}).join('')}</div>`;
+    const table=`<div class="nx-card nx-flat nr-tablewrap"><table class="nr-table"><thead><tr><th class="c">#</th><th>الطالب</th>${cols.map(c=>`<th class="c">${c}</th>`).join('')}</tr></thead><tbody>${items.map((x,i)=>`<tr><td class="c"><span class="nr-rk-n sm ${medal[i]||''}">${i+1}</span></td><td><div class="nrp-name">${av(x,32)}<b>${h(x.name)}</b></div></td>${x.cells.map((c,j)=>`<td class="c ${j===x.cells.length-1?'strong':''}">${h(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     return `<div class="nr-rk-phone nx-stack-s">${phone}</div><div class="nr-rk-desk">${podium}${table}</div>`;
   }
 
