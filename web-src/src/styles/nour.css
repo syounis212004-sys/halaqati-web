@@ -1,0 +1,17 @@
+/* Nour — visual layer only (no behavior change). Loaded last. */
+/* Bottom capsule: the label is permanent under every icon; the open tab gets a filled pill behind its icon. */
+html body .mobile-nav{height:68px!important;padding:4px 6px!important;border-radius:32px!important;justify-content:space-between}
+html body .mobile-nav .nt-tab-cell{flex:1 1 0;min-width:0;padding:0;display:flex;justify-content:center}
+html body .mobile-nav .nt-tab{flex-direction:column;gap:2px;min-width:48px;min-height:56px;width:100%;padding:4px 2px;border-radius:16px;background:transparent!important;color:var(--muted)}
+html body .mobile-nav .nt-tab .nt-tab-l{display:block!important;font:600 clamp(10px,2.9vw,11.5px)/14px Cairo,sans-serif;white-space:nowrap;color:inherit}
+html body .mobile-nav .nt-tab .nt-tab-ic{display:grid;place-items:center;height:28px;min-width:52px;border-radius:999px;transition:background-color .18s ease}
+html body .mobile-nav .nt-tab.on{color:var(--green)}
+html body .mobile-nav .nt-tab.on .nt-tab-l{font-weight:800}
+html body .mobile-nav .nt-tab.on .nt-tab-ic{background:var(--green);color:#fff}
+html body .mobile-nav .nt-tab.on .nt-tab-ic svg{stroke:#fff;fill:#fff}
+html body .mobile-nav .dn-plus{margin-inline:4px}
+@media (prefers-reduced-motion:reduce){html body .mobile-nav .nt-tab .nt-tab-ic{transition:none}}
+/* Home shortcuts: four columns, three on very narrow screens. */
+.nh-short{grid-template-columns:repeat(4,minmax(0,1fr))}
+.nh-short .nx-btn{font-size:clamp(11px,3vw,13px)}
+@media (max-width:360px){.nh-short{grid-template-columns:repeat(3,minmax(0,1fr))}}
