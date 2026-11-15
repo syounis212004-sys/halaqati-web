@@ -87,13 +87,18 @@
     if(typeof db==='undefined')throw new Error('لا يوجد اتصال بالخادم');
     const td=todayS(),ms=td.slice(0,8)+'01';
     await vqFlush();
-    const [hq,links,staff,sess,visits0]=await Promise.all([
+    const [hq0,links,staff,sess0,visits0,supLinks]=await Promise.all([
       db.from('halaqas').select('id,name,active,halaqa_type,supervisor_id').eq('active',true).order('name').limit(200).then(ok),
       db.from('halaqa_teachers').select('halaqa_id,teacher_id').limit(1000).then(ok),
       staffProfiles(),
       db.from('sessions').select('id,halaqa_id,session_date,status,created_by').gte('session_date',ms).neq('status','cancelled').order('session_date',{ascending:false}).limit(1500).then(ok),
-      db.from('supervisor_visits').select('*').order('visit_date',{ascending:false}).limit(300).then(ok)]);
-    const visits=applyQ(visits0);
+      db.from('supervisor_visits').select('*').order('visit_date',{ascending:false}).limit(300).then(ok),
+      db.from('halaqa_supervisors').select('halaqa_id,supervisor_id').limit(2000).then(r=>r&&r.error?[]:ok(r))]);
+    // Source of truth for «my halaqas»: halaqa_supervisors links plus halaqas.supervisor_id. The administrator sees all.
+    const me=state.user?.id,mineIds=new Set([...supLinks.filter(l=>l.supervisor_id===me).map(l=>l.halaqa_id),...hq0.filter(h=>h.supervisor_id===me).map(h=>h.id)]);
+    const hq=role()==='supervisor'?hq0.filter(h=>mineIds.has(h.id)):hq0,scopeIds=new Set(hq.map(h=>h.id));
+    const sess=sess0.filter(s=>role()!=='supervisor'||scopeIds.has(s.halaqa_id));
+    const visitsAll=applyQ(visits0),visits=role()==='supervisor'?visitsAll.filter(v=>scopeIds.has(v.halaqa_id)||v.supervisor_id===me):visitsAll;
     const todayS_=sess.filter(s=>s.session_date===td),ids=todayS_.map(s=>s.id);
     const [att,rec]=ids.length?await Promise.all([
       db.from('attendance_records').select('session_id,student_id,status').in('session_id',ids).limit(3000).then(ok),
@@ -115,7 +120,7 @@
     });
     const mDays=new Set(sess.map(s=>s.session_date)).size,byC={};
     sess.forEach(s=>{const o=byC[s.created_by]=byC[s.created_by]||{n:0,d:new Set,c:0,last:''};o.n++;o.d.add(s.session_date);if(s.status==='closed')o.c++;if(s.session_date>o.last)o.last=s.session_date});
-    B.data={halaqas,visits,staff,byC,mDays,sess:sess.map(x=>({halaqa_id:x.halaqa_id,session_date:x.session_date,status:x.status,created_by:x.created_by,id:x.id})),ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
+    B.data={halaqas,visits,myVisits:visits.filter(v=>v.supervisor_id===me),supLinks,staff,byC,mDays,sess:sess.map(x=>({halaqa_id:x.halaqa_id,session_date:x.session_date,status:x.status,created_by:x.created_by,id:x.id})),ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
   }
   const stLabel={none:'لم تبدأ الجلسة',open:'الجلسة جارية',closed:'انتهت الجلسة'};
   const rate=(a,b)=>b<=0?0:Math.min(100,Math.round(a*100/b));
@@ -129,8 +134,8 @@
   const donorHome=R.pages.home;
   const supHome=async()=>{
     const d=await load(false),ns=d.halaqas.filter(h=>h.state==='none'),started=d.halaqas.length-ns.length;
-    const stale=d.halaqas.filter(h=>(daysSince(h.lastVisit)??999)>14),open=d.visits.filter(v=>val(v.action_items)&&!v.action_done).length;
-    const wk=d.visits.filter(v=>(daysSince(v.visit_date)??999)<=7).length;
+    const stale=d.halaqas.filter(h=>(daysSince(h.lastVisit)??999)>14),open=(d.myVisits||d.visits).filter(v=>val(v.action_items)&&!v.action_done).length;
+    const wk=(d.myVisits||d.visits).filter(v=>(daysSince(v.visit_date)??999)<=7).length;
     return window.SupervisorUI.dashboard({halaqas:d.halaqas,pending:ns,stale,started,weekVisits:wk,openActions:open,welcome:R.welcome()},{escape:e,renderCircle:h=>hCard(h,false)});
   };
   R.pages.home={title:'الرئيسية',roles:[...(donorHome?.roles||['observer']),'supervisor'],render:async()=>role()==='supervisor'?supHome():(R.welcome()+await donorHome.render()),after:donorHome?.after};
@@ -229,7 +234,7 @@
     const monthDays=new Set(scope.map(s=>s.session_date)).size||d.mDays||0;
     const photo=p=>p.avatar_path&&String(p.avatar_path).startsWith('data:image/')?p.avatar_path:null;
     const rowsT=tchs.map(p=>{
-      const ov=d.ov[p.id]||{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
+      const ov=adm?(d.ov[p.id]||{}):{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
       // credit a teacher for sessions of his own halaqas as well as the ones he created
       const mine=(d.sess||[]).filter(s=>s.created_by===p.id||ids.has(s.halaqa_id));
       const days=Math.max(ov.session_days!=null?+ov.session_days:0,new Set(mine.map(s=>s.session_date)).size);
@@ -242,7 +247,7 @@
       return {id:p.id,name:p.full_name||'محفّظ',photo:photo(p),phone:val(p.phone),halaqat:hs,pct,sessions,days,monthDays:denom,closed,rec:ov.recitations,today,
         last:lastS||ov.last_session||'—',visits:vr.length,score:sc_.length?sc_.reduce((x,y)=>x+y,0)/sc_.length:null,
         openActions:d.visits.filter(v=>ids.has(v.halaqa_id)&&val(v.action_items)&&!v.action_done).length}});
-    const rowsS=sups.map(p=>{const mine=(state.halaqas||[]).filter(h=>h.supervisor_id===p.id),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=month),vis=new Set(made.map(v=>v.halaqa_id));
+    const rowsS=sups.map(p=>{const mine=d.halaqas.filter(h=>h.supervisor_id===p.id||(d.supLinks||[]).some(l=>l.halaqa_id===h.id&&l.supervisor_id===p.id)),made=d.visits.filter(v=>v.supervisor_id===p.id&&v.visit_date>=month),vis=new Set(made.map(v=>v.halaqa_id));
       const visited=mine.filter(h=>vis.has(h.id)).length;
       return {id:p.id,name:p.full_name||'مشرف',photo:photo(p),total:mine.length,visited,pct:mine.length?rate(visited,mine.length):null,made:made.length,last:made[0]?.visit_date||'—'}});
     const tabs=[['teachers','المحفظون'],...(adm?[['supervisors','المشرفون']]:[]),['compare','المقارنة']];

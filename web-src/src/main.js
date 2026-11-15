@@ -30,7 +30,6 @@ import './styles/tokens.css';
 import './styles/rc86.css';
 import './styles/supervisor.css';
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
-import { installSupervisorShell } from './features/supervisor/shell.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };
 import rc50RuntimeUrl from './features/rc50/runtime.js?url';
@@ -189,7 +188,6 @@ async function boot() {
   await loadClassicScript(rc66ExamsUrl, { id: 'halaqati-rc66-exams' });
   await loadClassicScript(rc85PortalUrl, { id: 'halaqati-rc85-portal' });
   await loadClassicScript(rc86ParityUrl, { id: 'halaqati-rc86-parity' });
-  installSupervisorShell();
   await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
   installReportLazyLoading();
   installImportLazyLoading();
