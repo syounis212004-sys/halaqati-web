@@ -200,7 +200,9 @@
     let card=`<div class="nt-sync-state"><span class="nt-sync-ic">${ic(on?'CloudDone':'CloudOff',24)}</span><div class="nx-grow"><b>${on?'Supabase متاح':'أنت تعمل دون اتصال'}</b><small class="nx-muted">${last}</small></div>${NX.btn(busy?'جارٍ…':'مزامنة',{icon:busy?'':'Sync',onclick:'tryNtSync()',disabled:!on||busy})}</div>`;
     if(!on||busy)card+=`<div class="nt-sync-art" id="ntSyncArt" data-scene="${on?'sync':'offline'}"></div>`;
     if(!on&&pendingN>0)card+=`<div class="nt-warn-box">تم حفظ ${pendingN} تغييرات محليًا على هذا الجهاز. لن تضيع عند إغلاق الشاشة، وستُرفع تلقائيًا بعد عودة الاتصال.</div>`;
-    if(state.authNeedsLogin&&q0.length)card+=`${NX.notice('تحتاج جلسة الدخول إلى تجديد قبل رفع العمليات المحفوظة.','warning')}${NX.btn('تجديد الدخول',{kind:'outlined',full:true,icon:'Lock',onclick:'openSyncAuthRecovery()'})}`;
+    // a 401 / expired-token failure means the login must be renewed, even if the flag was not raised
+    const authStuck=state.authNeedsLogin||q0.some(op=>/\b401\b|jwt|انتهت الجلسة|تجديد الدخول|تجديد جلسة/i.test(String(op.lastError||'')));
+    if(authStuck&&q0.length)card+=`${NX.notice('تحتاج جلسة الدخول إلى تجديد قبل رفع العمليات المحفوظة.','warning')}${NX.btn('تجديد الدخول',{kind:'outlined',full:true,icon:'Lock',onclick:'openSyncAuthRecovery()'})}`;
     if(blockedN>0)card+=`<p class="nt-err-text">العمليات المحجوبة لا تُحذف تلقائيًا لأنها قد تحتوي على خطأ صلاحيات RLS أو بيانات غير صالحة. راجع الخطأ ثم أعد المحاولة أو احذف العملية يدويًا.</p>${NX.btn('إعادة محاولة كل العمليات المحجوبة',{kind:'outlined',full:true,icon:'Replay',onclick:'resetFailedOfflineOperations()',disabled:!on||busy})}`;
     h0+=`<div class="nx-card nx-emph nt-sync-card">${card}</div>`;
     if(!q0.length)h0+=NX.empty('لا توجد عمليات معلقة — البيانات متزامنة',{icon:'CloudDone'});
