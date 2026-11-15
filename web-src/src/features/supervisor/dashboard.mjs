@@ -26,11 +26,23 @@ const paths = {
   approvals: '<path d="m5 12 4 4L20 5M4 4h8M4 20h16"/>',
   ranking: '<path d="M4 21v-8h5v8m1 0V5h5v16m1 0V10h5v11"/>',
 };
+paths.edit = '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>';
+paths.check = '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>';
+paths.trash = '<path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/>';
+paths.user = '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>';
+paths.star = '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z"/>';
+paths.book = '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Zm0 14a2 2 0 0 1 2-2h13"/>';
 paths.insights = paths.reports;
 paths.staff = paths.students;
 
 export function icon(name, size = 22) {
   return `<svg class="sv-icon" data-sv-icon="${name}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[name] || paths.halaqas}</svg>`;
+}
+
+export function medallion(logo, name, e, size = 22) {
+  return typeof logo === "string" && logo.startsWith("data:image/")
+    ? `<img class="sv-logo" alt="" src="${e(logo)}">`
+    : `<span class="sv-circle-icon">${icon("halaqas", size)}</span>`;
 }
 
 export function welcome({ greeting, name, avatar, quote, source }, e) {
@@ -54,7 +66,7 @@ export function halaqaCard(
       : 0;
   const teacher = h.names.join("، ") || "لم يُسنَد محفّظ بعد";
   return `<article class="s3-card sv-circle" data-state="${e(h.state)}">
-    <div class="sv-circle-head"><span class="sv-circle-icon">${icon("halaqas")}</span><div><h3>${e(h.name)}</h3><p>${e(teacher)}</p></div></div>
+    <div class="sv-circle-head">${medallion(h.logo, h.name, e)}<div><h3>${e(h.name)}</h3><p>${e(teacher)}</p></div></div>
     <div class="sv-circle-status"><span class="sv-status" data-state="${e(h.state)}"><i></i>${e(labels[h.state])}</span><span>سُمّع <bdi>${e(h.recited)} من ${e(h.students)}</bdi></span></div>
     <div class="sv-progress" role="progressbar" aria-label="تسميع طلاب ${e(h.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentage}"><span style="width:${percentage}%"></span></div>
     <dl class="sv-attendance"><div><dt>الحضور</dt><dd>${e(h.present)}</dd></div><div><dt>الغياب</dt><dd>${e(h.absent)}</dd></div><div><dt>بعذر</dt><dd>${e(h.excused || 0)}</dd></div></dl>
@@ -95,6 +107,6 @@ export function dashboard(
     <div class="sv-stats">${metric("halaqas", `${started}/${halaqas.length}`, "بدأت جلساتها", !halaqas.length ? "بانتظار إسناد حلقة" : pending.length ? `${e(pending.length)} بانتظار البدء` : "الجميع على الموعد")}${metric("visits", weekVisits, "زيارات الأسبوع", "خلال آخر 7 أيام")}${metric("supervision", openActions, "إجراءات للمتابعة", "من زياراتك السابقة")}</div>
     ${attention.length ? `<section class="sv-attention" aria-labelledby="svAttentionTitle"><header><span>${icon("alert")}</span><div><h2 id="svAttentionTitle">تحتاج متابعتك</h2><p>خطوة بسيطة تُحدث فرقًا اليوم</p></div><span class="sv-count">${attention.length}</span></header><ul>${attentionRows}</ul></section>` : `<section class="sv-all-clear">${icon("approvals")}<div><strong>${halaqas.length ? "أمور حلقاتك على ما يرام" : "أهلًا بك في لوحة المتابعة"}</strong><p>${halaqas.length ? "لا توجد تنبيهات متابعة حاليًا." : "ستظهر حلقاتك هنا بعد إسنادها إليك."}</p></div></section>`}
     <section class="sv-circles"><div class="sv-section-heading"><div><h2>حلقات اليوم <span class="sv-count">${halaqas.length}</span></h2></div><button type="button" class="sv-text-button" onclick="go('halaqas')">عرض الكل ${icon("arrow", 16)}</button></div><div class="sv-circle-grid">${halaqas.map(renderCircle).join("") || '<div class="sv-empty">لا توجد حلقات مسندة إليك بعد.</div>'}</div></section>
-    ${programs.length ? `<section class="sv-circles"><div class="sv-section-heading"><div><h2>البرامج <span class="sv-count">${programs.length}</span></h2></div><button type="button" class="sv-text-button" onclick="go('programs')">عرض الكل ${icon("arrow", 16)}</button></div><div class="sv-circle-grid">${programs.map((p) => `<article class="s3-card sv-circle"><div class="sv-circle-head"><span class="sv-circle-icon">${icon("halaqas")}</span><div><h3>${e(p.name)}</h3><p>${e(p.kind)} · ${e(p.names.join("، ") || "بلا محفّظ")}</p></div></div><div class="sv-circle-status"><span>مشاركون <bdi>${e(p.students)}</bdi></span><span>جلسات الشهر <bdi>${e(p.monthSessions)}</bdi></span></div></article>`).join("")}</div></section>` : ""}
+    ${programs.length ? `<section class="sv-circles"><div class="sv-section-heading"><div><h2>البرامج <span class="sv-count">${programs.length}</span></h2></div><button type="button" class="sv-text-button" onclick="go('programs')">عرض الكل ${icon("arrow", 16)}</button></div><div class="sv-circle-grid">${programs.map((p) => `<article class="s3-card sv-circle"><div class="sv-circle-head">${medallion(p.logo, p.name, e)}<div><h3>${e(p.name)}</h3><p>${e(p.kind)} · ${e(p.names.join("، ") || "بلا محفّظ")}</p></div></div><div class="sv-circle-status"><span>مشاركون <bdi>${e(p.students)}</bdi></span><span>جلسات الشهر <bdi>${e(p.monthSessions)}</bdi></span></div></article>`).join("")}</div></section>` : ""}
   </div>`;
 }
