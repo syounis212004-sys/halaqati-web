@@ -157,3 +157,9 @@ body.dark .nr-pod.gold .nr-pod-step{background:#5a4710;color:#f6e3a1}body.dark .
 
 /* nx.css resolves its aliases on :root, so dark tokens (body.dark) must be re-bound for our screens */
 body.dark .nr-root,body.dark .nx-dlg.nr-wide-dlg{--nx-surface-var:var(--mint2);--nx-secondary-container:var(--mint);--nx-outline-var:var(--line)}
+/* ranking rows: long Arabic names wrap instead of running over the points column */
+.nr-rk-row>.nx-grow{min-width:0}
+.nr-rk-row b.nx-ellipsis{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.nr-rk-row small{line-height:1.7}
+.nr-rk-row .rc85-ph{width:44px!important;height:44px!important}
+.nr-rk-v{min-width:64px}
