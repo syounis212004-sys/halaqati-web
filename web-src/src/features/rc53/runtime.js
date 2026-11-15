@@ -77,6 +77,13 @@
   // ---------- data ----------
   const B={at:0,data:null};
   const ok=r=>{if(r&&r.error)throw r.error;return (r&&r.data)||[]};
+  // A daily session is finished once its day has passed, even if nobody pressed «إنهاء الجلسة».
+  const finished=s=>s.status==='open'&&String(s.session_date)<todayS()?{...s,status:'closed',autoClosed:true}:s;
+  // PostgREST caps a response at 1000 rows, so fetch by small groups of sessions instead of one big request
+  async function fetchBy(table,cols,col,ids,size=15){
+    const out=[];for(let i=0;i<ids.length;i+=size){const r=await db.from(table).select(cols).in(col,ids.slice(i,i+size)).limit(1000);out.push(...ok(r))}
+    return out;
+  }
   async function staffProfiles(){
     let r=await db.from('profiles').select('id,full_name,role,phone,avatar_path,frozen').in('role',['teacher','supervisor']).order('full_name').limit(500);
     if(r.error)r=await db.from('profiles').select('id,full_name,role,phone').in('role',['teacher','supervisor']).order('full_name').limit(500);
@@ -97,7 +104,7 @@
     // Source of truth for «my halaqas»: halaqa_supervisors links plus halaqas.supervisor_id. The administrator sees all.
     const me=state.user?.id,mineIds=new Set([...supLinks.filter(l=>l.supervisor_id===me).map(l=>l.halaqa_id),...hq0.filter(h=>h.supervisor_id===me).map(h=>h.id)]);
     const hq=role()==='supervisor'?hq0.filter(h=>mineIds.has(h.id)):hq0,scopeIds=new Set(hq.map(h=>h.id));
-    const sess=sess0.filter(s=>role()!=='supervisor'||scopeIds.has(s.halaqa_id));
+    const sess=sess0.filter(s=>role()!=='supervisor'||scopeIds.has(s.halaqa_id)).map(finished);
     const visitsAll=applyQ(visits0),visits=role()==='supervisor'?visitsAll.filter(v=>scopeIds.has(v.halaqa_id)||v.supervisor_id===me):visitsAll;
     const todayS_=sess.filter(s=>s.session_date===td),ids=todayS_.map(s=>s.id);
     const [att,rec]=ids.length?await Promise.all([
@@ -153,12 +160,13 @@
     const since=new Date();since.setDate(since.getDate()-10);
     const d=await load(false),hq=Object.fromEntries(d.all.map(h=>[h.id,h])),stf=Object.fromEntries(d.staff.map(p=>[p.id,p.full_name]));
     const mineIds=d.all.map(h=>h.id);
-    const ses=mineIds.length?ok(await db.from('sessions').select('id,halaqa_id,session_date,status,created_by').in('halaqa_id',mineIds).gte('session_date',iso(since)).neq('status','cancelled').order('session_date',{ascending:false}).limit(120)):[];
-    const ids=ses.map(s=>s.id),[att,rec]=ids.length?await Promise.all([db.from('attendance_records').select('session_id,student_id,status').in('session_id',ids).limit(4000).then(ok),db.from('recitation_entries').select('session_id,student_id').in('session_id',ids).limit(5000).then(ok)]):[[],[]];
+    const raw=mineIds.length?ok(await db.from('sessions').select('id,halaqa_id,session_date,status,session_type,created_by').in('halaqa_id',mineIds).gte('session_date',iso(since)).neq('status','cancelled').order('session_date',{ascending:false}).limit(120)):[];
+    const ses=[...new Map(raw.map(x=>[x.id,finished(x)])).values()];
+    const ids=ses.map(s=>s.id),[att,rec]=ids.length?await Promise.all([fetchBy('attendance_records','session_id,student_id,status','session_id',ids),fetchBy('recitation_entries','session_id,student_id','session_id',ids)]):[[],[]];
     const U=window.SupervisorUI;
     return U.sessionsPage(ses.map(s=>{
       const a=att.filter(x=>x.session_id===s.id),h=hq[s.halaqa_id]||{};
-      return U.sessionCard(s,{e,halaqa:h.name||'حلقة',logo:h.logo,teacher:stf[s.created_by]||'—',present:a.filter(x=>x.status==='present'||x.status==='late').length,absent:a.filter(x=>x.status==='absent').length,recited:new Set(rec.filter(x=>x.session_id===s.id).map(x=>x.student_id)).size});
+      return U.sessionCard(s,{e,halaqa:h.name||'حلقة',logo:h.logo,teacher:stf[s.created_by]||'—',present:a.filter(x=>x.status==='present'||x.status==='late').length,absent:a.filter(x=>x.status==='absent').length,excused:a.filter(x=>x.status==='excused').length,recited:new Set(rec.filter(x=>x.session_id===s.id).map(x=>x.student_id)).size});
     }).join(''),'لا توجد جلسات في آخر عشرة أيام');
   }});
 
@@ -232,14 +240,11 @@
     const key=(d.sess||[]).length+':'+B.at;if(M.data&&M.key===key)return M.data;
     const sh={},att={},rec={};(d.sess||[]).forEach(x=>{sh[x.id]=x.halaqa_id});
     const ids=Object.keys(sh);
-    for(let i=0;i<ids.length;i+=80){
-      const part=ids.slice(i,i+80);
-      try{
-        const [a,r]=await Promise.all([db.from('attendance_records').select('session_id,status').in('session_id',part).limit(5000).then(ok),db.from('recitation_entries').select('session_id,student_id').in('session_id',part).limit(8000).then(ok)]);
-        a.forEach(x=>{const o=att[sh[x.session_id]]=att[sh[x.session_id]]||{p:0,t:0};o.t++;if(x.status==='present'||x.status==='late')o.p++});
-        r.forEach(x=>{(rec[sh[x.session_id]]=rec[sh[x.session_id]]||new Set()).add(x.student_id)});
-      }catch(_e){}
-    }
+    try{
+      const [a,r]=await Promise.all([fetchBy('attendance_records','session_id,status','session_id',ids),fetchBy('recitation_entries','session_id,student_id','session_id',ids)]);
+      a.forEach(x=>{const o=att[sh[x.session_id]]=att[sh[x.session_id]]||{p:0,t:0};o.t++;if(x.status==='present'||x.status==='late')o.p++});
+      r.forEach(x=>{(rec[sh[x.session_id]]=rec[sh[x.session_id]]||new Set()).add(x.student_id)});
+    }catch(_e){}
     M.key=key;M.data={att,rec};return M.data;
   }
   // overall teacher rating: weighted, missing components are left out and the rest re-weighted

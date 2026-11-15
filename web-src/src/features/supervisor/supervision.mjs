@@ -144,11 +144,16 @@ export function visitsPage(cards, add, empty) {
   return `<div class="sv-dashboard sv-supervision"><button type="button" class="sv-button sv-button-primary sv-wide" onclick="${add}">${icon("visits", 19)}تسجيل زيارة جديدة</button><div class="sv-people">${cards || `<div class="sv-empty">${empty}</div>`}</div></div>`;
 }
 
-export function sessionCard(s, { e, halaqa, logo, teacher, present, absent, recited }) {
+const TYPE_AR = { tasmee: "تسميع", lesson: "درس", sard: "سرد", review: "مراجعة", tajweed: "تجويد", tilawah: "تلاوة" };
+
+export function sessionCard(s, { e, halaqa, logo, teacher, present, absent, excused = 0, recited }) {
   const closed = s.status === "closed";
+  const lowRec = present >= 10 && recited * 100 < present * 30;
+  const type = TYPE_AR[s.session_type];
   return `<article class="sv-person sv-session">
     <div class="sv-person-head sv-static">${medallion(logo, halaqa, e)}<span class="sv-person-id"><strong>${e(halaqa)}</strong><small>${e(teacher)} · <bdi>${e(s.session_date)}</bdi></small></span><span class="sv-pill" data-tone="${closed ? "ok" : "warn"}">${closed ? "مُنهاة" : "جارية"}</span></div>
-    <dl class="sv-facts sv-facts-3">${fact("حضور", present, e)}${fact("غياب", absent, e)}${fact("سُمّع", recited, e)}</dl>
+    <div class="sv-person-state">${type ? `<span class="sv-pill">${e(type)}</span>` : ""}${s.autoClosed ? '<span class="sv-pill" title="لم يُضغط زر الإنهاء، فاعتُبرت منتهية بانتهاء يومها">أُنهيت تلقائيًا بانتهاء يومها</span>' : ""}${lowRec ? '<span class="sv-pill" data-tone="warn">تسميع منخفض</span>' : ""}</div>
+    <dl class="sv-facts sv-facts-3" data-n="${excused ? 4 : 3}">${fact("حضور", present, e)}${fact("غياب", absent, e)}${fact("سُمّع", recited, e)}${excused ? fact("بعذر", excused, e) : ""}</dl>
   </article>`;
 }
 
