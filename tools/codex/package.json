@@ -1,0 +1,20 @@
+{
+  "name": "halaqati-codex-tooling",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format:check": "prettier --check '*.{mjs,json}' 'tests/*.mjs' '../../eslint.config.mjs'",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "lint:app": "cd ../.. && tools/codex/node_modules/.bin/eslint --config eslint.config.mjs web-src/src"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "@playwright/mcp": "0.0.85",
+    "@playwright/test": "1.64.1",
+    "eslint": "10.15.0",
+    "prettier": "3.10.1",
+    "supabase": "3.1.0"
+  }
+}

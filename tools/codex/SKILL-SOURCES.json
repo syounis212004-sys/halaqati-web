@@ -1,0 +1,89 @@
+{
+  "installed_at": "2026-11-15",
+  "discovery": "https://developers.openai.com/codex/skills/",
+  "snapshots": [
+    {
+      "name": "halaqati-app-development",
+      "source": "skill://user/6a9b2b073ccc81918b991bcc52aaee26/halaqati-app-development/SKILL.md",
+      "package": "c16/6a9b2b073ccc81918b991bcc52aaee26/halaqati-app-development"
+    },
+    {
+      "name": "frontend-ui-engineering",
+      "source": "skill://user/6a9b2a0225748191a44afa8082379643/frontend-ui-engineering/SKILL.md",
+      "package": "c16/6a9b2a0225748191a44afa8082379643/frontend-ui-engineering"
+    },
+    {
+      "name": "debugging-and-error-recovery",
+      "source": "skill://user/6a9b29b04e288191a640473f318c144d/debugging-and-error-recovery/SKILL.md",
+      "package": "c16/6a9b29b04e288191a640473f318c144d/debugging-and-error-recovery"
+    },
+    {
+      "name": "code-review-and-quality",
+      "source": "skill://user/6a9b293b367c8191925394d7e037d9c4/code-review-and-quality/SKILL.md",
+      "package": "c16/6a9b293b367c8191925394d7e037d9c4/code-review-and-quality"
+    },
+    {
+      "name": "security-best-practices",
+      "source": "skill://user/6a9b2fee081c81919f5133e2121ce09d/security-best-practices/SKILL.md",
+      "package": "c16/6a9b2fee081c81919f5133e2121ce09d/security-best-practices"
+    },
+    {
+      "name": "performance-optimization",
+      "source": "skill://user/6a9b2ab2d34481919a871bf54b958a7b/performance-optimization/SKILL.md",
+      "package": "c16/6a9b2ab2d34481919a871bf54b958a7b/performance-optimization"
+    },
+    {
+      "name": "ci-cd-and-automation",
+      "source": "skill://user/6a9b291ab30081918f7834159d0a2df9/ci-cd-and-automation/SKILL.md",
+      "package": "c16/6a9b291ab30081918f7834159d0a2df9/ci-cd-and-automation"
+    },
+    {
+      "name": "test-driven-development",
+      "source": "skill://user/6a9b2cda37cc819189c2c21966d7f376/test-driven-development/SKILL.md",
+      "package": "c16/6a9b2cda37cc819189c2c21966d7f376/test-driven-development"
+    },
+    {
+      "name": "openai-playwright",
+      "source": "skill://user/6a9b2f98a48c8191b578fd651699fa8d/openai-playwright/SKILL.md",
+      "package": "c16/6a9b2f98a48c8191b578fd651699fa8d/openai-playwright"
+    },
+    {
+      "name": "supabase",
+      "source": "skill://plugin_asdk_app_69d3e5ee6a708191baa733f7b8931995/supabase/SKILL.md",
+      "package": "c4/supabase"
+    },
+    {
+      "name": "supabase-postgres-best-practices",
+      "source": "skill://plugin_asdk_app_69d3e5ee6a708191baa733f7b8931995/supabase-postgres-best-practices/SKILL.md",
+      "package": "c4/supabase-postgres-best-practices"
+    }
+  ],
+  "official_supplements": [
+    {
+      "name": "openai-playwright scripts and notices; security-best-practices references and notices",
+      "repository": "https://github.com/openai/skills",
+      "commit": "49f948faa9258a0c61caceaf225e179651397431"
+    },
+    {
+      "name": "supabase-postgres-best-practices (complete official package)",
+      "repository": "https://github.com/supabase/agent-skills",
+      "commit": "c9be0e931b7930f7d02126d04774d904c381e7d7"
+    }
+  ],
+  "design_adapters": {
+    "repository": "https://github.com/syounis212004-sys/halaqati-app",
+    "commit": "f0e0bdc1f443ca8c3666007f45e16adc79481c88",
+    "archive_sha256": "108a6e0555d1a78eb17d2887bb194fe734dd128a7034800be9a1e9dfad757bbd",
+    "skills": [
+      "ui-ux-pro-max",
+      "frontend-design",
+      "android-design",
+      "mobile-android-design"
+    ],
+    "adaptation": "Android preserves .claude originals via relative symlinks. Web copies the pinned originals into ignored .codex-work/skills and adapts .claude command paths to .agents. No application files are altered."
+  },
+  "excluded_incomplete_sources": [
+    "accessible-animation and 60fps-animation: original packages reference absent seek-shot/contact-sheet helpers; preserved in Android .claude but not exposed as Codex adapters"
+  ],
+  "snapshot_adaptation": "Imported text snapshots normalize trailing whitespace and final newlines. Original repository .claude skill sources are unchanged."
+}

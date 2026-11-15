@@ -1,0 +1,12 @@
+.codex-work/
+.playwright-mcp/
+tools/codex/node_modules/
+tools/codex/test-results/
+tools/codex/playwright-report/
+__pycache__/
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+local.properties
