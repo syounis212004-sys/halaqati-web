@@ -6,6 +6,7 @@ const TODAY = {
   none: ["لم يبدأ جلسة اليوم", "none"],
   open: ["جلسته جارية", "open"],
   closed: ["أنهى جلسة اليوم", "closed"],
+  off: ["اليوم إجازة", "off"],
 };
 
 export function stat(value, label, tone, e) {

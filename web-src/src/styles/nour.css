@@ -15,3 +15,10 @@ html body .mobile-nav .dn-plus{margin-inline:4px}
 .nh-short{grid-template-columns:repeat(4,minmax(0,1fr))}
 .nh-short .nx-btn{font-size:clamp(11px,3vw,13px)}
 @media (max-width:360px){.nh-short{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Guardian "today" card: the child's photo (88px) is wider than its 56px art box, which clipped it against the card edge. */
+.nh-today-art.rc85-child{width:88px;height:88px;padding:0;background:none;border-radius:0;overflow:visible}
+.nh-today-art.rc85-child .rc85-ph{width:88px!important;height:88px!important}
+/* "Today's ward" label: it inherited two opacities (.78 then .85) and nearly disappeared on the green card. */
+.nh-today .rc85-ward small{opacity:1;color:rgba(255,255,255,.94)}
+.nh-today small{opacity:.9}

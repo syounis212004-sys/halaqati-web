@@ -83,7 +83,11 @@
   }
   const prevRender=window.render;
   window.render=async function(){const r=await prevRender.apply(this,arguments);try{decorate();settingsCards()}catch(err){console.warn('rc85',err)}return r};
-  new MutationObserver(()=>{try{decorate()}catch(_e){}}).observe(document.documentElement,{childList:true,subtree:true});
+  // Nour: watch only the page content and run once per frame (it used to re-run for every DOM change anywhere in the document).
+  {let raf=0;const run=()=>{raf=0;try{decorate()}catch(_e){}};
+    const attach=()=>{const root=document.getElementById('content')||document.getElementById('app')||document.body;
+      new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(run)}).observe(root,{childList:true,subtree:true})};
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach);else attach()}
 
   // ---------------- settings: avatar shape + donor photos (owner/admin) ----------------
   function settingsCards(){
