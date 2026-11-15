@@ -23,6 +23,12 @@ function fact(label, value, e) {
   return `<div><dt>${e(label)}</dt><dd><bdi>${e(value)}</bdi></dd></div>`;
 }
 
+const tone = (v) => (v == null ? "idle" : v >= 80 ? "ok" : v >= 50 ? "warn" : "bad");
+function pmeter(m, e) {
+  const t = tone(m.pct);
+  return `<div class="sv-pm" data-tone="${t}" title="${e(m.hint)}"><span>${e(m.label)}</span><div class="sv-meter-bar" role="img" aria-label="${e(m.label)} ${m.pct == null ? "لا بيانات" : `${m.pct}%`}"><i style="width:${m.pct == null ? 0 : m.pct}%"></i></div><b><bdi dir="ltr">${m.pct == null ? "—" : `${m.pct}%`}</bdi></b></div>`;
+}
+
 export function teacherCard(r, ctx) {
   const { e, open, num1 } = ctx;
   const idle = !r.halaqat.length;
@@ -32,14 +38,13 @@ export function teacherCard(r, ctx) {
     : r.pct == null
       ? ["لا بيانات بعد", "idle"]
       : r.pct >= 80
-        ? ["ملتزم", "ok"]
-        : r.pct >= 50
-          ? ["يحتاج تحسينًا", "warn"]
-          : ["يحتاج متابعة", "bad"];
-  const bar =
-    r.pct == null
-      ? ""
-      : `<div class="sv-progress" role="progressbar" aria-label="التزام ${e(r.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${r.pct}"><span style="width:${r.pct}%"></span></div>`;
+        ? ["أداء ممتاز", "ok"]
+        : r.pct >= 65
+          ? ["أداء جيد", "ok"]
+          : r.pct >= 50
+            ? ["يحتاج تحسينًا", "warn"]
+            : ["يحتاج متابعة", "bad"];
+  const bar = idle || !r.metrics?.length ? "" : `<div class="sv-metrics" aria-label="تقييم ${e(r.name)}">${r.metrics.map((m) => pmeter(m, e)).join("")}</div>`;
   const first = r.halaqat[0];
   const alert = `RC50.s3.alert(${arg(r.id, e)},${arg(r.name, e)},${arg(first?.id || "", e)},"")`;
   const details = open
@@ -59,7 +64,6 @@ export function teacherCard(r, ctx) {
     </button>
     <div class="sv-person-state"><span class="sv-pill" data-tone="${status[1]}">${e(status[0])}${r.pct == null ? "" : ` <bdi dir="ltr">${e(r.pct)}%</bdi>`}</span>${idle ? "" : `<span class="sv-pill" data-today="${today[1]}">${e(today[0])}</span>`}</div>
     ${bar}
-    ${idle ? "" : `<p class="sv-person-line">نشِط <bdi>${e(r.days)}</bdi> يومًا من <bdi>${e(r.monthDays)}</bdi> هذا الشهر · <bdi>${e(r.sessions)}</bdi> جلسة</p>`}
     ${details}
     <div class="sv-person-actions">
       <button type="button" class="sv-button sv-button-tonal" onclick='${alert}'>${icon("notifications", 18)}إرسال تنبيه</button>

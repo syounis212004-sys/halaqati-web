@@ -152,3 +152,11 @@ test("a teacher without a halaqa is not flagged as needing follow-up", () => {
   assert.match(html, /بلا حلقة/);
   assert.ok(!html.includes("يحتاج متابعة"));
 });
+
+test("teacher card shows every evaluation metric with its percentage", () => {
+  const metrics = [["commit", "الالتزام بالحضور", 100], ["attend", "حضور الطلاب", 80], ["recite", "تغطية التسميع", 43], ["closed", "إنهاء الجلسات", 0], ["visit", "تقييم الزيارات", null]].map(([k, label, pct]) => ({ k, label, hint: label, pct }));
+  const html = teacherCard({ id: "t", name: "محفّظ", halaqat: [{ id: "h", name: "حلقة" }], pct: 69, metrics, sessions: 12, days: 12, monthDays: 12, closed: 0, rec: 300, today: "none", last: "2026-11-13", visits: 0, score: null, openActions: 0 }, { e, num1: String, open: false });
+  assert.equal((html.match(/class="sv-pm"/g) || []).length, 5);
+  assert.match(html, /أداء جيد/);
+  assert.match(html, /43%/);
+});
