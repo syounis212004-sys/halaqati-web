@@ -23,6 +23,7 @@
   const greeting=()=>{const h=new Date().getHours();return h>=4&&h<=11?'صباح الخير':h<=16&&h>=12?'نهارك مبارك':h>=17&&h<=20?'مساء الخير':'ليلة مباركة'};
   R.welcome=(detail)=>{
     const list=PH[role()]||PH.teacher,day=Math.floor(Date.now()/86400000),p=list[day%list.length];
+    if(role()==='supervisor')return window.SupervisorUI.welcome({greeting:greeting(),name:state.profile?.full_name,avatar:R.avatar?R.avatar(R.myPhoto?.(),state.profile?.full_name,56):'',quote:p[0],source:p[1]},e);
     return `<section class="s3-welcome"><small>${e(greeting())}</small><b>${e(p[0])}</b><span>${e(p[1])}</span>${detail?`<p>${e(detail)}</p>`:''}</section>`;
   };
   const baseHome=window.homePage;
@@ -116,18 +117,12 @@
     sess.forEach(s=>{const o=byC[s.created_by]=byC[s.created_by]||{n:0,d:new Set,c:0,last:''};o.n++;o.d.add(s.session_date);if(s.status==='closed')o.c++;if(s.session_date>o.last)o.last=s.session_date});
     B.data={halaqas,visits,staff,byC,mDays,ov:ov?Object.fromEntries(ov.map(x=>[x.id,x])):{},links};B.at=Date.now();return B.data;
   }
-  const stLabel={none:'لم يبدأ الجلسة',open:'الجلسة جارية',closed:'أنهى الجلسة'},stCls={none:'bad',open:'warn',closed:'ok'};
-  const tname=h=>h.names.join('، ')||'بلا محفّظ';
+  const stLabel={none:'لم تبدأ الجلسة',open:'الجلسة جارية',closed:'انتهت الجلسة'};
   const rate=(a,b)=>b<=0?0:Math.min(100,Math.round(a*100/b));
 
   // ---------- supervisor halaqa card ----------
   const hCard=(h,detailed)=>{
-    const pct=rate(h.recited,h.students),vd=daysSince(h.lastVisit);
-    return `<article class="s3-card ${stCls[h.state]}"><div class="s3-top"><div><b>${e(h.name)}</b><small>${e(tname(h))}</small></div><span class="s3-pill ${stCls[h.state]}">${stLabel[h.state]}</span></div>
-      ${h.students?`<div class="s3-prog"><i style="width:${pct}%"></i></div>`:''}
-      <small>سُمّع ${h.recited} من ${h.students} · حضور ${h.present} · غياب ${h.absent}${h.excused?` · بعذر ${h.excused}`:''}</small>
-      ${detailed?`<small>جلسات الشهر ${h.monthSessions} · ${h.lastVisit?`آخر زيارة قبل ${vd==null?0:vd} يومًا${h.lastScore!=null?` (${num1(h.lastScore)}/5)`:''}`:'لم تُزر بعد'}</small>`:''}
-      <div class="s3-acts"><button type="button" class="dn-btn tonal" ${h.tids.length?'':'disabled'} onclick="RC50.s3.alert('${e(h.tids[0]||'')}','${e(h.names[0]||'')}','${e(h.id)}','${h.state==='none'?'1':''}')">تنبيه المحفّظ</button><button type="button" class="dn-btn tonal" onclick="RC50.s3.visitNew('${e(h.id)}')">زيارة</button></div></article>`;
+    return window.SupervisorUI.halaqaCard(h,{detailed,daysSince,formatNumber:num1,escape:e,labels:stLabel});
   };
 
   // ---------- supervisor home: operations room ----------
@@ -136,11 +131,7 @@
     const d=await load(false),ns=d.halaqas.filter(h=>h.state==='none'),started=d.halaqas.length-ns.length;
     const stale=d.halaqas.filter(h=>(daysSince(h.lastVisit)??999)>14),open=d.visits.filter(v=>val(v.action_items)&&!v.action_done).length;
     const wk=d.visits.filter(v=>(daysSince(v.visit_date)??999)<=7).length;
-    return `${R.welcome()}<h3 class="dn-h">${d.halaqas.length?`${started} من ${d.halaqas.length} حلقات بدأت اليوم${ns.length?` · ${ns.length} لم تبدأ`:' · الجميع بدأ'}`:'لا توجد حلقات مسندة إليك بعد'}</h3>
-      <div class="dn-tiles">${R.tile('حلقات بدأت',`${started}/${d.halaqas.length}`)}${R.tile('زياراتي هذا الأسبوع',wk)}${R.tile('إجراءات مفتوحة',open)}</div>
-      ${ns.length||stale.length?`<section class="s3-card bad"><b>يحتاج تدخلك</b>${ns.slice(0,5).map(h=>`<div class="s3-line"><span>• ${e(tname(h))} لم يبدأ جلسة ${e(h.name)}</span><button type="button" class="dn-btn text" ${h.tids.length?'':'disabled'} onclick="RC50.s3.alert('${e(h.tids[0]||'')}','${e(h.names[0]||'')}','${e(h.id)}','1')">تنبيه</button></div>`).join('')}${stale.slice(0,3).map(h=>`<small>• ${e(h.name)}: ${h.lastVisit?`لم تُزر منذ ${daysSince(h.lastVisit)} يومًا`:'لم تُزر بعد'}</small>`).join('')}</section>`:''}
-      <h3 class="dn-h">حلقات اليوم</h3>${d.halaqas.map(h=>hCard(h,false)).join('')||R.card(R.empty('لا توجد حلقات لعرضها'))}
-      <div class="dn-actions">${R.btn('متابعة المحفّظين',"go('supervision')",'tonal')}</div>`;
+    return window.SupervisorUI.dashboard({halaqas:d.halaqas,pending:ns,stale,started,weekVisits:wk,openActions:open,welcome:R.welcome()},{escape:e,renderCircle:h=>hCard(h,false)});
   };
   R.pages.home={title:'الرئيسية',roles:[...(donorHome?.roles||['observer']),'supervisor'],render:async()=>role()==='supervisor'?supHome():(R.welcome()+await donorHome.render()),after:donorHome?.after};
 
