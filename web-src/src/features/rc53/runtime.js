@@ -143,7 +143,7 @@
 
   // ---------- supervisor halaqa card ----------
   const hCard=(h,detailed)=>{
-    return window.SupervisorUI.halaqaCard(h,{detailed,daysSince,formatNumber:num1,escape:e,labels:stLabel});
+    const off=!!B.data?.offDay&&h.state==='none';return window.SupervisorUI.halaqaCard(off?Object.assign({},h,{state:'off'}):h,{detailed,daysSince,formatNumber:num1,escape:e,labels:Object.assign({off:'اليوم إجازة'},stLabel)});
   };
 
   // ---------- supervisor home: operations room ----------
@@ -296,7 +296,7 @@
       const hsIds=[...ids],stN=hs.reduce((n,h)=>n+(h.students||0),0),aT=hsIds.reduce((n,i)=>n+(MD.att[i]?.t||0),0),aP=hsIds.reduce((n,i)=>n+(MD.att[i]?.p||0),0),rS=new Set();hsIds.forEach(i=>(MD.rec[i]||[]).forEach(x=>rS.add(x)));
       const vr=d.visits.filter(v=>ids.has(v.halaqa_id)&&v.visit_date>=month);
       const sc_=vr.map(v=>['organization_score','teaching_score','followup_score'].filter(k=>v[k]!=null).map(k=>+v[k])).filter(a=>a.length).map(a=>a.reduce((x,y)=>x+y,0)/a.length);
-      const states=hs.map(h=>h.state),today=!states.length?'none':states.includes('none')?'none':states.includes('open')?'open':'closed';
+      const states=hs.map(h=>h.state),today=!states.length?'none':states.includes('none')?(d.offDay?'off':'none'):states.includes('open')?'open':'closed';
       const lastS=mine.map(s=>s.session_date).sort().pop();
       const evalr=hs.length?rate_({commit:pct,attend:aT?rate(aP,aT):null,recite:stN?rate(rS.size,stN):null,closed:sessions?rate(closed,sessions):null,visit:sc_.length?Math.round(sc_.reduce((x,y)=>x+y,0)/sc_.length*20):null}):{metrics:[],score:null};
       return {id:p.id,name:p.full_name||'محفّظ',photo:photo(p),phone:val(p.phone),halaqat:hs,pct:evalr.score,metrics:evalr.metrics,commitPct:pct,sessions,days,monthDays:denom,closed,rec:ov.recitations,today,
