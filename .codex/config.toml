@@ -1,0 +1,21 @@
+# Launch Codex inside this repository. Bootstrap first; restart to discover MCP.
+[mcp_servers.halaqati-browser]
+command = "bash"
+args = ["-c", 'exec bash "$(git rev-parse --show-toplevel)/tools/codex/playwright-mcp.sh"']
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+# Optional CLI endpoints. The connected ChatGPT plugins are already authorized.
+# Enable and authenticate these separately if using standalone Codex CLI.
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/readonly"
+bearer_token_env_var = "GH_TOKEN"
+enabled = false
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=xlxzwucqdtggkfwwqibk&read_only=true"
+enabled = false
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+enabled = false

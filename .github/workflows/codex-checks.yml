@@ -1,0 +1,66 @@
+name: Codex Web checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: codex-web-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            web-src/package-lock.json
+            tools/codex/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bootstrap locked dependencies and tools
+        run: bash tools/codex/bootstrap.sh
+      - name: Install Chromium
+        run: tools/codex/node_modules/.bin/playwright install --with-deps chromium
+      - name: Tooling, syntax, unit tests and production build
+        id: checks
+        run: python3 tools/codex/check.py
+      - name: Browser parity, behavior, responsive and accessibility checks
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          test -s web-src/dist/index.html
+          npm --prefix web-src run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/halaqati-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid"' EXIT
+          node --input-type=module <<'JS'
+          for (let attempt = 0; attempt < 60; attempt++) {
+            try { if ((await fetch('http://127.0.0.1:4173/')).ok) process.exit(0); } catch {}
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          throw new Error('Preview did not start');
+          JS
+          parity_status=0
+          BASE_URL=http://127.0.0.1:4173 npm --prefix web-src run check:browser || parity_status=$?
+          visual_status=0
+          BASE_URL=http://127.0.0.1:4173 npm --prefix tools/codex run test:visual || visual_status=$?
+          test "$parity_status" -eq 0
+          test "$visual_status" -eq 0
+      - name: Retain logs, screenshots, traces and accessibility findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-web-checks
+          if-no-files-found: warn
+          path: |
+            .codex-work/checks/
+            web-src/.artifacts/
+            tools/codex/test-results/
+            tools/codex/playwright-report/
