@@ -44,7 +44,7 @@ export function teacherCard(r, ctx) {
   const alert = `RC50.s3.alert(${arg(r.id, e)},${arg(r.name, e)},${arg(first?.id || "", e)},"")`;
   const details = open
     ? `<div class="sv-person-more" id="svp-${e(r.id)}">
-        <dl class="sv-facts">${fact("جلسات الشهر", r.sessions, e)}${fact("أيام النشاط", `${r.days} من ${r.monthDays}`, e)}${fact("جلسات مُنهاة", r.closed, e)}${fact("التسميعات", r.rec == null ? "—" : r.rec, e)}</dl>
+        <dl class="sv-facts">${fact("جلسات الشهر", r.sessions, e)}${fact("أيام النشاط", `${r.days} من ${r.monthDays}`, e)}${fact("جلسات مُنهاة", r.closed, e)}${fact("جلسات لم تُنهَ بعد", Math.max(0, r.sessions - r.closed), e)}${fact("التسميعات هذا الشهر", r.rec == null ? "—" : r.rec, e)}</dl>
         <p>آخر جلسة: <bdi>${e(r.last)}</bdi></p>
         <p>زيارات المشرف هذا الشهر: <bdi>${e(r.visits)}</bdi>${r.score != null ? ` · متوسط التقييم <bdi>${e(num1(r.score))}/5</bdi>` : ""}</p>
         ${r.openActions ? `<p class="sv-warn-text">إجراءات مطلوبة لم تُنفَّذ: <bdi>${e(r.openActions)}</bdi></p>` : ""}

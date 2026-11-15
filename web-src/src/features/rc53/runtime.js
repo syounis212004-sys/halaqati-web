@@ -234,7 +234,7 @@
     const monthDays=new Set(scope.map(s=>s.session_date)).size||d.mDays||0;
     const photo=p=>p.avatar_path&&String(p.avatar_path).startsWith('data:image/')?p.avatar_path:null;
     const rowsT=tchs.map(p=>{
-      const ov=adm?(d.ov[p.id]||{}):{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
+      const ov=d.ov[p.id]||{},hs=d.halaqas.filter(h=>h.tids.includes(p.id)),ids=new Set(hs.map(h=>h.id));
       // credit a teacher for sessions of his own halaqas as well as the ones he created
       const mine=(d.sess||[]).filter(s=>s.created_by===p.id||ids.has(s.halaqa_id));
       const days=Math.max(ov.session_days!=null?+ov.session_days:0,new Set(mine.map(s=>s.session_date)).size);
