@@ -365,14 +365,14 @@
       const row=(r.data||[])[0]||{},adm=role()==='admin',phone=val(row.phone);
       if(!phone&&!adm)return;
       const tl={wallet:'محفظة إلكترونية',other:'جهة أخرى'}[row.entity_type]||'بنك';
-      const d=document.createElement('section');d.id='s3Support';d.className='dn-card s3-support';
-      d.innerHTML=`<h3>ادعم التطبيق</h3><p class="dn-muted">إن نفعك التطبيق وأحببت دعم استمراره وتطويره، يمكنك التحويل على البيانات التالية، جزاك الله خيرًا.</p>
-        ${phone?`<b dir="ltr">${e(phone)}</b><small>نوع الجهة: ${e(tl)}${val(row.entity_name)?' · '+e(val(row.entity_name)):''}</small>${val(row.note)?`<small>${e(val(row.note))}</small>`:''}<button type="button" class="dn-btn tonal" onclick="navigator.clipboard&&navigator.clipboard.writeText('${e(phone)}').then(()=>RC50.toast('تم نسخ الرقم'))">نسخ الرقم</button>`:''}
+      const d=document.createElement('section');d.id='s3Support';d.className='dn-card s3-support nt-quick';
+      d.innerHTML=`<div class="nt-q-row"><span class="nt-q-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z"/></svg></span><div class="nt-q-t"><b>ادعم التطبيق</b><small>إن نفعك التطبيق، يمكنك دعم استمراره وتطويره</small></div></div>
+        ${phone?`<div class="nt-q-copy"><div class="nt-q-t"><b dir="ltr">${e(phone)}</b><small>${e(tl)}${val(row.entity_name)?' · '+e(val(row.entity_name)):''}${val(row.note)?' · '+e(val(row.note)):''}</small></div><button type="button" class="dn-btn tonal nt-q-btn" data-copy="${e(phone)}" onclick="RC50.copyEl(this)">نسخ</button></div>`:''}
         ${adm?`<details><summary>${phone?'تعديل بيانات الدعم':'إضافة بيانات الدعم'}</summary><label class="dn-field"><span>رقم الهاتف</span><input id="s3SP" value="${e(phone)}"></label>
         <label class="dn-field"><span>نوع الجهة</span><select id="s3ST"><option value="bank" ${row.entity_type!=='wallet'&&row.entity_type!=='other'?'selected':''}>بنك</option><option value="wallet" ${row.entity_type==='wallet'?'selected':''}>محفظة</option><option value="other" ${row.entity_type==='other'?'selected':''}>أخرى</option></select></label>
         <label class="dn-field"><span>اسم الجهة</span><input id="s3SN" value="${e(val(row.entity_name))}"></label><label class="dn-field"><span>ملاحظة</span><textarea id="s3SO" rows="2">${e(val(row.note))}</textarea></label>
         ${R.btn('حفظ','RC50.s3.saveSupport()')}</details>`:''}`;
-      box.appendChild(d);
+      const host=box.querySelector('.nt-settings');if(host){const q=host.querySelector('.rc85-set'),hero=host.querySelector('.nt-shero');host.insertBefore(d,q?q.nextSibling:(hero?hero.nextSibling:host.firstChild))}else box.insertBefore(d,box.firstChild);
     }catch(_e){}
   }
   S3.saveSupport=async()=>{

@@ -55,3 +55,32 @@ body.dark .nx-filled{background:linear-gradient(180deg,color-mix(in srgb,var(--a
 .nx-card,.nx-metric{box-shadow:var(--dn-shadow)}
 body.dark .nx-card,body.dark .nx-metric{box-shadow:none}
 @media (prefers-reduced-motion:reduce){.nx-filled{transition:none}}
+
+/* ---------- settings quick cards (my photo · photo shape · support) — compact, right under the identity hero ---------- */
+.nt-settings>.nt-quick{padding:12px 14px;margin:0;display:grid;gap:10px;grid-column:1/-1;border-radius:20px}
+.nt-quick .nt-q-row{display:flex;align-items:center;gap:10px;min-width:0}
+.nt-quick .nt-q-t{flex:1;min-width:0;display:grid;gap:1px}
+.nt-quick .nt-q-t b{font:700 15px/22px Cairo,sans-serif;color:var(--dn-ink,var(--ink))}
+.nt-quick .nt-q-t small{font:500 12.5px/18px Cairo,sans-serif;color:var(--dn-mut-aa,var(--muted))}
+.nt-quick .nt-q-btn{min-height:44px;padding:0 16px;font-size:14px;margin:0;flex:none}
+.nt-quick .rc86-mine-av{flex:none;display:grid}
+.nt-quick .rc86-mine-av>*{width:52px!important;height:52px!important}
+.nt-quick .nt-q-shape{flex-wrap:wrap;gap:6px 10px}
+.nt-quick .nt-q-shape>small{flex:none;font:600 13px/18px Cairo,sans-serif;color:var(--dn-mut-aa,var(--muted))}
+.nt-quick .dn-seg{flex:1;min-width:210px;margin:0}
+.nt-quick .nt-q-sw{justify-content:space-between;cursor:pointer;min-height:44px}
+.nt-quick .nt-q-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--dn-tonal,rgba(11,93,79,.12));color:var(--dn-em,#0B5D4F)}
+.nt-quick .nt-q-copy{display:flex;align-items:center;gap:10px;background:var(--dn-soft,rgba(11,93,79,.08));border-radius:14px;padding:8px 12px}
+.nt-quick .nt-q-copy .nt-q-t b{font:800 17px/24px Cairo,sans-serif;letter-spacing:.3px;font-variant-numeric:tabular-nums;text-align:end}
+.nt-quick details{border-top:1px solid var(--dn-line,var(--line));padding-top:8px}.nt-quick summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 14px Cairo,sans-serif;color:var(--dn-em,var(--green))}
+body.dark .nt-quick summary{color:var(--ad-link)}
+.nt-quick .nt-q-btn:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.nt-quick .nt-q-btn:active{transform:none}}
+
+/* ---------- home hero ring: the % sits in the middle of the circle ---------- */
+html body .h86-nums .h86-ring{display:grid;place-items:center;justify-content:center;gap:0;border-radius:50%;width:56px;height:56px}
+html body .h86-nums .h86-ring svg{width:56px;height:56px}
+html body .h86-nums .h86-ring b{font:800 13px/1 Cairo,sans-serif;font-variant-numeric:tabular-nums;grid-area:1/1;margin:0}
+html body .h86-nums .h86-ring svg{grid-area:1/1;position:static}
+
+.nt-quick details{margin:0}.nt-quick details[open]{padding-bottom:4px}
