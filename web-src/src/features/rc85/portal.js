@@ -95,10 +95,14 @@
     const box=document.getElementById('content');if(!box||box.querySelector('.rc85-set'))return;
     const s=shape(),opt=(k,l)=>`<button type="button" class="rc85-chip ${s===k?'on':''}" onclick="RC50.k85.setShape('${k}')">${l}</button>`;
     const mine=myPhoto(),nm=state.profile?.full_name||'';
-    let html=`<div class="card rc85-set"><h3>صورتي</h3><div class="rc86-mine"><span class="rc86-mine-av">${R.avatar(mine,nm,76)}</span><div class="rc86-mine-b"><label class="dn-btn tonal rc86-file">${mine?'تغيير صورتي':'إضافة صورتي'}<input type="file" accept="image/*" hidden onchange="RC50.k85.myPick(this)"></label>${mine?'<button type="button" class="dn-btn" onclick="RC50.k85.myClear()">إزالة</button>':''}</div></div><div class="muted">تظهر صورتك في بطاقة الترحيب والقائمة الجانبية وقوائم الكادر. تُقصّ مربعة وتُضغط تلقائيًا.</div><h3 style="margin-top:16px">الصور</h3><div class="muted">شكل صور الطلاب والفريق على هذا الجهاز.</div><div class="rc85-chips2">${opt('ring','حلقة')}${opt('circle','دائرة')}${opt('rounded','مربع مدوّر')}</div>`;
-    if(role()==='admin')html+=`<div class="settings-row" style="margin-top:10px"><div><b>إظهار صور المكرَّمين للمانحين</b><div class="muted">يرى المانحون صور الطلاب المكرَّمين فقط؛ أطفئه لإخفائها</div></div><input id="rc85DonorPh" type="checkbox" onchange="RC50.k85.setDonorPhotos(this)"></div>`;
-    html+='</div>';
-    const div=document.createElement('div');div.innerHTML=html;box.insertBefore(div.firstElementChild,box.children[1]||null);
+    const sOpt=(k,l)=>`<button type="button" role="tab" aria-selected="${s===k}" class="${s===k?'on':''}" onclick="RC50.k85.setShape('${k}')">${l}</button>`;
+    let html=`<section class="card rc85-set nt-quick"><div class="nt-q-row"><span class="rc86-mine-av">${R.avatar(mine,nm,52)}</span><div class="nt-q-t"><b>صورتي</b><small>تظهر في الترحيب والقائمة والكادر</small></div><label class="dn-btn tonal nt-q-btn">${mine?'تغيير':'إضافة'}<input type="file" accept="image/*" hidden onchange="RC50.k85.myPick(this)"></label>${mine?'<button type="button" class="dn-btn text nt-q-btn" onclick="RC50.k85.myClear()">إزالة</button>':''}</div>
+      <div class="nt-q-row nt-q-shape"><small>شكل صور الطلاب</small><div class="dn-seg" role="tablist" aria-label="شكل الصور">${sOpt('ring','حلقة')}${sOpt('circle','دائرة')}${sOpt('rounded','مربع مدوّر')}</div></div>`;
+    if(role()==='admin')html+=`<label class="nt-q-row nt-q-sw"><span class="nt-q-t"><b>صور المكرَّمين للمانحين</b><small>أطفئه لإخفائها</small></span><input id="rc85DonorPh" class="nx-switch" type="checkbox" onchange="RC50.k85.setDonorPhotos(this)"></label>`;
+    html+='</section>';
+    const div=document.createElement('div');div.innerHTML=html;
+    const host=box.querySelector('.nt-settings'),hero=host&&host.querySelector('.nt-shero'),card=div.firstElementChild;
+    if(host)host.insertBefore(card,hero?hero.nextSibling:host.firstChild);else box.insertBefore(card,box.firstChild);
     if(role()==='admin')db.from('app_settings').select('donor_show_photos').limit(1).then(({data})=>{const c=document.getElementById('rc85DonorPh');if(c)c.checked=!(data&&data[0]&&data[0].donor_show_photos===false)});
   }
   K.myPick=async inp=>{
