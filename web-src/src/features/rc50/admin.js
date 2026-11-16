@@ -19,7 +19,7 @@
     const keys=months.map(m=>String(m.month).slice(0,7));
     if(!A.month||!keys.includes(A.month))A.month=keys[0];
     const status=(months.find(m=>String(m.month).slice(0,7)===A.month)||{}).status;
-    const data=await R.rpc('rc46_admin_awards',{p_month:A.month+'-01',p_scope:A.scope});
+    const data=(await R.rpc('rc46_admin_awards',{p_month:A.month+'-01',p_scope:A.scope}))||{};
     R.cache.awW=[];
     const draft=status==='draft',groups=data.groups||[];
     const groupHtml=groups.map(g=>{

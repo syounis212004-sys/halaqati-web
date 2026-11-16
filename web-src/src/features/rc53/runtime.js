@@ -357,8 +357,11 @@
   // ---------- support details card in settings ----------
   async function fillSupport(){
     try{
-      const box=document.getElementById('content');if(!box||document.getElementById('s3Support'))return;
-      const r=await db.from('app_support_info').select('*').limit(1);if(r.error)return;
+      if(S3._supBusy)return;S3._supBusy=true;
+      const box=document.getElementById('content');if(!box){S3._supBusy=false;return}
+      let r;try{r=await db.from('app_support_info').select('*').limit(1)}finally{S3._supBusy=false}
+      if(r.error)return;
+      if(state?.page!=='settings'||!document.getElementById('content')||document.getElementById('s3Support'))return;
       const row=(r.data||[])[0]||{},adm=role()==='admin',phone=val(row.phone);
       if(!phone&&!adm)return;
       const tl={wallet:'محفظة إلكترونية',other:'جهة أخرى'}[row.entity_type]||'بنك';
