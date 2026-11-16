@@ -14,8 +14,8 @@ state.v230LastFullLoadAt=state.v230LastFullLoadAt||0;
 state.v230LastCoreLoadAt=state.v230LastCoreLoadAt||0;
 state.v230Perf=state.v230Perf||{};
 
-const V230_CORE_TIMEOUT=5500;
-const V230_SECONDARY_TIMEOUT=7000;
+const V230_CORE_TIMEOUT=20000;
+const V230_SECONDARY_TIMEOUT=20000;
 let v230FullLoadPromise=null;
 let v230BackgroundRefreshPromise=null;
 let v230PhotoRefreshPromise=null;
@@ -34,6 +34,10 @@ function v230Mark(name,start){state.v230Perf[name]=Math.max(0,Math.round((v230No
 function v230StudentIds(){return (state.students||[]).map(x=>x?.id).filter(Boolean)}
 function v230RenderIfVisible(){if($('#app')&&!$('#app').classList.contains('hidden'))return Promise.resolve(render()).catch(e=>console.warn('v2.30 background render skipped',e))}
 
+// PostgREST caps one response at 1000 rows, so lists that grow with the student count are read in pages.
+// shortcut: stats views order by student_id only, so ties may repeat across pages, upgrade to a unique key if rows ever duplicate
+const v230PageAll=(mk,size)=>window.HalaqatiData?window.HalaqatiData.result(mk,()=>state.user?.id,size):mk();
+
 async function v230LoadCoreData(forceNetwork=false){
   let start=v230Now(),online=forceNetwork?true:await internetReachable();
   if(!online){
@@ -43,7 +47,7 @@ async function v230LoadCoreData(forceNetwork=false){
   state.networkVerified=true;state.offline=false;
   let tasks=[
     db.from('halaqas').select('*').order('created_at'),
-    db.from('students').select('*').order('full_name'),
+    v230PageAll(()=>db.from('students').select('*').order('full_name').order('id'),100),
     db.from('sessions').select('*').order('session_date',{ascending:false}).limit(120),
     db.from('app_settings').select('*').eq('id',1).single(),
     db.from('student_categories').select('*').order('min_age',{ascending:true,nullsFirst:false}).order('name'),
@@ -71,14 +75,14 @@ async function v230LoadDashboardData(){
   let start=v230Now(),tasks=[
     db.from('announcements').select('*').order('pinned',{ascending:false}).order('publish_at',{ascending:false}).limit(80),
     db.from('student_goals').select('*').gte('period_end',monthStart()).limit(300),
-    db.from('monthly_student_stats').select('*').gte('month_start',monthStart()),
-    db.from('leaderboard_daily').select('*').eq('period_date',today()),
-    db.from('leaderboard_monthly').select('*').gte('month_start',monthStart()),
+    v230PageAll(()=>db.from('monthly_student_stats').select('*').gte('month_start',monthStart()).order('student_id').order('month_start')),
+    v230PageAll(()=>db.from('leaderboard_daily').select('*').eq('period_date',today()).order('student_id')),
+    v230PageAll(()=>db.from('leaderboard_monthly').select('*').gte('month_start',monthStart()).order('month_start').order('student_id')),
     db.from('daily_student_summary').select('*').eq('session_date',today()).limit(300),
     db.from('forum_posts').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false}).limit(80),
     db.from('forum_comments').select('*').order('created_at').limit(500)
   ];
-  if(roleCanAdmin())tasks.push(db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at,frozen,avatar_path').order('created_at',{ascending:false}));
+  if(roleCanAdmin())tasks.push(v230PageAll(()=>db.from('profiles').select('id,full_name,email,phone,role,requested_role,approval_status,active,approved_at,rejection_reason,created_at,frozen,avatar_path').order('created_at',{ascending:false}).order('id')));
   let rows=await withTimeout(Promise.allSettled(tasks),V230_SECONDARY_TIMEOUT,'v2.30 dashboard timeout').catch(()=>[]);
   ['announcements','goals','monthly','leaderDaily','leaderMonthly','dailySummary','forum','comments'].forEach((p,i)=>v230ApplyArray(p,rows[i]));
   if(!state.homeSelectedMonth)state.homeSelectedMonth=today().slice(0,7);

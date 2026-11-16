@@ -517,6 +517,6 @@
       data.phase_id=ph.id;data.selection_data=Object.assign({},data.selection_data,{smart_plan_phase_id:ph.id});
     }catch(_e){}
   };
-  setInterval(()=>window.rc27PhasesPreload(),120000);
+  setInterval(()=>{if(document.visibilityState==='visible')window.rc27PhasesPreload()},300000);
   setTimeout(()=>window.rc27PhasesPreload(),9000);
 })();
