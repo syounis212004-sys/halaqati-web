@@ -168,7 +168,7 @@
   R.page('donor_stats',{title:'الإحصاءات',roles:OBS,render:async()=>{
     const to=new Date(),from=new Date();from.setDate(from.getDate()-(S.days-1));
     const args={p_from:iso(from),p_to:iso(to)};
-    const [ov,bd,reqs]=await Promise.all([R.rpc('rc32_observer_overview',args),safe(()=>R.rpc('rc40_observer_breakdown',args),null),safe(()=>R.rpc('rc32_observer_requests'),[])]);
+    const [ov,bd,reqs]=await Promise.all([R.cached('ov:'+JSON.stringify(args),300000,()=>R.rpc('rc32_observer_overview',args)),safe(()=>R.cached('bd:'+JSON.stringify(args),300000,()=>R.rpc('rc40_observer_breakdown',args)),null),safe(()=>R.rpc('rc32_observer_requests'),[])]);
     R.cache.ov=ov;const hal=ov.halaqas||[],names={};hal.forEach(h=>names[h.halaqa_id]=h.name);
     const bs={};(bd?.students||[]).forEach(x=>bs[x.student_id]=x);
     const tot=k=>(bd?.halaqas||[]).reduce((s,h)=>s+(Number(h[k])||0),0);
