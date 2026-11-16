@@ -82,7 +82,7 @@ html body .topbar .nt-sync.off{background:var(--st-warn-bg)!important;color:var(
 .nt-sync-dlg .nx-card small{display:block}
 
 /* ============ settings ============ */
-.nt-settings{display:grid;gap:12px;padding:12px 16px 110px;align-content:start}
+.nt-settings{display:grid;gap:12px;padding:12px 0 110px;align-content:start}
 .nt-col{display:contents}
 .nt-shero{display:flex;align-items:center;gap:12px;background:var(--green);color:#fff;border-radius:var(--nx-r-card);padding:18px}
 .nt-shero-ic{background:rgba(255,255,255,.12);border-radius:var(--nx-r-lg);padding:12px;display:inline-flex}

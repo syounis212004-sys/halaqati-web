@@ -1,0 +1,57 @@
+/* Halaqati web — staff/admin screens: same visual language as the donor pages and the Android Nour kit.
+   Loaded after donor.css. Colour tokens only; behaviour is untouched.
+   1) dark-mode legibility for outlined/text buttons, section titles and chips (they used --green, which is a dark fill in dark mode)
+   2) 44px touch targets and no sub‑12px text on phones
+   3) one raised ("3D") filled button + calmer outlined/tonal buttons, like NourButton in the app */
+body.dark{--ad-link:#8FDDBF;--ad-on-fill:#06291F}
+:root{--ad-link:var(--dn-em,#0B5D4F);--ad-on-fill:#fff}
+
+/* ---------- 1. dark legibility ---------- */
+body.dark .nx-outlined,body.dark .nx-text,body.dark .nx-chip.on,body.dark .nx-metric-ic,body.dark .nx-empty-ic,
+body.dark .nt-sec,body.dark .nt-settings h3,body.dark .nt-settings a,body.dark .nt-foot a,
+body.dark .nx-tile,body.dark .nx-avatar{color:var(--ad-link)}
+body.dark .nx-outlined{border-color:color-mix(in srgb,var(--ad-link) 55%,transparent)}
+body.dark .nx-text:hover:not(:disabled),body.dark .nx-outlined:hover:not(:disabled){background:color-mix(in srgb,var(--ad-link) 14%,transparent)}
+body.dark .nx-tonal{background:color-mix(in srgb,var(--ad-link) 18%,transparent);color:var(--ad-link)}
+body.dark .nx-filled{color:var(--ad-on-fill);background:var(--ad-link)}
+body.dark .nh-scope-c,body.dark .nh-scope b,body.dark .nh-scope small{color:var(--ink)}
+body.dark .nh-scope-c{background:color-mix(in srgb,var(--ad-link) 18%,transparent);color:var(--ad-link)}
+body.dark .nx-progress i{background:var(--ad-link)}
+body.dark .ayah-juz-chip.active,body.dark .ayah-surah-chip.active{background:var(--ad-link);color:var(--ad-on-fill)}
+body.dark .nx-grow b,body.dark .nc-pct,body.dark .nx-pill{color:inherit}
+body.dark .nx-muted,body.dark .muted,body.dark .nt-settings small{color:var(--dn-mut-aa,#b9c9c0)}
+body.dark .nt-settings .nt-shero small,body.dark .nt-settings .nt-shero .nx-muted{color:rgba(255,255,255,.9)}
+body.dark .nh-banner-n,body.dark .ns-group,body.dark .c90-tab.on,body.dark .c90-tab.on span,body.dark .nc-slider-h b,body.dark .nc-pct,body.dark .nx-grow>span.nx-muted{color:var(--ad-link)}
+body.dark .nx-danger-solid,body.dark .nx-danger-solid span{color:#2b0503}
+body.dark .nx-s-success{background:#0f6b41;color:#fff}
+.s3-danger,.dn-btn.s3-danger{color:var(--dn-danger,#a32619)!important}
+body.dark .nh-scope-c{color:#b6f0d8}
+
+/* ---------- 2. touch + type floor ---------- */
+.nx-iconbtn{min-width:44px;min-height:44px}
+.nx-badge{font-size:12px;line-height:18px}
+.ngm-cam{position:relative}.ngm-cam::before{content:"";position:absolute;inset:-8px}
+html body small{font-size:max(12px,.85em)}
+@media (max-width:720px){
+  html body .nx-small,html body .nx-chip,html body .ns-scopechip,html body .np-hchip{min-height:44px}
+  html body .np-hchip{min-width:44px}
+  html body .nx-btn,html body .nr-ctl-head{min-height:44px}
+  html body #content input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not(.nx-switch),html body #content select{min-height:44px}
+  html body .nr-sw{position:relative}html body .nr-sw::before{content:"";position:absolute;inset:-5px}
+}
+html body #content small,html body #content em,html body .nc-ver{font-size:max(12px,.85em)!important}
+html body .nr-acc-s{white-space:normal;overflow:visible;text-overflow:clip}
+body.dark .rc85-chip{color:var(--ad-link);border-color:color-mix(in srgb,var(--ad-link) 50%,transparent);background:transparent}
+body.dark .rc85-chip.on,body.dark .rc85-chip.active{background:var(--ad-link);color:var(--ad-on-fill)}
+
+/* ---------- 3. raised filled button, calm secondary buttons (NourButton twin) ---------- */
+.nx-filled{background:linear-gradient(180deg,color-mix(in srgb,var(--green) 90%,#fff),var(--green));
+  box-shadow:0 2px 0 color-mix(in srgb,var(--green) 68%,#000),0 5px 12px color-mix(in srgb,var(--green) 28%,transparent);
+  transition:transform .14s cubic-bezier(.2,0,0,1),box-shadow .14s ease}
+body.dark .nx-filled{background:linear-gradient(180deg,color-mix(in srgb,var(--ad-link) 92%,#fff),var(--ad-link));box-shadow:0 2px 0 color-mix(in srgb,var(--ad-link) 60%,#000)}
+.nx-filled:active:not(:disabled){transform:translateY(1px) scale(.99);box-shadow:0 1px 0 color-mix(in srgb,var(--green) 68%,#000)}
+.nx-outlined{border-width:1.5px}
+.nx-tonal{box-shadow:inset 0 -2px 0 color-mix(in srgb,currentColor 12%,transparent)}
+.nx-card,.nx-metric{box-shadow:var(--dn-shadow)}
+body.dark .nx-card,body.dark .nx-metric{box-shadow:none}
+@media (prefers-reduced-motion:reduce){.nx-filled{transition:none}}
