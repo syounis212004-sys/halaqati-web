@@ -1,0 +1,69 @@
+/* Halaqati web — donor pages polish (review fixes). Loaded last.
+   Goals: WCAG AA text contrast in light and dark, 44px touch targets, no sub‑12px text, one disabled/tonal/text button language
+   that matches the Android donor screens, and calm desktop width. Colours are tokens; nothing here changes behaviour. */
+:root{--dn-mut-aa:#46564f;--dn-gold-aa:#7a5600;--dn-danger:#a32619;--dn-up:#0b6b3a;--dn-down:#b3261e;--dn-tonal:rgba(11,93,79,.12);--dn-on-em:#fff;
+  --dn-m1:#7a5600;--dn-m2:#475467;--dn-m3:#8a4b12}
+body.dark{--dn-mut-aa:#b9c9c0;--dn-gold-aa:#EBC66F;--dn-danger:#ff9a8f;--dn-up:#7fe0a8;--dn-down:#ff9a8f;--dn-tonal:rgba(143,221,191,.16);--dn-on-em:#06291F;
+  --dn-m1:#EBC66F;--dn-m2:#d3dcd7;--dn-m3:#e8b184}
+
+/* text tones */
+html body .dn-card small,html body .dn-row small,html body .dn-win small,html body .dn-muted{color:var(--dn-mut-aa)!important}
+html body .dn-card small,html body .dn-row small,html body .dn-hero small,html body .rc85-lvl,html body .dn-status,html body .dn-badge{font-size:12.5px}
+html body .dn-gold{color:var(--dn-gold-aa)!important}
+html body .rc85-lvl.m1{color:var(--dn-m1)}html body .rc85-lvl.m2{color:var(--dn-m2)}html body .rc85-lvl.m3{color:var(--dn-m3)}
+html body .rc85-trend.up{color:var(--dn-up)}html body .rc85-trend.down{color:var(--dn-down)}
+html body .dn-hello{color:var(--dn-mut-aa);font-size:14px;font-weight:700}
+
+/* segmented tabs: 44px, readable idle + selected */
+html body .dn-seg button{min-height:44px;color:var(--dn-mut-aa);font-size:14px}
+html body .dn-seg button.on{color:var(--dn-ink);font-weight:800}
+html body .dn-pills button{min-height:44px;color:var(--dn-mut-aa)}
+html body .dn-pills button.on{background:var(--dn-em);color:var(--dn-on-em)}
+
+/* buttons: filled / tonal / text / disabled */
+html body .dn-btn{min-height:44px}
+html body .dn-btn.tonal{background:var(--dn-tonal);color:var(--dn-em)}
+html body .dn-btn.text{background:transparent;color:var(--dn-em)}
+html body .dn-btn.danger,html body .dn-btn.text.danger{color:var(--dn-danger)}
+html body .dn-btn:disabled,html body .dn-btn.disabled{opacity:1;background:color-mix(in srgb,var(--dn-ink) 9%,transparent);color:var(--dn-mut-aa);cursor:not-allowed;pointer-events:none}
+html body .dn-btn.dn-busy{opacity:.6;pointer-events:none}
+html body .dn-link{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;color:var(--dn-em);font-weight:700;background:transparent;border:0;border-radius:12px;font:inherit;font-weight:700;cursor:pointer}
+
+/* month picker arrows */
+html body .dn-mp-arrow{color:var(--dn-ink)}
+html body .dn-mp-arrow:disabled{opacity:.45}
+
+/* badges, status, steps */
+html body .dn-badge{color:var(--dn-mut-aa)}
+html body .dn-badge.on{background:var(--dn-em);color:var(--dn-on-em)}
+html body .dn-status{background:var(--dn-tonal);color:var(--dn-em);white-space:normal;text-align:center;max-width:44%}
+html body .dn-track-steps .dn-dot{color:var(--dn-mut-aa)}
+html body .dn-track-steps .on .dn-dot{background:var(--dn-em);color:var(--dn-on-em)}
+
+/* payment card: the account number never wraps mid‑number, the copy button stays reachable */
+html body .dn-copy{flex-wrap:nowrap}
+html body .dn-copy code{direction:ltr;unicode-bidi:isolate;white-space:nowrap;overflow-x:auto;font-family:'Cairo',system-ui,sans-serif;font-variant-numeric:tabular-nums;min-width:0;flex:1}
+html body .dn-more{text-align:center;margin:6px 0 14px}
+
+/* numerals + sparkline */
+html body .dn-tile b,html body .dn-amount,html body .dn-card b{font-variant-numeric:tabular-nums}
+html body .dn-tile svg text{font-size:12px}
+
+/* grid children may shrink: a long account number must scroll inside its own box, never widen the card (320px) */
+html body .dn-card>*,html body .dn-pay,html body .dn-pay>*,html body .dn-copy,html body .dn-row>*{min-width:0}
+html body .dn-pay{overflow:hidden}
+html body .dn-steps,html body .dn-track-steps small,html body .dn-msg small,html body .dn-status{font-size:12px!important}
+html body .dn-track-steps b{font-size:12px}
+html body .dn-badge{color:var(--dn-ink)}
+html body .dn-badge:not(.on){background:color-mix(in srgb,var(--dn-ink) 5%,transparent)}
+html body .dn-mp-arrow:disabled{opacity:.6;color:var(--dn-mut-aa)}
+html body #dnQ,html body .dn-field input,html body .dn-field select{min-height:44px}
+/* desktop: calm reading width instead of stretched cards */
+@media (min-width:1000px){
+  body.dn-role #content>*{max-width:760px;margin-inline:auto;width:100%}
+}
+@media (prefers-reduced-motion:reduce){html body .dn-seg button,html body .dn-btn{transition:none}}
+
+/* nothing under 12px for donors (e.g. verse source) */
+body.dn-role #content small{font-size:max(12px,.85em)}
+body.dn-role .dn-mp-arrow:disabled{opacity:1;color:var(--dn-mut-aa);background:transparent}

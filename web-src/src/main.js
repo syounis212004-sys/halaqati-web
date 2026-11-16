@@ -31,6 +31,7 @@ import './styles/rc86.css';
 import './styles/supervisor.css';
 import './styles/supervisor-skin.css';
 import './styles/nour.css';
+import './styles/donor.css';
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };

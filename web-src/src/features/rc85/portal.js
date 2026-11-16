@@ -8,7 +8,7 @@
   const e=R.e||(v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
   const role=()=>state?.profile?.role;
   const me=()=>state?.user?.id||state?.profile?.id;
-  const isImg=v=>typeof v==='string'&&v.startsWith('data:image/');
+  const isImg=v=>typeof v==='string'&&/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v);
   const K=R.k85={assoc:null,orgAt:0,org:null,open:{}};
 
   // ---------------- avatar shape (same three shapes as the app) ----------------

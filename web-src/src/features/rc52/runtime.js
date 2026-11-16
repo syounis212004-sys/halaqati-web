@@ -124,9 +124,10 @@
       return R.card(`<div class="dn-row between"><div><b>${e(r.student_name)} · ${e(R.monthLabel(r.month))}</b><small class="dn-muted">${e([r.title,R.amount(r.amount,r.currency)].filter(Boolean).join(' · '))}</small></div><span class="dn-status">${e(statusText(r))}</span></div>
         ${R.tracker(r)}${r.admin_note?`<p class="dn-muted">ملاحظة المدير: ${e(r.admin_note)}</p>`:''}${payCard}
         ${st==='delivered'?`${r.delivery_text?`<p>إفادة التسليم: ${e(r.delivery_text)}</p>`:''}${r.thanks_text?`<div class="dn-thanks">💌 ${e(r.thanks_text)}</div>`:''}`:''}
-        <div class="dn-actions">${st==='approved'&&cash&&!tr?R.btn('رفع إثبات التحويل',`RC50.rwTransfer(${i})`):''}${r.has_delivery_image?R.btn('صورة التسليم',`RC50.rwProof(${i},'delivery')`,'tonal'):''}${R.btn(r.unread>0?`المحادثة (${r.unread})`:'المحادثة',`RC50.thread('reward','${r.id}','مكافأة ${e(String(r.student_name||'').replace(/'/g,''))}')`,'tonal')}${st==='requested'||(st==='approved'&&!tr)?R.btn('إلغاء الطلب',`RC50.rwCancel(${i})`,'text'):''}</div>`);
+        <div class="dn-actions">${st==='approved'&&cash&&!tr?R.btn('رفع إثبات التحويل',`RC50.rwTransfer(${i})`):''}${r.has_delivery_image?R.btn('صورة التسليم',`RC50.rwProof(${i},'delivery')`,'tonal'):''}${R.btn(r.unread>0?`المحادثة (${r.unread})`:'المحادثة',`RC50.rwThread(${i})`,'tonal')}${st==='requested'||(st==='approved'&&!tr)?R.btn('إلغاء الطلب',`RC50.rwCancel(${i})`,'text'):''}</div>`);
     }).join('');
   };
+  R.rwThread=i=>{const r=R.cache.rw[i];if(r)R.thread('reward',r.id,'مكافأة '+(r.student_name||''))};
   R.rwTransfer=i=>{
     const r=R.cache.rw[i];R.cache.rwSel=r;R.cache.img=null;
     R.sheet('dnRwTr','إثبات التحويل',`<p class="dn-muted">أرسل رقم الحوالة أو صورة الإشعار (يكفي أحدهما).</p><label class="dn-field"><span>رقم الحوالة</span><input id="dnRwRef"></label><label class="dn-field"><span>صورة الإشعار</span><input type="file" accept="image/*" onchange="RC50.dPick(this)"></label><p id="dnImgOk" class="dn-ok"></p>`,R.btn('إرسال','RC50.rwTransferSend()'));
@@ -135,22 +136,21 @@
     const ref=document.getElementById('dnRwRef').value.trim(),img=R.cache.img;if(ref.length<2&&!img)return R.toast('اكتب رقم الحوالة أو أرفق صورة');
     try{const ok=await R.rpc('rc52_reward_submit_transfer',{p_id:R.cache.rwSel.id,p_ref:ref,p_image:img||null});R.closeSheet('dnRwTr');R.toast(ok?'وصل إثبات التحويل إلى المدير':'تعذّر الإرسال');render()}catch(err){R.toast(err.message)}
   };
-  R.rwCancel=i=>{const r=R.cache.rw[i];NX.confirm('إلغاء الطلب','هل تريد إلغاء طلب المكافأة؟','إلغاء الطلب',async()=>{try{const ok=await R.rpc('rc52_reward_cancel',{p_id:r.id});R.toast(ok?'أُلغي الطلب':'لا يمكن إلغاء الطلب في هذه المرحلة');render()}catch(err){R.toast(err.message)}},{danger:true})};
+  R.rwCancel=i=>{const r=R.cache.rw[i];R.confirm('إلغاء الطلب','هل تريد إلغاء طلب المكافأة؟','إلغاء الطلب',async()=>{try{const ok=await R.rpc('rc52_reward_cancel',{p_id:r.id});R.toast(ok?'أُلغي الطلب':'لا يمكن إلغاء الطلب في هذه المرحلة');render()}catch(err){R.toast(err.message)}},{danger:true})};
   R.rwProof=async(i,kind,list)=>{const r=(list||R.cache.rw)[i];try{const img=await R.rpc('rc52_reward_proof',{p_id:r.id,p_kind:kind});R.sheet('dnProof',kind==='transfer'?'صورة الحوالة':'صورة التسليم',img?`<img class="dn-proof" src="${e(img)}" alt="">`:'<p>تعذّر تحميل الصورة</p>')}catch(err){R.toast(err.message)}};
   R.payCard=(pay,amount)=>{
     const acc=pay&&pay.account;if(!acc)return `<div class="dn-pay"><b>بيانات التحويل</b><p>لم يحدّد المدير بيانات الدفع بعد. تواصل معه عبر المحادثة.</p></div>`;
     const m={bank:'تحويل بنكي',wallet:'محفظة إلكترونية'}[pay.method]||'';
-    return `<div class="dn-pay"><b>بيانات التحويل</b>${amount?`<p class="dn-amount">المبلغ: ${e(amount)}</p>`:''}<p>${e([m,pay.provider].filter(Boolean).join(' · '))}</p><div class="dn-copy"><code>${e(acc)}</code><button type="button" class="dn-link" onclick="RC50.copy('${e(String(acc).replace(/'/g,''))}')">نسخ</button></div>${pay.holder?`<small>باسم: ${e(pay.holder)}</small>`:''}${pay.note?`<small class="dn-muted">${e(pay.note)}</small>`:''}</div>`;
+    return `<div class="dn-pay"><b>بيانات التحويل</b>${amount?`<p class="dn-amount">المبلغ: ${e(amount)}</p>`:''}<p>${e([m,pay.provider].filter(Boolean).join(' · '))}</p><div class="dn-copy"><code>${e(acc)}</code><button type="button" class="dn-link" data-copy="${e(acc)}" onclick="RC50.copyEl(this)">نسخ</button></div>${pay.holder?`<small>باسم: ${e(pay.holder)}</small>`:''}${pay.note?`<small class="dn-muted">${e(pay.note)}</small>`:''}</div>`;
   };
 
   // support page: two sections (pledges | reward requests)
   const origSupport=R.pages.donor_support;
   const D=R.ds2={sec:'pledges'};
   R.page('donor_support',{title:'الدعم',roles:OBS,render:async()=>{
-    const seg=R.seg([['pledges','الكفالات والدعم'],['rewards','طلبات المكافآت']],D.sec,'RC50.dSec');
-    const html=D.sec==='rewards'?await R.rwDonorHtml():await origSupport.render();
-    return D.sec==='rewards'?`<div class="dn-hello">أهلًا بك، ${e(String(state?.profile?.full_name||'').trim().split(/\s+/)[0]||'')}</div>${seg}${html}`:html.replace('</div>','</div>'+seg.replace(/\$/g,'$$$$'));
+    return D.sec==='rewards'?R.dSegHtml()+'<!--dn-chat-->'+await R.rwDonorHtml():await origSupport.render();
   }});
+  R.dSegHtml=()=>R.seg([['pledges','الكفالات والدعم'],['rewards','طلبات المكافآت']],D.sec,'RC50.dSec');
   R.dSec=s=>{D.sec=s;render()};
 
   // ================= admin: rewards tab =================
