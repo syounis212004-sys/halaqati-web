@@ -29,7 +29,7 @@
   const baseHome=window.homePage;
   if(typeof baseHome==='function')window.homePage=function(){
     const r=baseHome.apply(this,arguments);
-    if(typeof r!=='string'||['supervisor','admin','teacher'].includes(role()))return r;/* RC86: greeting + verse live inside the day card */
+    if(typeof r!=='string'||['supervisor','admin','teacher','observer'].includes(role()))return r;/* RC86: greeting + verse live inside the day card */
     return R.welcome()+r;
   };
 
@@ -154,7 +154,7 @@
     const wk=(d.myVisits||d.visits).filter(v=>(daysSince(v.visit_date)??999)<=7).length;
     return window.SupervisorUI.dashboard({programs:d.programs,halaqas:d.halaqas,pending:ns,stale,started,weekVisits:wk,openActions:open,welcome:R.welcome()},{escape:e,renderCircle:h=>hCard(h,false)});
   };
-  R.pages.home={title:'الرئيسية',roles:[...(donorHome?.roles||['observer']),'supervisor'],render:async()=>role()==='supervisor'?supHome():(R.welcome()+await donorHome.render()),after:donorHome?.after};
+  R.pages.home={title:'الرئيسية',roles:[...(donorHome?.roles||['observer']),'supervisor'],render:async()=>role()==='supervisor'?supHome():await donorHome.render(),after:donorHome?.after};
 
   // ---------- supervisor halaqat (read-only) ----------
   R.page('halaqas',{title:'الحلقات',roles:['supervisor'],render:async()=>{const d=await load(false);return d.halaqas.map(h=>hCard(h,true)).join('')||R.card(R.empty('لا توجد حلقات مسندة إليك'))}});

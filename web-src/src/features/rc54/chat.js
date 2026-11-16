@@ -82,7 +82,8 @@
     const baseRender=sup.render;
     sup.render=async function(){
       const html=await baseRender.apply(this,arguments);
-      return `<div class="ch-donorbar">${R.btn('محادثة مع المدير','RC50.chat.donorOpen()','tonal')}</div>`+html;
+      const bar=`<div class="ch-donorbar">${R.btn('محادثة مع المدير','RC50.chat.donorOpen()','tonal')}</div>`;
+      return html.includes('<!--dn-chat-->')?html.replace('<!--dn-chat-->',()=>bar):bar+html;
     };
   }
 

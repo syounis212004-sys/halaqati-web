@@ -42,7 +42,11 @@
   RC50.sheet=(id,title,body,footer)=>{if(window.NX&&NX.dialog)return NX.dialog(id,e(title),body,{footer:footer||''});
     let d=document.getElementById(id);if(!d){d=document.createElement('dialog');d.id=id;d.className='rc27-dlg';document.body.appendChild(d)}d.innerHTML=`<h3>${e(title)}</h3>${body}<div class="dn-foot">${footer||''}</div>`;if(!d.open)d.showModal();return d};
   RC50.closeSheet=id=>document.getElementById(id)?.close();
-  RC50.btn=(label,fn,kind)=>`<button type="button" class="dn-btn ${kind||''}" onclick="${fn}">${e(label)}</button>`;
+  RC50.btn=(label,fn,kind,disabled)=>`<button type="button" class="dn-btn ${kind||''}"${disabled?' disabled aria-disabled="true"':` onclick="${fn}"`}>${e(label)}</button>`;
+  RC50.confirm=(title,msg,ok,fn,opts)=>{if(window.NX&&NX.confirm)return NX.confirm(title,msg,ok,fn,opts||{});if(window.confirm(title+'\n'+msg))fn()};
+  const _c={};
+  RC50.cached=async(k,ttl,load)=>{const h=_c[k],n=Date.now();if(h&&n-h.t<ttl)return h.v;const v=await load();_c[k]={t:n,v};return v};
+  RC50.bust=()=>{Object.keys(_c).forEach(k=>delete _c[k])};
 
   // ---------- roles ----------
   try{if(typeof roleAr==='object'){roleAr.observer='المانح'}}catch(_e){}
@@ -58,6 +62,7 @@
     if(cur&&(!cur.roles||cur.roles.includes(role))){
       try{buildNav();setFab()}catch(_e){}
       const t=document.getElementById('pageTitle');if(t)t.textContent=cur.title;
+      document.body.classList.toggle('dn-role',role==='observer');
       const box=document.getElementById('content');if(!box)return;
       const token=RC50._tok=(RC50._tok||0)+1;
       box.innerHTML=RC50.skeleton();
