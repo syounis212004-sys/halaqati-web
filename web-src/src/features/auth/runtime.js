@@ -97,9 +97,24 @@ function authParamsFromUrl(url){
   }catch(e){return {}}
 }
 
+const NATIVE_OAUTH_PENDING_KEY='halaqati_native_oauth_pending';
+const NATIVE_OAUTH_TTL_MS=15*60*1000;
+function markNativeOAuthPending(){try{localStorage.setItem(NATIVE_OAUTH_PENDING_KEY,String(Date.now()))}catch(e){}}
+/** One-shot: true only if this app started a Google sign-in in the last 15 minutes. */
+function takeNativeOAuthPending(){
+  let at=0;try{at=Number(localStorage.getItem(NATIVE_OAUTH_PENDING_KEY)||0);localStorage.removeItem(NATIVE_OAUTH_PENDING_KEY)}catch(e){}
+  const age=Date.now()-at;return at>0&&age>=0&&age<=NATIVE_OAUTH_TTL_MS;
+}
+
 async function finishNativeGoogleLogin(url){
   if(!url || !url.startsWith(APP_DEEP_LINK))return false;
   const p=authParamsFromUrl(url);
+  // A link from any other app can carry somebody else's valid tokens (session fixation): ignore it unless we asked for it.
+  if(!takeNativeOAuthPending()){
+    try{await window.Capacitor?.Plugins?.Browser?.close?.()}catch(e){}
+    googleSignInBusy=false;
+    return true;
+  }
 
   try{ await window.Capacitor?.Plugins?.Browser?.close?.(); }catch(e){}
 
@@ -176,6 +191,7 @@ async function loginWithGoogle(){
   try{
     if(isNativeHalaqati()){
       await setupNativeAuthDeepLink();
+      markNativeOAuthPending();
 
       const {data,error}=await db.auth.signInWithOAuth({
         provider:'google',
@@ -288,7 +304,13 @@ async function boot(user=null){
   $('#pendingPanel').classList.add('hidden');
   await loadAll(true);showApp();cacheSnapshot();setTimeout(syncOfflineQueue,250)
 }
-async function logout(){try{if(typeof unregisterPushDevice==='function')await unregisterPushDevice()}catch(e){}try{await db.auth.signOut()}catch(e){}clearOfflineAuth();location.reload()}
+async function clearLocalStudentData(uid){
+  // Sign-out must not leave the account's downloaded student data in the browser. Unsynced operations stay (same owner id).
+  try{if(uid)localStorage.removeItem(`halaqati_v214_cache_${uid}`)}catch(e){}
+  try{if(typeof legacyCacheKey==='function'){const k=legacyCacheKey();if(k)localStorage.removeItem(k)}}catch(e){}
+  try{const s=window.HalaqatiOfflineStore;if(uid&&s?.clearSnapshot)await Promise.race([s.clearSnapshot(uid),sleep(1200)])}catch(e){}
+}
+async function logout(){const uid=state.user?.id;try{if(typeof unregisterPushDevice==='function')await unregisterPushDevice()}catch(e){}try{await db.auth.signOut()}catch(e){}clearOfflineAuth();await clearLocalStudentData(uid);location.reload()}
 function showApp(){$('#auth').classList.add('hidden');$('#app').classList.remove('hidden');$('#roleLabel').textContent=roleAr[state.profile.role]||state.profile.role;$('#userName').textContent=state.profile.full_name;$('#drawerUser').textContent=`${state.profile.full_name} · ${roleAr[state.profile.role]}`;$('#userAvatar').textContent=(state.profile.full_name||'ح')[0];updateSyncBadge();render()}
 async function loadRoleExtras(){state.guardianAccounts=[];state.guardianDirectory=[];state.guardianRanksMonth={};state.guardianRanksDay={};state.guardianRangeRanks={};state.guardianCompetition={};state.guardianActivities={};state.guardianAnalyticsError='';if(!state.networkVerified)return;if(roleCanManage()){let g=await db.rpc('list_guardian_accounts');if(!g.error)state.guardianAccounts=g.data||[]}if(state.profile?.role==='guardian'){state.guardianDirectory=[];let children=activeStudents();for(let st of children){let [m,day]=await Promise.all([db.rpc('student_rank_snapshot',{p_student_id:st.id,p_period:'month'}),db.rpc('student_rank_snapshot',{p_student_id:st.id,p_period:'day'})]);state.guardianRanksMonth[st.id]=m.data||[];state.guardianRanksDay[st.id]=day.data||[]}let ids=children.map(x=>x.id);if(ids.length){try{let [sr,nr]=await Promise.all([db.from('sessions').select('id,halaqa_id,session_date,title,session_type,activity_data').eq('session_type','lesson').order('session_date',{ascending:false}).limit(40),db.from('student_daily_notes').select('session_id,student_id,activity_score,activity_max_score,participation,teacher_comment,parent_visible,created_at').in('student_id',ids).eq('parent_visible',true).order('created_at',{ascending:false}).limit(160)]);if(!sr.error&&!nr.error){let sm=new Map((sr.data||[]).map(x=>[String(x.id),x]));for(let note of nr.data||[]){let stid=String(note.student_id),session=sm.get(String(note.session_id));if(session&&!state.guardianActivities[stid])state.guardianActivities[stid]={session,note}}}}catch(e){console.warn('guardian activity summary skipped',e)}};if(typeof loadGuardianDashboardData==='function')await loadGuardianDashboardData({silent:true})}}
 // shortcut: stats views order by student_id only, so ties may repeat across pages, upgrade to a unique key if rows ever duplicate

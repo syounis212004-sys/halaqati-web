@@ -76,6 +76,16 @@ class HalaqatiOfflineStore {
       await done
     })
   }
+  /** Sign-out: drop the downloaded student snapshot of this account but KEEP its unsynced operations. */
+  async clearSnapshot(userId){
+    if(!userId)return;
+    return this._schedule(async()=>{
+      const db=await this.open();if(!db)return;
+      const tx=db.transaction(SNAPSHOTS,'readwrite'),done=txDone(tx);
+      tx.objectStore(SNAPSHOTS).delete(userId);
+      await done
+    })
+  }
   async migrateLegacy(userId,{queue=[],snapshot=null}={}){
     if(!userId)return {queue:[],snapshot:null};
     const db=await this.open();if(!db)return {queue:clone(queue||[]),snapshot:clone(snapshot)};
