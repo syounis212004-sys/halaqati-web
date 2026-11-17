@@ -1,8 +1,8 @@
 {
-  "versionName": "2.90.2",
-  "versionCode": 29002,
-  "apkUrl": "https://raw.githubusercontent.com/syounis212004-sys/halaqati-web/main/Halaqati-latest.apk",
-  "sha256": "23ef2bf046dd51efe6d0187a552a4b7949f6ecace491f14eccb643c868d72606",
+  "versionName": "2.91.0",
+  "versionCode": 29100,
+  "apkUrl": "https://syounis212004-sys.github.io/halaqati-web/Halaqati-latest.apk",
+  "sha256": "114d8745e947eb5a13a4a30d3195e64579daf7f687675757ae3952428492e9c6",
   "native": true,
   "mandatory": false,
   "notes": [
