@@ -296,7 +296,8 @@ for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-d
     await touch('touchEnd', 190); await page.waitForTimeout(150);
     const snap = await page.evaluate(() => ({ open: document.getElementById('drawer').classList.contains('open'), style: document.getElementById('drawer').getAttribute('style') || '', bstyle: document.getElementById('backdrop').getAttribute('style') || '' }));
     await page.waitForTimeout(500);
-    note(/translateX\(9\dpx\)|translateX\(8\dpx\)/.test(during.tf) && +during.bo < 1 && during.open, `${cfg.name}: while dragging, drawer tracks the finger (${during.tf}) and the backdrop fades (${(+during.bo).toFixed(2)})`);
+    const dragX = +(/translateX\((\d+(?:\.\d+)?)px\)/.exec(during.tf) || [])[1]; /* how far depends on how many touch events were processed when sampled: assert it follows, not a magic number */
+    note(dragX >= 30 && dragX <= 95 && +during.bo < 1 && during.open, `${cfg.name}: while dragging, drawer tracks the finger (${during.tf}) and the backdrop fades (${(+during.bo).toFixed(2)})`);
     note(snap.open && !/transform|transition/.test(snap.style) && !/opacity|transition/.test(snap.bstyle), `${cfg.name}: a short drag snaps back to open with no inline residue`);
     await touch('touchStart', 100); for (let x = 100; x <= 260; x += 20) { await touch('touchMove', x); await page.waitForTimeout(12); }
     await touch('touchEnd', 260); await page.waitForTimeout(700);
@@ -317,6 +318,23 @@ for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-d
     note(rev.end > 300 && rev.jump < 200, `${cfg.name}: reversing the drawer mid-animation continues from the current position (max frame step ${rev.jump}px, min x ${rev.min}, end x ${rev.end})`);
   }
 
+  if (!mobile) {
+    /* table sort: rows glide to their new places; they must never collapse onto each other mid-flight (regression: duplicate keys inside a row) */
+    const ts = await page.evaluate(async () => {
+      go('students'); await new Promise(r => setTimeout(r, 1500));
+      const rows = () => [...document.querySelectorAll('#content tbody tr')];
+      if (rows().length < 6) return { rows: rows().length };
+      let minGap = 1e9, settled = true;
+      for (let k = 0; k < 2; k++) { /* sort, then sort again: the second one REVERSES the order, the worst case for a naive glide */
+        NSS.sortBy('name');
+        await new Promise(res => { let n = 0; const t = () => { const tops = rows().map(r => r.getBoundingClientRect()); const h = tops[0].height; for (let i = 1; i < tops.length; i++) minGap = Math.min(minGap, Math.abs(tops[i].top - tops[i - 1].top) / h); if (++n < 26) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+        await new Promise(r => setTimeout(r, 500)); settled = settled && rows().every(r => !r.getAnimations().length);
+      }
+      return { rows: rows().length, minGap: +minGap.toFixed(2), settled };
+    });
+    if (ts.rows >= 6) note(ts.minGap >= 0.5 && ts.settled, `${cfg.name}: sorting a table never collapses rows onto each other (min row spacing during the glide = ${ts.minGap} row heights) and settles`);
+    else console.log(`INFO  ${cfg.name}: no table rows rendered for the sort check`);
+  }
   /* 8. empty state ornament: present, drawn once, never over data */
   const em = await page.evaluate(async () => {
     state.students = []; go('students'); await new Promise(r => setTimeout(r, 1400));

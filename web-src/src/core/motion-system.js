@@ -127,6 +127,15 @@ function playSameRender(content, snap, hadSkel) {
   if (!snap || !snap.size) return;
   const els = topKeyed(content), reads = [];
   els.forEach(el => { const key = keyOf(el); if (!key) return; const r = el.getBoundingClientRect(); reads.push({ el, key, r }); });
+  /* A real reorder (sort, reverse, filter that reshuffles) must not glide: rows travelling to each other's places all meet in the
+     middle and collapse. If the old vertical order is not preserved, settle in place with a short fade instead. */
+  const kept = reads.filter(x => snap.has(x.key)).sort((a, b) => snap.get(a.key).top - snap.get(b.key).top);
+  let reordered = false;
+  for (let i = 1; i < kept.length; i++) if (kept[i].r.top < kept[i - 1].r.top - 1) { reordered = true; break; }
+  if (reordered) {
+    kept.forEach(({ el, key, r }) => { const o = snap.get(key); if (Math.abs(o.top - r.top) > 1 || Math.abs(o.left - r.left) > 1) flipAnims.push(el.animate([{ opacity: .3 }, { opacity: 1 }], { duration: T.fast * 1000 + 60, easing: 'cubic-bezier(.16,1,.3,1)' })); });
+    return;
+  }
   reads.slice(0, 90).forEach(({ el, key, r }) => {
     const o = snap.get(key);
     if (!o) { if (r.top < innerHeight * 1.5 && r.bottom > 0) flipAnims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T.fast * 1000 + 40, easing: 'cubic-bezier(.16,1,.3,1)' })); return; }
