@@ -11,6 +11,16 @@
 }
 :root[dir="ltr"]{--hm-start:-1}
 
+
+/* ---- spring presets: damped-oscillator curves (zeta .9 / .78 / .55) written as linear(); JS reads the same strings (HalaqatiMotion.spring) ----
+   soft  = settles with no overshoot (height changes) · sheet = ~2% overshoot (panels, indicators) · pop = ~12% overshoot (small controls only) */
+:root{
+  --hm-spring-soft:linear(0, 0.0146, 0.0525, 0.1061, 0.1697, 0.2386, 0.3096, 0.38, 0.448, 0.5125, 0.5727, 0.628, 0.6782, 0.7235, 0.7639, 0.7996, 0.831, 0.8583, 0.882, 0.9024, 0.9199, 0.9347, 0.9472, 0.9577, 0.9665, 0.9738, 0.9798, 0.9846, 0.9886, 0.9918, 0.9943, 0.9963, 0.9978, 0.999, 1);
+  --hm-spring-sheet:linear(0, 0.0194, 0.0696, 0.1402, 0.223, 0.3114, 0.4007, 0.4874, 0.5689, 0.6437, 0.7109, 0.7701, 0.8214, 0.865, 0.9016, 0.9316, 0.9558, 0.9749, 0.9897, 1.0007, 1.0087, 1.0141, 1.0175, 1.0193, 1.0199, 1.0196, 1.0187, 1.0173, 1.0157, 1.0139, 1.0121, 1.0104, 1.0088, 1.0073, 1);
+  --hm-spring-pop:linear(0, 0.039, 0.1381, 0.2735, 0.425, 0.577, 0.7181, 0.8409, 0.9414, 1.0184, 1.0726, 1.1065, 1.1231, 1.126, 1.1187, 1.1048, 1.0869, 1.0676, 1.0486, 1.0313, 1.0165, 1.0046, 0.9956, 0.9895, 0.9858, 0.9842, 0.9842, 0.9854, 0.9873, 0.9896, 0.9921, 0.9945, 0.9966, 0.9983, 1);
+  --hm-dur-spring:420ms;
+}
+
 /* ---- page change: the shell stays still, the page fades; the movement belongs to the staggered blocks (JS) ---- */
 html.hm-pre #content>*{opacity:0}
 @media (prefers-reduced-motion:no-preference){
@@ -78,6 +88,77 @@ html .nst-card.open .nst-card-more-in{opacity:1;transition:opacity var(--hm-dur-
 .hm-orn{position:absolute;top:12px;left:50%;width:80px;height:80px;margin-left:-40px;color:var(--green);opacity:.26;z-index:-1;pointer-events:none}
 html .drawer,html .drawer *{touch-action:pan-y} /* the nav is its own scroller, so the rule must reach it for horizontal drags to stay with the page */
 
+/* ================= interaction states: ONE contract for every control =================
+   rest -> hover (fine pointers only) -> press (instant, via the individual `scale` property so it never fights an existing transform)
+   -> release (spring) -> disabled -> busy -> confirmed. Variants differ in weight, not in kind:
+   primary heavier press + lift on hover · secondary light press · danger slower, heavier press · icon buttons pop on release. */
+html .nx-btn,html .btn,html .mini,html .tab,html .nx-chip,html .nx-iconbtn,html .menu-btn,html .nx-fab{
+  transition-property:scale,translate,background-color,color,border-color,box-shadow,filter,opacity;
+  transition-duration:var(--hm-dur-spring),var(--hm-dur-spring),var(--hm-dur-fast),var(--hm-dur-fast),var(--hm-dur-fast),var(--hm-dur-fast),var(--hm-dur-fast),var(--hm-dur-base);
+  transition-timing-function:var(--hm-spring-sheet),var(--hm-spring-sheet),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out)}
+html .nx-iconbtn,html .menu-btn{transition-timing-function:var(--hm-spring-pop),var(--hm-spring-pop),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out),var(--hm-ease-out)}
+html .nx-btn{--hm-press:.975}html .btn,html .mini,html .tab{--hm-press:.98}html .nx-chip{--hm-press:.96}
+html .nx-filled,html .btn-primary,html .nx-fab{--hm-press:.965}
+html .nx-danger,html .btn-danger{--hm-press:.98}
+html .nx-iconbtn,html .menu-btn{--hm-press:.88}
+html .nx-btn:active:not(:disabled),html .btn:active:not(:disabled),html .mini:active:not(:disabled),html .tab:active:not(:disabled),
+html .nx-chip:active:not(:disabled),html .nx-iconbtn:active:not(:disabled),html .menu-btn:active:not(:disabled),html .nx-fab:active:not(:disabled){
+  transform:none;scale:var(--hm-press);transition-duration:var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant),var(--hm-dur-instant);
+  transition-timing-function:var(--hm-ease-out)}
+html .nx-danger:active:not(:disabled),html .btn-danger:active:not(:disabled){transition-duration:130ms,130ms,130ms,130ms,130ms,130ms,130ms,130ms;filter:brightness(.94)}
+html .nx-filled:active:not(:disabled),html .btn-primary:active:not(:disabled){filter:brightness(.93)}
+@media (hover:hover) and (pointer:fine){
+  html .nx-filled:hover:not(:disabled),html .btn-primary:hover:not(:disabled),html .nx-fab:hover:not(:disabled){translate:0 -1px}
+  html .nx-filled:hover:not(:disabled):active,html .btn-primary:hover:not(:disabled):active{translate:0 0}
+  html .nx-danger:hover:not(:disabled),html .btn-danger:hover:not(:disabled){filter:brightness(.96)}
+}
+/* disabled: the control settles into its disabled look instead of flipping, and never keeps a stale press */
+html .nx-btn:disabled,html .btn:disabled,html button:disabled{scale:none;filter:saturate(.7)}
+/* busy: the pressed button (marked by the motion system while the app disables it) carries a calm sheen — a loop, kept visible */
+html .hm-busy{position:relative;overflow:hidden;pointer-events:none}
+html .hm-busy:disabled{opacity:.78}
+html .hm-busy::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,#fff 42%,transparent) 50%,transparent 70%);translate:-100% 0;animation:hm-sheen 1.15s var(--hm-ease-std) infinite}
+@keyframes hm-sheen{to{translate:100% 0}}
+html .hm-ok{box-shadow:0 0 0 3px color-mix(in srgb,var(--green,#0a7a5a) 30%,transparent)}
+
+/* ---- fields: focus, value and validity colours glide (focus rings themselves stay the app's accessible outline) ---- */
+html .input,html select,html textarea,html .nt-af-box,html .nx-field input,html .nx-field select,html .nx-field textarea,html .nx-search,html input[type="search"],html input[type="date"],html input[type="month"]{
+  transition:border-color var(--hm-dur-fast) var(--hm-ease-out),box-shadow var(--hm-dur-base) var(--hm-ease-out),background-color var(--hm-dur-fast) var(--hm-ease-out)}
+html [id$="Hint"],html .hint,html .muted{transition:color var(--hm-dur-fast) var(--hm-ease-out)}
+
+/* ---- switch: a fixed 22px thumb that travels and scales (transform only), spring on arrival; RTL-aware via --hm-start ---- */
+html .nx-switch{transition:background-color var(--hm-dur-base) var(--hm-ease-out),border-color var(--hm-dur-base) var(--hm-ease-out)}
+html .nx-switch:before{width:22px;height:22px;inset-inline-start:3px;scale:.727;translate:0 0;
+  transition:scale var(--hm-dur-spring) var(--hm-spring-pop),translate var(--hm-dur-spring) var(--hm-spring-pop),background-color var(--hm-dur-fast) var(--hm-ease-out)}
+html .nx-switch:checked:before{inset-inline-start:3px;width:22px;height:22px;scale:1;translate:calc(var(--hm-start) * -21px) 0}
+html .nx-switch:active:before{scale:.84}
+html .nx-switch:checked:active:before{scale:1.06}
+
+/* ---- checkbox: the box fills with the brand colour and the tick is wiped in along its own stroke; press squeezes, release springs ---- */
+html input[type="checkbox"]:not(.nx-switch){-webkit-appearance:none;appearance:none;position:relative;flex:none;width:22px;height:22px;border:2px solid var(--outline,#8a9892);border-radius:7px;background:transparent;cursor:pointer;vertical-align:middle;
+  transition:background-color var(--hm-dur-fast) var(--hm-ease-out),border-color var(--hm-dur-fast) var(--hm-ease-out),scale var(--hm-dur-spring) var(--hm-spring-pop)}
+html input[type="checkbox"]:not(.nx-switch)::after{content:"";position:absolute;left:5.5px;top:1px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);clip-path:inset(0 0 100% 0);transition:clip-path var(--hm-dur-base) var(--hm-ease-out)}
+html input[type="checkbox"]:not(.nx-switch):checked{background:var(--green,#0a7a5a);border-color:var(--green,#0a7a5a)}
+html input[type="checkbox"]:not(.nx-switch):checked::after{clip-path:inset(0 0 0 0);transition-delay:50ms}
+html input[type="checkbox"]:not(.nx-switch):active:not(:disabled){scale:.88;transition-duration:var(--hm-dur-instant)}
+html input[type="checkbox"]:not(.nx-switch):disabled{opacity:.45;cursor:not-allowed}
+
+/* ---- segmented/chip groups: the selected highlight travels (shared element) ---- */
+.hm-chip-ghost{position:absolute;pointer-events:none;z-index:0;transform-origin:0 0}
+.hm-chip-ghost~.nx-chip{position:relative;z-index:1}
+html .nx-chip.hm-hold{background:transparent!important;box-shadow:none!important}
+
+@keyframes hm-nav-pop{from{scale:.72}to{scale:1}}
+.hm-nav-pop button.active svg{animation:hm-nav-pop 460ms var(--hm-spring-pop) both}
+
+/* ---- one chevron, two states (the drawer's section headers): the icon is constant, the state rotates it ---- */
+html .d86-gh svg{transition:transform var(--hm-dur-base) var(--hm-ease-std)}
+html .d86-gh[aria-expanded="true"] svg{transform:rotate(180deg)}
+html .d86-fav svg{transition:fill var(--hm-dur-fast) var(--hm-ease-out)}
+
+/* ---- popup menus: entrance and exit belong to the motion system (nx.js), the old CSS pop would double it ---- */
+html .nx-menu{animation:none}
+
 /* ---- reduced motion: tiered, not a kill switch ---- */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
@@ -93,3 +174,13 @@ html .drawer,html .drawer *{touch-action:pan-y} /* the nav is its own scroller, 
 html.rc27-reduce-motion dialog,html.rc27-reduce-motion dialog::backdrop,html.rc27-reduce-motion .toast,html.rc27-reduce-motion .drawer-backdrop{transform:none;translate:none;transition-duration:var(--hm-dur-instant)}
 html.rc27-reduce-motion .drawer{transition-duration:var(--hm-dur-instant)} /* instant, but still translateX(105%) when closed */
 html.rc27-reduce-motion .drawer.open .nav>*{animation:none}
+
+/* reduced motion for the interaction contract: no press scale or lift (state is still visible by colour), static busy sheen, instant tick */
+@media (prefers-reduced-motion:reduce){
+  html .nx-btn:active:not(:disabled),html .btn:active:not(:disabled),html .mini:active:not(:disabled),html .tab:active:not(:disabled),html .nx-chip:active:not(:disabled),html .nx-iconbtn:active:not(:disabled),html .menu-btn:active:not(:disabled),html .nx-fab:active:not(:disabled),html input[type="checkbox"]:not(.nx-switch):active:not(:disabled){scale:none}
+  html .nx-filled:hover:not(:disabled),html .btn-primary:hover:not(:disabled){translate:none}
+  html .hm-busy::after{animation:none;opacity:0}
+}
+html.rc27-reduce-motion .nx-btn:active:not(:disabled),html.rc27-reduce-motion .btn:active:not(:disabled),html.rc27-reduce-motion .mini:active:not(:disabled),html.rc27-reduce-motion .nx-chip:active:not(:disabled),html.rc27-reduce-motion .nx-iconbtn:active:not(:disabled),html.rc27-reduce-motion .menu-btn:active:not(:disabled),html.rc27-reduce-motion .nx-fab:active:not(:disabled),html.rc27-reduce-motion input[type="checkbox"]:not(.nx-switch):active:not(:disabled){scale:none}
+html.rc27-reduce-motion .nx-filled:hover:not(:disabled),html.rc27-reduce-motion .btn-primary:hover:not(:disabled){translate:none}
+html.rc27-reduce-motion .hm-busy::after{animation:none;opacity:0}

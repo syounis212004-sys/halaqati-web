@@ -48,7 +48,16 @@
 
   // ---------- dropdown menu (Compose DropdownMenu) ----------
   const MENUS=new Map();let menuSeq=0,openMenu=null;
-  function closeMenu(){if(openMenu){openMenu.remove();openMenu=null}}
+  /* The menu leaves with a short exit (the node is detached from `openMenu` at once, so a new menu can open while it fades) and is
+     removed on the animation's end; with motion off it is removed immediately, exactly as before. */
+  function closeMenu(){
+    const m=openMenu;if(!m)return;openMenu=null;
+    const M=window.HalaqatiMotion;
+    if(!M||M.reduced()||M.off||document.hidden||!m.animate){m.remove();return}
+    m.style.pointerEvents='none';
+    const a=m.animate([{opacity:1,scale:1},{opacity:0,scale:.96}],{duration:110,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+    a.onfinish=a.oncancel=()=>m.remove();setTimeout(()=>m.remove(),400);
+  }
   NX.closeMenu=closeMenu;
   /** items: [{label,icon,onclick,danger,hidden}] — returns the "⋮" IconButton html. */
   NX.kebab=(items,o={})=>{
@@ -64,6 +73,10 @@
     let left=r.left;if(left+mw>vw-8)left=Math.max(8,vw-mw-8);
     let top=r.bottom+4;if(top+mh>vh-8)top=Math.max(8,r.top-mh-4);
     m.style.left=left+'px';m.style.top=top+'px';
+    /* grow from the trigger: the origin is the trigger's centre, so the menu feels attached to it (spring, tiny overshoot) */
+    const M=window.HalaqatiMotion;
+    if(M&&!M.reduced()&&!M.off&&m.animate){m.style.transformOrigin=(r.left+r.width/2-left)+'px '+(top>r.top?'0':'100%');m.animate([{opacity:0,scale:.9},{opacity:1,scale:1}],{duration:260,easing:M.spring('sheet')});
+      m.querySelectorAll('button').forEach((b,i)=>b.animate([{opacity:0,translate:'0 -4px'},{opacity:1,translate:'0 0'}],{duration:200,delay:30+i*18,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}))}
     m.addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;const it=items[+b.dataset.i];closeMenu();try{typeof it.onclick==='function'?it.onclick():(0,eval)(it.onclick)}catch(err){console.error(err)}});
     setTimeout(()=>{document.addEventListener('click',closeMenu,{once:true});document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){closeMenu();document.removeEventListener('keydown',esc)}})},0);
   };

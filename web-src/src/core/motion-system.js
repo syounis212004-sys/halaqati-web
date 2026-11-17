@@ -98,34 +98,83 @@ function runCounters(scope, page, pageChanged) {
    the final layout is never painted before the animation starts. */
 const KEYED = '[data-stcard],[id^="roster_"],[data-id],[data-sid],[data-key]';
 const SKEL = '.nx-skel,.ops-skeleton,.dn-skel';
-const CHEV = '.nr-chev>svg,.nst-card-head>.nx-iconbtn>svg';
+const CHEV = '.nr-chev>svg,.nst-card-head>.nx-iconbtn>svg,.d86-gh>svg';
+const OPEN = '.open,[aria-expanded="true"]';
 const keyOf = el => el.dataset.stcard || el.id || el.dataset.id || el.dataset.sid || el.dataset.key || '';
 /* leaf-most keyed blocks only: a container that merely holds keyed cards must not move or clip them a second time */
 const topKeyed = content => [...content.querySelectorAll(KEYED)].filter(el => !el.querySelector(KEYED));
 let flipAnims = [];
+/* the spring presets live in CSS (--hm-spring-soft|sheet|pop, damped-oscillator curves as linear()); JS reads the same strings */
+const spring = name => getComputedStyle(root).getPropertyValue('--hm-spring-' + name).trim() || 'cubic-bezier(.16,1,.3,1)';
+const EASE_IN_OUT = 'cubic-bezier(.4,0,.2,1)';
 
-function snapshotKeyed(content) {
+/* a "pop" state: an element inside a keyed block turned on/off (favourite star): the glyph springs instead of snapping */
+const popOn = el => !!el.querySelector('.d86-fav.on');
+const popTarget = el => el.querySelector('.d86-fav svg');
+
+function snapshotChips(root0) {
+  const out = new Map();
+  root0.querySelectorAll('.nx-chips,.nt-eq').forEach((g, i) => {
+    const chips = g.querySelectorAll(':scope>.nx-chip'); const on = g.querySelector(':scope>.nx-chip.on');
+    if (chips.length < 2 || !on) return;
+    const gr = g.getBoundingClientRect(), r = on.getBoundingClientRect();
+    out.set(i + '|' + chips.length, { text: on.textContent.trim(), x: r.left - gr.left + g.scrollLeft, y: r.top - gr.top + g.scrollTop, w: r.width, h: r.height });
+  });
+  return out;
+}
+/* The selected-chip highlight travels from the old chip to the new one (one shared element) instead of vanishing and re-appearing. */
+function playChips(root0, snap) {
+  const T = tokens();
+  root0.querySelectorAll('.nx-chips,.nt-eq').forEach((g, i) => {
+    const chips = g.querySelectorAll(':scope>.nx-chip'); const on = g.querySelector(':scope>.nx-chip.on');
+    const o = snap.get(i + '|' + chips.length); if (!o || !on || on.textContent.trim() === o.text) return;
+    const gr = g.getBoundingClientRect(), r = on.getBoundingClientRect(), cs = getComputedStyle(on);
+    const n = { x: r.left - gr.left + g.scrollLeft, y: r.top - gr.top + g.scrollTop, w: r.width, h: r.height };
+    if (!n.w || !n.h || !o.w) return;
+    if (getComputedStyle(g).position === 'static') g.style.position = 'relative';
+    const ghost = document.createElement('i'); ghost.className = 'hm-chip-ghost'; ghost.setAttribute('aria-hidden', 'true');
+    Object.assign(ghost.style, { left: n.x + 'px', top: n.y + 'px', width: n.w + 'px', height: n.h + 'px', background: cs.backgroundColor, boxShadow: cs.boxShadow, borderRadius: cs.borderRadius });
+    g.prepend(ghost); on.classList.add('hm-hold');
+    const done = () => { ghost.remove(); on.classList.remove('hm-hold'); };
+    const a = ghost.animate([{ transform: `translate(${o.x - n.x}px,${o.y - n.y}px) scale(${o.w / n.w},${o.h / n.h})` }, { transform: 'none' }], { duration: T.base * 1000 + 80, easing: spring('sheet') });
+    a.onfinish = a.oncancel = done; flipAnims.push(a);
+  });
+}
+
+function snapshotKeyed(root0) {
   const vh = innerHeight, out = new Map();
-  for (const el of topKeyed(content)) {
+  for (const el of topKeyed(root0)) {
     if (out.size >= 70) break;
     const key = keyOf(el); if (!key || out.has(key)) continue;
     const r = el.getBoundingClientRect();
     if (!r.height || r.bottom < -vh || r.top > vh * 2) continue;
-    out.set(key, { top: r.top, left: r.left, h: r.height, open: el.classList.contains('open') });
+    out.set(key, { top: r.top, left: r.left, h: r.height, open: el.matches(OPEN), pop: popOn(el) });
   }
+  out.chips = snapshotChips(root0);
+  out.notices = new Set([...root0.querySelectorAll('.nx-notice')].map(n => n.textContent.trim()));
   return out;
 }
 
-function playSameRender(content, snap, hadSkel) {
+function playSameRender(root0, snap, hadSkel) {
   if (reduced() || document.hidden) return;
   const T = tokens();
-  if (hadSkel && !content.querySelector(SKEL)) {
-    flipAnims.push(...[...content.children].map(el => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T.base * 1000, easing: 'cubic-bezier(.16,1,.3,1)' })));
-    runCounters(content, state.page, true);
+  if (hadSkel && !root0.querySelector(SKEL)) {
+    flipAnims.push(...[...root0.children].map(el => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T.base * 1000, easing: 'cubic-bezier(.16,1,.3,1)' })));
+    runCounters(root0, state.page, true);
     return;
   }
+  if (snap && snap.chips && snap.chips.size) playChips(root0, snap.chips);
+  /* a state message that was not on screen before (save failed / saved): a quick fade and one colour ring, no movement of the text */
+  if (snap && snap.notices) root0.querySelectorAll('.nx-notice').forEach(n => {
+    if (snap.notices.has(n.textContent.trim())) return;
+    flipAnims.push(n.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T.fast * 1000 - 10, easing: 'cubic-bezier(.16,1,.3,1)' }));
+    const kind = /nx-s-(error|danger|warn|success)/.exec(n.className);
+    if (kind) { const col = { error: 'var(--danger,#c0392b)', danger: 'var(--danger,#c0392b)', warn: 'var(--gold,#b8861b)', success: 'var(--green,#0a7a5a)' }[kind[1]];
+      const ring = (a, w) => `0 0 0 ${w}px color-mix(in srgb, ${col} ${a}%, transparent)`;
+      flipAnims.push(n.animate([{ boxShadow: ring(45, 0) }, { boxShadow: ring(0, 9) }], { duration: 560, easing: 'cubic-bezier(.16,1,.3,1)' })); }
+  });
   if (!snap || !snap.size) return;
-  const els = topKeyed(content), reads = [];
+  const els = topKeyed(root0), reads = [];
   els.forEach(el => { const key = keyOf(el); if (!key) return; const r = el.getBoundingClientRect(); reads.push({ el, key, r }); });
   /* A real reorder (sort, reverse, filter that reshuffles) must not glide: rows travelling to each other's places all meet in the
      middle and collapse. If the old vertical order is not preserved, settle in place with a short fade instead. */
@@ -141,11 +190,13 @@ function playSameRender(content, snap, hadSkel) {
     if (!o) { if (r.top < innerHeight * 1.5 && r.bottom > 0) flipAnims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: T.fast * 1000 + 40, easing: 'cubic-bezier(.16,1,.3,1)' })); return; }
     const dx = o.left - r.left, dy = o.top - r.top, grow = r.height - o.h;
     if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-      if (Math.abs(dy) < innerHeight * 1.5) flipAnims.push(el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], dy > 0 /* moving up = something collapsed: leave faster, so the gap it leaves is short-lived */ ? { duration: T.base * 1000, easing: 'cubic-bezier(.4,0,.2,1)' } : { duration: T.slow * 1000, easing: 'cubic-bezier(.16,1,.3,1)' }));
+      if (Math.abs(dy) < innerHeight * 1.5) flipAnims.push(el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], dy > 0 /* moving up = something collapsed: leave faster, so the gap it leaves is short-lived */ ? { duration: T.base * 1000, easing: EASE_IN_OUT } : { duration: T.slow * 1000 + 60, easing: spring('sheet') }));
     }
     if (grow > 8) flipAnims.push(el.animate([{ clipPath: `inset(0 0 ${grow}px 0)` }, { clipPath: 'inset(0 0 0 0)' }], { duration: T.slow * 1000, easing: 'cubic-bezier(.16,1,.3,1)' }));
-    const open = el.classList.contains('open');
-    if (open !== o.open) { const ch = el.querySelector(CHEV); if (ch) flipAnims.push(ch.animate([{ transform: `rotate(${open ? 0 : 180}deg)` }, { transform: `rotate(${open ? 180 : 0}deg)` }], { duration: T.base * 1000, easing: 'cubic-bezier(.4,0,.2,1)' })); }
+    const open = el.matches(OPEN);
+    if (open !== o.open) { const ch = el.querySelector(CHEV) || (el.matches('.d86-gh') ? el.querySelector('svg') : null); if (ch) flipAnims.push(ch.animate([{ transform: `rotate(${open ? 0 : 180}deg)` }, { transform: `rotate(${open ? 180 : 0}deg)` }], { duration: T.base * 1000 + 40, easing: spring('sheet') })); }
+    const pop = popOn(el);
+    if (pop !== o.pop) { const g = popTarget(el); if (g) flipAnims.push(g.animate(pop ? [{ scale: .55 }, { scale: 1 }] : [{ scale: 1.18 }, { scale: 1 }], { duration: pop ? T.base * 1000 + 160 : T.fast * 1000, easing: pop ? spring('pop') : EASE_IN_OUT })); }
   });
 }
 
@@ -269,6 +320,9 @@ function watchNav(selector) {
     if (!visibleNow(c)) { last = null; return; }
     const cur = measure(active);
     if (last && last.key !== cur.key && !reduced() && !document.hidden && cur.w && last.w) slidePill(c, active, last, cur);
+    /* the arriving icon springs in. The bar is rebuilt by several layers after this callback, so the animation is bound to a class on the
+       container (CSS), not to a node that may be replaced a few ms later. No node is ever inserted into the bar. */
+    if (last && last.key !== cur.key && !reduced() && !document.hidden) { c.classList.add('hm-nav-pop'); clearTimeout(c.__hmPopT); c.__hmPopT = setTimeout(() => c.classList.remove('hm-nav-pop'), 520); }
     last = cur;
   }).observe(c, { childList: true });
 }
@@ -344,6 +398,7 @@ function decorateToast(message) {
   const t = document.getElementById('toast');
   if (!t || reduced()) return;
   if (OK.test(message)) {
+    confirmBusyButton();
     t.insertAdjacentHTML('afterbegin', CHECK_SVG);
     const paths = t.querySelectorAll('.hm-check circle,.hm-check path');
     gsap.fromTo(paths, { drawSVG: '0%' }, { drawSVG: '100%', duration: .4, stagger: .12, ease: 'power2.out' });
@@ -381,6 +436,65 @@ function installOrnament() {
   const timer = setInterval(() => { if (drawAuthOrnament() || ornamentDone || ++tries > 30) clearInterval(timer); }, 200);
 }
 
+/* ---------- button state machine: pressed -> busy -> success, on the very button the person pressed ----------
+   The app already disables a button while it saves. We only LISTEN: when the pressed button becomes disabled right after the press
+   it shows a calm busy sheen (aria-busy); when it is enabled again after a success toast it gives a short confirming pulse.
+   Nothing here touches what the button does and nothing delays it. */
+let lastPress = null, lastBusy = null;
+function installButtonStates() {
+  const press = e => { const b = e.target && e.target.closest && e.target.closest('button'); if (b) lastPress = { el: b, t: performance.now() }; };
+  document.addEventListener('pointerdown', press, true);
+  document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.matches && document.activeElement.matches('button')) lastPress = { el: document.activeElement, t: performance.now() }; }, true);
+  const endBusy = b => {
+    b.el.classList.remove('hm-busy'); b.el.removeAttribute('aria-busy'); b.ended = performance.now();
+    if (b.ok) flashOk(b.el);
+  };
+  new MutationObserver(list => {
+    for (const m of list) {
+      const el = m.target; if (!el || el.nodeType !== 1) continue;
+      if (el.disabled && lastPress && el === lastPress.el && performance.now() - lastPress.t < 900 && !el.classList.contains('hm-busy')) {
+        el.classList.add('hm-busy'); el.setAttribute('aria-busy', 'true'); lastBusy = { el, t0: performance.now(), ok: false, ended: 0 };
+      } else if (!el.disabled && lastBusy && el === lastBusy.el && el.classList.contains('hm-busy')) endBusy(lastBusy);
+    }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['disabled'] });
+}
+function flashOk(el) {
+  if (!el.isConnected || reduced() || document.hidden) return;
+  el.classList.add('hm-ok');
+  el.animate([{ scale: 1 }, { scale: 1.045 }, { scale: 1 }], { duration: 420, easing: spring('pop') });
+  setTimeout(() => el.classList.remove('hm-ok'), 700);
+}
+/* called by the toast decoration: a success message confirms the button that was just busy */
+function confirmBusyButton() {
+  const b = lastBusy; if (!b || performance.now() - b.t0 > 6000) return;
+  if (b.ended && performance.now() - b.ended < 1500) flashOk(b.el); else b.ok = true;
+}
+
+/* ---------- <details>: open and close with a height transition that can be reversed mid-way ---------- */
+function installDetails() {
+  document.addEventListener('click', e => {
+    const sum = e.target && e.target.closest && e.target.closest('summary');
+    if (!sum) return;
+    const d = sum.parentElement;
+    if (!(d instanceof HTMLDetailsElement) || reduced() || document.hidden || window.HalaqatiMotion?.off || motionOffInStorage()) return;
+    e.preventDefault();
+    const T = tokens();
+    const cur = d.getBoundingClientRect().height; /* where it visually is right now (read BEFORE cancelling): the animation reverses from here, never jumps */
+    if (d.__hmAnim) { d.__hmAnim.cancel(); d.__hmAnim = null; }
+    const wantOpen = !(d.open && !d.__hmClosing);
+    d.__hmClosing = !wantOpen;
+    d.style.height = ''; d.style.overflow = '';
+    const wasOpen = d.open; d.open = true; const full = d.getBoundingClientRect().height;
+    d.open = false; const shut = d.getBoundingClientRect().height; d.open = wasOpen || wantOpen;
+    const from = d.__hmAnimActive ? cur : (wantOpen ? shut : full), to = wantOpen ? full : shut;
+    d.style.overflow = 'hidden'; d.__hmAnimActive = true;
+    const a = d.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: T.base * 1000 + 60, easing: spring('soft') });
+    d.__hmAnim = a;
+    a.onfinish = () => { d.open = wantOpen; d.style.overflow = ''; d.style.height = ''; d.__hmAnim = null; d.__hmClosing = false; d.__hmAnimActive = false; };
+    a.oncancel = () => { /* a newer click took over */ };
+  }, true);
+}
+
 /* ---------- lifecycle ---------- */
 function install() {
   installRender();
@@ -389,6 +503,8 @@ function install() {
   watchNav('#nav');
   installOrnament();
   installDrawerDrag();
+  installButtonStates();
+  installDetails();
 }
 mqReduce.addEventListener && mqReduce.addEventListener('change', settle);
 document.addEventListener('visibilitychange', () => { if (document.hidden) settle(); });
@@ -398,18 +514,18 @@ window.addEventListener('halaqati:ready', install, { once: true });
 
 /* For features that update a part of the page in place (not through render()): HalaqatiMotion.flip(() => { ...mutate the DOM... })
    keeps the keyed blocks gliding from where they were. Falls back to a plain call when motion is off. */
-function flip(mutate) {
-  const content = document.getElementById('content');
-  if (!content || reduced() || document.hidden || window.HalaqatiMotion?.off || motionOffInStorage()) return mutate();
-  const snap = snapshotKeyed(content);
+function flip(mutate, root0) {
+  root0 = root0 || document.getElementById('content');
+  if (!root0 || reduced() || document.hidden || window.HalaqatiMotion?.off || motionOffInStorage()) return mutate();
+  const snap = snapshotKeyed(root0);
   flipAnims.forEach(a => { try { a.cancel ? a.cancel() : a.progress(1).kill(); } catch (_e) { /* gone */ } }); flipAnims = [];
   const out = mutate();
-  try { playSameRender(content, snap, false); } catch (_e) { /* motion must never break an update */ }
+  try { playSameRender(root0, snap, false); } catch (_e) { /* motion must never break an update */ }
   return out;
 }
 
 window.HalaqatiMotion = {
-  gsap, tokens, reduced, settle, flip,
+  gsap, tokens, reduced, settle, flip, spring,
   /* for features that add their own list later: stagger a set of elements with the shared tokens */
   stagger(els, { y = tokens().distSm } = {}) {
     const list = [...els];

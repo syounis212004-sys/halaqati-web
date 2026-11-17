@@ -146,7 +146,7 @@
   const navIcon=p=>typeof window.navSvg==='function'?window.navSvg(p):'';
   function dRow(p,l,F){
     const act=state.page===p,unread=p==='notifications'?Number(state.notificationUnread||0):0,bt=unread>99?'99+':unread,fav=F.has(p);
-    return `<div class="d86-row ${act?'active':''}"><button type="button" class="dtile ${act?'active':''}" ${act?'aria-current="page"':''} title="${e(l)}" onclick="go('${p}')"><span class="dt-ico">${navIcon(p)}${unread?`<i class="dt-badge">${bt}</i>`:''}</span><span class="dt-label">${e(l)}</span></button><button type="button" class="d86-fav ${fav?'on':''}" aria-label="${fav?'إزالة من المفضلة':'إضافة إلى المفضلة'}" onclick="RC86.dFav('${p}')">${IC('Star',20)}</button></div>`;
+    return `<div class="d86-row ${act?'active':''}" data-key="nav-${p}"><button type="button" class="dtile ${act?'active':''}" ${act?'aria-current="page"':''} title="${e(l)}" onclick="go('${p}')"><span class="dt-ico">${navIcon(p)}${unread?`<i class="dt-badge">${bt}</i>`:''}</span><span class="dt-label">${e(l)}</span></button><button type="button" class="d86-fav ${fav?'on':''}" aria-label="${fav?'إزالة من المفضلة':'إضافة إلى المفضلة'}" onclick="RC86.dFav('${p}')">${IC('Star',20)}</button></div>`;
   }
   function drawerBody(){
     const items=(window.navItems()||[]).map(x=>[x[0],String(x[1]).replace(/\s*\(\d+\)$/,'')]),F=favs(),q=DQ.q.trim();
@@ -157,7 +157,7 @@
       if(fe.length)html+=`<div class="nav-section d86-favt">مفضلتي</div><div class="dgrid">${fe.map(([p,l])=>dRow(p,l,F)).join('')}</div>`;
       const groups=new Map();items.forEach(([p,l])=>{const g=DG_OF[p]==null?3:DG_OF[p];if(!groups.has(g))groups.set(g,[]);groups.get(g).push([p,l])});
       [...groups.keys()].sort((a,b)=>a-b).forEach(g=>{const list=groups.get(g),closed=DQ.col.has(g)&&!list.some(([p])=>p===state.page);
-        html+=`<button type="button" class="nav-section d86-gh" aria-expanded="${!closed}" onclick="RC86.dCol(${g})"><span>${DG_TITLES[g]} (${list.length})</span>${IC(closed?'KeyboardArrowDown':'KeyboardArrowUp',22)}</button>${closed?'':`<div class="dgrid">${list.map(([p,l])=>dRow(p,l,F)).join('')}</div>`}`});
+        html+=`<button type="button" class="nav-section d86-gh" data-key="navgrp-${g}" aria-expanded="${!closed}" onclick="RC86.dCol(${g})"><span>${DG_TITLES[g]} (${list.length})</span>${IC('KeyboardArrowDown',22)}</button>${closed?'':`<div class="dgrid">${list.map(([p,l])=>dRow(p,l,F)).join('')}</div>`}`});
     }
     return html+'</div>';
   }
@@ -173,7 +173,10 @@
   function paintDrawer(force){
     try{drawerAvatar()}catch(_e){}
     const n=document.getElementById('nav');if(!n)return;const html=drawerBody();
-    if(force||n.dataset.html86!==html){const had=document.activeElement&&document.activeElement.id==='d86Q';n.dataset.html86=html;n.innerHTML=html;if(had){const i=document.getElementById('d86Q');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}}
+    if(force||n.dataset.html86!==html){const had=document.activeElement&&document.activeElement.id==='d86Q';n.dataset.html86=html;
+      /* motion system: sections collapse/expand and favourites toggle with the rows gliding instead of jumping (no-op when motion is off) */
+      const apply=()=>{n.innerHTML=html};if(force&&window.HalaqatiMotion&&HalaqatiMotion.flip)HalaqatiMotion.flip(apply,n);else apply();
+      if(had){const i=document.getElementById('d86Q');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}}}
   }
   const prevBuild=window.buildNav;
   if(typeof prevBuild==='function'){
