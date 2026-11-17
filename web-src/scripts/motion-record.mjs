@@ -74,6 +74,15 @@ function sheet(frames, dir, cols = 8, maxMs = +(process.env.MAXMS || 1500)) {
 
 /* state to reach BEFORE recording starts, so the sheet shows only the motion under test */
 export const SETUPS = {
+  async 'chips'(page) { await page.evaluate(() => go('settings')); await sleep(1500); },
+  async 'drawer-section'(page) { await page.evaluate(() => toggleDrawer(true)); await sleep(900); },
+  async 'menu'(page) { await page.evaluate(() => go('students')); await sleep(1500); },
+  async 'harness'(page) { await page.evaluate(() => go('home')); await sleep(1200); await page.evaluate(() => {
+    const h = document.createElement('div'); h.id = 'hmHarness'; h.style.cssText = 'position:fixed;inset:60px 12px auto 12px;z-index:9999;background:var(--card,#fff);padding:14px;border-radius:18px;display:grid;gap:14px;box-shadow:0 8px 30px #0003';
+    h.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="nx-btn nx-filled" id="hP">أساسي</button><button class="nx-btn nx-tonal" id="hS">ثانوي</button><button class="nx-btn nx-danger" id="hD">حذف</button><button class="nx-iconbtn" id="hI"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" fill="currentColor"/></svg></button><button class="nx-btn nx-filled" id="hX" disabled>معطّل</button></div>'
+      + '<label style="display:flex;align-items:center;gap:12px"><input type="checkbox" id="hC"> مربع اختيار</label><label style="display:flex;align-items:center;gap:12px"><input type="checkbox" class="nx-switch" id="hW"> مفتاح</label>'
+      + '<details id="hDet" style="border:1px solid var(--line);border-radius:12px;padding:10px"><summary>قسم قابل للطي</summary><div style="height:120px;padding-top:10px">محتوى القسم المطوي يفتح بحركة متصلة</div></details>';
+    document.body.appendChild(h); }); await sleep(300); },
   async 'card-expand'(page) { await page.evaluate(() => go('students')); await sleep(1500); },
   async 'roster-expand'(page) { await page.evaluate(() => { state.sessionView = state.sessions[0].id; go('sessions'); }); await sleep(1800); },
   async 'sort-filter'(page) { await page.evaluate(() => go('students')); await sleep(1500); },
@@ -106,6 +115,19 @@ export const SCENARIOS = {
     for (let x = 120; x <= 170; x += 5) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: pt(x) }); await sleep(30); }
     await sleep(250);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await sleep(700);
+  },
+  async 'chips'(page) { const c = page.locator('.nt-eq').first(); const n = await c.locator('.nx-chip').count(); if (n < 2) return; await c.locator('.nx-chip').nth(0).click(); await sleep(700); await c.locator('.nx-chip').nth(1).click(); await sleep(700); await c.locator('.nx-chip').nth(0).click(); await sleep(700); },
+  async 'drawer-section'(page) { await page.locator('.d86-gh').first().click(); await sleep(900); await page.locator('.d86-gh').first().click(); await sleep(900); },
+  async 'menu'(page) { const t = page.locator('[aria-haspopup="menu"]').first(); if (!(await t.count())) return; await t.click(); await sleep(700); await page.mouse.click(5, 300); await sleep(500); },
+  async 'harness'(page) {
+    const box = async id => (await page.locator(id).boundingBox());
+    let b = await box('#hP'); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await sleep(250); await page.mouse.down(); await sleep(260); await page.mouse.up(); await sleep(500);
+    b = await box('#hD'); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await sleep(200); await page.mouse.down(); await sleep(260); await page.mouse.up(); await sleep(500);
+    b = await box('#hI'); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await sleep(200); await page.mouse.up(); await sleep(500);
+    await page.locator('#hC').click(); await sleep(600); await page.locator('#hC').click(); await sleep(500);
+    await page.locator('#hW').click(); await sleep(700); await page.locator('#hW').click(); await sleep(600);
+    await page.locator('#hDet summary').click(); await sleep(700); await page.locator('#hDet summary').click(); await sleep(700);
+    await page.evaluate(() => document.getElementById('hmHarness') && document.getElementById('hmHarness').remove());
   },
   async 'toast'(page) { await page.evaluate(() => toast('تم الحفظ بنجاح')); await sleep(1400); },
   async 'counters'(page) { await page.evaluate(() => go('plans')); await sleep(800); await page.evaluate(() => go('home')); await sleep(1400); },

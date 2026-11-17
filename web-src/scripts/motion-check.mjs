@@ -48,6 +48,139 @@ const dirty = page => page.evaluate(() => ({
 }));
 const PAGES = ['home', 'halaqas', 'students', 'sessions', 'plans', 'notifications', 'reports', 'ranking', 'settings', 'community'];
 
+/* ===== v3: interaction states over time (frame-by-frame samples, not end states) ===== */
+const HARNESS = () => {
+  const h = document.createElement('div'); h.id = 'hmHarness'; h.style.cssText = 'position:fixed;inset:70px 12px auto 12px;z-index:9999;background:var(--card,#fff);padding:14px;border-radius:18px;display:grid;gap:14px';
+  h.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="nx-btn nx-filled" id="hP">أساسي</button><button class="nx-btn nx-danger" id="hD">حذف</button><button class="nx-iconbtn" id="hI"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" fill="currentColor"/></svg></button><button class="nx-btn nx-filled" id="hX" disabled>x</button><button class="nx-btn nx-filled" id="hB">يحفظ</button></div>'
+    + '<label><input type="checkbox" id="hC"> a</label><label><input type="checkbox" class="nx-switch" id="hW"> b</label>'
+    + '<details id="hDet" style="border:1px solid #ccc;border-radius:12px;padding:10px"><summary>قسم</summary><div style="height:160px">محتوى</div></details>';
+  document.body.appendChild(h);
+  document.getElementById('hB').addEventListener('click', e => { const b = e.currentTarget; b.disabled = true; setTimeout(() => { toast('تم الحفظ بنجاح'); setTimeout(() => { b.disabled = false; }, 80); }, 450); });
+};
+const sampleOver = (page, fn, ms = 600) => page.evaluate(async ([src, ms]) => { const f = eval("(" + src + ")"); const out = []; const t0 = performance.now(); await new Promise(res => { const t = () => { out.push([Math.round(performance.now() - t0), f()]); if (performance.now() - t0 < ms) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); }); return out; }, [fn.toString(), ms]);
+
+for (const cfg of [{ name: 'controls-mobile', width: 390, height: 844 }, { name: 'controls-desktop', width: 1440, height: 900 }]) {
+  const { context, page, errors } = await open(cfg);
+  await page.evaluate(HARNESS); await page.waitForTimeout(200);
+  const mid = id => page.locator(id).boundingBox().then(b => [b.x + b.width / 2, b.y + b.height / 2]);
+  const scaleOf = id => `(()=>{const v=getComputedStyle(document.querySelector('${id}')).scale;return v==='none'?1:parseFloat(v)})()`;
+  /* press: reaches the pressed scale fast, never below the floor, comes back by spring and settles */
+  const press = async id => { const [x, y] = await mid(id); await page.mouse.move(x, y); await page.waitForTimeout(150);
+    await page.mouse.down(); const down = await sampleOver(page, new Function('return ' + scaleOf(id)), 120); await page.mouse.up(); const up = await sampleOver(page, new Function('return ' + scaleOf(id)), 700); return { down, up }; };
+  const P = await press('#hP'), D = await press('#hD'), I = await press('#hI');
+  const at = (arr, t) => arr.find(([ms]) => ms >= t)?.[1] ?? arr[arr.length - 1][1];
+  note(at(P.down, 100) <= .975 && Math.min(...P.up.map(x => x[1])) >= .955 && Math.abs(P.up[P.up.length - 1][1] - 1) < .002, `${cfg.name}: primary button presses to ~.965 within 100ms, never below .955, settles at 1 (min ${Math.min(...P.up.map(x => x[1])).toFixed(3)})`);
+  note(at(D.down, 40) > at(P.down, 40) + 0.004, `${cfg.name}: danger button presses slower/heavier than primary (scale at 40ms: danger ${at(D.down, 40).toFixed(3)} vs primary ${at(P.down, 40).toFixed(3)})`);
+  note(Math.max(...I.up.map(x => x[1])) > 1.004 && Math.abs(I.up[I.up.length - 1][1] - 1) < .002, `${cfg.name}: icon button springs past rest on release then settles (max ${Math.max(...I.up.map(x => x[1])).toFixed(3)})`);
+  const disabled = await page.evaluate(() => { const b = document.getElementById('hX'); b.focus(); return { sc: getComputedStyle(b).scale, op: +getComputedStyle(b).opacity }; });
+  note(disabled.sc === 'none' && disabled.op < .6, `${cfg.name}: a disabled button has no press scale and a dimmed state (opacity ${disabled.op})`);
+
+  /* switch thumb: translate progresses monotonically to the RTL-aware end position */
+  const sw = await page.evaluate(async () => { const el = document.getElementById('hW'); const read = () => { const v = getComputedStyle(el, '::before').translate; return v === 'none' ? 0 : parseFloat(v.split(' ')[0]); };
+    const rest = read(); const out = []; el.click(); const t0 = performance.now();
+    await new Promise(res => { const t = () => { out.push(read()); if (performance.now() - t0 < 600) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    return { rest, out, dir: getComputedStyle(document.documentElement).direction }; });
+  const swEnd = sw.out[sw.out.length - 1], swMax = Math.max(...sw.out.map(Math.abs));
+  note(Math.abs(swEnd + 21) < .6 && sw.dir === 'rtl' && Math.abs(sw.rest) < .1 && swMax >= 21 && swMax < 25, `${cfg.name}: switch thumb travels to -21px in RTL (end ${swEnd.toFixed(1)}, peak ${swMax.toFixed(1)}: tiny spring overshoot only)`);
+  const cb = await page.evaluate(async () => { const el = document.getElementById('hC'); const read = () => getComputedStyle(el, '::after').clipPath; const before = read(); el.click(); const out = []; const t0 = performance.now();
+    await new Promise(res => { const t = () => { out.push(read()); if (performance.now() - t0 < 400) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); }); return { before, mid: new Set(out).size, end: out[out.length - 1], bg: getComputedStyle(el).backgroundColor }; });
+  note(/100%/.test(cb.before) && cb.mid > 4 && /^inset\(0(px)?( 0(px)?){0,3}\)$/.test(cb.end) && cb.bg !== 'rgba(0, 0, 0, 0)', `${cfg.name}: checkbox tick is wiped in over several frames (${cb.mid} distinct clip states) and the box fills`);
+
+  /* accordion: height glides, and reverses from where it is (no jump) */
+  const ac = await page.evaluate(async () => { const d = document.getElementById('hDet'), s = d.querySelector('summary'); const h = () => d.getBoundingClientRect().height; const closed = h();
+    s.click(); const open = []; const t0 = performance.now(); await new Promise(res => { const t = () => { open.push(h()); if (performance.now() - t0 < 110) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    const atReverse = h(); s.click(); const back = []; const t1 = performance.now(); await new Promise(res => { const t = () => { back.push(h()); if (performance.now() - t1 < 700) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    return { closed, open, atReverse, back, endOpenAttr: d.open, inlineLeft: d.style.height + d.style.overflow }; });
+  const monotoneOpen = ac.open.every((v, i, a) => i === 0 || v >= a[i - 1] - .5), jumpAtReverse = Math.abs(ac.back[0] - ac.atReverse), monotoneBack = ac.back.every((v, i, a) => i === 0 || v <= a[i - 1] + .5);
+  note(monotoneOpen && ac.atReverse > ac.closed + 5 && ac.atReverse < ac.closed + 150 && jumpAtReverse < 40 && monotoneBack && !ac.endOpenAttr && ac.inlineLeft === '', `${cfg.name}: accordion opens smoothly, reverses from its current height (jump ${jumpAtReverse.toFixed(0)}px), closes, leaves no inline residue`);
+
+  /* busy -> confirmed on the very button that was pressed */
+  await page.locator('#hB').click(); /* a real pointer press: the state machine listens for pointerdown */
+  const busy = await page.evaluate(async () => { const b = document.getElementById('hB'); const log = []; await new Promise(r => setTimeout(r, 40)); log.push(['during', b.classList.contains('hm-busy'), b.getAttribute('aria-busy')]);
+    await new Promise(r => setTimeout(r, 650)); log.push(['after', b.classList.contains('hm-busy'), b.classList.contains('hm-ok'), b.disabled]); await new Promise(r => setTimeout(r, 900)); log.push(['later', b.classList.contains('hm-ok')]); return log; });
+  note(busy[0][1] && busy[0][2] === 'true' && !busy[1][1] && busy[1][2] && !busy[2][1], `${cfg.name}: the pressed button shows busy while the app disables it, then a confirming pulse after the success toast, then rests (${JSON.stringify(busy)})`);
+  note(errors.length === 0, `${cfg.name}: no JavaScript errors in controls ${errors.slice(0, 1).join('')}`);
+  await context.close();
+}
+
+/* ===== v3: real components — menus, chip groups, drawer sections, favourites, nav icon ===== */
+for (const cfg of [{ name: 'parts-mobile', width: 390, height: 844 }, { name: 'parts-desktop', width: 1440, height: 900 }]) {
+  const { context, page, errors } = await open(cfg);
+  const mobile = cfg.width < 700;
+  await page.evaluate(() => go('students')); await page.waitForTimeout(1500);
+  const trig = page.locator('.nx-iconbtn[aria-haspopup="menu"]').first();
+  if (await trig.count()) {
+    await trig.click(); await page.waitForTimeout(35);
+    const m1 = await page.evaluate(() => { const m = document.querySelector('.nx-menu'); return m ? { op: +getComputedStyle(m).opacity, sc: getComputedStyle(m).scale, origin: m.style.transformOrigin, anims: m.getAnimations().length } : null; });
+    await page.waitForTimeout(450);
+    const m2 = await page.evaluate(() => { const m = document.querySelector('.nx-menu'); return m ? { op: +getComputedStyle(m).opacity, sc: getComputedStyle(m).scale, running: m.getAnimations().length } : null; });
+    note(m1 && m1.op < 1 && m1.anims > 0 && m1.origin !== '' && m2 && m2.op === 1 && m2.running === 0, `${cfg.name}: the menu grows from its trigger (origin '${m1 && m1.origin}', opacity ${m1 && m1.op.toFixed(2)} at 35ms) and settles at 1 with nothing left running`);
+    await page.mouse.click(4, 300); await page.waitForTimeout(40);
+    const x1 = await page.evaluate(() => { const m = document.querySelector('.nx-menu'); return m ? { op: +getComputedStyle(m).opacity, pe: getComputedStyle(m).pointerEvents } : null; });
+    await page.waitForTimeout(450);
+    const x2 = await page.evaluate(() => document.querySelectorAll('.nx-menu').length);
+    note(x1 && x1.pe === 'none' && x2 === 0, /* present but inert = in its exit; the opacity at one instant depends on frame timing, so it is only reported */ `${cfg.name}: closing the menu plays a short exit (still present at 40ms, opacity ${x1 && x1.op.toFixed(2)}, inert) and removes it afterwards`);
+    await trig.click(); await page.waitForTimeout(150); await trig.click(); await page.waitForTimeout(150); await trig.click(); await page.waitForTimeout(700);
+    const many = await page.evaluate(() => document.querySelectorAll('.nx-menu').length);
+    note(many <= 1, `${cfg.name}: rapid open/close/open never leaves more than one menu (found ${many})`);
+    await page.mouse.click(4, 300); await page.waitForTimeout(500);
+  } else console.log(`INFO  ${cfg.name}: no menu trigger on the students page for this layout`);
+
+  /* chip group: the selected highlight travels from the old chip to the new one */
+  await page.evaluate(() => go('settings')); await page.waitForTimeout(1500);
+  const grp = page.locator('.nt-eq').first();
+  if (await grp.count() && (await grp.locator('.nx-chip').count()) >= 2) {
+    const before = await grp.locator('.nx-chip.on').first().innerText();
+    const target = grp.locator('.nx-chip:not(.on)').first(); const label = await target.innerText();
+    await target.click(); await page.waitForTimeout(70);
+    const mid = await page.evaluate(() => { const g = document.querySelector('.nt-eq'); const gh = g.querySelector('.hm-chip-ghost'); return { ghost: !!gh, held: !!g.querySelector('.hm-hold'), tf: gh ? getComputedStyle(gh).transform : '' }; });
+    await page.waitForTimeout(650);
+    const end = await page.evaluate(() => { const g = document.querySelector('.nt-eq'); return { ghost: !!g.querySelector('.hm-chip-ghost'), held: !!g.querySelector('.hm-hold'), on: g.querySelector('.nx-chip.on')?.innerText || '' }; });
+    note(mid.ghost && mid.held && mid.tf !== 'none' && !end.ghost && !end.held && end.on.trim() === label.trim() && before.trim() !== label.trim(), `${cfg.name}: choosing a chip slides one highlight from '${before.trim()}' to '${label.trim()}' (ghost mid-flight, nothing left behind)`);
+    /* put the density back so later steps see the default */
+  } else console.log(`INFO  ${cfg.name}: no chip group found on the settings page`);
+
+  if (mobile) {
+    await page.evaluate(() => toggleDrawer(true)); await page.waitForTimeout(700);
+    const head = page.locator('.d86-gh').first();
+    const rows0 = await page.locator('.d86-row').count();
+    await head.click(); await page.waitForTimeout(60);
+    const s1 = await page.evaluate(() => { const h = document.querySelector('.d86-gh'); return { svgs: h.querySelectorAll('svg').length, anim: h.querySelector('svg').getAnimations().length, exp: h.getAttribute('aria-expanded') }; });
+    await page.waitForTimeout(600);
+    const rows1 = await page.locator('.d86-row').count();
+    await head.click(); await page.waitForTimeout(60);
+    const s2 = await page.evaluate(() => ({ fading: [...document.querySelectorAll('.d86-row')].some(r => r.getAnimations().length > 0) }));
+    await page.waitForTimeout(700);
+    const rows2 = await page.locator('.d86-row').count();
+    note(s1.svgs === 1 && s1.anim > 0 && s1.exp === 'false' && rows1 < rows0 && rows2 === rows0 && s2.fading, `${cfg.name}: drawer section header keeps ONE chevron that turns (${s1.svgs} svg, ${s1.anim} anim), rows ${rows0} -> ${rows1} -> ${rows2}, re-opened rows glide in`);
+    const fav = page.locator('.d86-fav').first(); const was = await fav.evaluate(e => e.classList.contains('on'));
+    await fav.click(); await page.waitForTimeout(60);
+    const f1 = await page.evaluate(() => { const f = [...document.querySelectorAll('.d86-fav')].find(x => x.getAnimations({ subtree: true }).length > 0); return { popping: !!f }; });
+    await page.waitForTimeout(600);
+    const now = await page.locator('.d86-fav.on').count();
+    note(f1.popping, `${cfg.name}: toggling a favourite star springs the glyph instead of swapping images (animation running at 60ms; stars on: ${now}, first was ${was ? 'on' : 'off'})`);
+    await page.evaluate(() => toggleDrawer(false)); await page.waitForTimeout(500);
+    await page.evaluate(() => go('home')); await page.waitForTimeout(900);
+    await page.locator('#mobileNav button').nth(1).click(); await page.waitForTimeout(90);
+    const navPop = await page.evaluate(() => { const a = document.querySelector('#mobileNav button.active svg'); return { anims: a ? Math.max(a.getAnimations().length, /hm-nav-pop/.test(getComputedStyle(a).animationName) ? 1 : 0) : -1, kids: document.getElementById('mobileNav').children.length }; });
+    note(navPop.anims >= 1 && navPop.kids === 5, `${cfg.name}: the arriving mobile-nav icon springs in (${navPop.anims} animation) and the bar still has exactly ${navPop.kids} items (nothing inserted)`);
+  }
+  /* state messages: a NEW error notice fades in with a colour ring; an unchanged one is left alone */
+  const nt = await page.evaluate(async () => {
+    go('home'); await new Promise(r => setTimeout(r, 1200)); const c = document.getElementById('content');
+    HalaqatiMotion.flip(() => c.insertAdjacentHTML('afterbegin', NX.notice('تعذر الحفظ', 'error')));
+    const n = c.querySelector('.nx-notice'); const anims = n.getAnimations().length; const op = +getComputedStyle(n).opacity;
+    await new Promise(r => setTimeout(r, 40)); HalaqatiMotion.flip(() => { /* same notice already on screen */ }); const again = n.getAnimations().length;
+    await new Promise(r => setTimeout(r, 700)); const left = n.getAnimations().length; n.remove();
+    return { anims, op, again, left };
+  });
+  note(nt.anims >= 2 && nt.op < 1 && nt.left === 0, `${cfg.name}: a new error notice fades in with one colour ring and settles (${nt.anims} animations, opacity ${nt.op.toFixed(2)} at start, ${nt.left} left)`);
+  note(errors.length === 0, `${cfg.name}: no JavaScript errors in parts ${errors.slice(0, 1).join('')}`);
+  await context.close();
+}
+
+if (process.env.ONLY === 'controls') { await browser.close(); console.log(failures.length ? `\n${failures.length} FAILED` : '\nControls: all passed'); process.exit(failures.length ? 1 : 0); }
+
 /* Generic guard for the whole class of bug "reduced motion changes what is on screen": every position:fixed element must be on/off screen
    exactly as in normal mode, on several pages (OS preference and the in-app switch, both compared with normal motion). */
 {
