@@ -62,6 +62,7 @@ window.gazaFmt=(function(){
       try{
         // the render must start INSIDE the callback so the browser has already captured the old page
         const t=document.startViewTransition(()=>{const w=run();return Promise.race([contentChanged(320),w])});
+        t.ready.catch(()=>{});/* a newer navigation skips this transition: not an error */
         t.finished.catch(()=>{}).finally(()=>{root.classList.remove('vt-active');delete root.dataset.vt});
         await t.updateCallbackDone.catch(()=>{});
       }catch(_e){/* browser refused the transition */}

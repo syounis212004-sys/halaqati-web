@@ -14,7 +14,7 @@
 .rc27-dlg::backdrop{background:rgba(0,0,0,.45)}
 .rc27-compact .card,.rc27-compact .stat,.rc27-compact .rc27-card{padding:10px;margin-bottom:7px;border-radius:14px}
 .rc27-compact .hero{padding:14px}
-.rc27-reduce-motion *,.rc27-reduce-motion *::before,.rc27-reduce-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+.rc27-reduce-motion *,.rc27-reduce-motion *::before,.rc27-reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 .rc27-scope{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;position:sticky;top:0;z-index:5;background:var(--cream,#f7f7f2);padding:6px 0}
 .rc27-scope select{flex:1;min-width:160px;border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:var(--card,#fff);color:var(--ink);font:inherit}
 .rc27-kinds{display:flex;gap:6px}.rc27-kinds button{border:1px solid var(--line);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;cursor:pointer}

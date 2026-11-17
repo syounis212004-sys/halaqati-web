@@ -33,6 +33,8 @@ import './styles/supervisor-skin.css';
 import './styles/nour.css';
 import './styles/donor.css';
 import './styles/admin.css';
+import './styles/motion.css';
+import './core/motion-system.js';
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };
