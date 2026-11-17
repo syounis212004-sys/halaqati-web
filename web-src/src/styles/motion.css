@@ -81,11 +81,15 @@ html .drawer,html .drawer *{touch-action:pan-y} /* the nav is its own scroller, 
 /* ---- reduced motion: tiered, not a kill switch ---- */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
-  html dialog,html dialog::backdrop,html dialog[open],html dialog[open]::backdrop,html .toast,html .toast.show,html .drawer,html .drawer-backdrop{transform:none!important;translate:none!important;transition-duration:var(--hm-dur-instant)!important}
+  html dialog,html dialog::backdrop,html dialog[open],html dialog[open]::backdrop,html .toast,html .toast.show,html .drawer-backdrop{transform:none!important;translate:none!important;transition-duration:var(--hm-dur-instant)!important}
+  /* The drawer's transform IS its closed state (translateX(105%) keeps it off-screen): reduced motion may make it instant, never remove it.
+     Removing it left the "closed" menu covering the whole phone screen (regression found in production). */
+  html .drawer{transition-duration:var(--hm-dur-instant)!important}
   .nr-chev svg,.nst-card-head>.nx-iconbtn svg{transition:none!important}
   html .nst-card-more{transition:visibility 0s!important}
   html :focus-visible{transition:outline-color var(--hm-dur-fast)!important}
   [class*="spin"]:not(html):not(body){animation-duration:1.4s!important;animation-iteration-count:infinite!important}
 }
-html.rc27-reduce-motion dialog,html.rc27-reduce-motion dialog::backdrop,html.rc27-reduce-motion .toast,html.rc27-reduce-motion .drawer,html.rc27-reduce-motion .drawer-backdrop{transform:none;translate:none;transition-duration:var(--hm-dur-instant)}
+html.rc27-reduce-motion dialog,html.rc27-reduce-motion dialog::backdrop,html.rc27-reduce-motion .toast,html.rc27-reduce-motion .drawer-backdrop{transform:none;translate:none;transition-duration:var(--hm-dur-instant)}
+html.rc27-reduce-motion .drawer{transition-duration:var(--hm-dur-instant)} /* instant, but still translateX(105%) when closed */
 html.rc27-reduce-motion .drawer.open .nav>*{animation:none}

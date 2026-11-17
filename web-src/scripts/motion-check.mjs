@@ -362,6 +362,70 @@ for (const role of ['admin', 'supervisor', 'teacher', 'guardian', 'observer']) {
   await context.close();
 }
 
+/* ===== Reduced motion must never hide or cover the app (regression: a closed drawer covered the whole screen) =====
+   Both entry points: the OS preference (emulated) and the in-app switch (html.rc27-reduce-motion), phone and desktop. */
+for (const cfg of [
+  { name: 'reduce-os-mobile', width: 390, height: 844, reduce: true },
+  { name: 'reduce-internal-mobile', width: 390, height: 844, internal: true },
+  { name: 'reduce-internal-desktop', width: 1440, height: 900, internal: true },
+  { name: 'reduce-live-toggle-mobile', width: 390, height: 844, live: true },
+]) {
+  const { context, page, errors } = await open({ width: cfg.width, height: cfg.height, reduce: !!cfg.reduce });
+  if (cfg.internal) await page.evaluate(() => document.documentElement.classList.add('rc27-reduce-motion'));
+  await page.evaluate(() => go('home')); await page.waitForTimeout(1200);
+  if (cfg.live) { /* the person flips the setting while the app is open */ await page.evaluate(() => document.documentElement.classList.add('rc27-reduce-motion')); await page.waitForTimeout(400); }
+  const mobile = cfg.width < 700;
+  const cover = await page.evaluate(() => {
+    const d = document.getElementById('drawer'), b = document.getElementById('backdrop'), r = d.getBoundingClientRect();
+    const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+    return { left: Math.round(r.left), vw: innerWidth, hitInDrawer: !!(hit && hit.closest('#drawer')), backdropOpacity: getComputedStyle(b).opacity, backdropPE: getComputedStyle(b).pointerEvents, dialogsOpen: [...document.querySelectorAll('dialog')].filter(x => x.open).length };
+  });
+  if (mobile) note(cover.left >= cover.vw - 1 && !cover.hitInDrawer, `${cfg.name}: the closed drawer stays off-screen and does not cover the app (left=${cover.left}, viewport=${cover.vw})`);
+  else note(!cover.hitInDrawer || cover.left < cover.vw, `${cfg.name}: desktop layout unaffected`);
+  note(cover.backdropOpacity === '0' && cover.dialogsOpen === 0, `${cfg.name}: no backdrop or dialog is left showing (backdrop opacity ${cover.backdropOpacity})`);
+  if (mobile) {
+    const cyc = await page.evaluate(async () => {
+      const d = document.getElementById('drawer'); const x = () => Math.round(d.getBoundingClientRect().left);
+      toggleDrawer(true); await new Promise(r => setTimeout(r, 400)); const open = x(), hidden1 = d.getAttribute('aria-hidden');
+      toggleDrawer(false); await new Promise(r => setTimeout(r, 400)); const closed = x();
+      toggleDrawer(true); await new Promise(r => setTimeout(r, 60)); toggleDrawer(false); await new Promise(r => setTimeout(r, 400)); const closed2 = x();
+      return { open, closed, closed2, vw: innerWidth, hidden1 };
+    });
+    note(cyc.open === 0 && cyc.closed >= cyc.vw - 1 && cyc.closed2 >= cyc.vw - 1, `${cfg.name}: the drawer opens in place and closes off-screen again, also when toggled quickly (${cyc.open} -> ${cyc.closed}, quick ${cyc.closed2})`);
+  }
+  /* the page still works: navigation changes the page and content is visible */
+  const nav = await page.evaluate(async () => { go('students'); await new Promise(r => setTimeout(r, 900)); const c = document.getElementById('content'); const r = c.getBoundingClientRect(); return { page: state.page, h: Math.round(r.height), op: getComputedStyle(c.firstElementChild || c).opacity }; });
+  note(nav.page === 'students' && nav.h > 100 && nav.op === '1', `${cfg.name}: navigation still works and the new page is fully visible (height ${nav.h}, opacity ${nav.op})`);
+  note(errors.length === 0, `${cfg.name}: no JavaScript errors`);
+  await context.close();
+}
+
+/* the exact user action that broke the live site: Settings -> Motion -> "مخففة" (reduced), then keep using the app */
+for (const cfg of [{ name: 'reduce-ui-click-mobile', width: 390, height: 844 }, { name: 'reduce-ui-click-desktop', width: 1440, height: 900 }]) {
+  const { context, page, errors } = await open({ width: cfg.width, height: cfg.height });
+  await page.evaluate(() => go('settings')); await page.waitForTimeout(1200);
+  await page.locator('#content button', { hasText: /^مخففة$/ }).first().click(); await page.waitForTimeout(700);
+  const st = await page.evaluate(() => { const d = document.getElementById('drawer'); const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return { on: document.documentElement.classList.contains('rc27-reduce-motion'), left: Math.round(d.getBoundingClientRect().left), vw: innerWidth, covered: !!(hit && hit.closest('#drawer')), page: state.page, content: Math.round(document.getElementById('content').getBoundingClientRect().height) }; });
+  const mobile = cfg.width < 700;
+  note(st.on && (!mobile || st.left >= st.vw - 1) && !st.covered && st.page === 'settings' && st.content > 100, `${cfg.name}: after choosing reduced motion the app is still visible and usable (${JSON.stringify(st)})`);
+  const more = await page.evaluate(async () => {
+    const out = {}; for (const p of ['home', 'students', 'sessions', 'plans']) { go(p); await new Promise(r => setTimeout(r, 700)); out[p] = Math.round(document.getElementById('content').getBoundingClientRect().height) > 100 && !document.querySelector('#drawer').matches('.open'); }
+    toast('تم الحفظ بنجاح'); await new Promise(r => setTimeout(r, 300)); const t = document.getElementById('toast'); const shown = getComputedStyle(t).visibility === 'visible' && +getComputedStyle(t).opacity > .9;
+    await new Promise(r => setTimeout(r, 4200)); const gone = getComputedStyle(t).visibility === 'hidden';
+    const dlg = document.getElementById('halaqaDlg'); dlg.showModal(); await new Promise(r => setTimeout(r, 120)); const dOpen = +getComputedStyle(dlg).opacity > .95 && getComputedStyle(dlg).transform.replace(/ /g, '') !== 'none' ? getComputedStyle(dlg).transform : 'ok';
+    const visibleOpen = +getComputedStyle(dlg).opacity > .95; dlg.close(); await new Promise(r => setTimeout(r, 200)); const dClosed = getComputedStyle(dlg).display === 'none';
+    return { pages: out, toastShown: shown, toastGone: gone, dialogVisible: visibleOpen, dialogClosed: dClosed };
+  });
+  note(Object.values(more.pages).every(Boolean) && more.toastShown && more.toastGone && more.dialogVisible && more.dialogClosed, `${cfg.name}: pages, toast and dialog all show and hide correctly in reduced motion (${JSON.stringify(more)})`);
+  /* and switching back to normal motion restores everything */
+  await page.evaluate(() => go('settings')); await page.waitForTimeout(900);
+  await page.locator('#content button', { hasText: /^عادية$/ }).first().click(); await page.waitForTimeout(500);
+  const back = await page.evaluate(() => ({ on: document.documentElement.classList.contains('rc27-reduce-motion'), left: Math.round(document.getElementById('drawer').getBoundingClientRect().left), vw: innerWidth }));
+  note(!back.on && (!mobile || back.left >= back.vw - 1), `${cfg.name}: switching back to normal motion keeps the app intact (${JSON.stringify(back)})`);
+  note(errors.length === 0, `${cfg.name}: no JavaScript errors ${errors.slice(0, 1).join('')}`);
+  await context.close();
+}
+
 await browser.close();
 console.log(failures.length ? `\n${failures.length} FAILED` : '\nMotion check: all passed');
 process.exit(failures.length ? 1 : 0);
