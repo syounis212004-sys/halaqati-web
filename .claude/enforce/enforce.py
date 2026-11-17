@@ -163,7 +163,7 @@ def changed_files():
         return []
 
 
-WRITE_HINT = re.compile(r"(>>?\s*\S|\btee\b|\bsed\s+-[a-zA-Z]*i|\bperl\s+-[a-zA-Z]*i|\bgit\s+apply\b|\bpatch\b|\bmv\s|\bcp\s|\binstall\s|write_text|write_bytes|\.write\(|open\([^)]*['\"][wax]|\bdd\b|\btruncate\b|\brm\s)")
+WRITE_HINT = re.compile(r"((?<![0-9&])>>?(?!&)\s*(?!/dev/null)\S|\btee\b|\bsed\s+-[a-zA-Z]*i|\bperl\s+-[a-zA-Z]*i|\bgit\s+apply\b|\bpatch\b|\bmv\s|\bcp\s|\binstall\s|write_text|write_bytes|\.write\w*\(|open\([^)]*['\"][wax]|\bdd\b|\btruncate\b|\brm\s)")
 
 
 def bash_targets(rules, cmd):
@@ -317,6 +317,11 @@ def gate_bash(p, rules, ti):
                 problems.append("shell write to %s: %s" % (r, how_to(miss)))
         # 2) commit/push gate: skills for every changed governed file, review for large changes, Playwright for web UI, release verification
         if re.search(r"\bgit\s+(-C\s+\S+\s+)?(commit|push)\b", cmd):
+            # The files a command creates do not exist yet when this hook runs, so a command that BOTH writes files and commits/pushes
+            # cannot be verified in advance. Quoted text (commit messages) is ignored.
+            bare = re.sub(r"'[^']*'|\"[^\"]*\"", "''", cmd)
+            if ("release" not in w and "*" not in w) and (WRITE_HINT.search(bare) or re.search(r"<<|\b(python3?|node|bash|sh)\s+(-c|-e|-)(\s|$)", bare)):
+                problems.append("this command both changes files and commits/pushes, so the changes cannot be checked before they are committed: run the file changes as their own command first, then commit/push in a separate command")
             files = [f for f in changed_files() if not match(rules.get("exempt", []), f)]
             sess_skills, sess_tools = union_skills(st), union_tools(st)
             for f in files:
