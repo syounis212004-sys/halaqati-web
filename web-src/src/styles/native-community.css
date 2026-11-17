@@ -198,3 +198,8 @@ html[data-view="desktop"] .nc-bar i{width:16px}
 .nc-head .nc-acts .nx-iconbtn{width:40px;height:40px}
 .nx-chips.nc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));overflow:visible}
 .nc-grid .nx-chip{flex:none;width:100%}
+
+/* v2.91.1: guardian ranking card spacing + hero wrapping */
+.nc-rname b{display:block;margin-bottom:2px}.nc-rname small{display:block;line-height:18px}
+.nc-rbox{min-width:72px;white-space:nowrap}.nc-rbox small{display:block;white-space:nowrap}
+.nc-g .nx-hero-row{flex-wrap:wrap}.nc-g .nx-hero-t{flex:1 1 180px;min-width:180px}
