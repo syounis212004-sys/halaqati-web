@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" prompt", "timeout": 15}]}],
+    "PreToolUse": [{"matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|mcp__github__actions_run_trigger", "hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" gate", "timeout": 30}]}],
+    "PostToolUse": [
+      {"matcher": "Skill", "hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" record-skill", "timeout": 15}]},
+      {"matcher": "Bash|Read|Grep|Glob|mcp__playwright__.*", "hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" record-tool", "timeout": 15}]}
+    ],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" subagent-start", "timeout": 15}]}],
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" subagent-stop", "timeout": 15}]}],
+    "Stop": [{"hooks": [{"type": "command", "command": "PYTHONDONTWRITEBYTECODE=1 python3 \"$CLAUDE_PROJECT_DIR/.claude/enforce/enforce.py\" stop", "timeout": 15}]}]
+  }
+}

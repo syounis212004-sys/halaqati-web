@@ -291,6 +291,10 @@ jobs:
           echo "Prepared GitHub Pages site:"
           du -sh _site
 
+      - name: Release gate (APK hash, version.json, not lower than published)
+        shell: bash
+        run: python3 .github/scripts/release_gate.py web . Halaqati-latest.apk version.json
+
       - name: Commit updater files to main
         shell: bash
         env:

@@ -1,0 +1,5 @@
+
+# skill enforcement runtime state/logs (per session, never committed)
+.claude/enforce/state/
+.claude/enforce/log/
+.claude/enforce/__pycache__/

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "comment": "Maps paths and task types to the skills that must have been INVOKED (recorded by a PostToolUse hook) by the editing agent. Invocation is verified; quality of application is not.",
+  "protected": [".claude/enforce/*", ".claude/settings.json", ".claude/settings.local.json"],
+  "exempt": ["*__pycache__*", "*.md", "docs/*", "web-src/dist/*", "web-src/node_modules/*", "*.zip", ".claude/enforce/state/*", ".claude/enforce/log/*", "web-src/scripts/*", ".github/*", "version.json", "Halaqati-latest.apk"],
+  "path_rules": [
+    {"id": "web-ui", "globs": ["web-src/src/styles/*", "web-src/src/features/*", "web-src/src/ui/*", "web-src/src/*.css", "web-src/index.html"], "require": ["ui-ux-pro-max"], "why": "web UI/CSS changes must follow UI/UX Pro Max"},
+    {"id": "web-logic", "globs": ["web-src/src/features/*/runtime.js", "web-src/src/core/*"], "require": ["test-driven-development"], "why": "behaviour change in testable logic needs superpowers:test-driven-development"}
+  ],
+  "content_rules": [
+    {"id": "motion", "scope_globs": ["web-src/src/*.css", "web-src/src/*.js"], "pattern": "@keyframes|animation\\s*:|transition\\s*:|requestAnimationFrame|\\.animate\\(|gsap", "require": ["halaqati-motion-guidance"], "why": "motion changes must follow the Halaqati motion rules"}
+  ],
+  "task_rules": {
+    "debug": {"prompt_regex": "إصلاح|اصلح|أصلح|خطأ|عطل|مشكلة|\\bbug\\b|\\bfix\\b|crash|regression", "require": ["systematic-debugging"], "applies_to_globs": ["web-src/src/*"], "why": "bug fix: superpowers:systematic-debugging first"},
+    "audit": {"prompt_regex": "تدقيق|audit|security review|مراجعة أمنية", "require": ["ponytail-audit"], "applies_to_globs": ["docs/*"], "why": "audit reports need ponytail-audit"}
+  },
+  "large_edit": {"globs": ["web-src/src/*"], "lines": 60, "total_lines": 150},
+  "commit_gate": {"large_total_lines": 150, "playwright_paths": ["web-src/src/features/*", "web-src/src/styles/*", "web-src/src/ui/*"]},
+  "publish": {"workflow_regex": "halaqati_update_and_pages\\.yml"}
+}
