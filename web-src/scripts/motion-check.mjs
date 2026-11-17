@@ -339,9 +339,11 @@ for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-d
   const em = await page.evaluate(async () => {
     state.students = []; go('students'); await new Promise(r => setTimeout(r, 1400));
     const box = document.querySelector('#content .nx-empty'); const o = box && box.querySelector('.hm-orn');
-    return { has: !!box, orn: !!o, behind: o ? getComputedStyle(o).zIndex : null, dataNear: !!document.querySelector('#content .nst-card') };
+    const ic = box && box.querySelector('.nx-empty-ic'); const cx = e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+    const off = o && ic ? Math.hypot(cx(o)[0] - cx(ic)[0], cx(o)[1] - cx(ic)[1]) : null; /* found by eye: in RTL a logical margin pushed the star 45px off-centre */
+    return { has: !!box, orn: !!o, behind: o ? getComputedStyle(o).zIndex : null, dataNear: !!document.querySelector('#content .nst-card'), off };
   });
-  if (em.has) note(em.orn && em.behind === '-1' && !em.dataNear, `${cfg.name}: the empty state carries a geometric star, behind the content, with no student data around it`);
+  if (em.has) note(em.orn && em.behind === '-1' && !em.dataNear && em.off !== null && em.off < 6, `${cfg.name}: the empty state carries a geometric star, centred behind the icon (offset ${em.off === null ? 'n/a' : em.off.toFixed(1)}px), with no student data around it`);
   else console.log(`INFO  ${cfg.name}: the test data produced no .nx-empty on the students page (ornament not exercised here)`);
   note(errors.length === 0, `${cfg.name}: no JavaScript errors in v2 checks ${errors.slice(0, 2).join(' | ')}`);
   await context.close();

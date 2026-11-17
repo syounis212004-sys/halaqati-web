@@ -75,7 +75,7 @@ html .nst-card.open .nst-card-more{transition:grid-template-rows var(--hm-dur-sl
 html .nst-card-more-in{opacity:0;transition:opacity var(--hm-dur-fast) var(--hm-ease-in)}
 html .nst-card.open .nst-card-more-in{opacity:1;transition:opacity var(--hm-dur-base) var(--hm-ease-out) 70ms}
 .nx-empty{position:relative;isolation:isolate}
-.hm-orn{position:absolute;top:12px;left:50%;width:80px;height:80px;margin-inline-start:-40px;color:var(--green);opacity:.26;z-index:-1;pointer-events:none}
+.hm-orn{position:absolute;top:12px;left:50%;width:80px;height:80px;margin-left:-40px;color:var(--green);opacity:.26;z-index:-1;pointer-events:none}
 html .drawer,html .drawer *{touch-action:pan-y} /* the nav is its own scroller, so the rule must reach it for horizontal drags to stay with the page */
 
 /* ---- reduced motion: tiered, not a kill switch ---- */
