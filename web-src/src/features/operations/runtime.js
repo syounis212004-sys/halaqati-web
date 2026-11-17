@@ -307,12 +307,16 @@ exportParentReportPdf=async function(id,p='month'){
   try{opsActionBusy('جارٍ تجهيز PDF…');let c=await opsCaptureParent(id,p);await window.HalaqatiLazy.ensureLib('jspdf');let C=window.jspdf?.jsPDF||window.jsPDF,pdf=new C({unit:'mm',format:'a4',compress:true}),img=c.toDataURL('image/jpeg',.9),w=190,h=c.height*190/c.width;pdf.addImage(img,'JPEG',10,10,w,Math.min(277,h),undefined,'FAST');await saveOrShareBase64(pdf.output('datauristring').split(',')[1],`halaqati-parent-${id}-${p}-${today()}.pdf`,'application/pdf')}catch(e){toast('تعذر إنشاء PDF: '+e.message)}
 };
 
-/* Show instant navigation feedback instead of leaving the old page frozen while JS renders. */
+/* Navigation feedback. The previous page stays on screen until the new one is ready (continuity: the page transition sees the REAL
+   old page, not a placeholder). Instant feedback comes from the nav indicator (buildNav below); the loading skeleton is only
+   for a genuinely slow render (>260ms), so a fast page never flashes a skeleton. */
 const opsV2191GoBase=go;
+let opsSkelTimer=0;
 go=function(p){
   if(p!=='sessions')state.sessionView=null;state.page=p;toggleDrawer(false);buildNav();setFab();
-  let c=$('#content');if(c)c.innerHTML=opsSkeleton();
-  requestAnimationFrame(()=>Promise.resolve(render()).then(()=>{let n=$('#content');if(n){n.classList.add('ops-page-enter');setTimeout(()=>n.classList.remove('ops-page-enter'),180)}}).catch(e=>{console.error(e);toast('تعذر فتح الصفحة')}))
+  clearTimeout(opsSkelTimer);
+  opsSkelTimer=setTimeout(()=>{let c=$('#content');if(c&&state.page===p&&!c.querySelector('.ops-skeleton'))c.innerHTML=opsSkeleton()},260);
+  requestAnimationFrame(()=>Promise.resolve(render()).catch(e=>{console.error(e);toast('تعذر فتح الصفحة')}).finally(()=>clearTimeout(opsSkelTimer)))
 };
 
 /* Halaqati v2.19.2 — HQ PDF hotfix

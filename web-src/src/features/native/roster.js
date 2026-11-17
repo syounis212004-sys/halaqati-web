@@ -212,8 +212,10 @@
   function refreshCard(sid){
     const se=curSession(),st=studentOf(sid),el=$id('roster_'+sid);
     if(!se||!st)return;
-    if(!el){setHtml('nrList',listHtml(se))}else{const tmp=document.createElement('div');tmp.innerHTML=cardHtml(se,st,queueInfo(se));const n=tmp.firstElementChild;if(n)el.replaceWith(n)}
-    setHtml('nrSummary',summaryHtml(se));setHtml('nrDesk',deskFiltersHtml(se));
+    const apply=()=>{if(!el){setHtml('nrList',listHtml(se))}else{const tmp=document.createElement('div');tmp.innerHTML=cardHtml(se,st,queueInfo(se));const n=tmp.firstElementChild;if(n)el.replaceWith(n)}
+    setHtml('nrSummary',summaryHtml(se));setHtml('nrDesk',deskFiltersHtml(se))};
+    /* motion system: siblings glide, the card reveals, the chevron turns (no-op when motion is off) */
+    if(window.HalaqatiMotion&&HalaqatiMotion.flip)HalaqatiMotion.flip(apply);else apply();
   }
   NS.refresh=()=>{if(!refreshAll()&&state.sessionView&&typeof render==='function')render()};
 
@@ -323,7 +325,7 @@
         <div class="nr-id"><b class="nr-name">${h(st.full_name)}</b><span class="nr-sub ${blocked?'bad':''}">${h(sub)}</span></div>
         ${syncLabel?`<span class="nr-sync ${blocked?'bad':''}" title="${h(syncLabel)}">${ic(blocked?'ErrorOutline':'CloudUpload',22)}</span>`:''}
         ${quick}
-        <span class="nr-chev" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}">${ic(open?'ExpandLess':'ExpandMore',24)}</span>
+        <span class="nr-chev" aria-label="${open?'طي تفاصيل الطالب':'فتح تفاصيل الطالب'}">${ic('ExpandMore',24)}</span>
       </div>
       ${!lesson&&latest&&!(open&&!isProgramSession(se)&&planSnapshots(sid,se.session_date).length)?`<div class="nr-latest">${ic('AutoStories',16)}<span>${h(actLabel(latest.activity_type))} · ${h(recRangeText(latest))} · ${plain(latest.pages_count)} ص</span></div>`:''}
       ${open?detailHtml(se,st):''}

@@ -67,10 +67,23 @@ html .toast{opacity:0;translate:0 var(--hm-dist-md);visibility:hidden;transition
 html .toast.show{opacity:1;translate:0 0;visibility:visible;transition:opacity var(--hm-dur-base) var(--hm-ease-out),translate var(--hm-dur-base) var(--hm-ease-spring),visibility 0s}
 .toast .hm-check{display:inline-block;vertical-align:-4px;margin-inline-end:6px;width:18px;height:18px}
 
+/* ---- continuity: one chevron that turns (never two swapped images), accordions that fade with their height, empty-state ornament ---- */
+.nr-chev svg,.nst-card-head>.nx-iconbtn svg{transition:transform var(--hm-dur-base) var(--hm-ease-std)}
+.nr-card.open .nr-chev svg,.nst-card.open .nst-card-head>.nx-iconbtn svg{transform:rotate(180deg)}
+html .nst-card-more{transition:grid-template-rows var(--hm-dur-base) var(--hm-ease-in),visibility 0s linear var(--hm-dur-base)}
+html .nst-card.open .nst-card-more{transition:grid-template-rows var(--hm-dur-slow) var(--hm-ease-out),visibility 0s}
+html .nst-card-more-in{opacity:0;transition:opacity var(--hm-dur-fast) var(--hm-ease-in)}
+html .nst-card.open .nst-card-more-in{opacity:1;transition:opacity var(--hm-dur-base) var(--hm-ease-out) 70ms}
+.nx-empty{position:relative;isolation:isolate}
+.hm-orn{position:absolute;top:12px;left:50%;width:80px;height:80px;margin-inline-start:-40px;color:var(--green);opacity:.26;z-index:-1;pointer-events:none}
+html .drawer,html .drawer *{touch-action:pan-y} /* the nav is its own scroller, so the rule must reach it for horizontal drags to stay with the page */
+
 /* ---- reduced motion: tiered, not a kill switch ---- */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   html dialog,html dialog::backdrop,html dialog[open],html dialog[open]::backdrop,html .toast,html .toast.show,html .drawer,html .drawer-backdrop{transform:none!important;translate:none!important;transition-duration:var(--hm-dur-instant)!important}
+  .nr-chev svg,.nst-card-head>.nx-iconbtn svg{transition:none!important}
+  html .nst-card-more{transition:visibility 0s!important}
   html :focus-visible{transition:outline-color var(--hm-dur-fast)!important}
   [class*="spin"]:not(html):not(body){animation-duration:1.4s!important;animation-iteration-count:infinite!important}
 }

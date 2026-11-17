@@ -14,7 +14,7 @@ const browser = await chromium.launch({ executablePath: exe, headless: true, arg
 const failures = [];
 const note = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!ok) failures.push(msg); };
 
-async function open({ width, height, dark = false, reduce = false, video = false }) {
+async function open({ width, height, dark = false, reduce = false, video = false, role = 'admin' }) {
   const context = await browser.newContext({
     viewport: { width, height }, serviceWorkers: 'block', reducedMotion: reduce ? 'reduce' : 'no-preference', colorScheme: dark ? 'dark' : 'light',
     recordVideo: video ? { dir: OUT, size: { width, height } } : undefined,
@@ -27,10 +27,10 @@ async function open({ width, height, dark = false, reduce = false, video = false
   await page.waitForFunction(() => !!window.HalaqatiCertificates && window.__hmRender, null, { timeout: 45000 });
   await page.locator('#rc27Splash').evaluate(e => e.remove()).catch(() => {});
   await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(({ dark }) => {
+  await page.evaluate(({ dark, ROLE }) => {
     const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
     state.user = { id: id(1) };
-    state.profile = { id: id(1), role: 'admin', full_name: 'د. محمد سمير أبو يونس', active: true, approval_status: 'approved' };
+    state.profile = { id: id(1), role: ROLE, full_name: 'د. محمد سمير أبو يونس', active: true, approval_status: 'approved' };
     state.offline = true; state.networkVerified = false;
     state.halaqas = [0, 1, 2].map(i => ({ id: id(10 + i), name: ['حلقة معاوية بن أبي سفيان', 'حلقة عمر بن الخطاب', 'حلقة الفاروق'][i], active: true, halaqa_type: 'regular' }));
     state.students = Array.from({ length: 12 }, (_, i) => ({ id: id(100 + i), full_name: 'طالب ' + i + ' أبو يونس', status: 'active', halaqa_id: state.halaqas[i % 3].id, track_code: 'general_hifz', enrollment_date: '2026-01-01' }));
@@ -38,7 +38,7 @@ async function open({ width, height, dark = false, reduce = false, video = false
     document.getElementById('auth').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     if (dark) document.body.classList.add('dark');
-  }, { dark });
+  }, { dark, ROLE: role });
   return { context, page, errors };
 }
 
@@ -204,6 +204,141 @@ for (const cfg of [{ name: 'reduced-mobile', width: 390, height: 844 }, { name: 
   note(r.moved === 0, `${cfg.name}: no transform movement during page entrance (moved=${r.moved})`);
   note(r.dlgTransform === 'none' || r.dlgTransform === 'matrix(1, 0, 0, 1, 0, 0)', `${cfg.name}: dialog has no slide/scale (${r.dlgTransform})`);
   note(errors.length === 0, `${cfg.name}: no JavaScript errors`);
+  await context.close();
+}
+
+/* ===== Motion System v2: continuity, FLIP, loading->content, drawer drag, ornament, roles ===== */
+for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-desktop', width: 1440, height: 900 }]) {
+  const { context, page, errors } = await open(cfg);
+  const mobile = cfg.width < 700;
+
+  /* 1. page change keeps the real old page on screen (no skeleton flash) and crossfades into the new one */
+  const pc = await page.evaluate(async () => {
+    go('home'); await new Promise(r => setTimeout(r, 1200));
+    const c = document.getElementById('content'); const oldFirst = c.firstElementChild; let skel = 0, oldStillThere = 0, frames = 0;
+    go('halaqas');
+    await new Promise(res => { let n = 0; const t = () => { frames++; if (c.querySelector('.ops-skeleton')) skel++; if (c.contains(oldFirst)) oldStillThere++; if (++n < 30) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    return { skel, oldStillThere, frames, page: state.page };
+  });
+  note(pc.skel === 0, `${cfg.name}: navigating never flashes the loading skeleton on a fast page (skeleton frames=${pc.skel}/${pc.frames})`);
+  note(pc.oldStillThere >= 1, `${cfg.name}: the previous page stays until the new one is ready (frames with old content=${pc.oldStillThere})`);
+
+  /* 2. slow render still gets a skeleton after the grace period */
+  const slow = await page.evaluate(async () => {
+    const baseRender = window.render; let sawSkel = false;
+    window.render = async function () { await new Promise(r => setTimeout(r, 420)); return baseRender.apply(this, arguments); };
+    go('students'); await new Promise(r => setTimeout(r, 330)); sawSkel = !!document.querySelector('#content .ops-skeleton');
+    await new Promise(r => setTimeout(r, 900)); window.render = baseRender;
+    return { sawSkel, endSkel: !!document.querySelector('#content .ops-skeleton') };
+  });
+  note(slow.sawSkel && !slow.endSkel, `${cfg.name}: a genuinely slow page shows the skeleton after the grace period and removes it (${JSON.stringify(slow)})`);
+
+  /* 3. loading -> content cross-fades (opacity only) instead of cutting */
+  const lc = await page.evaluate(async () => {
+    go('home'); await new Promise(r => setTimeout(r, 1200));
+    document.getElementById('content').innerHTML = NX.skeleton(3);
+    const p = render(); await new Promise(r => setTimeout(r, 30));
+    const anims = document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#content') && a.playState === 'running');
+    const opacityOnly = anims.length > 0 && anims.every(a => a.effect.getKeyframes().every(k => !k.transform || k.transform === 'none'));
+    await p; await new Promise(r => setTimeout(r, 900));
+    return { n: anims.length, opacityOnly, skelLeft: !!document.querySelector('#content .nx-skel'), stale: [...document.querySelectorAll('#content *')].filter(e => e.style.opacity !== '').length };
+  });
+  note(lc.n > 0 && lc.opacityOnly && !lc.skelLeft && lc.stale === 0, `${cfg.name}: skeleton -> content settles with an opacity-only fade and leaves no residue (${JSON.stringify(lc)})`);
+
+  /* 4. same-page re-render: no re-entry of all rows; kept rows are not re-faded */
+  const sp = await page.evaluate(async () => {
+    go('students'); await new Promise(r => setTimeout(r, 1300));
+    let fades = 0; const watch = () => document.getAnimations().forEach(a => { const k = a.effect?.getKeyframes?.() || []; if (a.effect?.target?.closest?.('#content') && k.some(f => f.opacity === '0' || f.opacity === 0)) fades++; });
+    const done = new Promise(res => { let n = 0; const t = () => { watch(); if (++n < 20) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    await render(); await done;
+    return { fades, stale: [...document.querySelectorAll('#content *')].filter(e => e.style.opacity !== '' || /translate|matrix|scale/.test(e.style.transform)).length };
+  });
+  note(sp.fades === 0 && sp.stale === 0, `${cfg.name}: re-rendering the same page replays no entrance (opacity-from-0 animations seen: ${sp.fades})`);
+
+  if (mobile) {
+    /* 5. FLIP on in-place update (roster card): siblings glide, card reveals, chevron turns, everything settles clean */
+    const fl = await page.evaluate(async () => {
+      state.sessionView = state.sessions[0].id; go('sessions'); await new Promise(r => setTimeout(r, 1600));
+      const sid = state.students[0].id, cards = () => [...document.querySelectorAll('[id^="roster_"]')];
+      const y0 = cards().map(c => c.getBoundingClientRect().top);
+      NSR.toggle(sid);
+      const mid = cards().map(c => ({ id: c.id, tf: getComputedStyle(c).transform, clip: getComputedStyle(c).clipPath, anims: c.getAnimations().length }));
+      const chev = document.querySelector('#roster_' + sid + ' .nr-chev svg'); const chevAnims = chev ? chev.getAnimations().length : -1;
+      await new Promise(r => setTimeout(r, 800));
+      const settled = cards().every(c => c.getAnimations().length === 0 && (getComputedStyle(c).transform === 'none' || getComputedStyle(c).transform === 'matrix(1, 0, 0, 1, 0, 0)'));
+      return { moving: mid.filter(m => m.anims > 0).length, chevAnims, settled, residue: cards().filter(c => c.getAttribute('style')).length };
+    });
+    note(fl.moving >= 2 && fl.chevAnims >= 1, `${cfg.name}: expanding a roster card animates the card and the siblings below it (animated blocks=${fl.moving}, chevron anims=${fl.chevAnims})`);
+    note(fl.settled && fl.residue === 0, `${cfg.name}: the in-place update settles with no running animation and no inline residue`);
+
+    /* 6. the chevron is ONE element that turns: same node, same path, rotation on the card state */
+    const ch = await page.evaluate(async () => {
+      go('students'); await new Promise(r => setTimeout(r, 1400));
+      const card = document.querySelector('.nst-card'); const btn = card.querySelector('.nst-card-head > .nx-iconbtn'); const svg = btn.querySelector('svg'); const before = svg.innerHTML;
+      NSS.toggle(card.dataset.stcard); await new Promise(r => setTimeout(r, 60));
+      const sameNode = btn.querySelector('svg') === svg && svg.innerHTML === before; const mid = getComputedStyle(svg).transform;
+      await new Promise(r => setTimeout(r, 450)); const open = new DOMMatrix(getComputedStyle(svg).transform);
+      const vis = getComputedStyle(card.querySelector('.nst-card-more')).visibility;
+      NSS.toggle(card.dataset.stcard); await new Promise(r => setTimeout(r, 60));
+      const closingVisible = getComputedStyle(card.querySelector('.nst-card-more')).visibility; /* content stays visible while the height collapses */
+      await new Promise(r => setTimeout(r, 450)); const closedVis = getComputedStyle(card.querySelector('.nst-card-more')).visibility;
+      return { sameNode, mid, rot: Math.round(Math.atan2(open.b, open.a) * 180 / Math.PI), vis, closingVisible, closedVis };
+    });
+    note(ch.sameNode && Math.abs(ch.rot) === 180, `${cfg.name}: the card chevron is one icon that turns 180deg (no image swap): ${JSON.stringify(ch)}`);
+    note(ch.vis === 'visible' && ch.closingVisible === 'visible' && ch.closedVis === 'hidden', `${cfg.name}: accordion content stays visible while it collapses, hidden once closed`);
+
+    /* 7. drawer follows the finger and is reversible */
+    const cdp = await context.newCDPSession(page);
+    const touch = (type, x, y = 400) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    await page.evaluate(() => { toggleDrawer(true); }); await page.waitForTimeout(600);
+    await touch('touchStart', 100); for (let x = 100; x <= 190; x += 15) { await touch('touchMove', x); await page.waitForTimeout(14); }
+    const during = await page.evaluate(() => ({ tf: document.getElementById('drawer').style.transform, bo: document.getElementById('backdrop').style.opacity, open: document.getElementById('drawer').classList.contains('open') }));
+    await touch('touchEnd', 190); await page.waitForTimeout(150);
+    const snap = await page.evaluate(() => ({ open: document.getElementById('drawer').classList.contains('open'), style: document.getElementById('drawer').getAttribute('style') || '', bstyle: document.getElementById('backdrop').getAttribute('style') || '' }));
+    await page.waitForTimeout(500);
+    note(/translateX\(9\dpx\)|translateX\(8\dpx\)/.test(during.tf) && +during.bo < 1 && during.open, `${cfg.name}: while dragging, drawer tracks the finger (${during.tf}) and the backdrop fades (${(+during.bo).toFixed(2)})`);
+    note(snap.open && !/transform|transition/.test(snap.style) && !/opacity|transition/.test(snap.bstyle), `${cfg.name}: a short drag snaps back to open with no inline residue`);
+    await touch('touchStart', 100); for (let x = 100; x <= 260; x += 20) { await touch('touchMove', x); await page.waitForTimeout(12); }
+    await touch('touchEnd', 260); await page.waitForTimeout(700);
+    const fin = await page.evaluate(() => ({ open: document.getElementById('drawer').classList.contains('open'), hidden: document.getElementById('drawer').getAttribute('aria-hidden'), style: document.getElementById('drawer').getAttribute('style') || '', bo: getComputedStyle(document.getElementById('backdrop')).opacity }));
+    note(!fin.open && fin.hidden === 'true' && fin.style === '' && fin.bo === '0', `${cfg.name}: a long drag closes the drawer from where the finger left it, leaving nothing behind (${JSON.stringify(fin)})`);
+    /* a vertical swipe must stay native scrolling, not a drag */
+    await page.evaluate(() => toggleDrawer(true)); await page.waitForTimeout(600);
+    await touch('touchStart', 150, 500); for (let y = 500; y >= 380; y -= 15) { await touch('touchMove', 150, y); await page.waitForTimeout(12); }
+    const vert = await page.evaluate(() => document.getElementById('drawer').style.transform); await touch('touchEnd', 150, 380);
+    note(vert === '', `${cfg.name}: a vertical swipe in the menu is not hijacked by the drag (inline transform='${vert}')`);
+    await page.evaluate(() => toggleDrawer(false)); await page.waitForTimeout(500);
+    /* reverse mid-flight: open then close after 90ms -> position never jumps back to a fully-open pose */
+    const rev = await page.evaluate(async () => {
+      const d = document.getElementById('drawer'); const xs = []; toggleDrawer(true); await new Promise(r => setTimeout(r, 90)); toggleDrawer(false);
+      await new Promise(res => { let n = 0; const t = () => { xs.push(new DOMMatrix(getComputedStyle(d).transform).m41); if (++n < 40) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+      let jump = 0; for (let i = 1; i < xs.length; i++) jump = Math.max(jump, Math.abs(xs[i] - xs[i - 1])); return { jump: Math.round(jump), start: Math.round(xs[0]), min: Math.round(Math.min(...xs)), end: Math.round(xs[xs.length - 1]) };
+    });
+    note(rev.end > 300 && rev.jump < 200, `${cfg.name}: reversing the drawer mid-animation continues from the current position (max frame step ${rev.jump}px, min x ${rev.min}, end x ${rev.end})`);
+  }
+
+  /* 8. empty state ornament: present, drawn once, never over data */
+  const em = await page.evaluate(async () => {
+    state.students = []; go('students'); await new Promise(r => setTimeout(r, 1400));
+    const box = document.querySelector('#content .nx-empty'); const o = box && box.querySelector('.hm-orn');
+    return { has: !!box, orn: !!o, behind: o ? getComputedStyle(o).zIndex : null, dataNear: !!document.querySelector('#content .nst-card') };
+  });
+  if (em.has) note(em.orn && em.behind === '-1' && !em.dataNear, `${cfg.name}: the empty state carries a geometric star, behind the content, with no student data around it`);
+  else console.log(`INFO  ${cfg.name}: the test data produced no .nx-empty on the students page (ornament not exercised here)`);
+  note(errors.length === 0, `${cfg.name}: no JavaScript errors in v2 checks ${errors.slice(0, 2).join(' | ')}`);
+  await context.close();
+}
+
+/* roles: every role walks its own pages with the choreography on; no errors, nothing left hanging */
+for (const role of ['admin', 'supervisor', 'teacher', 'guardian', 'observer']) {
+  const { context, page, errors } = await open({ width: 390, height: 844, role });
+  const res = await page.evaluate(async role => {
+    const pages = role === 'guardian' ? ['home', 'reports', 'plans', 'home'] : ['home', 'sessions', 'students', 'plans', 'halaqas', 'home'];
+    let animated = 0;
+    for (const p of pages) { go(p); await new Promise(r => setTimeout(r, 60)); if (document.getAnimations().some(a => a.effect?.target?.closest?.('#content')) || document.documentElement.classList.contains('hm-pre')) animated++; await new Promise(r => setTimeout(r, 900)); }
+    return { animated, pages: pages.length, pre: document.documentElement.classList.contains('hm-pre'), stale: [...document.querySelectorAll('#content *')].filter(e => e.style.opacity !== '' || /translate|matrix|scale/.test(e.style.transform)).length, running: HalaqatiMotion.gsap.globalTimeline.getChildren(true, true, true).length };
+  }, role);
+  note(res.pre === false && res.stale === 0 && res.running === 0 && errors.length === 0, `role ${role}: ${res.pages} pages walked, entrance on ${res.animated}, no leftovers, no JavaScript errors ${errors.slice(0, 1).join('')}`);
   await context.close();
 }
 
