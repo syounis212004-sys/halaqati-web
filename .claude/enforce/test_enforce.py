@@ -197,5 +197,16 @@ else:
     mkrc(False)
     run(d, "prompt", {"prompt": "ENFORCE-WAIVE: release emergency"})
     check("the user can waive the release check explicitly", run(d, "gate", trig)[0] == 0)
+
+# 16. a command that writes files AND commits cannot slip past the commit gate
+d = project(); ui_skills(d)
+if IS_WEB:
+    run(d, "record-tool", {"tool_name": "mcp__playwright__browser_navigate", "tool_input": {}})
+rc, _, err = bash(d, "python3 - <<'EOF'\nopen('x.txt','w').write('1')\nEOF\ngit add -A && git commit -m 'sneaky'")
+check("write-and-commit in ONE command is denied", rc == 2 and "own command" in err, (rc, err))
+rc, _, err = bash(d, "git commit -m 'a -> b' 2>&1 | head -3")
+check("a plain commit with a '2>&1' redirect and '->' in the message is not misflagged", rc == 0, (rc, err))
+rc, _, err = bash(d, "echo hi > notes.txt && git commit -am x")
+check("redirect-then-commit in ONE command is denied", rc == 2, (rc, err))
 print("\n%d passed, %d failed" % (PASS, FAIL))
 sys.exit(1 if FAIL else 0)

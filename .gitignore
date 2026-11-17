@@ -3,3 +3,4 @@
 .claude/enforce/state/
 .claude/enforce/log/
 .claude/enforce/__pycache__/
+.playwright-mcp/
