@@ -48,6 +48,28 @@ const dirty = page => page.evaluate(() => ({
 }));
 const PAGES = ['home', 'halaqas', 'students', 'sessions', 'plans', 'notifications', 'reports', 'ranking', 'settings', 'community'];
 
+/* Generic guard for the whole class of bug "reduced motion changes what is on screen": every position:fixed element must be on/off screen
+   exactly as in normal mode, on several pages (OS preference and the in-app switch, both compared with normal motion). */
+{
+  const state = async (name, opts) => {
+    const { context, page } = await open({ width: 390, height: 844, reduce: !!opts.os });
+    if (opts.internal) await page.evaluate(() => document.documentElement.classList.add('rc27-reduce-motion'));
+    const out = {};
+    for (const p of ['home', 'students', 'sessions', 'plans', 'settings', 'notifications']) {
+      await page.evaluate(p => go(p), p); await page.waitForTimeout(1100);
+      Object.assign(out, await page.evaluate(p => {
+        const r = {}; document.querySelectorAll('body *').forEach(e => { const cs = getComputedStyle(e); if (cs.position !== 'fixed') return;
+          const b = e.getBoundingClientRect(); const on = cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > .01 && b.width > 0 && b.right > 0 && b.left < innerWidth && b.bottom > 0 && b.top < innerHeight;
+          r[p + ' ' + (e.id ? '#' + e.id : e.tagName.toLowerCase() + '.' + String(e.className).split(' ')[0])] = on; }); return r; }, p));
+    }
+    await context.close(); return out;
+  };
+  const normal = await state('normal', {}), os = await state('os', { os: true }), internal = await state('internal', { internal: true });
+  const diff = (a, b) => Object.keys(a).filter(k => k in b && a[k] !== b[k]);
+  const dOs = diff(normal, os), dIn = diff(normal, internal);
+  note(Object.keys(normal).length > 10 && dOs.length === 0 && dIn.length === 0, `reduced motion changes no fixed element's on-screen state (compared ${Object.keys(normal).length} element states; OS differences: ${dOs.join(', ') || 'none'}; in-app differences: ${dIn.join(', ') || 'none'})`);
+}
+
 for (const cfg of [
   { name: 'mobile-light', width: 390, height: 844 },
   { name: 'mobile-dark', width: 390, height: 844, dark: true },
@@ -291,7 +313,7 @@ for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-d
     const cdp = await context.newCDPSession(page);
     const touch = (type, x, y = 400) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
     await page.evaluate(() => { toggleDrawer(true); }); await page.waitForTimeout(600);
-    await touch('touchStart', 100); for (let x = 100; x <= 190; x += 15) { await touch('touchMove', x); await page.waitForTimeout(14); }
+    await touch('touchStart', 100); for (let x = 100; x <= 190; x += 15) { await touch('touchMove', x); await page.waitForTimeout(70); } /* slow on purpose: a fast flick closes the drawer by design */
     const during = await page.evaluate(() => ({ tf: document.getElementById('drawer').style.transform, bo: document.getElementById('backdrop').style.opacity, open: document.getElementById('drawer').classList.contains('open') }));
     await touch('touchEnd', 190); await page.waitForTimeout(150);
     const snap = await page.evaluate(() => ({ open: document.getElementById('drawer').classList.contains('open'), style: document.getElementById('drawer').getAttribute('style') || '', bstyle: document.getElementById('backdrop').getAttribute('style') || '' }));
