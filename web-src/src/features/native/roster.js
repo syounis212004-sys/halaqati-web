@@ -226,17 +226,7 @@
     return `<div class="nr-strip">${items.map(([l,v,i])=>`<div class="nr-chipm"><span class="nr-chipm-i">${ic(i,17)}</span><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
   };
 
-  function offlineBlock(){
-    let out='';
-    try{
-      const verified=state.networkVerified,off=state.offline,pend=state.pendingSync;
-      if(!verified||off||pend){
-        const st=typeof syncQueueStats==='function'?syncQueueStats():{failed:0};
-        out+=NX.notice(`<b>${verified?'بيانات محلية بانتظار المزامنة':'وضع العمل دون إنترنت'}</b><br>${pend?`${pend} عملية محفوظة بأمان في قاعدة الجهاز${st.failed?` · ${st.failed} تحتاج إعادة محاولة`:''}. ستتم المزامنة تلقائياً عند عودة الاتصال.`:'الحلقات والفئات والطلاب والجلسات والحضور والسلوك والتسميع متاحة من النسخة المحلية.'}`,'warning');
-      }
-    }catch(_e){}
-    return out;
-  }
+  function offlineBlock(){return ''}/* no sync/offline notices on the web */
   function topHtml(se){
     if(!se)return '';
     const mg=canManage(),pend=Number(state.pendingSync||0),q=queueInfo(se),lesson=isLesson(se);
@@ -249,7 +239,7 @@
       if(lesson&&['weekly','biweekly'].includes(sessionActivityData(se).recurrence)&&typeof duplicateActivitySession==='function')items.push({label:'نسخ للموعد القادم',icon:'ContentCopy',onclick:()=>duplicateActivitySession(se.id)});
       items.push({label:'حذف الجلسة نهائياً',icon:'DeleteForever',danger:true,onclick:()=>NS.remove()});
     }
-    const syncNote=q.blocked.size?NX.notice(`${q.blocked.size} طالب لديهم عملية مزامنة تحتاج مراجعة`,'error'):(pend>0||q.queued.size)?NX.notice(`${Math.max(q.queued.size,pend)} عملية محفوظة محليًا بانتظار الرفع`,'warning'):'';
+    const syncNote='';
     return `${offlineBlock()}
       <header class="nr-head">
         ${NX.iconBtn('ArrowBack',{title:'رجوع',onclick:'closeSessionRoster()',cls:'nr-back'})}

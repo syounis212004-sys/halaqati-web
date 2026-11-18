@@ -21,7 +21,11 @@
       return row;
     }
     if (op.intent === 'status') {
-      return confirmed(await db.from('sessions').update({status:s.status}).eq('id',id).select().single());
+      /* no .single(): zero matched rows is an answer, not an error. A session opened from "today" while offline only exists on the device, so its
+         first operation reaches the server as a status change for an id the server has never seen: it is created below instead of failing. */
+      const res = await db.from('sessions').update({status:s.status}).eq('id',id).select();
+      if (res.error) throw new Error(res.error.message || String(res.error));
+      if (res.data?.length) return res.data[0];
     }
     const proposed = id || crypto.randomUUID();
     let row = confirmed(await db.rpc('rc23_get_or_create_session', {
@@ -32,7 +36,7 @@
     if (row.id === proposed && (s.notes || Object.keys(s.activity_data || {}).length)) {
       row = confirmed(await db.from('sessions').update({notes:s.notes || null, activity_data:{...row.activity_data,...s.activity_data}}).eq('id',row.id).select().single());
     }
-    if(s.status==='closed'&&row.status!=='closed')row=confirmed(await db.from('sessions').update({status:'closed'}).eq('id',row.id).select().single());
+    if(s.status&&s.status!=='open'&&row.status!==s.status)row=confirmed(await db.from('sessions').update({status:s.status}).eq('id',row.id).select().single());
     return row;
   }
   async function archive(db, id, archived) {

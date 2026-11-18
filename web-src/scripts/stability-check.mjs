@@ -97,4 +97,36 @@ const bigState = () => { const id = n => `00000000-0000-4000-8000-${String(n).pa
   note(!op.armed && op.prevented === 0 && after < before, `S6b open drawer scrolled 400px: dragging down scrolls the list back (scrollTop ${before} -> ${after}), no refresh armed (${op.armed}), prevented ${op.prevented}`);
   await context.close();
 }
+{ /* S7: no sync notices anywhere on the web (the header badge stays as the way into the sync centre) */
+  const { context, page } = await open('admin');
+  await page.evaluate(() => { state.pendingSync = 1; state.networkVerified = true; state.offline = false; state.sessions = [{ id: 'se1', halaqa_id: state.halaqas[0].id, session_date: today(), session_type: 'tasmee', status: 'open', title: 'جلسة', activity_data: {}, _offline: true }]; state.page = 'sessions'; });
+  await page.evaluate(async () => { await render(); }); await page.waitForTimeout(2500);
+  const read = () => page.evaluate(() => ({ roster: !!document.querySelector('.nr-head'), banner: document.querySelectorAll('.nt-banner').length, text: /بانتظار المزامنة|بانتظار الرفع|وضع العمل دون إنترنت|تحتاج مراجعة/.test(document.getElementById('content').innerText + (document.getElementById('ntBanner')?.innerText || '')) }));
+  const a = await read();
+  await page.evaluate(async () => { state.offline = true; state.networkVerified = false; state.authNeedsLogin = true; state.sessionView = 'se1'; await render(); }); await page.waitForTimeout(2500);
+  const b = await read();
+  note(b.roster && a.banner === 0 && !a.text && b.banner === 0 && !b.text, `S7 no sync/offline notices on the sessions list or the roster (list ${JSON.stringify(a)}, roster ${JSON.stringify(b)})`);
+  await context.close();
+}
+{ /* S8: slow mobile networks are not "offline" */
+  const { context, page } = await open('admin');
+  await context.route(/\/auth\/v1\/health/, r => setTimeout(() => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }), 4500));
+  const r = await page.evaluate(async () => { state.lastNetworkCheck = 0; const ok = await internetReachable(true); return { ok, offline: state.offline } });
+  note(r.ok === true && r.offline === false, `S8a a health check answered after 4.5 s is still online (${JSON.stringify(r)})`);
+  await context.close();
+}
+{ /* S8b: any answer from the server proves the connection and clears a stale "offline" */
+  const { context, page } = await open('admin');
+  const r = await page.evaluate(async () => { state.offline = true; state.networkVerified = false; await db.from('exam_settings').select('*').limit(1); return { offline: state.offline, verified: state.networkVerified } });
+  note(r.offline === false && r.verified === true, `S8b a successful request clears a stale offline state (${JSON.stringify(r)})`);
+  await context.close();
+}
+{ /* S8c: a refresh that fails for a reason that is not the network (permission, code error) does not turn the app offline */
+  const { context, page } = await open('admin');
+  await context.route(/\/rest\/v1\/profiles/, r => r.fulfill({ status: 403, contentType: 'application/json', body: '{"code":"42501","message":"permission denied for table profiles"}' }));
+  const r = await page.evaluate(async () => { internetReachable = async () => { state.networkVerified = true; state.offline = false; return true }; ensureServerAuthSession = async () => true; readOfflineQueue = () => [];
+    state.networkVerified = true; state.offline = false; const ok = await refreshFromServer({ renderAfter: false }); return { ok, offline: state.offline } });
+  note(r.offline === false, `S8c a permission error during refresh does not set offline (${JSON.stringify(r)})`);
+  await context.close();
+}
 await browser.close(); console.log(failures.length ? failures.length + ' FAILED' : 'Stability checks: all passed'); process.exit(failures.length ? 1 : 0);

@@ -121,17 +121,8 @@
     b.innerHTML=ic(on?'Sync':'CloudOff',22)+(n>0?`<i class="nt-bdg">${n>99?99:n}</i>`:'');
     const lbl=on?'عمليات بانتظار المزامنة':'دون اتصال — العمل محفوظ محليًا';b.title=lbl;b.setAttribute('aria-label',lbl);
   }
-  function syncBanner(){
-    const slot=q('#ntBanner');if(!slot)return;
-    const on=online(),n=pendingCount(),bl=blockedCount(),authIssue=!!state.authNeedsLogin&&n>0;
-    let html='';
-    if(authIssue){
-      html=`<div class="nt-banner err">${ic('ErrorOutline',20)}<span>تحتاج جلسة الدخول إلى تجديد لإكمال مزامنة ${n} عملية محفوظة</span><button type="button" onclick="handleSyncBadgeClick()">التفاصيل</button></div>`;
-    }else if(bl>0){
-      html=`<div class="nt-banner ${on?'ok':'warn'}">${ic(on?'Sync':'CloudOff',20)}<span>هناك ${bl} عمليات تحتاج مراجعة، و${n-bl} بانتظار الرفع</span><button type="button" onclick="openSyncStatusDialog()">التفاصيل</button>${on&&n-bl>0?'<button type="button" onclick="tryNtSync()">مزامنة</button>':''}</div>`;
-    }
-    if(slot.dataset.html!==html){slot.dataset.html=html;slot.innerHTML=html}
-  }
+  /* no sync banner: the header badge is the way into the sync centre */
+  function syncBanner(){const slot=q('#ntBanner');if(slot&&slot.firstChild){slot.innerHTML='';slot.dataset.html=''}}
   function chromeTick(){
     tryDo(()=>{
       chromeInit();syncTile();syncBanner();

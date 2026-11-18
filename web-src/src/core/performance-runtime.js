@@ -204,7 +204,7 @@ refreshFromServer=async function({renderAfter=true}={}){
   if(!state.user||!(await internetReachable(true)))return false;
   if(!(await ensureServerAuthSession({silent:true}))){state.offline=false;updateSyncBadge();return false}
   try{
-    let res=await withTimeout(db.from('profiles').select('*').eq('id',state.user.id).single(),3500,'profile timeout');if(res.error)throw res.error;if(!res.data)throw new Error('profile missing');
+    let res=await withTimeout(db.from('profiles').select('*').eq('id',state.user.id).single(),10000,'profile timeout');if(res.error)throw res.error;if(!res.data)throw new Error('profile missing');
     let wasBlocked=state.profile?.approval_status!=='approved'||!state.profile?.active||(state.profile?.frozen&&state.profile?.role!=='admin');
     state.profile=res.data;saveOfflineAuth(state.user);maybePromptGoogleAccountName();if(state.profile.approval_status!=='approved'||!state.profile.active||(state.profile.frozen&&state.profile.role!=='admin')){showAccessStatus(state.profile);cacheSnapshot();return false}
     if(readOfflineQueue().length){captureSyncSessionDependencies();await syncOfflineQueue({refreshAfter:false});if(readOfflineQueue().length)return false}
@@ -212,7 +212,7 @@ refreshFromServer=async function({renderAfter=true}={}){
     let appHidden=$('#app')?.classList.contains('hidden');if(appHidden){$('#pendingPanel')?.classList.add('hidden');showApp();if(wasBlocked)toast('تم اعتماد الحساب وفتح لوحة ولي الأمر')}else if(renderAfter)await v230RenderIfVisible();
     if(!v230BackgroundRefreshPromise)v230BackgroundRefreshPromise=v230FullLoad(true,{skipCore:true}).then(()=>renderAfter?v230RenderIfVisible():null).finally(()=>{v230BackgroundRefreshPromise=null});
     return true
-  }catch(e){state.networkVerified=false;state.offline=true;updateSyncBadge();return false}
+  }catch(e){/* only a network failure means offline; a permission or code error must not */if(!navigator.onLine||/failed to fetch|network|timeout|abort|load failed/i.test(String(e?.message||e))){state.networkVerified=false;state.offline=true}updateSyncBadge();return false}
 };
 
 /* First-ever login no longer waits for reports, photos, plan history and operations history before showing the app. */

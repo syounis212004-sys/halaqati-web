@@ -147,12 +147,7 @@
   }
 
   // ---------- header / action row ----------
-  function syncBanner(){
-    const out=[];
-    if(!state.networkVerified||state.offline)out.push(NX.notice('<b>وضع العمل دون إنترنت</b><br>الحلقات والفئات والطلاب والجلسات والحضور والسلوك والتسميع متاحة من النسخة المحلية.','warning'));
-    if(state.pendingSync){let f=0;try{f=syncQueueStats().failed||0}catch(_e){}out.push(NX.notice(`<b>بيانات محلية بانتظار المزامنة</b><br>${state.pendingSync} عملية محفوظة بأمان في قاعدة الجهاز${f?` · ${f} تحتاج إعادة محاولة`:''}. ستتم المزامنة تلقائياً عند عودة الاتصال.`,'info'))}
-    return out.length?`<div class="ns-banners">${out.join('')}</div>`:'';
-  }
+  function syncBanner(){return ''}/* no sync/offline notices on the web */
   function topBar(){
     return `<div class="ns-top"><div class="ns-top-t"><small>الجلسات اليومية · سجل اللقاءات اليومية</small><h2>الجلسات</h2></div>
       ${state.pendingSync?`<span class="ns-pend" title="عمليات بانتظار المزامنة">${ic('Sync',16)}${state.pendingSync}</span>`:''}

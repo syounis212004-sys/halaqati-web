@@ -56,7 +56,9 @@ const HalaqatiSwr=(()=>{
 /* Automatic refreshes (coming back to the app, going online, launch) only run when the last full load is older than 5 minutes.
    User actions (pull-to-refresh, the refresh button, saving) are not limited by this. */
 function autoRefreshDue(){let t=state.v230LastFullLoadAt||0;if(!t)try{t=Number(localStorage.getItem('halaqati_full_load_'+state.user?.id))||0}catch(_e){}return Date.now()-t>300000}
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n))}});
+/* a real answer from the server proves the connection: it clears a stale "offline" (cached answers do not count) */
+const halaqatiAnswered=r=>{try{if(state.offline||!state.networkVerified){state.networkVerified=true;state.offline=false;updateSyncBadge()}}catch(_e){}return r};
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n).then(halaqatiAnswered))}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';
 const APP_DEEP_LINK='com.mohammedsamir.halaqati://auth/callback';
@@ -185,13 +187,14 @@ async function internetReachable(force=false){
     const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),ms);
     try{
       let r=await fetch(SUPABASE_URL+'/auth/v1/health',{method:'GET',cache:'no-store',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY},signal:ctl.signal});
-      return !!r.ok
+      return r.status<500/* any answer from the gateway proves the connection */
     }finally{clearTimeout(timer)}
   };
   try{
     let ok=false;
-    try{ok=await check(3000)}catch(_e){}
-    if(!ok&&navigator.onLine){await sleep(250);try{ok=await check(1800)}catch(_e){}}
+    /* a phone waking its radio or busy rendering can take several seconds: only a real failure, not a slow answer, means offline */
+    try{ok=await check(7000)}catch(_e){}
+    if(!ok&&navigator.onLine){await sleep(250);try{ok=await check(5000)}catch(_e){}}
     state.networkVerified=!!ok;state.offline=!ok;return !!ok
   }catch(e){state.networkVerified=false;state.offline=true;return false}
 }
