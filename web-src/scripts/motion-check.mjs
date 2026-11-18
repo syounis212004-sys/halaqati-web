@@ -51,10 +51,13 @@ const PAGES = ['home', 'halaqas', 'students', 'sessions', 'plans', 'notification
 /* ===== v3: interaction states over time (frame-by-frame samples, not end states) ===== */
 const HARNESS = () => {
   const h = document.createElement('div'); h.id = 'hmHarness'; h.style.cssText = 'position:fixed;inset:70px 12px auto 12px;z-index:9999;background:var(--card,#fff);padding:14px;border-radius:18px;display:grid;gap:14px';
-  h.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="nx-btn nx-filled" id="hP">أساسي</button><button class="nx-btn nx-danger" id="hD">حذف</button><button class="nx-iconbtn" id="hI"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" fill="currentColor"/></svg></button><button class="nx-btn nx-filled" id="hX" disabled>x</button><button class="nx-btn nx-filled" id="hB">يحفظ</button></div>'
+  h.innerHTML = '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="nx-btn nx-filled" id="hP">أساسي</button><button class="nx-btn nx-danger" id="hD">حذف</button><button class="nx-iconbtn" id="hI"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" fill="currentColor"/></svg></button><button class="nx-btn nx-filled" id="hX" disabled>x</button><button class="nx-btn nx-filled" id="hB">يحفظ</button><button class="nx-btn nx-filled" id="hK">تم</button></div>'
     + '<label><input type="checkbox" id="hC"> a</label><label><input type="checkbox" class="nx-switch" id="hW"> b</label>'
-    + '<details id="hDet" style="border:1px solid #ccc;border-radius:12px;padding:10px"><summary>قسم</summary><div style="height:160px">محتوى</div></details>';
+    + '<details id="hDet" style="border:1px solid #ccc;border-radius:12px;padding:10px"><summary>قسم</summary><div style="height:160px">محتوى</div></details>'
+    + '<details id="hDet2"><summary>قسم<button id="hSB">زر</button></summary><div>محتوى</div></details>';
   document.body.appendChild(h);
+  document.getElementById('hK').addEventListener('click', e => { e.currentTarget.disabled = true; }); /* disables itself for good, like a "sent" button */
+  document.getElementById('hSB').addEventListener('click', () => { window.__sb = (window.__sb || 0) + 1; });
   document.getElementById('hB').addEventListener('click', e => { const b = e.currentTarget; b.disabled = true; setTimeout(() => { toast('تم الحفظ بنجاح'); setTimeout(() => { b.disabled = false; }, 80); }, 450); });
 };
 const sampleOver = (page, fn, ms = 600) => page.evaluate(async ([src, ms]) => { const f = eval("(" + src + ")"); const out = []; const t0 = performance.now(); await new Promise(res => { const t = () => { out.push([Math.round(performance.now() - t0), f()]); if (performance.now() - t0 < ms) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); }); return out; }, [fn.toString(), ms]);
@@ -99,6 +102,15 @@ for (const cfg of [{ name: 'controls-mobile', width: 390, height: 844 }, { name:
   const busy = await page.evaluate(async () => { const b = document.getElementById('hB'); const log = []; await new Promise(r => setTimeout(r, 40)); log.push(['during', b.classList.contains('hm-busy'), b.getAttribute('aria-busy')]);
     await new Promise(r => setTimeout(r, 650)); log.push(['after', b.classList.contains('hm-busy'), b.classList.contains('hm-ok'), b.disabled]); await new Promise(r => setTimeout(r, 900)); log.push(['later', b.classList.contains('hm-ok')]); return log; });
   note(busy[0][1] && busy[0][2] === 'true' && !busy[1][1] && busy[1][2] && !busy[2][1], `${cfg.name}: the pressed button shows busy while the app disables it, then a confirming pulse after the success toast, then rests (${JSON.stringify(busy)})`);
+  /* a button the app disables for good must not shimmer forever */
+  await page.locator('#hK').click(); await page.waitForTimeout(150);
+  const k1 = await page.evaluate(() => document.getElementById('hK').classList.contains('hm-busy')); await page.waitForTimeout(6700);
+  const k2 = await page.evaluate(() => { const b = document.getElementById('hK'); return [b.classList.contains('hm-busy'), b.getAttribute('aria-busy')]; });
+  note(k1 && !k2[0] && k2[1] === null, `${cfg.name}: busy shimmer on a permanently disabled button is capped (during ${k1}, after 6.8s ${JSON.stringify(k2)})`);
+  /* a control inside <summary> keeps its own behaviour: no toggle hijack */
+  const sb = await page.evaluate(async () => { const d = document.getElementById('hDet2'), b = document.getElementById('hSB'); let prevented = null; d.addEventListener('click', e => { prevented = e.defaultPrevented; });
+    b.click(); await new Promise(r => setTimeout(r, 500)); return { n: window.__sb, prevented, open: d.open }; });
+  note(sb.n === 1 && sb.prevented === false, `${cfg.name}: a button inside <summary> is not hijacked by the accordion (${JSON.stringify(sb)})`);
   note(errors.length === 0, `${cfg.name}: no JavaScript errors in controls ${errors.slice(0, 1).join('')}`);
   await context.close();
 }

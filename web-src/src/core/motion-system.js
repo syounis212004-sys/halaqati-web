@@ -454,6 +454,8 @@ function installButtonStates() {
       const el = m.target; if (!el || el.nodeType !== 1) continue;
       if (el.disabled && lastPress && el === lastPress.el && performance.now() - lastPress.t < 900 && !el.classList.contains('hm-busy')) {
         el.classList.add('hm-busy'); el.setAttribute('aria-busy', 'true'); lastBusy = { el, t0: performance.now(), ok: false, ended: 0 };
+        /* a button the app disables for good ("sent") must not shimmer for ever */
+        const mine = lastBusy; setTimeout(() => { if (lastBusy === mine && el.classList.contains('hm-busy')) { el.classList.remove('hm-busy'); el.removeAttribute('aria-busy'); } }, 6000);
       } else if (!el.disabled && lastBusy && el === lastBusy.el && el.classList.contains('hm-busy')) endBusy(lastBusy);
     }
   }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['disabled'] });
@@ -475,6 +477,7 @@ function installDetails() {
   document.addEventListener('click', e => {
     const sum = e.target && e.target.closest && e.target.closest('summary');
     if (!sum) return;
+    if (e.target.closest('a,button,input,select,textarea,label') && e.target.closest('a,button,input,select,textarea,label') !== sum) return; /* a control inside <summary> keeps its own behaviour */
     const d = sum.parentElement;
     if (!(d instanceof HTMLDetailsElement) || reduced() || document.hidden || window.HalaqatiMotion?.off || motionOffInStorage()) return;
     e.preventDefault();
