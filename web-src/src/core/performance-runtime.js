@@ -139,7 +139,8 @@ loadSmartPlanData=async function(){
   if(!state.user?.id||!state.networkVerified)return;let start=v230Now();
   let plans=await db.from('smart_plans').select('*').order('created_at',{ascending:false}).limit(1500);
   if(plans.error){state.smartPlansAvailable=false;state.smartPlanError=plans.error.message||'';if(!smartPlanMigrationMissing(plans.error))console.warn('Smart plans unavailable',plans.error);return}
-  let v217=await db.from('smart_plans').select('id,category_id').limit(1);
+  /* the select('*') above already shows whether category_id exists; only an empty table needs the extra probe */
+  let v217=plans.data?.length?{error:'category_id' in plans.data[0]?null:{message:'category_id غير موجود'}}:await db.from('smart_plans').select('id,category_id').limit(1);
   if(v217.error){state.smartPlansAvailable=false;state.smartPlanError='ترحيل v2.17 غير مطبق بعد: '+(v217.error.message||'category_id غير موجود');return}
   state.smartPlansAvailable=true;state.smartPlanError='';state.smartPlans=plans.data||[];
   let planIds=state.smartPlans.map(x=>x.id),studentIds=v230StudentIds();
@@ -183,6 +184,7 @@ checkSmartPlanAlerts=async function(){
 
 async function v230FullLoad(forceNetwork=false,{skipCore=false}={}){
   if(v230FullLoadPromise)return v230FullLoadPromise;
+  if(forceNetwork)HalaqatiSwr.clear();
   v230FullLoadPromise=(async()=>{
     let start=v230Now();state.v230Hydrating=true;
     try{

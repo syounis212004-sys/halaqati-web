@@ -65,9 +65,10 @@
       document.body.classList.toggle('dn-role',role==='observer');
       const box=document.getElementById('content');if(!box)return;
       const token=RC50._tok=(RC50._tok||0)+1;
-      box.innerHTML=RC50.skeleton();
-      try{const html=await cur.render();if(token!==RC50._tok)return;box.innerHTML=html;cur.after&&cur.after(box)}
-      catch(err){console.error(err);if(token===RC50._tok)box.innerHTML=`<div class="dn-card"><div class="dn-empty">${e(err.message||'تعذر التحميل')}</div>${RC50.btn('إعادة المحاولة','render()')}</div>`}
+      /* the previous screen stays until the new one is ready; a skeleton only for a genuinely slow load (and never on a cached repeat visit) */
+      const sk=setTimeout(()=>{if(token===RC50._tok)box.innerHTML=RC50.skeleton()},200);
+      try{const html=await cur.render();clearTimeout(sk);if(token!==RC50._tok)return;box.innerHTML=html;cur.after&&cur.after(box)}
+      catch(err){clearTimeout(sk);console.error(err);if(token===RC50._tok)box.innerHTML=`<div class="dn-card"><div class="dn-empty">${e(err.message||'تعذر التحميل')}</div>${RC50.btn('إعادة المحاولة','render()')}</div>`}
       try{document.getElementById('content')?.scrollTo?.(0,0)}catch(_e){}
       return;
     }

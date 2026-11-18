@@ -129,7 +129,7 @@
     try{const d=await baseRpc.apply(this,arguments);lsSet(key,{at:Date.now(),data:d});return d}
     catch(err){if(c)return c.data;throw err}
   };
-  document.addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#ntRefresh'))RC86.invalidateStored()},true);
+  document.addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('#ntRefresh')){RC86.invalidateStored();HalaqatiSwr.clear()}},true);
 
   // ================= drawer (GoldenDrawerContent: search, «مفضلتي», collapsible groups with counts) =================
   const DG_TITLES=['إدارة الحلقة','التقارير والإنجاز','التواصل والأدوات','إدارة النظام','الحساب والإعدادات'];

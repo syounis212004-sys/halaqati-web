@@ -27,7 +27,33 @@ function halaqatiPagedFetch(input,init){
     })();
   }catch(_e){return raw(input,init)}
 }
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:halaqatiPagedFetch}});
+/* Stale-while-revalidate for reads. A repeat read is answered from memory at once (so a page never waits for data it already has) and is
+   refreshed behind the scenes; if the data changed, the visible page is re-rendered once. Any write clears everything, and an in-flight read
+   that started before a write is not stored. Chat, notifications and other live feeds are never cached.
+   shortcut: memory only (cleared on reload), upgrade to IndexedDB if cold starts need it. */
+const HalaqatiSwr=(()=>{
+  const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000;let gen=0,tm=0,last=0;
+  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription)$/;
+  const res=e=>new Response(e.text,{status:e.status,headers:e.headers});
+  const changed=()=>{clearTimeout(tm);tm=setTimeout(()=>{const c=document.getElementById('content'),a=document.activeElement;
+    if(Date.now()-last<3000||document.hidden||!c||Math.max(c.scrollTop,scrollY)>40||document.querySelector('dialog[open],.drawer.open')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
+    last=Date.now();try{render()}catch(_e){}},400)};
+  const load=(k,go,old)=>{if(F.has(k))return F.get(k);const g=gen;
+    const p=go().then(async r=>{if(!r.ok)return r;const text=await r.clone().text();
+      if(g===gen&&text.length<MAXB){const e={text,status:r.status,headers:{'content-type':r.headers.get('content-type')||'application/json','content-range':r.headers.get('content-range')||''},t:Date.now()};
+        if(!e.headers['content-range'])delete e.headers['content-range'];M.delete(k);M.set(k,e);if(M.size>MAX)M.delete(M.keys().next().value);if(old&&old.text!==text)changed()}
+      return r}).finally(()=>F.delete(k));F.set(k,p);return p};
+  return{
+    clear(){gen++;M.clear()},
+    fetch(input,init,go){let u,m;try{u=new URL(typeof input==='string'?input:input.url);m=String(init?.method||input.method||'GET').toUpperCase()}catch(_e){return go()}
+      if(!u.pathname.includes('/rest/v1/')||LIVE.test(u.pathname))return go();
+      const read=m==='GET'||(m==='POST'&&READ_RPC.test(u.pathname));
+      if(!read){gen++;M.clear();return go()}
+      const h=new Headers(init?.headers||input.headers||{}),k=[m,u.href,h.get('authorization'),h.get('range'),h.get('accept'),h.get('prefer'),typeof init?.body==='string'?init.body:''].join('|'),e=M.get(k);
+      if(e){if(Date.now()-e.t>FRESH)load(k,go,e).catch(()=>{});return Promise.resolve(res(e))}
+      return load(k,go,null).then(r=>r.ok&&M.get(k)?res(M.get(k)):r.clone())}
+  }})();
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n))}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';
 const APP_DEEP_LINK='com.mohammedsamir.halaqati://auth/callback';

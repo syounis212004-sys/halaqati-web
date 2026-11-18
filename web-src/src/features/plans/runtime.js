@@ -200,8 +200,6 @@ async function loadSmartPlanData(){
   await runSmartPlanAutoExtensions();cacheSnapshot();if(state.sessionView)setTimeout(()=>injectSmartPlanSessionWidgets(state.sessionView),0);setTimeout(()=>checkSmartPlanAlerts(),900)
 }
 
-const smartPlanBaseLoadAll=loadAll;
-loadAll=async function(forceNetwork=false){await smartPlanBaseLoadAll(forceNetwork);if(state.networkVerified&&!state.offline)await loadSmartPlanData()};
 
 const SMART_PLAN_DB_COLUMNS=new Set(['id','scope_type','halaqa_id','student_id','category_id','parent_plan_id','plan_type','review_tier','title','goal_unit','target_units','target_pages','start_date','end_date','schedule_weekdays','catch_up_weekday','max_daily_multiplier','auto_extend','quality_gate_enabled','minimum_evaluation','range_start_page','range_end_page','range_start_surah','range_start_ayah','range_end_surah','range_end_ayah','selected_surahs','selected_juz','selected_rubs','near_revision_pages','far_revision_pages','milestone_mode','milestone_requires_approval','delay_alert_days','home_prep_push','status','note','settings','revision','created_by','created_at','updated_at']);
 function cleanSmartPlanRow(row){let out={};for(let [key,value] of Object.entries(row||{}))if(SMART_PLAN_DB_COLUMNS.has(key))out[key]=value;return out}
