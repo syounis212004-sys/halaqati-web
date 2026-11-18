@@ -103,13 +103,13 @@
 .nc-arow.open{padding-bottom:10px}
 .nc-arow-d{display:grid;gap:8px;padding:4px 10px 0 0}
 .nc-arow:hover{background:color-mix(in srgb,var(--nx-surface-var) 50%,var(--card))}
-.nc-del{color:var(--st-bad-fg)}
+.nc-del{color:var(--st-bad-text)}
 .nc-compact .nc-arow{padding:8px 12px;padding-inline:12px}
 .nc-fold{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--outline);background:transparent;color:var(--green);font:600 14px Cairo,sans-serif;cursor:pointer}
 .nc-foldbody{display:grid;gap:8px;padding:4px 2px}
 .nc-lrow{display:flex;align-items:center;gap:2px;padding:6px;padding-inline:12px 6px}
 .nc-lrow b{display:block;font:600 14px/20px Cairo,sans-serif}.nc-lrow small{display:block;font:400 11px/16px Cairo,sans-serif;color:var(--muted);unicode-bidi:plaintext;text-align:start}
-.nc-act{justify-content:center}.nc-destructive{color:var(--st-bad-fg)!important;border-color:var(--st-bad-fg)!important}
+.nc-act{justify-content:center}.nc-destructive{color:var(--st-bad-text)!important;border-color:var(--st-bad-text)!important}
 .nc-revs{display:grid;gap:8px}
 .nc-rev{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:14px;border:1px solid var(--outline);background:var(--card);color:var(--ink);font:600 14px Cairo,sans-serif;cursor:pointer;text-align:start}
 .nc-rev:hover{background:var(--nx-surface-var)}

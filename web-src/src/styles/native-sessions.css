@@ -113,7 +113,7 @@ html[dir=rtl] .ns-chev svg.mi[data-mirror]{transform:none} /* Icons.Default.Chev
 .ns-del small{font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
 .ns-del-ok{font:600 12px Cairo,sans-serif;color:var(--green)}
 .ns-del-btn{justify-self:start;min-height:48px;border-radius:14px}
-.ns-del-err{margin:0;color:var(--st-bad-fg);font:400 12px/18px Cairo,sans-serif}
+.ns-del-err{margin:0;color:var(--st-bad-text);font:400 12px/18px Cairo,sans-serif}
 
 /* ---------- QuickMemorizationScreen ---------- */
 #opsQuickOverlay.ns-qo,.ops-overlay.ns-qo{padding:0;align-items:stretch;background:var(--cream,#f5f7f6);backdrop-filter:none;overflow:hidden}

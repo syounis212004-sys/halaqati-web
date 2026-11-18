@@ -7,7 +7,7 @@ body:has(.nc-community) #fab{display:none!important}
 .nc-lbl{font:600 14px/20px Cairo,sans-serif;color:var(--ink);margin-top:2px}
 .nc-h4{margin:0 0 8px;font:700 16px/24px Cairo,sans-serif}
 .nc-sm{font:400 12px/18px Cairo,sans-serif;margin:0 0 8px}
-.nc-err{color:var(--st-bad-fg);font:500 12px/18px Cairo,sans-serif;min-height:0}.nc-err:empty{display:none}
+.nc-err{color:var(--st-bad-text);font:500 12px/18px Cairo,sans-serif;min-height:0}.nc-err:empty{display:none}
 .nc-dk-only{display:none!important}
 html[data-view="desktop"] .nc-dk-only{display:grid!important}
 html[data-view="desktop"] .nc-phone-only{display:none!important}
@@ -36,7 +36,7 @@ html[data-view="desktop"] .nc-seg{max-width:360px}
 .nc-sub{display:block;font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
 .nc-cat{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;background:var(--mint);color:var(--on-primary-container,#0A4A3D);font:600 12px/18px Cairo,sans-serif;white-space:nowrap}
 .nc-acts{display:inline-flex;align-items:center;margin-inline-start:auto}
-.nc-danger{color:var(--st-bad-fg)}
+.nc-danger{color:var(--st-bad-text)}
 .nc-body{margin:0;font:500 14px/22px Cairo,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}
 .nc-meta{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
 .nc-meta2{display:inline-flex;align-items:center;gap:4px}
@@ -51,7 +51,7 @@ html[data-view="desktop"] .nc-seg{max-width:360px}
 .nc-addc{display:flex;justify-content:flex-end}
 .nc-closed{display:flex;align-items:center;gap:6px;color:var(--muted);font:500 12px/18px Cairo,sans-serif}
 .nc-cdel{display:grid;justify-items:center;gap:8px;text-align:center}
-.nc-cdel-ic{color:var(--st-bad-fg)}
+.nc-cdel-ic{color:var(--st-bad-text)}
 .nc-confirm .nx-dlg-head h3{text-align:center}
 .nc-grid .nx-chip{flex:1 1 112px;justify-content:center;min-height:44px}
 .nc-dlg .nx-dlg-content textarea{min-height:140px}
@@ -181,7 +181,7 @@ html[data-view="desktop"] .nc-nlist .nx-empty,html[data-view="desktop"] .nc-nlis
 .nc-prog .nc-row{color:var(--green)}.nc-prog b{display:block;color:var(--ink);font:700 14px Cairo,sans-serif}.nc-prog small{display:block;font:400 12px/18px Cairo,sans-serif;color:var(--muted)}.nc-prog p{margin:0;font:500 14px/20px Cairo,sans-serif}
 .nc-planbox{display:grid;gap:4px;padding:12px;border-radius:var(--nx-r-md);background:var(--mint2)}
 .nc-planbox .nc-row{color:var(--green)}.nc-planbox b{color:var(--ink);font:700 14px Cairo,sans-serif}.nc-planbox p{margin:0;font:500 14px/20px Cairo,sans-serif}
-.nc-late{color:var(--st-bad-fg);font:400 12px/18px Cairo,sans-serif}
+.nc-late{color:var(--st-bad-text);font:400 12px/18px Cairo,sans-serif}
 /* guardian — desktop: two columns */
 html[data-view="desktop"] .nc-g{max-width:1240px;margin-inline:auto;width:100%}
 html[data-view="desktop"] .nc-gsplit{grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}

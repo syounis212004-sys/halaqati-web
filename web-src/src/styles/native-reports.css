@@ -20,7 +20,7 @@
 .nr-cmp-l{flex:1;font:600 16px/24px Cairo,sans-serif}
 .nr-cmp b{font:700 14px Cairo,sans-serif}
 .nr-cmp em{font:700 13px Cairo,sans-serif;font-style:normal}
-.nr-cmp em.good{color:var(--green)}.nr-cmp em.bad{color:var(--st-bad-fg)}
+.nr-cmp em.good{color:var(--green)}.nr-cmp em.bad{color:var(--st-bad-text)}
 .nr-datebox{display:flex;align-items:center;gap:10px;min-height:54px;padding:0 14px;border:1px solid var(--outline);border-radius:999px;color:var(--green);font:600 14px Cairo,sans-serif}
 .nr-prepare{min-height:48px}
 .nr-ctl-head{display:flex;align-items:center;gap:8px;color:var(--green)}

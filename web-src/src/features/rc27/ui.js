@@ -49,25 +49,40 @@
   }
   setInterval(()=>{refreshDrawerHead();if(document.getElementById('drawer')?.classList.contains('open')&&typeof buildNav==='function')buildNav()},4000);
 
-  // RC27.25: pages opened from the side menu (notifications, settings, sync, ...) stack over the page they came from,
-  // so Back returns to it instead of the home page. Bottom-bar pages reset the stack.
+  /* Back button. A sentinel history entry sits above the base entry, so every Back press (phone button, swipe, browser) reaches the app first.
+     Order: close what is on top (dialog, menu, drawer) -> the in-page "رجوع" arrow (session, student profile...) -> the page this one was
+     opened from (pages opened from the side menu stack over their origin; bottom-bar pages reset the stack) -> the home screen -> leave. */
   const BAR=new Set(['home','sessions','students','plans','ranking','children','achievements']);
-  const stack=[];let popping=false;
+  const stack=[];let popping=false,leaving=false;
   if(typeof go==='function'){
     const baseGo=go;
     go=function(p){
       const prev=state.page;
-      if(!popping){
-        if(BAR.has(p))stack.length=0;
-        else if(prev&&prev!==p){stack.push(prev);try{history.pushState({rc27:stack.length},'')}catch(_e){}}
-      }
+      if(!popping){if(BAR.has(p))stack.length=0;else if(prev&&prev!==p)stack.push(prev)}
       return baseGo.apply(this,arguments);
     };
-    window.addEventListener('popstate',()=>{
-      if(!stack.length)return;
-      const back=stack.pop();popping=true;
-      try{go(back)}finally{popping=false}
-    });
   }
+  const arm=()=>{try{history.pushState({hl:1},'')}catch(_e){}};
+  /* Chrome skips history entries a page adds without a user gesture when Back is pressed: the sentinel is added on the first touch or key press */
+  let armed=false;
+  const armFirst=()=>{if(armed)return;armed=true;const hs=history.state&&history.state.hl;try{if(hs==null){history.replaceState({hl:0},'');arm()}else if(hs===0)arm()}catch(_e){}};
+  ['pointerdown','keydown'].forEach(t=>document.addEventListener(t,armFirst,{capture:true,once:true}));
+  const shown=e=>e.getClientRects().length>0;
+  function handleBack(){
+    const dlg=[...document.querySelectorAll('dialog[open]')].pop();if(dlg){dlg.close();return true}
+    if(document.querySelector('.nx-menu')&&window.NX&&NX.closeMenu){NX.closeMenu();return true}
+    const d=document.getElementById('drawer');
+    if(d&&d.classList.contains('open')&&document.documentElement.getAttribute('data-view')!=='desktop'){toggleDrawer(false);return true}
+    const b=[...document.querySelectorAll('#content [title="رجوع"]')].find(shown);if(b){b.click();return true}
+    if(stack.length){const back=stack.pop();popping=true;try{go(back)}finally{popping=false}return true}
+    if(state.user&&state.page!=='home'){popping=true;try{go('home')}finally{popping=false}return true}
+    return false;
+  }
+  window.addEventListener('popstate',()=>{
+    if(leaving||!armed)return;
+    if(history.state&&history.state.hl===1)return;/* a forward move onto the sentinel: nothing to do */
+    let handled=false;try{handled=handleBack()}catch(e){console.error(e)}
+    if(handled)arm();else{leaving=true;history.back()}
+  });
 
 })();

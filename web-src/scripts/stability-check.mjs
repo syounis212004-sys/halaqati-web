@@ -129,4 +129,45 @@ const bigState = () => { const id = n => `00000000-0000-4000-8000-${String(n).pa
   note(r.offline === false, `S8c a permission error during refresh does not set offline (${JSON.stringify(r)})`);
   await context.close();
 }
+{ /* S9: danger/error text is readable on the surfaces it is drawn on, in light and dark (the rc54 status tokens are solid-pill colours: white text) */
+  const { context, page } = await open('admin');
+  const CASES = [['nx-menu', '<div class="nx-menu" style="position:static;animation:none"><button class="danger">حذف</button></div>', 'button'], ['nc-err', '<span class="nc-err">خطأ</span>'], ['nh-err', '<span class="nh-err">خطأ</span>'], ['ngm-err', '<span class="ngm-err">خطأ</span>'], ['nr-pick-err', '<p class="nr-pick-err">خطأ</p>'], ['ns-del-err', '<p class="ns-del-err">خطأ</p>'], ['nc-del', '<button class="nc-del">حذف</button>'], ['nc-danger', '<button class="nc-danger">حذف</button>'], ['nc-late', '<span class="nc-late">متأخر</span>'], ['ngm-offline-red', '<span class="ngm-offline-red">x</span>'], ['ngm-reject', '<small class="ngm-reject">مرفوض</small>'], ['nr-del', '<button class="nr-del">حذف</button>'], ['nr-del-btn', '<button class="nr-del-btn">حذف</button>'], ['nr-sub.bad', '<span class="nr-sub bad">x</span>'], ['nr-sync.bad', '<span class="nr-sync bad">x</span>'], ['ns-wk-s.bad', '<i class="ns-wk-s bad">x</i>'], ['nr-cmp em.bad', '<div class="nr-cmp"><em class="bad">x</em></div>', 'em']];
+  const lum = c => { const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4) }); return .2126 * r + .7152 * g + .0722 * b };
+  const bad = [];
+  for (const dark of [false, true]) {
+    const res = await page.evaluate(({ dark, CASES }) => { document.body.classList.toggle('dark', dark); const host = document.createElement('div'); host.style.cssText = 'background:var(--card);padding:8px'; document.body.appendChild(host); const out = [];
+      for (const [name, html, sel] of CASES) { host.innerHTML = html; const el = sel ? host.querySelector(sel) : host.firstElementChild; out.push([name, getComputedStyle(el).color, getComputedStyle(host).backgroundColor]) }
+      host.innerHTML = '<div class="ngm-dlg"><button class="nx-btn nx-danger">حذف</button></div>'; const b = host.querySelector('button'); out.push(['ngm-dlg danger button', getComputedStyle(b).color, getComputedStyle(b).backgroundColor]); host.remove(); return out }, { dark, CASES });
+    for (const [name, fg, bg] of res) { const a = lum(fg), b = lum(bg), cr = (Math.max(a, b) + .05) / (Math.min(a, b) + .05); if (cr < 3) bad.push(`${name}${dark ? ' (dark)' : ''}: ${cr.toFixed(2)}`) }
+  }
+  note(bad.length === 0, `S9 danger/error text has contrast >= 3:1 on its surface in light and dark ${JSON.stringify(bad)}`);
+  await context.close();
+}
+{ /* S10: the Back button closes what is on top, then goes back one screen, and only leaves the app from the home screen */
+  const mk = async () => { const { context, page } = await open('admin'); await page.evaluate(async () => { window.__alive = 1; state.sessions = [{ id: 'se1', halaqa_id: state.halaqas[0].id, session_date: today(), session_type: 'tasmee', status: 'open', title: 'جلسة', activity_data: {} }]; state.page = 'home'; await render(); }); await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await page.waitForTimeout(800); return { context, page } };
+  const back = async page => { await page.evaluate(() => history.back()); await page.waitForTimeout(900) };
+  const alive = page => page.evaluate(() => window.__alive === 1).catch(() => false);
+  { const { context, page } = await mk(); await page.evaluate(() => toggleDrawer(true)); await page.waitForTimeout(500); await back(page);
+    const r = await page.evaluate(() => window.__alive === 1 && !document.getElementById('drawer').classList.contains('open')).catch(() => false);
+    note(r, 'S10a Back closes the open drawer and stays in the app'); await context.close(); }
+  { const { context, page } = await mk(); await page.evaluate(() => { NX.dialog('tDlg', 'اختبار', '<p>x</p>') }); await page.waitForTimeout(400); await back(page);
+    const r = await page.evaluate(() => window.__alive === 1 && !document.getElementById('tDlg').open).catch(() => false);
+    note(r, 'S10b Back closes an open dialog and stays in the app'); await context.close(); }
+  { const { context, page } = await mk(); await page.evaluate(async () => { state.page = 'sessions'; await render(); state.sessionView = 'se1'; await render(); }); await page.waitForTimeout(800); const open = await page.evaluate(() => !!document.querySelector('.nr-back')); await back(page);
+    const r = await page.evaluate(() => ({ alive: window.__alive === 1, view: state.sessionView, page: state.page })).catch(() => ({ alive: false }));
+    note(open && r.alive && !r.view && r.page === 'sessions', `S10c Back from an open session returns to the sessions list (${JSON.stringify(r)})`); await context.close(); }
+  { const { context, page } = await mk(); await page.evaluate(async () => { go('sessions') }); await page.waitForTimeout(900); await back(page);
+    const r = await page.evaluate(() => ({ alive: window.__alive === 1, page: state.page })).catch(() => ({ alive: false }));
+    note(r.alive && r.page === 'home', `S10d Back from a bottom-bar page goes to the home screen instead of leaving (${JSON.stringify(r)})`); await context.close(); }
+  { const { context, page } = await mk(); await page.evaluate(async () => { go('sessions') }); await page.waitForTimeout(700); await page.evaluate(() => go('settings')); await page.waitForTimeout(900); await back(page);
+    const r = await page.evaluate(() => ({ alive: window.__alive === 1, page: state.page })).catch(() => ({ alive: false }));
+    note(r.alive && r.page === 'sessions', `S10e Back from a menu page returns to the page it was opened from (${JSON.stringify(r)})`); await context.close(); }
+  { /* S10g: Chrome skips history entries a page adds without a user gesture when the person presses Back, so the sentinel is only added on the first touch */
+    const { context, page } = await open('admin'); await page.waitForTimeout(500);
+    const before = await page.evaluate(() => history.length); await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))); await page.waitForTimeout(300);
+    const after = await page.evaluate(() => history.length);
+    note(after === before + 1, `S10g the Back sentinel is added on the first user gesture, not at load (history ${before} -> ${after})`); await context.close(); }
+  { const { context, page } = await mk(); await back(page); const gone = !(await alive(page));
+    note(gone, 'S10f Back on the home screen with nothing open leaves the app (unchanged)'); await context.close(); }
+}
 await browser.close(); console.log(failures.length ? failures.length + ' FAILED' : 'Stability checks: all passed'); process.exit(failures.length ? 1 : 0);

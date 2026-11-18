@@ -92,7 +92,7 @@ html[dir=rtl] svg.mi[data-mirror]{transform:scaleX(-1)}
 /* menu */
 .nx-menu{position:fixed;z-index:200;min-width:210px;max-width:min(92vw,320px);padding:6px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 32px rgba(0,0,0,.22);animation:nxPop .14s ease-out}
 .nx-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 12px;border:0;background:transparent;border-radius:10px;color:var(--ink);font:500 14px Cairo,sans-serif;cursor:pointer;text-align:start}
-.nx-menu button:hover{background:var(--nx-surface-var)}.nx-menu button.danger{color:var(--st-bad-fg)}.nx-menu .sp{width:20px}
+.nx-menu button:hover{background:var(--nx-surface-var)}.nx-menu button.danger{color:var(--st-bad-text)}.nx-menu .sp{width:20px}
 @keyframes nxPop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 
 /* dialog / bottom sheet */

@@ -107,7 +107,7 @@ html[dir=rtl] .nh-fhead svg.mi{transform:none}
 .nh-srow{display:flex;align-items:center;gap:10px}
 .nh-srow-n{color:var(--green);font:700 14px Cairo,sans-serif}.nh-srow-t{flex:1;min-width:0;font:600 14px/20px Cairo,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .nh-srow span:last-child{font:500 12px/18px Cairo,sans-serif;color:var(--muted)}
-.nh-err{color:var(--st-bad-fg);font:400 12px/18px Cairo,sans-serif}
+.nh-err{color:var(--st-bad-text);font:400 12px/18px Cairo,sans-serif}
 .nh-badge{display:flex;align-items:center;gap:10px}.nh-badge>div{display:grid;flex:1;min-width:0}.nh-badge b{font:700 14px/20px Cairo,sans-serif;color:var(--ink)}.nh-badge small{font:400 12px/18px Cairo,sans-serif;color:var(--muted)}
 .nh-medal{font:700 19px/28px Cairo,sans-serif}
 .nh-next{font:600 14px/20px Cairo,sans-serif;color:var(--muted)}

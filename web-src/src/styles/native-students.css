@@ -96,7 +96,7 @@
 .ns-ctitle{gap:7px;color:var(--green)}.ns-ctitle b{color:var(--ink)}
 .ns-week{display:grid}
 .ns-wk{display:grid;grid-template-columns:72px 1fr 58px minmax(88px,auto);gap:6px;align-items:center;min-height:42px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);font:500 12px/18px Cairo,sans-serif}.ns-wk:last-child{border-bottom:0}
-.ns-wk b{font:600 12px/18px Cairo,sans-serif}.ns-wk-s{color:var(--muted);font-size:11px;line-height:16px}.ns-wk-s.ok{color:var(--green)}.ns-wk-s.bad{color:var(--st-bad-fg)}
+.ns-wk b{font:600 12px/18px Cairo,sans-serif}.ns-wk-s{color:var(--muted);font-size:11px;line-height:16px}.ns-wk-s.ok{color:var(--green)}.ns-wk-s.bad{color:var(--st-bad-text)}
 .ns-4w{display:grid;grid-template-columns:58px 1fr 72px;gap:8px;align-items:center;font:500 12px/18px Cairo,sans-serif}.ns-4w b{font-weight:500;text-align:end}
 .ns-qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ns-qa>div{display:grid;gap:5px}.ns-qa b{font:700 14px/20px Cairo,sans-serif}.ns-big{font:500 24px/32px Cairo,sans-serif}.ns-qa small{font:400 11px/16px Cairo,sans-serif;color:var(--muted)}
 .ns-reason{display:flex;align-items:flex-start;gap:7px;font:400 12px/18px Cairo,sans-serif}.ns-reason>svg{color:var(--gold)}
