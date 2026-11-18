@@ -184,7 +184,6 @@ checkSmartPlanAlerts=async function(){
 
 async function v230FullLoad(forceNetwork=false,{skipCore=false}={}){
   if(v230FullLoadPromise)return v230FullLoadPromise;
-  if(forceNetwork)HalaqatiSwr.clear();
   v230FullLoadPromise=(async()=>{
     let start=v230Now();state.v230Hydrating=true;
     try{
@@ -192,7 +191,7 @@ async function v230FullLoad(forceNetwork=false,{skipCore=false}={}){
       if(!state.networkVerified||state.offline)return false;
       /* Independent branches run together. v2.20 did these as serial stages. */
       await Promise.allSettled([v230LoadDashboardData(),loadSmartPlanData(),opsLoadOperationalData(forceNetwork),loadRoleExtras()]);
-      state.pendingSync=readOfflineQueue().length;state.v230LastFullLoadAt=Date.now();applySavedTheme();cacheSnapshot();updateSyncBadge();loadPhotoUrls();v230Mark('fullLoadMs',start);return true
+      state.pendingSync=readOfflineQueue().length;state.v230LastFullLoadAt=Date.now();try{localStorage.setItem('halaqati_full_load_'+state.user?.id,String(state.v230LastFullLoadAt))}catch(e){}applySavedTheme();cacheSnapshot();updateSyncBadge();loadPhotoUrls();v230Mark('fullLoadMs',start);return true
     }finally{state.v230Hydrating=false}
   })().finally(()=>{v230FullLoadPromise=null});return v230FullLoadPromise
 }

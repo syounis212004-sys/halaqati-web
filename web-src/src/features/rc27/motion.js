@@ -37,13 +37,15 @@
   function play(el,name,o={}){
     if(!el||!SCENES[name])return null;
     const [loop,rest]=SCENES[name],handle={anim:null,dead:false,destroy(){this.dead=true;try{this.anim&&this.anim.destroy()}catch(_e){}}};
-    const rd=reduced();
+    /* decorative scenes must not keep the CPU busy for ever: the page background is a still frame, other decorative loops play twice and rest on their still pose */
+    const still=/^(ambient|role_|empty|trophy)/.test(name),rd=reduced()||name==='ambient';
     Promise.all([ensureLottie(),loadJson(name)]).then(([lottie,data])=>{
       if(handle.dead||!el.isConnected)return;
       recolor(data,palette(!!o.onBand),null);
-      const anim=lottie.loadAnimation({container:el,renderer:'svg',loop:loop&&!rd,autoplay:!rd,animationData:data,rendererSettings:{preserveAspectRatio:'xMidYMid meet'}});
+      const anim=lottie.loadAnimation({container:el,renderer:'svg',loop:rd?false:(loop&&still?2:loop),autoplay:!rd,animationData:data,rendererSettings:{preserveAspectRatio:'xMidYMid meet'}});
       handle.anim=anim;
       if(rd){anim.addEventListener('DOMLoaded',()=>{anim.goToAndStop(Math.round(rest*anim.totalFrames),true);o.onFinished&&o.onFinished()});return}
+      if(loop&&still)anim.addEventListener('complete',()=>anim.goToAndStop(Math.round(rest*anim.totalFrames),true));
       if(!loop){let done=false;const fin=()=>{if(!done){done=true;o.onFinished&&o.onFinished()}};anim.addEventListener('enterFrame',e=>{if(e.currentTime/e.totalTime>=(o.finishAt||1))fin()});anim.addEventListener('complete',fin)}
     }).catch(()=>{o.onFinished&&o.onFinished()});
     return handle;

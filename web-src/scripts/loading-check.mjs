@@ -86,4 +86,11 @@ const READ = /^(awards|matrix|weekly|visits|supervision|observer_requests|chats|
     const w = db.from('exam_settings').update({ x: 1 }).eq('id', 'z'); const [x, y] = await Promise.all([a, b, w]); return [!!x.data, !!y.data, x.error && x.error.message, y.error && y.error.message] });
   note(r[0] && r[1], 'L6 concurrent readers both get data across a write ' + JSON.stringify(r)); await context.close();
 }
+{ /* L7: an automatic full reload and the notification cleanup do not wipe the read cache */
+  const { context, page, log } = await open('admin'); const q = tb => log.filter(x => x.m === 'GET' && x.p.startsWith(tb)).length;
+  await page.evaluate(() => db.from('exam_settings').select('*').limit(7)); const a = q('exam_settings');
+  await page.evaluate(() => db.rpc('rc27_cleanup_notifications')); await page.evaluate(() => db.from('exam_settings').select('*').limit(7)); const b = q('exam_settings');
+  await page.evaluate(() => loadAll(true)); await page.evaluate(() => db.from('exam_settings').select('*').limit(7)); const c = q('exam_settings');
+  note(a === 1 && b === 1 && c === 1, `L7 cache survives the cleanup call and a forced full reload (network ${a}->${b}->${c})`); await context.close();
+}
 await browser.close(); console.log(failures.length ? failures.length + ' FAILED' : 'Loading checks: all passed'); process.exit(failures.length ? 1 : 0);

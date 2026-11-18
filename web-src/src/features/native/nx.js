@@ -55,7 +55,7 @@
     const M=window.HalaqatiMotion;
     if(!M||M.reduced()||M.off||document.hidden||!m.animate){m.remove();return}
     m.style.pointerEvents='none';
-    const a=m.animate([{opacity:1,scale:1},{opacity:0,scale:.96}],{duration:110,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+    const a=m.animate([{opacity:1,scale:1},{opacity:0,scale:.96}],{duration:170,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
     a.onfinish=a.oncancel=()=>m.remove();setTimeout(()=>m.remove(),400);
   }
   NX.closeMenu=closeMenu;

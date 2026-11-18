@@ -28,7 +28,8 @@ window.gazaFmt=(function(){
       return !!JSON.parse(localStorage.getItem('halaqati_display_v1')||'{}').reduceMotion;
     }catch(_e){return false}
   };
-  const canVT=typeof document.startViewTransition==='function';
+  /* View Transitions freeze rendering while the (synchronous, heavy) page render runs and stack a second transition on the motion-system entrance: off for page changes */
+  const canVT=false;
   const OVERLAY=new Set(['notifications','settings','quran']);
   let prevPage=null;
 

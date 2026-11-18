@@ -315,8 +315,11 @@ let opsSkelTimer=0;
 go=function(p){
   if(p!=='sessions')state.sessionView=null;state.page=p;toggleDrawer(false);buildNav();setFab();
   clearTimeout(opsSkelTimer);
-  opsSkelTimer=setTimeout(()=>{let c=$('#content');if(c&&state.page===p&&!c.querySelector('.ops-skeleton'))c.innerHTML=opsSkeleton()},260);
-  requestAnimationFrame(()=>Promise.resolve(render()).catch(e=>{console.error(e);toast('تعذر فتح الصفحة')}).finally(()=>clearTimeout(opsSkelTimer)))
+  /* the skeleton is only for a page that has not been written yet: on a slow CPU the render can finish its DOM write and only then let the
+     timer run, and a late skeleton would overwrite the finished page for good */
+  let written=false;const c=$('#content'),mo=c&&new MutationObserver(()=>{written=true;mo.disconnect()});mo&&mo.observe(c,{childList:true});
+  opsSkelTimer=setTimeout(()=>{mo&&mo.disconnect();if(!written&&c&&state.page===p&&!c.querySelector('.ops-skeleton'))c.innerHTML=opsSkeleton()},260);
+  requestAnimationFrame(()=>Promise.resolve(render()).catch(e=>{console.error(e);toast('تعذر فتح الصفحة')}).finally(()=>{clearTimeout(opsSkelTimer);mo&&mo.disconnect()}))
 };
 
 /* Halaqati v2.19.2 — HQ PDF hotfix

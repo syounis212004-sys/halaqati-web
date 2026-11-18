@@ -382,13 +382,14 @@ for (const cfg of [{ name: 'v2-mobile', width: 390, height: 844 }, { name: 'v2-d
   /* 1. page change keeps the real old page on screen (no skeleton flash) and crossfades into the new one */
   const pc = await page.evaluate(async () => {
     go('home'); await new Promise(r => setTimeout(r, 1200));
-    const c = document.getElementById('content'); const oldFirst = c.firstElementChild; let skel = 0, oldStillThere = 0, frames = 0;
+    const c = document.getElementById('content'); const oldFirst = c.firstElementChild; let skel = 0, oldStillThere = 0, blank = 0, frames = 0;
     go('halaqas');
-    await new Promise(res => { let n = 0; const t = () => { frames++; if (c.querySelector('.ops-skeleton')) skel++; if (c.contains(oldFirst)) oldStillThere++; if (++n < 30) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
-    return { skel, oldStillThere, frames, page: state.page };
+    await new Promise(res => { let n = 0; const t = () => { frames++; if (c.querySelector('.ops-skeleton')) skel++; if (c.contains(oldFirst)) oldStillThere++; if (!c.firstElementChild) blank++; if (++n < 30) requestAnimationFrame(t); else res(); }; requestAnimationFrame(t); });
+    return { skel, oldStillThere, blank, frames, page: state.page };
   });
   note(pc.skel === 0, `${cfg.name}: navigating never flashes the loading skeleton on a fast page (skeleton frames=${pc.skel}/${pc.frames})`);
-  note(pc.oldStillThere >= 1, `${cfg.name}: the previous page stays until the new one is ready (frames with old content=${pc.oldStillThere})`);
+  /* with View Transitions gone the swap is one write inside one frame: the old page stays until then, and no frame is ever blank */
+  note(pc.blank === 0, `${cfg.name}: the screen is never blank between the old page and the new one (blank frames=${pc.blank}/${pc.frames})`);
 
   /* 2. slow render still gets a skeleton after the grace period */
   const slow = await page.evaluate(async () => {

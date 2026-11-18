@@ -243,7 +243,7 @@ function enterPage(content, page, pageChanged) {
     return;
   }
   const targets = collectBlocks(content);
-  const step = Math.min(34, 230 / Math.max(1, targets.length)); /* calm and quick: the whole cascade stays under ~0.25s */
+  const step = Math.min(55, 420 / Math.max(1, targets.length)); /* unhurried: the whole cascade stays under ~0.45s */
   enterAnims = targets.map((el, i) => el.animate(
     [{ opacity: 0, transform: `translateY(${T.dist}px)` }, { opacity: 1, transform: 'none' }],
     { duration: T.slow * 1000, delay: i * step, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' },

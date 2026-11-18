@@ -33,7 +33,7 @@ function halaqatiPagedFetch(input,init){
    shortcut: memory only (cleared on reload), upgrade to IndexedDB if cold starts need it. */
 const HalaqatiSwr=(()=>{
   const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000;let gen=0,tm=0,last=0;
-  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription)$/;
+  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts)$/,KEEP=/\/rpc\/rc27_cleanup_notifications$/;
   const res=e=>new Response(e.text,{status:e.status,headers:e.headers});
   const changed=()=>{clearTimeout(tm);tm=setTimeout(()=>{const c=document.getElementById('content'),a=document.activeElement;
     if(Date.now()-last<3000||document.hidden||!c||Math.max(c.scrollTop,scrollY)>40||document.querySelector('dialog[open],.drawer.open')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
@@ -48,11 +48,14 @@ const HalaqatiSwr=(()=>{
     fetch(input,init,go){let u,m;try{u=new URL(typeof input==='string'?input:input.url);m=String(init?.method||input.method||'GET').toUpperCase()}catch(_e){return go()}
       if(!u.pathname.includes('/rest/v1/')||LIVE.test(u.pathname))return go();
       const read=m==='GET'||(m==='POST'&&READ_RPC.test(u.pathname));
-      if(!read){gen++;M.clear();return go()}
+      if(KEEP.test(u.pathname))return go();if(!read){gen++;M.clear();return go()}
       const h=new Headers(init?.headers||input.headers||{}),k=[m,u.href,h.get('authorization'),h.get('range'),h.get('accept'),h.get('prefer'),typeof init?.body==='string'?init.body:''].join('|'),e=M.get(k);
       if(e){if(Date.now()-e.t>FRESH)load(k,go,e).catch(()=>{});return Promise.resolve(res(e))}
       return load(k,go,null).then(r=>r.ok&&M.get(k)?res(M.get(k)):r.clone())}
   }})();
+/* Automatic refreshes (coming back to the app, going online, launch) only run when the last full load is older than 5 minutes.
+   User actions (pull-to-refresh, the refresh button, saving) are not limited by this. */
+function autoRefreshDue(){let t=state.v230LastFullLoadAt||0;if(!t)try{t=Number(localStorage.getItem('halaqati_full_load_'+state.user?.id))||0}catch(_e){}return Date.now()-t>300000}
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n))}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';

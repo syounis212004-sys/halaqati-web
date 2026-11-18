@@ -289,7 +289,7 @@ async function boot(user=null){
     $('#pendingPanel').classList.add('hidden');
     showApp();
     updateSyncBadge();
-    setTimeout(()=>refreshFromServer({renderAfter:true}),60);
+    if(autoRefreshDue())setTimeout(()=>refreshFromServer({renderAfter:true}),60);
     return
   }
 

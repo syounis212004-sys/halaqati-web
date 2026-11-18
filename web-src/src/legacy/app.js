@@ -240,7 +240,7 @@ $('#planForm').addEventListener('submit',async e=>{e.preventDefault();let ym=$('
 
 
 window.addEventListener('offline',()=>{state.networkVerified=false;state.offline=true;updateSyncBadge();if(state.user){cacheSnapshot();toast('انقطع الإنترنت — العمل مستمر محلياً وسيتم رفع البيانات لاحقاً')}});
-async function recoverConnectionAndSync(){if(!state.user||!(await internetReachable(true)))return;state.offline=false;updateSyncBadge();if(!(await ensureServerAuthSession({silent:true}))){updateSyncBadge();return}if(readOfflineQueue().length)await syncOfflineQueue();if(!readOfflineQueue().length)await refreshFromServer({renderAfter:true})}
+async function recoverConnectionAndSync(){if(!state.user||!(await internetReachable(true)))return;state.offline=false;updateSyncBadge();if(!(await ensureServerAuthSession({silent:true}))){updateSyncBadge();return}if(readOfflineQueue().length)await syncOfflineQueue();if(!readOfflineQueue().length&&autoRefreshDue())await refreshFromServer({renderAfter:true})}
 window.addEventListener('online',()=>{setTimeout(recoverConnectionAndSync,300)});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.user)setTimeout(recoverConnectionAndSync,120)});
 
