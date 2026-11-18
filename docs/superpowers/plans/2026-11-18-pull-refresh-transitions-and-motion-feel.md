@@ -81,7 +81,53 @@ Interaction feedback stays immediate: the press floor is still reached within 12
 ### Backlog from the previous plan (not started)
 Scoped refresh instead of the full `loadAll` after a save (26 requests), `updated_at` deltas, shared `HM.swap/list/tabs/sheet` components, IndexedDB-backed read cache.
 
+## Addendum — second report (same day): stuck skeleton, frozen drawer click, refetch on resume, decorative CPU
+
+User report with screenshots: data re-downloads although the app was never left; tapping a drawer row "hangs", opens strangely, the page is heavy, and the direction the page appears from looks wrong; two screens (الطلاب, الخطط الذكية) show a 2x2 grey skeleton.
+
+### E5. Stuck skeleton = a race in my own `go()` (introduced in 2.91.4, REPRODUCED)
+`features/operations/runtime.js` `go()` arms `setTimeout(... c.innerHTML = opsSkeleton(), 260)` and clears it in `.finally` of `render()`. When the render's synchronous work is long (weak CPU), the timer callback runs **after the real page was written but before `.finally`** (render still awaits two frames), checks only `state.page === p` and no `.ops-skeleton`, and **overwrites the finished page with the skeleton**. Nothing re-renders, so the skeleton stays.
+Reproduced: drawer -> الطلاب, 800 students, CPU 4x: after 7 s `#content` is `<div class="ops-skeleton">` (0 `.nst-card`); same run at CPU 1x: 60 `.nst-card` after 300 ms. The `ops-skeleton` has exactly 4 blocks = the 2x2 grid in the screenshots.
+
+### E6. Drawer row tap freezes the screen, then shows the old page ghosting under the skeleton (REPRODUCED by film, CPU 4x)
+Filmstrip (129 frames) of tapping "الطلاب" in the open drawer: 131 ms -> 1062 ms **no new frame is painted, the drawer stays open on screen**; then the old page appears with the drawer gone; at 1232 ms the title changes to الطلاب while the previous page is still fading out as a ghost and the skeleton blocks fade in; the list is still not there at 2.8 s (E5).
+Cause, in `features/rc54/motion.js`: page changes use `document.startViewTransition`. While the update callback runs the browser **suppresses rendering**; the callback runs `baseRender` synchronously (`run()` -> heavy synchronous HTML build) before the `Promise.race([contentChanged(320), w])` cap can apply, so the "never freeze the screen" cap does not work for synchronous work. The drawer's close animation is stuck behind the same frozen frame.
+There are **two stacked page transitions**: rc54 (`#content{view-transition-name:hl-page}`, `hlOut/hlIn`, `data-vt` start/end/up with `--hl-x:±26px`; `motion.css` overrides it with a 160 ms fade) and the motion-system cascade (`html.hm-pre #content>*{opacity:0}` then children arrive `translateX(--hm-start*14px)`). The page therefore fades as a layer, then its blocks appear again one by one.
+Direction: both layers bring content from the **right** (`--hm-start:+1` in RTL, `data-vt="start"`). In an RTL app forward navigation enters from the **left**; top-level destinations (drawer rows, bottom bar) are not forward/back at all and should use a fade-through (no horizontal travel). This matches "the page appears in a strange direction".
+
+### E7. Why data downloads again (code + measurement)
+- Screen changes do **not** fetch (go(students/plans/sessions/home) = 0-1 requests, measured).
+- `legacy/app.js:245`: every `visibilitychange -> visible` and every `online` event runs `recoverConnectionAndSync` -> `refreshFromServer` -> `loadAll(true)` (30 requests, 25 endpoints). Also `auth/runtime.js:292`: every launch schedules the same refresh 60 ms after the cached shell paints. No freshness window, no change detection.
+- My 2.91.8 `v230FullLoad` calls `HalaqatiSwr.clear()` on every forced load, so each automatic refresh (resume/online/launch) **wipes the read cache**, and the next visits refetch. The cache should be cleared only by a user-initiated refresh or by a write.
+- Measured (mock): app hidden->visible: 1 request here only because the mock health check fails; `online`: 6 requests; a real device with a healthy connection runs the full load.
+
+### E8. Decorative Lottie keeps the CPU busy and slows every screen (MEASURED)
+`rc27/motion.js` plays looping Lottie scenes (`ambient` page background `#rc27PageAmbient`, drawer role art, empty states) with the SVG renderer, forever.
+Idle home screen, 4 s, CPU 4x: only 34% idle; Lottie functions + `setAttribute` ~ 1 s of 4.7 s (~21%), plus 42% native "program" time (style/layout/paint). During the drawer->الطلاب click (6.2 s sampled): Lottie + `setAttribute` ~ 1.2 s (~20%), `normalizeNameJs` 226 ms (recomputed per student per render in `plans/runtime.js:315`), a MutationObserver callback in the motion bundle 144 ms, `getClientRects` 95 ms.
+
+### E9. Smaller findings from the same review
+- `go()` closes the drawer, rebuilds the nav (`buildNav`, drawer FLIP via `paintDrawer(force)`), and starts the render in the same tick: all the work lands on the frame where the drawer should animate.
+- `chromeTick` intervals exist in two files (`rc27/motion.js:198`, `native/tools.js:147`) plus other 1.5-3 s timers (`rc27/desktop.js`, `rc27/ui.js`): small, constant wake-ups (unverified cost).
+- The RC50 delayed-skeleton added in 2.91.8 is safe from E5 (cleared in the same microtask continuation as the render), but the same pattern should be shared instead of copied.
+
+### Revised plan (one release, in this order; each task: failing check first)
+**A. Correctness (stability)**
+1. `go()` skeleton race: arm the skeleton only if `#content` has not been written since `go()` started (clear the timer on the first childList mutation of `#content`, or compare a render token); drop it when the page renders in < 260 ms. Check: CPU 4x, 800 students, drawer tap -> `#content` never ends as `.ops-skeleton`; RED on 2.91.8.
+2. Refresh gesture (Task 1 above).
+3. Refresh policy: skip the automatic refresh on resume/online/launch if the last full load is < 5 min old; automatic refreshes must not clear the cache (revalidate and re-render only if the payload differs); only pull-to-refresh/refresh button/writes clear. Check: hide/show and `online` within the window = 0 requests; after the window = revalidation only.
+**B. Transition**
+4. One page-transition layer: stop using `startViewTransition` for page changes (rc54 `canVT=false` or remove), keep the motion-system entrance; top-level destinations use a fade-through (opacity + 8 px vertical, no horizontal), drill-down uses an RTL-mirrored axis (enters from the left). Close the drawer first (let its 220-260 ms transition run), then render in the next frame. Check: film + frame gaps: no gap > 120 ms between tap and drawer movement at CPU 4x; direction assertion per route type.
+**C. Weak-device cost**
+5. Lottie: static `ambient` (or paused unless idle and visible), drawer art plays once, all loops pause when `document.hidden`/offscreen; target idle CPU at 4x back above 70% idle. Check: idle profile before/after.
+6. `content-visibility:auto` on `.nst-card`; memoize `normalizeNameJs`; defer non-visible cards (Task 4 above).
+**D. Feel**
+7. Pace tokens, press depth, `summary` press (Tasks 2-3 above).
+**E. Separate release (needs server verification)**
+8. Change detection instead of full reload: per-table `max(updated_at)`/count probe compared with stored marks, refetch only changed tables. First verify which tables have `updated_at` and RLS-safe aggregate access. Scoped refresh after saves.
+
 ## Review focus
+- The skeleton guard must never leave a page blank when a render fails (error card still shown).
+- Without View Transitions the old page must not flash: keep `hm-pre` hiding until the new blocks are ready.
 - Pull gesture on every other inner scroller (tables, long lists inside dialogs) and in RTL.
 - Slower tokens must not make the app feel laggy on interaction: keep press and focus feedback <= 120 ms.
 - `content-visibility` and anchor/scroll restoration on the students list.
