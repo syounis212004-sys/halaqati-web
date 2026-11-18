@@ -23,6 +23,12 @@
 5. Motion contract (`motion.css`) is a class list; of 9,248 visible interactive elements in the inventory, ~7,850 are outside it (drawer rows `dtile`, `d86-fav`, section headers, bell, sync badge, `h86-more`, `ns-ib`, `dn-plus`, presets, student cards...). The donor/support layer (`dn-btn`, `dn-seg`, `dn-pills`, `dn-card`, `d86-donor`) has 0 rules.
 6. Service worker is `registerType: 'prompt'`, `skipWaiting: false`: a device keeps the old build until the update prompt is accepted. **Unverified** as a cause of "no smooth motion"; check what build the user's device runs.
 
+## Measured (2026-11-18, production build 2.91.7, mocked network at 700 ms per request, 390x844)
+- RC50 pages for admin (13): 8 show the skeleton for the whole network time on **every** visit (awards, matrix, weekly, visits 1.4 s, supervision 1.4 s, observer_requests, chats, exams: ~704-1447 ms); 5 are cached (support, team, org, insights, staff: 0 ms on the 2nd visit). First visits: 720-1440 ms of skeleton on 11 of 13.
+- One `loadAll(true)`: 30 requests (25 distinct endpoints) = 3.5 s at 700 ms latency. The `loadAll()` that follows every save/delete: 26 requests = 4.3 s. (12 students in the mock; real students are paged by 100.)
+- `cacheSnapshot()` under 4x CPU: ~255-433 ms per call with 1,500 students + 120 sessions + 10,000 attendance rows (2.8 MB); 3 ms with a small state. One call per `loadAll`. So item 3 above matters for large organisations only.
+- Press response (mouse held down, computed scale): responds: notification bell, `h86-more`, mobile-nav buttons, `.menu-btn`, `.dn-btn`. Does NOT respond: student card (`nst-card-main`), support tabs (`.dn-seg button`), drawer rows (`dtile`), favourite star (`d86-fav`), drawer section headers (`d86-gh`), logout. The earlier "85% of elements are outside the contract" was by class name and overstated; by measurement the non-responding groups are the ones above (drawer rows are ~5,800 of the inventory's instances because the drawer repeats on every page). Controls not present in the mock data (`.nx-btn`, `.ns-ib`, `.dn-pills`, `.d86-donor`...) were not measured.
+
 ## Tasks
 
 ### Task 1: One data layer — `HalaqatiData.swr`
