@@ -112,89 +112,97 @@ import { installSmartPlansEngine } from './features/plans/engine.js';
 const base = import.meta.env.BASE_URL;
 window.HALAQATI_WEB_VERSION=webVersion;
 
-async function boot() {
-  installSmartPlansEngine(window);
-  // v2.14: open the durable IndexedDB layer before any classic runtime restores cached data.
-  await installHalaqatiOfflineStore();
+/* Boot scripts in execution order (they share globals, so the order is part of the contract). [url, element id, optional]
+   Every URL is fetched in parallel (preload) while execution below stays strictly sequential: one network round trip, not one per script. */
+const BOOT_SCRIPTS = [
   // Only true boot dependencies are loaded before the legacy runtime.
-  await loadClassicScript(`${base}core/supabase-2.min.js`, { id: 'halaqati-core-supabase' });
+  [`${base}core/supabase-2.min.js`, 'halaqati-core-supabase'],
   // Quran layout metadata is optional; the legacy runtime already has a fallback.
-  try { await loadClassicScript(`${base}core/quran-layout.js`, { id: 'halaqati-core-quran-layout' }); } catch (e) { console.warn(e); }
-
+  [`${base}core/quran-layout.js`, 'halaqati-core-quran-layout', true],
   // Phase 3: load the classic-compatible modules in dependency order. They share the
   // same global lexical environment as the old single file, preserving existing behavior.
-  await loadClassicScript(rc27DataUrl, { id: 'halaqati-complete-data' });
-  await loadClassicScript(sessionServerUrl, { id: 'halaqati-session-server' });
-  await loadClassicScript(coreRuntimeUrl, { id: 'halaqati-core-runtime' });
-  await loadClassicScript(latinDigitsRuntimeUrl, { id: 'halaqati-latin-digits-runtime' });
-  await loadClassicScript(navigationRuntimeUrl, { id: 'halaqati-navigation-runtime' });
-  await loadClassicScript(authRuntimeUrl, { id: 'halaqati-auth-runtime' });
-  await loadClassicScript(masterDataRuntimeUrl, { id: 'halaqati-master-data-runtime' });
-  await loadClassicScript(studentsRuntimeUrl, { id: 'halaqati-students-runtime' });
-  await loadClassicScript(sessionsRuntimeUrl, { id: 'halaqati-sessions-runtime' });
-  await loadClassicScript(settingsRuntimeUrl, { id: 'halaqati-settings-runtime' });
-  await loadClassicScript(legacyUrl, { id: 'halaqati-legacy-runtime' });
+  [rc27DataUrl, 'halaqati-complete-data'],
+  [sessionServerUrl, 'halaqati-session-server'],
+  [coreRuntimeUrl, 'halaqati-core-runtime'],
+  [latinDigitsRuntimeUrl, 'halaqati-latin-digits-runtime'],
+  [navigationRuntimeUrl, 'halaqati-navigation-runtime'],
+  [authRuntimeUrl, 'halaqati-auth-runtime'],
+  [masterDataRuntimeUrl, 'halaqati-master-data-runtime'],
+  [studentsRuntimeUrl, 'halaqati-students-runtime'],
+  [sessionsRuntimeUrl, 'halaqati-sessions-runtime'],
+  [settingsRuntimeUrl, 'halaqati-settings-runtime'],
+  [legacyUrl, 'halaqati-legacy-runtime'],
   // Smart plans are additive and intentionally load after legacy overrides.
-  await loadClassicScript(planHealthUrl, { id: 'halaqati-native-plan-health' });
-  await loadClassicScript(smartPlansRuntimeUrl, { id: 'halaqati-smart-plans-runtime' });
+  [planHealthUrl, 'halaqati-native-plan-health'],
+  [smartPlansRuntimeUrl, 'halaqati-smart-plans-runtime'],
   // v2.42 parent dashboard/ranking layer depends on smart-plan calculations.
-  await loadClassicScript(guardianRuntimeUrl, { id: 'halaqati-guardian-v242-runtime' });
-  await loadClassicScript(notificationsRuntimeUrl, { id: 'halaqati-notifications-runtime' });
+  [guardianRuntimeUrl, 'halaqati-guardian-v242-runtime'],
+  [notificationsRuntimeUrl, 'halaqati-notifications-runtime'],
   // Reports/PDF keeps the Arabic-safe HQ rendering path; v2.40 only adds auto-fit table layout before capture.
-  await loadClassicScript(reportsRuntimeUrl, { id: 'halaqati-reports-runtime' });
+  [reportsRuntimeUrl, 'halaqati-reports-runtime'],
   // v2.19 Operations Suite loads after all page/report overrides so it can isolate tracks and add safety.
-  await loadClassicScript(operationsRuntimeUrl, { id: 'halaqati-operations-runtime' });
+  [operationsRuntimeUrl, 'halaqati-operations-runtime'],
   // v2.30 Performance Core is deliberately final so it optimizes the composed v2.20 runtime without deleting legacy behavior.
-  await loadClassicScript(performanceRuntimeUrl, { id: 'halaqati-performance-runtime' });
+  [performanceRuntimeUrl, 'halaqati-performance-runtime'],
   // v2.40 Live Halaqa is last functional layer: it owns the daily workflow and robust quick-memorization entry points.
-  await loadClassicScript(liveHalaqaRuntimeUrl, { id: 'halaqati-live-halaqa-runtime' });
+  [liveHalaqaRuntimeUrl, 'halaqati-live-halaqa-runtime'],
   // v2.40.8 saves the exact Chromium print layout directly to Downloads without Print Spooler; system printing remains isolated.
-  await loadClassicScript(vectorPdfRuntimeUrl, { id: 'halaqati-vector-pdf-runtime' });
+  [vectorPdfRuntimeUrl, 'halaqati-vector-pdf-runtime'],
   // v2.41 manual local certificate center uses the same stable Chromium vector engine.
-  await loadClassicScript(certificatePdfUrl, { id: 'halaqati-arabic-certificate-pdf' });
-  await loadClassicScript(certificateServerUrl, { id: 'halaqati-certificate-server' });
-  await loadClassicScript(certificatesRuntimeUrl, { id: 'halaqati-certificates-runtime' });
+  [certificatePdfUrl, 'halaqati-arabic-certificate-pdf'],
+  [certificateServerUrl, 'halaqati-certificate-server'],
+  [certificatesRuntimeUrl, 'halaqati-certificates-runtime'],
   // Startup stays last so every function/override is present before auth restoration begins.
-  await loadClassicScript(nativeIconsUrl, { id: 'halaqati-native-icons' });
-  await loadClassicScript(nativeNxUrl, { id: 'halaqati-native-nx' });
-  await loadClassicScript(rc27RuntimeUrl, { id: 'halaqati-rc27-runtime' });
-  await loadClassicScript(rc27ScopeUrl, { id: 'halaqati-rc27-scope' });
-  await loadClassicScript(rc27ProgramsUrl, { id: 'halaqati-rc27-programs' });
-  await loadClassicScript(rc27IconsUrl, { id: 'halaqati-rc27-icons' });
-  await loadClassicScript(rc27UiUrl, { id: 'halaqati-rc27-ui' });
-  await loadClassicScript(rc27PhasesUrl, { id: 'halaqati-rc27-phases' });
-  await loadClassicScript(rc27PlansUrl, { id: 'halaqati-rc27-plans' });
-  await loadClassicScript(rc27MotionUrl, { id: 'halaqati-rc27-motion' });
-  await loadClassicScript(rc27DashboardUrl, { id: 'halaqati-rc27-dashboard' });
-  await loadClassicScript(rc27InsightsUrl, { id: 'halaqati-rc27-insights' });
-  await loadClassicScript(rc27GuardianUrl, { id: 'halaqati-rc27-guardian' });
-  await loadClassicScript(rc27DesktopUrl, { id: 'halaqati-rc27-desktop' });
-  await loadClassicScript(nativeSessionsUrl, { id: 'halaqati-native-sessions' });
-  await loadClassicScript(nativeRosterUrl, { id: 'halaqati-native-roster' });
-  await loadClassicScript(nativeStudentsUrl, { id: 'halaqati-native-students' });
-  await loadClassicScript(nativePlansUrl, { id: 'halaqati-native-plans' });
-  await loadClassicScript(nativeManagementUrl, { id: 'halaqati-native-management' });
-  await loadClassicScript(nativeReportsUrl, { id: 'halaqati-native-reports' });
-  await loadClassicScript(nativeToolsUrl, { id: 'halaqati-native-tools' });
-  await loadClassicScript(nativePhasesUrl, { id: 'halaqati-native-phases' });
-  await loadClassicScript(nativeCommunityUrl, { id: 'halaqati-native-community' });
-  await loadClassicScript(nativeCertificatesUrl, { id: 'halaqati-native-certificates' });
-  await loadClassicScript(nativeHomeUrl, { id: 'halaqati-native-home' });
-  await loadClassicScript(nativeApprovalsUrl, { id: 'halaqati-native-approvals' });
-  await loadClassicScript(rc50RuntimeUrl, { id: 'halaqati-rc50-runtime' });
-  await loadClassicScript(rc50DonorUrl, { id: 'halaqati-rc50-donor' });
-  await loadClassicScript(rc50AdminUrl, { id: 'halaqati-rc50-admin' });
-  await loadClassicScript(rc50ShellUrl, { id: 'halaqati-rc50-shell' });
-  await loadClassicScript(rc52SpanUrl, { id: 'halaqati-rc52-span' });
-  await loadClassicScript(rc52RuntimeUrl, { id: 'halaqati-rc52-runtime' });
-  await loadClassicScript(rc52StaffUrl, { id: 'halaqati-rc52-staff' });
-  await loadClassicScript(rc53RuntimeUrl, { id: 'halaqati-rc53-runtime' });
-  await loadClassicScript(rc54MotionUrl, { id: 'halaqati-rc54-motion' });
-  await loadClassicScript(rc54ChatUrl, { id: 'halaqati-rc54-chat' });
-  await loadClassicScript(rc66ExamsUrl, { id: 'halaqati-rc66-exams' });
-  await loadClassicScript(rc85PortalUrl, { id: 'halaqati-rc85-portal' });
-  await loadClassicScript(rc86ParityUrl, { id: 'halaqati-rc86-parity' });
-  await loadClassicScript(startupRuntimeUrl, { id: 'halaqati-startup-runtime' });
+  [nativeIconsUrl, 'halaqati-native-icons'],
+  [nativeNxUrl, 'halaqati-native-nx'],
+  [rc27RuntimeUrl, 'halaqati-rc27-runtime'],
+  [rc27ScopeUrl, 'halaqati-rc27-scope'],
+  [rc27ProgramsUrl, 'halaqati-rc27-programs'],
+  [rc27IconsUrl, 'halaqati-rc27-icons'],
+  [rc27UiUrl, 'halaqati-rc27-ui'],
+  [rc27PhasesUrl, 'halaqati-rc27-phases'],
+  [rc27PlansUrl, 'halaqati-rc27-plans'],
+  [rc27MotionUrl, 'halaqati-rc27-motion'],
+  [rc27DashboardUrl, 'halaqati-rc27-dashboard'],
+  [rc27InsightsUrl, 'halaqati-rc27-insights'],
+  [rc27GuardianUrl, 'halaqati-rc27-guardian'],
+  [rc27DesktopUrl, 'halaqati-rc27-desktop'],
+  [nativeSessionsUrl, 'halaqati-native-sessions'],
+  [nativeRosterUrl, 'halaqati-native-roster'],
+  [nativeStudentsUrl, 'halaqati-native-students'],
+  [nativePlansUrl, 'halaqati-native-plans'],
+  [nativeManagementUrl, 'halaqati-native-management'],
+  [nativeReportsUrl, 'halaqati-native-reports'],
+  [nativeToolsUrl, 'halaqati-native-tools'],
+  [nativePhasesUrl, 'halaqati-native-phases'],
+  [nativeCommunityUrl, 'halaqati-native-community'],
+  [nativeCertificatesUrl, 'halaqati-native-certificates'],
+  [nativeHomeUrl, 'halaqati-native-home'],
+  [nativeApprovalsUrl, 'halaqati-native-approvals'],
+  [rc50RuntimeUrl, 'halaqati-rc50-runtime'],
+  [rc50DonorUrl, 'halaqati-rc50-donor'],
+  [rc50AdminUrl, 'halaqati-rc50-admin'],
+  [rc50ShellUrl, 'halaqati-rc50-shell'],
+  [rc52SpanUrl, 'halaqati-rc52-span'],
+  [rc52RuntimeUrl, 'halaqati-rc52-runtime'],
+  [rc52StaffUrl, 'halaqati-rc52-staff'],
+  [rc53RuntimeUrl, 'halaqati-rc53-runtime'],
+  [rc54MotionUrl, 'halaqati-rc54-motion'],
+  [rc54ChatUrl, 'halaqati-rc54-chat'],
+  [rc66ExamsUrl, 'halaqati-rc66-exams'],
+  [rc85PortalUrl, 'halaqati-rc85-portal'],
+  [rc86ParityUrl, 'halaqati-rc86-parity'],
+  [startupRuntimeUrl, 'halaqati-startup-runtime'],
+];
+
+async function boot() {
+  installSmartPlansEngine(window);
+  BOOT_SCRIPTS.forEach(([href]) => { const l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = href; document.head.appendChild(l); });
+  // v2.14: open the durable IndexedDB layer before any classic runtime restores cached data.
+  await installHalaqatiOfflineStore();
+  for (const [src, id, optional] of BOOT_SCRIPTS) {
+    if (optional) { try { await loadClassicScript(src, { id }); } catch (e) { console.warn(e); } } else await loadClassicScript(src, { id });
+  }
   installReportLazyLoading();
   installImportLazyLoading();
   registerHalaqatiPwa();
