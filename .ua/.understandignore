@@ -83,3 +83,6 @@ web-src/package-lock.json
 *.png
 *.svg
 docs/KNOWLEDGE_GRAPH_AR.md
+.codex/
+.agents/
+AGENTS.md

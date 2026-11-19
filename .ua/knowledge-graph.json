@@ -23,11 +23,12 @@
       "GitHub Actions"
     ],
     "description": "حلقاتي — تطبيق ويب عربي (RTL) لإدارة حلقات تحفيظ القرآن، مبني بـ Vite وCapacitor مع خلفية Supabase. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
-    "analyzedAt": "2026-11-19T10:50:52.511Z",
-    "gitCommitHash": "447935011929eb9221853c75cb7dcf5deb14f563",
+    "analyzedAt": "2026-11-19T11:56:51.666Z",
+    "gitCommitHash": "30ddee6ab62c03bd7489d6d8d38f3cbf83fbfa25",
     "enrichment": {
       "tool": ".ua/tools/enrich-graph.mjs",
       "stats": {
+        "tool_confirmed": 130,
         "reads_from": 175,
         "rpc_calls": 101,
         "writes_to": 62,
@@ -77,22 +78,6 @@
         "utility"
       ],
       "complexity": "moderate"
-    },
-    {
-      "id": "file:web-src/src/core/motion-system.js",
-      "type": "file",
-      "name": "motion-system.js",
-      "filePath": "web-src/src/core/motion-system.js",
-      "summary": "نظام الحركة الموحّد: دخول الصفحات المتدرج، عدّ الأرقام، مؤشر التنقل، رسم علامة النجاح وزخرفة الدخول بـ GSAP مع دعم تقليل الحركة، ويعرض window.HalaqatiMotion.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation",
-        "accessibility",
-        "entry-point"
-      ],
-      "complexity": "complex",
-      "languageNotes": "يستخدم GSAP وDrawSVGPlugin عبر ES imports ويربط نفسه بدورة render() العامة وحدث halaqati:ready."
     },
     {
       "id": "file:web-src/src/core/offline-store.js",
@@ -207,445 +192,6 @@
       "complexity": "simple"
     },
     {
-      "id": "function:web-src/src/core/motion-system.js:settle",
-      "type": "function",
-      "name": "settle",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        33,
-        40
-      ],
-      "summary": "ينهي كل الحركات الجارية إلى حالتها النهائية حتى لا تبقى transforms أو opacity عالقة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:sec",
-      "type": "function",
-      "name": "sec",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        17,
-        21
-      ],
-      "summary": "يقرأ قيمة token زمنية من متغير CSS ويحوّلها إلى ثوانٍ مع قيمة احتياطية.",
-      "tags": [
-        "motion",
-        "tokens",
-        "css-vars"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "function",
-      "name": "tokens",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        22,
-        25
-      ],
-      "summary": "يجمع tokens المدة والمسافة والتتابع من متغيرات --hm-* في CSS.",
-      "tags": [
-        "motion",
-        "tokens"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:animateNumber",
-      "type": "function",
-      "name": "animateNumber",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        53,
-        72
-      ],
-      "summary": "يحرّك رقماً من قيمة إلى أخرى مع وحدة اختيارية.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:runCounters",
-      "type": "function",
-      "name": "runCounters",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        74,
-        91
-      ],
-      "summary": "يشغّل عدّادات الأرقام على عناصر الصفحة المرئية.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:snapshotChips",
-      "type": "function",
-      "name": "snapshotChips",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        115,
-        124
-      ],
-      "summary": "يلتقط مواضع الشرائح chips قبل إعادة الرسم.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:playChips",
-      "type": "function",
-      "name": "playChips",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        126,
-        142
-      ],
-      "summary": "يشغّل حركة انتقال الشرائح من مواضعها السابقة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:snapshotKeyed",
-      "type": "function",
-      "name": "snapshotKeyed",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        144,
-        156
-      ],
-      "summary": "يلتقط مواضع الكتل ذات المفاتيح لحركة FLIP.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:playSameRender",
-      "type": "function",
-      "name": "playSameRender",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        158,
-        201
-      ],
-      "summary": "يقارن اللقطة بالرسم الجديد ويحرّك الكتل المتطابقة بانسيابية.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:adornEmpty",
-      "type": "function",
-      "name": "adornEmpty",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        205,
-        213
-      ],
-      "summary": "يضيف زخرفة للحالات الفارغة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:collectBlocks",
-      "type": "function",
-      "name": "collectBlocks",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        219,
-        231
-      ],
-      "summary": "يجمع كتل الصفحة القابلة للحركة المتدرجة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:enterPage",
-      "type": "function",
-      "name": "enterPage",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        235,
-        253
-      ],
-      "summary": "ينفّذ حركة دخول متدرجة للصفحة بعد الرسم.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installRender",
-      "type": "function",
-      "name": "installRender",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        259,
-        303
-      ],
-      "summary": "يلتف حول دالة render العامة ليشغّل الحركات بعد كل رسم.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:watchNav",
-      "type": "function",
-      "name": "watchNav",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        306,
-        328
-      ],
-      "summary": "يراقب شريط التنقل ويحرّك مؤشر العنصر النشط.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:slidePill",
-      "type": "function",
-      "name": "slidePill",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        332,
-        348
-      ],
-      "summary": "ينقل مؤشر التنقل (pill) إلى العنصر النشط بحركة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installDrawerDrag",
-      "type": "function",
-      "name": "installDrawerDrag",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        354,
-        391
-      ],
-      "summary": "يضيف سحب الإغلاق بالإيماءة للدرج الجانبي.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:decorateToast",
-      "type": "function",
-      "name": "decorateToast",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        397,
-        408
-      ],
-      "summary": "يزخرف عنصر toast بحركة دخول.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installToast",
-      "type": "function",
-      "name": "installToast",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        409,
-        418
-      ],
-      "summary": "يربط زخرفة toast بالإشعارات المعروضة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
-      "type": "function",
-      "name": "drawAuthOrnament",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        424,
-        432
-      ],
-      "summary": "يرسم زخرفة شاشة الدخول بـ DrawSVG.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installOrnament",
-      "type": "function",
-      "name": "installOrnament",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        433,
-        437
-      ],
-      "summary": "يحاول رسم زخرفة الدخول مع إعادة محاولات دورية حتى تظهر.",
-      "tags": [
-        "motion",
-        "auth",
-        "polling"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installButtonStates",
-      "type": "function",
-      "name": "installButtonStates",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        444,
-        462
-      ],
-      "summary": "يربط حالات الأزرار (انشغال ونجاح) بحركات.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:flashOk",
-      "type": "function",
-      "name": "flashOk",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        463,
-        468
-      ],
-      "summary": "يشغّل نبضة تكبير قصيرة لتأكيد نجاح الزر.",
-      "tags": [
-        "motion",
-        "feedback"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:confirmBusyButton",
-      "type": "function",
-      "name": "confirmBusyButton",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        470,
-        473
-      ],
-      "summary": "يربط رسالة النجاح بالزر الذي كان منشغلاً للتو.",
-      "tags": [
-        "motion",
-        "button-state"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:installDetails",
-      "type": "function",
-      "name": "installDetails",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        476,
-        499
-      ],
-      "summary": "يحرّك فتح وإغلاق عناصر details.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:install",
-      "type": "function",
-      "name": "install",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        502,
-        511
-      ],
-      "summary": "نقطة تهيئة تستدعي كل مثبّتات الحركة بعد جاهزية التطبيق.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/core/motion-system.js:flip",
-      "type": "function",
-      "name": "flip",
-      "filePath": "web-src/src/core/motion-system.js",
-      "lineRange": [
-        520,
-        528
-      ],
-      "summary": "يتيح لميزات تعدّل جزءاً من الصفحة تحريك الكتل بنمط FLIP مع تجاهل ذلك عند إيقاف الحركة.",
-      "tags": [
-        "motion",
-        "gsap",
-        "animation"
-      ],
-      "complexity": "simple"
-    },
-    {
       "id": "file:web-src/src/core/view.js",
       "type": "file",
       "name": "view.js",
@@ -655,7 +201,8 @@
         "view-switching",
         "responsive",
         "global-script",
-        "rtl"
+        "rtl",
+        "tested"
       ],
       "complexity": "simple"
     },
@@ -2150,20 +1697,6 @@
         "sql-function"
       ],
       "complexity": "simple"
-    },
-    {
-      "id": "document:docs/MOTION_SYSTEM_AR.md",
-      "type": "document",
-      "name": "MOTION_SYSTEM_AR.md",
-      "filePath": "docs/MOTION_SYSTEM_AR.md",
-      "summary": "يوثّق نظام الحركة المركزي لحلقاتي: جرد الحركة السابقة (keyframes متفرقة وLottie وView Transitions) والنظام الجديد القائم على رموز تصميم في motion.css وطبقة JS في motion-system.js مع تخفيف الحركة المتدرّج.",
-      "tags": [
-        "documentation",
-        "motion-system",
-        "design-tokens",
-        "accessibility"
-      ],
-      "complexity": "moderate"
     },
     {
       "id": "document:docs/NATIVE_PORT_BRIEF.md",
@@ -3776,20 +3309,6 @@
       "complexity": "simple"
     },
     {
-      "id": "file:web-src/src/styles/motion.css",
-      "type": "file",
-      "name": "motion.css",
-      "filePath": "web-src/src/styles/motion.css",
-      "summary": "نظام الحركة: رموز التوقيت والتسارع والمسافات التي يقرؤها JS أيضاً، مع مستويات تقليل الحركة (reduced motion).",
-      "tags": [
-        "motion",
-        "animation",
-        "accessibility",
-        "design-tokens"
-      ],
-      "complexity": "moderate"
-    },
-    {
       "id": "file:web-src/src/styles/native-certificates.css",
       "type": "file",
       "name": "native-certificates.css",
@@ -4221,20 +3740,6 @@
         "architecture"
       ],
       "complexity": "complex"
-    },
-    {
-      "id": "config:version.json",
-      "type": "config",
-      "name": "version.json",
-      "filePath": "version.json",
-      "summary": "بيان الإصدار 2.91.2 (versionCode 29102) يتضمن رابط APK وsha256 وملاحظات الإصدار، ويستهلكه التحديث ومحقق بوابة الإصدار.",
-      "tags": [
-        "configuration",
-        "versioning",
-        "release",
-        "updater"
-      ],
-      "complexity": "simple"
     },
     {
       "id": "file:web-src/index.html",
@@ -5910,7 +5415,8 @@
         "offline-first",
         "sync",
         "supabase",
-        "foundation"
+        "foundation",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "يُحمَّل أولًا كسكربت كلاسيكي ويصدّر المتغيرات والدوال كعناصر عامة."
@@ -5995,7 +5501,8 @@
         "certificates",
         "supabase",
         "archive",
-        "server-sync"
+        "server-sync",
+        "tested"
       ],
       "complexity": "moderate"
     },
@@ -6009,7 +5516,8 @@
         "guardian",
         "dashboard",
         "rpc",
-        "supabase"
+        "supabase",
+        "tested"
       ],
       "complexity": "simple"
     },
@@ -6790,7 +6298,8 @@
         "operations",
         "follow-up",
         "audit-log",
-        "supabase"
+        "supabase",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -6805,7 +6314,8 @@
         "smart-plans",
         "health",
         "rpc",
-        "utility"
+        "utility",
+        "tested"
       ],
       "complexity": "simple",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -6820,7 +6330,8 @@
         "smart-plans",
         "runtime",
         "offline",
-        "supabase"
+        "supabase",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -6835,7 +6346,8 @@
         "dashboard",
         "rc27",
         "home",
-        "supabase-read"
+        "supabase-read",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -6850,7 +6362,8 @@
         "data-loader",
         "pagination",
         "utility",
-        "rc27"
+        "rc27",
+        "tested"
       ],
       "complexity": "simple",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -6940,7 +6453,8 @@
         "smart-plans",
         "phases",
         "supabase",
-        "rc27"
+        "rc27",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "سكربت classic يشارك المتغيرات العامة (globals) دون ES imports."
@@ -7589,7 +7103,8 @@
         "reports",
         "pdf",
         "print",
-        "hotfix"
+        "hotfix",
+        "tested"
       ],
       "complexity": "complex"
     },
@@ -7617,7 +7132,8 @@
         "sessions",
         "roster",
         "offline-first",
-        "recitation"
+        "recitation",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "ملف ضخم بدوال من سطر واحد، وبعض الدوال معرّفة مرتين (تجاوز لاحق)."
@@ -7632,7 +7148,8 @@
         "sessions",
         "server-contract",
         "rpc",
-        "validation"
+        "validation",
+        "tested"
       ],
       "complexity": "simple"
     },
@@ -7674,7 +7191,8 @@
         "legacy",
         "classic-script",
         "reports",
-        "quran"
+        "quran",
+        "tested"
       ],
       "complexity": "complex",
       "languageNotes": "سكربت كلاسيكي بدوال عامة مشتركة، وتتكرر فيه تعريفات الدوال حيث يغلب الأخير."
@@ -8022,6 +7540,739 @@
         "fcm",
         "push",
         "notifications"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/src/core/motion-system.js",
+      "type": "file",
+      "name": "motion-system.js",
+      "filePath": "web-src/src/core/motion-system.js",
+      "summary": "نظام الحركة الموحّد لحلقاتي: دخول الصفحات المتدرج، FLIP عند إعادة الرسم، عدّ الأرقام وملء الرسوم، مؤشر التنقل، الجرس، حالات الأزرار، details، وزخرفة الدخول بـ GSAP مع تقليل الحركة المتدرج، ويعرض window.HalaqatiMotion.",
+      "tags": [
+        "motion",
+        "gsap",
+        "animation",
+        "accessibility",
+        "entry-point"
+      ],
+      "complexity": "complex",
+      "languageNotes": "ES module يستورد GSAP وDrawSVGPlugin، ويلفّ window.render الكلاسيكي ويعمل بعد حدث halaqati:ready."
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:settle",
+      "type": "function",
+      "name": "settle",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        33,
+        40
+      ],
+      "summary": "ينهي كل الحركات الجارية (enter وFLIP والعدّادات) إلى حالتها النهائية ويزيل hm-pre حتى لا تبقى transforms أو opacity عالقة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:sec",
+      "type": "function",
+      "name": "sec",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        17,
+        21
+      ],
+      "summary": "يقرأ token زمنياً من متغير CSS ويحوّله من ms إلى ثوانٍ مع قيمة احتياطية.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "function",
+      "name": "tokens",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        22,
+        25
+      ],
+      "summary": "يجمع tokens المدة والمسافة والتتابع من متغيرات --hm-* في CSS لتبقى CSS وJS متطابقتين.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:animateNumber",
+      "type": "function",
+      "name": "animateNumber",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        53,
+        72
+      ],
+      "summary": "يحرّك رقماً من قيمة إلى أخرى بـ gsap مع وحدة اختيارية، ويثبّت عرض العنصر بأرقام tabular ويعيد النص الأصلي عند الانتهاء.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "gsap"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:runCharts",
+      "type": "function",
+      "name": "runCharts",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        77,
+        92
+      ],
+      "summary": "يملأ حلقات التقدم (stroke-dasharray) ويكشف الخطوط البيانية بالاتجاه RTL عند دخول الصفحة، ويحرّك الحلقة من قيمتها السابقة عند تغيّر الرقم.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:runCounters",
+      "type": "function",
+      "name": "runCounters",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        93,
+        111
+      ],
+      "summary": "يشغّل عدّادات الأرقام على عناصر KPI المرئية بقراءات مجمّعة قبل الكتابة (بلا layout thrash) ويستدعي runCharts.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:snapshotChips",
+      "type": "function",
+      "name": "snapshotChips",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        135,
+        144
+      ],
+      "summary": "يلتقط مواضع الشرائح chips قبل إعادة الرسم لاستخدامها في حركة الانتقال.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:playChips",
+      "type": "function",
+      "name": "playChips",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        146,
+        162
+      ],
+      "summary": "يشغّل حركة انتقال الشرائح من مواضعها السابقة باستخدام spring وtokens.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:snapshotKeyed",
+      "type": "function",
+      "name": "snapshotKeyed",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        164,
+        176
+      ],
+      "summary": "يلتقط المواضع المرئية الحالية للكتل ذات المفاتيح لحركة FLIP موضعية فقط.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:playSameRender",
+      "type": "function",
+      "name": "playSameRender",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        178,
+        221
+      ],
+      "summary": "يدير الاستمرارية عند إعادة رسم الصفحة نفسها: FLIP للكتل الباقية، وكشف الكتل النامية، وتلاشي الكتل الجديدة، وانتقال الهيكل skeleton إلى المحتوى.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:adornEmpty",
+      "type": "function",
+      "name": "adornEmpty",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        225,
+        233
+      ],
+      "summary": "يضيف زخرفة نجمة هندسية إسلامية إلى الحالات الفارغة ويرسمها بـ DrawSVG عند السماح بالحركة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "gsap"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:collectBlocks",
+      "type": "function",
+      "name": "collectBlocks",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        239,
+        251
+      ],
+      "summary": "يجمع كتل المحتوى المرئية التي ستدخل بحركة التتابع في الصفحة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:enterPage",
+      "type": "function",
+      "name": "enterPage",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        255,
+        273
+      ],
+      "summary": "ينفّذ حركة دخول الصفحة المتدرجة بـ Web Animations ثم يشغّل العدّادات والرسوم البيانية.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installRender",
+      "type": "function",
+      "name": "installRender",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        279,
+        323
+      ],
+      "summary": "يلفّ window.render لتنسيق الحركة: يحفظ لقطة قبل الرسم، يخفي الكتل الواردة، ثم يشغّل الدخول أو FLIP بعد الرسم، مع مفتاح إيقاف وحماية زمنية.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:watchNav",
+      "type": "function",
+      "name": "watchNav",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        326,
+        351
+      ],
+      "summary": "يراقب أشرطة التنقل (#mobileNav و#nav) لتحريك مؤشر النشط، وينسب data-ic لكل أيقونة حسب صفحتها (tagIcons)، ويفعّل نبضة الأيقونة القادمة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:watchBell",
+      "type": "function",
+      "name": "watchBell",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        354,
+        366
+      ],
+      "summary": "يهزّ جرس الإشعارات عند ارتفاع عدد غير المقروء فقط، لا عند ثباته أو انخفاضه.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:slidePill",
+      "type": "function",
+      "name": "slidePill",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        370,
+        386
+      ],
+      "summary": "يحرّك مؤشر النشط في شريط التنقل من موضعه السابق إلى الجديد بـ gsap.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "gsap"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installDrawerDrag",
+      "type": "function",
+      "name": "installDrawerDrag",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        392,
+        429
+      ],
+      "summary": "يضيف سحب الدرج الجانبي بالإصبع/المؤشر مع إغلاقه عند تجاوز عتبة السحب.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:decorateToast",
+      "type": "function",
+      "name": "decorateToast",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        435,
+        447
+      ],
+      "summary": "يزخرف رسالة toast حسب نوعها ويربطها بحالة الزر المشغول (تأكيد النجاح أو إظهار الفشل).",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installToast",
+      "type": "function",
+      "name": "installToast",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        448,
+        457
+      ],
+      "summary": "يلفّ دالة toast العامة لتمرير الرسائل عبر decorateToast.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
+      "type": "function",
+      "name": "drawAuthOrnament",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        463,
+        471
+      ],
+      "summary": "يرسم زخرفة شاشة الدخول بـ DrawSVG عندما تكون مرئية والحركة مسموحة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "gsap"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installOrnament",
+      "type": "function",
+      "name": "installOrnament",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        472,
+        476
+      ],
+      "summary": "يركّب مراقبة زخرفة الدخول ويستدعي drawAuthOrnament.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installButtonStates",
+      "type": "function",
+      "name": "installButtonStates",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        483,
+        501
+      ],
+      "summary": "يتتبع ضغطات الأزرار ويضيف حالة انشغال hm-busy/aria-busy عند تعطيل الزر، ثم يؤكد النجاح أو الفشل عند عودته.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:flashOk",
+      "type": "function",
+      "name": "flashOk",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        502,
+        507
+      ],
+      "summary": "نبضة تأكيد قصيرة على الزر بعد نجاح العملية (scale مع spring pop).",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:flashErr",
+      "type": "function",
+      "name": "flashErr",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        509,
+        514
+      ],
+      "summary": "يعطي الزر الفاشل حلقة حمراء وهزّة قصيرة؛ تبقى الحلقة عند تقليل الحركة وتُزال الهزّة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:failBusyButton",
+      "type": "function",
+      "name": "failBusyButton",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        515,
+        518
+      ],
+      "summary": "يعلّم الزر المشغول الأخير بالفشل أو يومض فوراً بالخطأ إذا انتهى انشغاله للتو.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:confirmBusyButton",
+      "type": "function",
+      "name": "confirmBusyButton",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        520,
+        523
+      ],
+      "summary": "يؤكد نجاح الزر المشغول الأخير عبر flashOk أو يسجّل النجاح ليُعرض عند انتهاء الانشغال.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:installDetails",
+      "type": "function",
+      "name": "installDetails",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        526,
+        549
+      ],
+      "summary": "يحرّك فتح وإغلاق عناصر details بانتقال ارتفاع قابل للعكس في منتصف الحركة.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:install",
+      "type": "function",
+      "name": "install",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        552,
+        562
+      ],
+      "summary": "نقطة التركيب: يفعّل render وtoast والتنقل والجرس والزخرفة وسحب الدرج وحالات الأزرار وdetails.",
+      "tags": [
+        "motion",
+        "animation",
+        "setup",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/src/core/motion-system.js:flip",
+      "type": "function",
+      "name": "flip",
+      "filePath": "web-src/src/core/motion-system.js",
+      "lineRange": [
+        571,
+        579
+      ],
+      "summary": "واجهة عامة (HalaqatiMotion.flip) لتحديث جزء من الصفحة في مكانه مع انزلاق الكتل ذات المفاتيح، وتعود لاستدعاء عادي عند إيقاف الحركة.",
+      "tags": [
+        "motion",
+        "animation",
+        "runtime",
+        "web-animations"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/MOTION_SYSTEM_AR.md",
+      "type": "document",
+      "name": "MOTION_SYSTEM_AR.md",
+      "filePath": "docs/MOTION_SYSTEM_AR.md",
+      "summary": "توثيق عربي لنظام الحركة المركزي في حلقاتي: الجرد، القواعد، الاستمرارية، عقد حالات التفاعل والنوابض، وأمان تخفيف الحركة، مع قسم الإصدار الرابع الخاص بالأيقونات الحيّة.",
+      "tags": [
+        "documentation",
+        "motion-system",
+        "rtl",
+        "reduced-motion"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/src/styles/motion.css",
+      "type": "file",
+      "name": "motion.css",
+      "filePath": "web-src/src/styles/motion.css",
+      "summary": "أنماط نظام الحركة المشترك: متغيرات التوقيت والنوابض، حالات التفاعل (hm-busy / hm-ok / hm-err)، وقسم الأيقونات الحيّة بإطارات keyframes من نوع hm-ic-*، مع احترام تخفيف الحركة.",
+      "tags": [
+        "stylesheet",
+        "motion-system",
+        "animation",
+        "keyframes",
+        "reduced-motion"
+      ],
+      "complexity": "complex",
+      "languageNotes": "CSS مع keyframes مخصصة للأيقونات وحالة الخطأ .hm-err."
+    },
+    {
+      "id": "config:version.json",
+      "type": "config",
+      "name": "version.json",
+      "filePath": "version.json",
+      "summary": "بيان إصدار التطبيق (2.91.2): رقم الإصدار، رابط APK وبصمة sha256، وملاحظات الإصدار بالعربية.",
+      "tags": [
+        "configuration",
+        "versioning",
+        "release",
+        "android"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:web-src/scripts/buttons-check.mjs",
+      "type": "file",
+      "name": "buttons-check.mjs",
+      "filePath": "web-src/scripts/buttons-check.mjs",
+      "summary": "فحص حالات الأزرار في Chromium حقيقي: الضغط ثم الانشغال ثم النجاح (نبضة) أو الخطأ (حلقة وهزّة واحدة)، مع التحقق من التنظيف وتخفيف الحركة.",
+      "tags": [
+        "test",
+        "e2e",
+        "playwright",
+        "motion-system",
+        "script"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "سكربت ESM مستقل يشغّل Chromium عبر Playwright مع محاكاة الشبكة."
+    },
+    {
+      "id": "function:web-src/scripts/buttons-check.mjs:open",
+      "type": "function",
+      "name": "open",
+      "filePath": "web-src/scripts/buttons-check.mjs",
+      "lineRange": [
+        8,
+        25
+      ],
+      "summary": "يفتح سياقاً بمحاكاة الشبكة، يجهّز حالة التطبيق ويضيف زر اختبار.",
+      "tags": [
+        "helper",
+        "playwright",
+        "test-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/scripts/buttons-check.mjs:flow",
+      "type": "function",
+      "name": "flow",
+      "filePath": "web-src/scripts/buttons-check.mjs",
+      "lineRange": [
+        27,
+        37
+      ],
+      "summary": "يحاكي ضغط الزر وتعطيله ثم رسالة toast ويقيس صفوف الحالة والرسوم.",
+      "tags": [
+        "helper",
+        "playwright",
+        "test-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/scripts/charts-check.mjs",
+      "type": "file",
+      "name": "charts-check.mjs",
+      "filePath": "web-src/scripts/charts-check.mjs",
+      "summary": "فحص رسوم الإحصاء: تعبئة حلقات التقدم وكشف المخطط الخطي باتجاه القراءة (RTL) عند دخول الصفحة، وعدم التشغيل عند إعادة رسم بنفس الأرقام.",
+      "tags": [
+        "test",
+        "e2e",
+        "playwright",
+        "motion-system",
+        "script"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "سكربت ESM مستقل يشغّل Chromium عبر Playwright مع محاكاة الشبكة."
+    },
+    {
+      "id": "function:web-src/scripts/charts-check.mjs:open",
+      "type": "function",
+      "name": "open",
+      "filePath": "web-src/scripts/charts-check.mjs",
+      "lineRange": [
+        10,
+        28
+      ],
+      "summary": "يفتح سياقاً مع محاكاة rc49_donor_report ويهيّئ جلسة مراقب.",
+      "tags": [
+        "helper",
+        "playwright",
+        "test-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:web-src/scripts/charts-check.mjs:snap",
+      "type": "function",
+      "name": "snap",
+      "filePath": "web-src/scripts/charts-check.mjs",
+      "lineRange": [
+        29,
+        34
+      ],
+      "summary": "يلتقط حالة الحلقات والمخطط من المحتوى.",
+      "tags": [
+        "helper",
+        "playwright",
+        "test-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/scripts/icons-check.mjs",
+      "type": "file",
+      "name": "icons-check.mjs",
+      "filePath": "web-src/scripts/icons-check.mjs",
+      "summary": "فحص الأيقونات الحيّة: لكل أيقونة تنقل حركتها الخاصة عند تفعيل الصفحة، دون بقايا، وصامتة مع تخفيف الحركة، والجرس يرنّ فقط عند ارتفاع عدد غير المقروء.",
+      "tags": [
+        "test",
+        "e2e",
+        "playwright",
+        "motion-system",
+        "script"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "سكربت ESM مستقل يشغّل Chromium عبر Playwright مع محاكاة الشبكة."
+    },
+    {
+      "id": "function:web-src/scripts/icons-check.mjs:open",
+      "type": "function",
+      "name": "open",
+      "filePath": "web-src/scripts/icons-check.mjs",
+      "lineRange": [
+        9,
+        28
+      ],
+      "summary": "يفتح سياقاً بدور محدد ويجهّز حلقة وطلاباً وهميين.",
+      "tags": [
+        "helper",
+        "playwright",
+        "test-setup"
       ],
       "complexity": "moderate"
     },
@@ -10119,17 +10370,6 @@
         "state",
         "static-analysis"
       ],
-      "id": "concept:state:page",
-      "type": "concept",
-      "name": "state.page",
-      "summary": "مفتاح الحالة العامة state.page المشترك بين 34 ملفات."
-    },
-    {
-      "complexity": "simple",
-      "tags": [
-        "state",
-        "static-analysis"
-      ],
       "id": "concept:state:profile",
       "type": "concept",
       "name": "state.profile",
@@ -10145,6 +10385,17 @@
       "type": "concept",
       "name": "state.notificationUnread",
       "summary": "مفتاح الحالة العامة state.notificationUnread المشترك بين 9 ملفات."
+    },
+    {
+      "complexity": "simple",
+      "tags": [
+        "state",
+        "static-analysis"
+      ],
+      "id": "concept:state:page",
+      "type": "concept",
+      "name": "state.page",
+      "summary": "مفتاح الحالة العامة state.page المشترك بين 34 ملفات."
     },
     {
       "complexity": "simple",
@@ -11037,462 +11288,6 @@
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:settle",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:sec",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:animateNumber",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:runCounters",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:snapshotChips",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:playChips",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:playSameRender",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:adornEmpty",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:collectBlocks",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:enterPage",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installRender",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:watchNav",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:slidePill",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installDrawerDrag",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:decorateToast",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installToast",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installOrnament",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installButtonStates",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:flashOk",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:confirmBusyButton",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:installDetails",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:install",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "function:web-src/src/core/motion-system.js:flip",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:tokens",
-      "target": "function:web-src/src/core/motion-system.js:sec",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:runCounters",
-      "target": "function:web-src/src/core/motion-system.js:animateNumber",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:playChips",
-      "target": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:playSameRender",
-      "target": "function:web-src/src/core/motion-system.js:playChips",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:playSameRender",
-      "target": "function:web-src/src/core/motion-system.js:runCounters",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:playSameRender",
-      "target": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:enterPage",
-      "target": "function:web-src/src/core/motion-system.js:collectBlocks",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:enterPage",
-      "target": "function:web-src/src/core/motion-system.js:runCounters",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:enterPage",
-      "target": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installRender",
-      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installRender",
-      "target": "function:web-src/src/core/motion-system.js:settle",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installRender",
-      "target": "function:web-src/src/core/motion-system.js:playSameRender",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installRender",
-      "target": "function:web-src/src/core/motion-system.js:enterPage",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installRender",
-      "target": "function:web-src/src/core/motion-system.js:adornEmpty",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:watchNav",
-      "target": "function:web-src/src/core/motion-system.js:slidePill",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:slidePill",
-      "target": "function:web-src/src/core/motion-system.js:tokens",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:decorateToast",
-      "target": "function:web-src/src/core/motion-system.js:confirmBusyButton",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:confirmBusyButton",
-      "target": "function:web-src/src/core/motion-system.js:flashOk",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installOrnament",
-      "target": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:flip",
-      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:flip",
-      "target": "function:web-src/src/core/motion-system.js:playSameRender",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installRender",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installToast",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:watchNav",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installOrnament",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installDrawerDrag",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installButtonStates",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:install",
-      "target": "function:web-src/src/core/motion-system.js:installDetails",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:installToast",
-      "target": "function:web-src/src/core/motion-system.js:decorateToast",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/core/motion-system.js:snapshotKeyed",
-      "target": "function:web-src/src/core/motion-system.js:snapshotChips",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/core/lazy-libs.js",
-      "target": "file:web-src/src/core/script-loader.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
       "source": "file:web-src/src/core/lazy-libs.js",
       "target": "file:web-src/src/core/script-loader.js",
       "type": "depends_on",
@@ -11627,398 +11422,6 @@
       "direction": "forward",
       "weight": 0.8,
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/features/import/lazy.js",
-      "target": "file:web-src/src/core/lazy-libs.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/features/reports/lazy.js",
-      "target": "file:web-src/src/core/lazy-libs.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "config:web-src/package.json",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/install.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/lazy-libs.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/motion-system.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/offline-store.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/pwa.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/script-loader.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/view.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/import/lazy.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/notifications/push-bridge.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/reports/lazy.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/supervisor/supervision.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/admin.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/apk.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/app.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/certificates.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/desktop.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/donor.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/live-halaqa.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/motion.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-certificates.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-community.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-home.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-management.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-phases.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-plans.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-reports.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-roster.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-sessions.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-students.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/native-tools.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/nour.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/nx.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc27.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc50.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc52.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc53.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc54.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc85.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/rc86.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/responsive.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/supervisor-skin.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/supervisor.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/tokens.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/styles/uiux-pro-max.css",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
       "source": "file:web-src/src/main.js",
@@ -12525,14 +11928,6 @@
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/motion-system.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
       "source": "file:web-src/src/core/install.js",
       "target": "function:web-src/src/core/install.js:installed",
       "type": "contains",
@@ -12726,27 +12121,11 @@
     },
     {
       "source": "file:web-src/scripts/modules-vm-smoke.mjs",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/scripts/modules-vm-smoke.mjs",
       "target": "function:web-src/src/features/plans/engine.js:createSmartPlansEngine",
       "type": "calls",
       "direction": "forward",
       "weight": 0.8,
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/scripts/smart-plans-v216.test.mjs",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
       "source": "file:web-src/src/features/plans/engine.js",
@@ -12765,14 +12144,6 @@
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
-      "source": "file:web-src/scripts/smart-plans-v217.test.mjs",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
       "source": "file:web-src/src/features/plans/engine.js",
       "target": "file:web-src/scripts/smart-plans-v217.test.mjs",
       "type": "tested_by",
@@ -12789,14 +12160,6 @@
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
-      "source": "file:web-src/scripts/v2180-behavior.test.mjs",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
       "source": "file:web-src/src/features/plans/engine.js",
       "target": "file:web-src/scripts/v2180-behavior.test.mjs",
       "type": "tested_by",
@@ -12811,14 +12174,6 @@
       "direction": "forward",
       "weight": 0.8,
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/scripts/v2182-check.mjs",
-      "target": "file:web-src/src/features/plans/engine.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
       "source": "file:web-src/scripts/v2182-check.mjs",
@@ -13114,30 +12469,6 @@
       "type": "exports",
       "direction": "forward",
       "weight": 0.8,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/features/supervisor/supervision.mjs",
-      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/scripts/supervisor-dashboard.test.mjs",
-      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/scripts/supervisor-dashboard.test.mjs",
-      "target": "file:web-src/src/features/supervisor/supervision.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
@@ -13501,32 +12832,8 @@
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
-      "source": "document:docs/superpowers/plans/2026-11-18-local-first-loading-and-shared-motion.md",
-      "target": "file:web-src/src/styles/motion.css",
-      "type": "documents",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
       "source": "document:docs/superpowers/plans/2026-11-18-pull-refresh-transitions-and-motion-feel.md",
       "target": "file:web-src/src/core/startup.js",
-      "type": "documents",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "document:docs/superpowers/plans/2026-11-18-pull-refresh-transitions-and-motion-feel.md",
-      "target": "file:web-src/src/core/motion-system.js",
-      "type": "documents",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "document:docs/superpowers/plans/2026-11-18-pull-refresh-transitions-and-motion-feel.md",
-      "target": "file:web-src/src/styles/motion.css",
       "type": "documents",
       "direction": "forward",
       "weight": 0.5,
@@ -13637,14 +12944,6 @@
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
-      "source": "file:.github/scripts/release_gate.py",
-      "target": "config:version.json",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
       "source": "document:docs/superpowers/progress.md",
       "target": "document:docs/superpowers/specs/2026-10-19-rc27-web-parity-design.md",
       "type": "related",
@@ -13730,14 +13029,6 @@
       "type": "exports",
       "direction": "forward",
       "weight": 0.8,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/scripts/motion-inventory.mjs",
-      "target": "file:web-src/scripts/motion-record.mjs",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
@@ -14034,14 +13325,6 @@
       "type": "contains",
       "direction": "forward",
       "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "file:web-src/src/core/pwa.js",
-      "target": "file:web-src/src/core/update-ui.js",
-      "type": "imports",
-      "direction": "forward",
-      "weight": 0.7,
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
@@ -14739,6 +14022,1106 @@
       "direction": "forward",
       "weight": 0.7,
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:settle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:sec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:animateNumber",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:runCharts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:runCounters",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:snapshotChips",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:playChips",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:playSameRender",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:adornEmpty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:collectBlocks",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:enterPage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installRender",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:watchNav",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:watchBell",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:slidePill",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installDrawerDrag",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:decorateToast",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installToast",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installOrnament",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installButtonStates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:flashOk",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:flashErr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:failBusyButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:confirmBusyButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:installDetails",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:install",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "function:web-src/src/core/motion-system.js:flip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:tokens",
+      "target": "function:web-src/src/core/motion-system.js:sec",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:runCounters",
+      "target": "function:web-src/src/core/motion-system.js:runCharts",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:runCounters",
+      "target": "function:web-src/src/core/motion-system.js:animateNumber",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:playChips",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:snapshotKeyed",
+      "target": "function:web-src/src/core/motion-system.js:snapshotChips",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:playSameRender",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:playSameRender",
+      "target": "function:web-src/src/core/motion-system.js:runCounters",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:playSameRender",
+      "target": "function:web-src/src/core/motion-system.js:playChips",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:enterPage",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:enterPage",
+      "target": "function:web-src/src/core/motion-system.js:runCounters",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:enterPage",
+      "target": "function:web-src/src/core/motion-system.js:collectBlocks",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installRender",
+      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installRender",
+      "target": "function:web-src/src/core/motion-system.js:settle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installRender",
+      "target": "function:web-src/src/core/motion-system.js:playSameRender",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installRender",
+      "target": "function:web-src/src/core/motion-system.js:enterPage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installRender",
+      "target": "function:web-src/src/core/motion-system.js:adornEmpty",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:watchNav",
+      "target": "function:web-src/src/core/motion-system.js:slidePill",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:slidePill",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:decorateToast",
+      "target": "function:web-src/src/core/motion-system.js:failBusyButton",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:decorateToast",
+      "target": "function:web-src/src/core/motion-system.js:confirmBusyButton",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installToast",
+      "target": "function:web-src/src/core/motion-system.js:decorateToast",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installOrnament",
+      "target": "function:web-src/src/core/motion-system.js:drawAuthOrnament",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:failBusyButton",
+      "target": "function:web-src/src/core/motion-system.js:flashErr",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:confirmBusyButton",
+      "target": "function:web-src/src/core/motion-system.js:flashOk",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:installDetails",
+      "target": "function:web-src/src/core/motion-system.js:tokens",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installRender",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installToast",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:watchNav",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:watchBell",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installOrnament",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installDrawerDrag",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installButtonStates",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:install",
+      "target": "function:web-src/src/core/motion-system.js:installDetails",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:flip",
+      "target": "function:web-src/src/core/motion-system.js:snapshotKeyed",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/core/motion-system.js:flip",
+      "target": "function:web-src/src/core/motion-system.js:playSameRender",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/scripts/buttons-check.mjs",
+      "target": "function:web-src/scripts/buttons-check.mjs:open",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/buttons-check.mjs",
+      "target": "function:web-src/scripts/buttons-check.mjs:flow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/charts-check.mjs",
+      "target": "function:web-src/scripts/charts-check.mjs:open",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/charts-check.mjs",
+      "target": "function:web-src/scripts/charts-check.mjs:snap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/icons-check.mjs",
+      "target": "function:web-src/scripts/icons-check.mjs:open",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/modules-vm-smoke.mjs",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/motion-inventory.mjs",
+      "target": "file:web-src/scripts/motion-record.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/smart-plans-v216.test.mjs",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/smart-plans-v217.test.mjs",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/supervisor-dashboard.test.mjs",
+      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/supervisor-dashboard.test.mjs",
+      "target": "file:web-src/src/features/supervisor/supervision.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/v2180-behavior.test.mjs",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/v2182-check.mjs",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/lazy-libs.js",
+      "target": "file:web-src/src/core/script-loader.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/core/pwa.js",
+      "target": "file:web-src/src/core/update-ui.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/features/import/lazy.js",
+      "target": "file:web-src/src/core/lazy-libs.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/features/reports/lazy.js",
+      "target": "file:web-src/src/core/lazy-libs.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/features/supervisor/supervision.mjs",
+      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "config:web-src/package.json",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/install.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/lazy-libs.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/motion-system.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/offline-store.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/pwa.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/script-loader.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/view.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/import/lazy.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/notifications/push-bridge.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/plans/engine.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/reports/lazy.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/supervisor/dashboard.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/supervisor/supervision.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/admin.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/apk.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/app.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/certificates.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/desktop.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/donor.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/live-halaqa.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/motion.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-certificates.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-community.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-home.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-management.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-phases.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-plans.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-reports.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-roster.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-sessions.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-students.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/native-tools.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/nour.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/nx.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc27.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc50.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc52.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc53.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc54.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc85.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/rc86.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/responsive.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/supervisor-skin.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/supervisor.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/tokens.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/styles/uiux-pro-max.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
       "source": "function:web-src/src/core/performance-runtime.js:v230LoadCoreData",
@@ -18821,326 +19204,6 @@
       "description": "[مؤكد-تحليل] web-src/src/legacy/app.js يستدعي canManageUsers()"
     },
     {
-      "source": "file:web-src/src/core/motion-system.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/core/navigation.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/core/navigation.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/core/performance-runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/auth/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/certificates/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/approvals.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/certificates.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/community.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/home.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/management.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/plans.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/reports.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/sessions.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/students.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/native/tools.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/notifications/runtime.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/notifications/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/operations/runtime.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/operations/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/dashboard.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/dashboard.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/desktop.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/insights.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/motion.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/phases.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/plans.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/scope.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc27/ui.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc50/runtime.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc50/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc50/shell.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc53/runtime.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc54/motion.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc85/portal.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/rc86/parity.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/sessions/runtime.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/features/students/runtime.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/legacy/app.js",
-      "target": "concept:state:page",
-      "type": "writes_to",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
-    },
-    {
-      "source": "file:web-src/src/legacy/app.js",
-      "target": "concept:state:page",
-      "type": "reads_from",
-      "direction": "forward",
-      "weight": 0.5,
-      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
-    },
-    {
       "source": "file:web-src/src/core/navigation.js",
       "target": "concept:state:profile",
       "type": "reads_from",
@@ -19539,6 +19602,326 @@
       "direction": "forward",
       "weight": 0.5,
       "description": "[مؤكد-تحليل] قراءة state.notificationUnread في الملف"
+    },
+    {
+      "source": "file:web-src/src/core/navigation.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/core/navigation.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/core/performance-runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/auth/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/certificates/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/approvals.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/certificates.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/community.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/home.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/management.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/plans.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/reports.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/sessions.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/students.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/native/tools.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/notifications/runtime.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/notifications/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/operations/runtime.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/operations/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/dashboard.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/dashboard.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/desktop.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/insights.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/motion.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/phases.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/plans.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/scope.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc27/ui.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc50/runtime.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc50/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc50/shell.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc53/runtime.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc54/motion.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc85/portal.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/rc86/parity.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/sessions/runtime.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/features/students/runtime.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/legacy/app.js",
+      "target": "concept:state:page",
+      "type": "writes_to",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-تحليل] إسناد state.page=… في الملف"
+    },
+    {
+      "source": "file:web-src/src/legacy/app.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
+    },
+    {
+      "source": "file:web-src/src/core/motion-system.js",
+      "target": "concept:state:page",
+      "type": "reads_from",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-تحليل] قراءة state.page في الملف"
     },
     {
       "source": "file:web-src/src/core/navigation.js",
@@ -27608,7 +27991,10 @@
         "file:web-src/scripts/v2420-v6-score.test.mjs",
         "file:web-src/scripts/v2430-dashboard.test.mjs",
         "file:web-src/scripts/v2440-sync-refresh-check.mjs",
-        "file:web-src/scripts/view.test.mjs"
+        "file:web-src/scripts/view.test.mjs",
+        "file:web-src/scripts/buttons-check.mjs",
+        "file:web-src/scripts/charts-check.mjs",
+        "file:web-src/scripts/icons-check.mjs"
       ]
     },
     {

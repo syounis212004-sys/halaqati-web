@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "447935011929eb9221853c75cb7dcf5deb14f563",
-  "generatedAt": "2026-11-19T10:51:32.082Z",
+  "gitCommitHash": "30ddee6ab62c03bd7489d6d8d38f3cbf83fbfa25",
+  "generatedAt": "2026-11-19T11:56:51.947Z",
   "files": {
     ".github/scripts/release_gate.py": {
       "filePath": ".github/scripts/release_gate.py",
@@ -149,12 +149,12 @@
     },
     "docs/MOTION_SYSTEM_AR.md": {
       "filePath": "docs/MOTION_SYSTEM_AR.md",
-      "contentHash": "6d2d002e397b529eb404436c034c108aa0c67f312cbdae7d17e3b9a8106ec843",
+      "contentHash": "1f8d64ecea99b3332b61d0afd87b641d945f164ddaf2e178300f2dbea789086b",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 102,
+      "totalLines": 118,
       "hasStructuralAnalysis": false
     },
     "docs/NATIVE_PORT_BRIEF.md": {
@@ -299,7 +299,7 @@
     },
     "version.json": {
       "filePath": "version.json",
-      "contentHash": "ed392baf22210fd78816c163a1bfcde7b1de22ef2899241db88e81ab55fffccd",
+      "contentHash": "68895817b61e8da89b7c72acdcda288b9bb7c3c2654899f3585fa335cb4aec27",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -4575,7 +4575,7 @@
     },
     "web-src/src/core/motion-system.js": {
       "filePath": "web-src/src/core/motion-system.js",
-      "contentHash": "8544f5771ca843c088852c37c01a42181ecdd8758f12463a9c83c3cd18f5c5bb",
+      "contentHash": "d5d7bb5ce926fbdc165b977bf98639ca048cef6368675edfeb20db5fc3f29dc1",
       "functions": [
         {
           "name": "reduced",
@@ -4633,6 +4633,16 @@
           "lineCount": 20
         },
         {
+          "name": "runCharts",
+          "params": [
+            "scope",
+            "page",
+            "pageChanged"
+          ],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
           "name": "runCounters",
           "params": [
             "scope",
@@ -4640,7 +4650,7 @@
             "pageChanged"
           ],
           "exported": false,
-          "lineCount": 18
+          "lineCount": 19
         },
         {
           "name": "keyOf",
@@ -4758,7 +4768,13 @@
             "selector"
           ],
           "exported": false,
-          "lineCount": 23
+          "lineCount": 26
+        },
+        {
+          "name": "watchBell",
+          "params": [],
+          "exported": false,
+          "lineCount": 13
         },
         {
           "name": "slidePill",
@@ -4783,7 +4799,7 @@
             "message"
           ],
           "exported": false,
-          "lineCount": 12
+          "lineCount": 13
         },
         {
           "name": "installToast",
@@ -4818,6 +4834,20 @@
           "lineCount": 6
         },
         {
+          "name": "flashErr",
+          "params": [
+            "el"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "failBusyButton",
+          "params": [],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
           "name": "confirmBusyButton",
           "params": [],
           "exported": false,
@@ -4833,7 +4863,7 @@
           "name": "install",
           "params": [],
           "exported": false,
-          "lineCount": 10
+          "lineCount": 11
         },
         {
           "name": "flip",
@@ -4861,7 +4891,7 @@
         }
       ],
       "exports": [],
-      "totalLines": 541,
+      "totalLines": 592,
       "hasStructuralAnalysis": true
     },
     "web-src/src/core/navigation.js": {
@@ -9351,7 +9381,7 @@
     },
     "web-src/src/features/rc50/donor.js": {
       "filePath": "web-src/src/features/rc50/donor.js",
-      "contentHash": "9b800b53e07e8a23dfd1c309528fe99d61989ba5487bf3eacada9e6c93a0cf44",
+      "contentHash": "a745c901ec1a543da1e44aadeec54eddbbf48bd1eaabfc0b8678483078703782",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -12982,12 +13012,12 @@
     },
     "web-src/src/styles/motion.css": {
       "filePath": "web-src/src/styles/motion.css",
-      "contentHash": "45b2c8dc146ac241c297ab326800a0432252de857fb5224a4cb77fa2711e9f34",
+      "contentHash": "87023b6bc4c56afd732bafbd03d5a178f926546819e5395dcf5905df5772637c",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 194,
+      "totalLines": 247,
       "hasStructuralAnalysis": false
     },
     "web-src/src/styles/native-certificates.css": {
@@ -13478,6 +13508,141 @@
       ],
       "exports": [],
       "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/buttons-check.mjs": {
+      "filePath": "web-src/scripts/buttons-check.mjs",
+      "contentHash": "07a168619767b8ac098778621c43db5a7e1202a91ed9651c6b2d389e1165ad60",
+      "functions": [
+        {
+          "name": "ok",
+          "params": [
+            "c",
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "open",
+          "params": [],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "flow",
+          "params": [
+            "page",
+            "msg"
+          ],
+          "exported": false,
+          "lineCount": 11
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 61,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/charts-check.mjs": {
+      "filePath": "web-src/scripts/charts-check.mjs",
+      "contentHash": "47de5aceabbd12cf18c91b2a2754d976656a15d1fe63d719f05c6466fd3f3264",
+      "functions": [
+        {
+          "name": "ok",
+          "params": [
+            "c",
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "open",
+          "params": [],
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "snap",
+          "params": [],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "enter",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 80,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/icons-check.mjs": {
+      "filePath": "web-src/scripts/icons-check.mjs",
+      "contentHash": "bc980f8d269bb654edf4a35d1692f335ca0f56c8b6bbf80cf8314411657be9d6",
+      "functions": [
+        {
+          "name": "ok",
+          "params": [
+            "c",
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "open",
+          "params": [],
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "sample",
+          "params": [
+            "page",
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "residue",
+          "params": [],
+          "exported": false,
+          "lineCount": 5
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 102,
       "hasStructuralAnalysis": true
     }
   }
