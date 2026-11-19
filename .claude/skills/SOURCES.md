@@ -10,3 +10,6 @@
 | animation-forge | https://github.com/Eskapeum/animation-forge | ee08fc138d0c | MIT (حسب README) |
 
 غير مثبَّتة عمدًا: gsap-react، gsap-frameworks (React/Vue/Svelte)، page-transition-animation (Next.js App Router).
+
+## ponytail-review (مراجعة الكود)
+مثبّتة بتاريخ 2026-11-19 نسخةً حرفيةً (SHA-256 `33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e`) من مستودع المالك `syounis212004-sys/halaqati-app`، المسار `.claude/skills/ponytail-review/SKILL.md` (commit `7ca6ef6`). ملف توثيق واحد؛ لا سكربتات ولا تنفّذ شيئاً ("Lists findings, changes no code"). تتبع عائلة مهارات `ponytail` التي يشترطها `.claude/enforce/` في هذا المستودع.
