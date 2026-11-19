@@ -4,7 +4,7 @@
  * tracing page -> file -> data operation, impact analysis of shared components, motion coverage, commit freshness. */
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const root = process.argv[2] || process.cwd();
 const gp = process.argv[3] || path.join(root, '.ua/knowledge-graph.json');
@@ -80,8 +80,14 @@ const speculative = g.edges.filter(e => ['related', 'similar_to'].includes(e.typ
 ok(speculative.length === 0, `V18 no speculative related/similar_to edges (${speculative.length})`);
 
 /* V15: freshness */
-const head = execSync('git rev-parse HEAD', { cwd: root }).toString().trim();
-const changed = g.project.gitCommitHash === head ? [] : execSync(`git diff --name-only ${g.project.gitCommitHash} HEAD`, { cwd: root }).toString().split('\n').filter(f => f && !/^(\.ua\/|\.claude\/|docs\/KNOWLEDGE_GRAPH_AR\.md$)/.test(f));
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+const head = git('rev-parse', 'HEAD').trim();
+const graphCommit = g.project.gitCommitHash;
+if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(graphCommit)) throw new Error('Invalid graph commit hash');
+// Treat renames as a deletion and an addition so moving source into an excluded folder is still detected.
+const excluded = /^(?:\.ua\/|\.claude\/|\.codex\/|\.agents\/skills\/|AGENTS\.md$|docs\/KNOWLEDGE_GRAPH_AR\.md$)/;
+const changed = graphCommit === head ? [] : git('diff', '--no-renames', '--name-only', '-z', graphCommit, head, '--')
+  .split('\0').filter(file => file && !excluded.test(file));
 ok(changed.length === 0, `V15 graph matches HEAD ${head.slice(0, 7)} (graph commit ${g.project.gitCommitHash.slice(0, 7)}; source files changed since: ${changed.length})`);
 
 console.log(fails ? `\n${fails} check(s) FAILED` : '\nGraph checks: all passed');

@@ -1,0 +1,9 @@
+{
+  "description": "Halaqati Codex quality gates",
+  "hooks": {
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 .codex/enforce.py"}]}],
+    "PreToolUse": [{"matcher": "^(Bash|apply_patch)$", "hooks": [{"type": "command", "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 .codex/enforce.py"}]}],
+    "PostToolUse": [{"matcher": "^Bash$", "hooks": [{"type": "command", "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 .codex/enforce.py"}]}],
+    "Stop": [{"hooks": [{"type": "command", "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 .codex/enforce.py"}]}]
+  }
+}
