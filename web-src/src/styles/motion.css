@@ -125,6 +125,7 @@ html .hm-busy:disabled{opacity:.78}
 html .hm-busy::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,#fff 42%,transparent) 50%,transparent 70%);translate:-100% 0;animation:hm-sheen 1.15s var(--hm-ease-std) infinite}
 @keyframes hm-sheen{to{translate:100% 0}}
 html .hm-ok{box-shadow:0 0 0 3px color-mix(in srgb,var(--green,#0a7a5a) 30%,transparent)}
+html .hm-err{box-shadow:0 0 0 3px color-mix(in srgb,var(--st-bad-bg,#C62828) 32%,transparent)}
 
 /* ---- fields: focus, value and validity colours glide (focus rings themselves stay the app's accessible outline) ---- */
 html .input,html select,html textarea,html .nt-af-box,html .nx-field input,html .nx-field select,html .nx-field textarea,html .nx-search,html input[type="search"],html input[type="date"],html input[type="month"]{
@@ -155,6 +156,58 @@ html .nx-chip.hm-hold{background:transparent!important;box-shadow:none!important
 
 @keyframes hm-nav-pop{from{scale:.72}to{scale:1}}
 .hm-nav-pop button.active svg{animation:hm-nav-pop 460ms var(--hm-spring-pop) both}
+
+/* ---- living icons: each nav icon plays ONE short gesture that means what it draws (class hm-nav-pop is set by watchNav when the active page changes).
+   Motion is opt-in (no-preference, setting not 'reduced'); fill-mode is backwards only, so nothing is left behind once it ends. ---- */
+@media (prefers-reduced-motion:no-preference){
+  html:not(.rc27-reduce-motion) .hm-nav-pop button.active svg[data-ic] *{transform-box:view-box;transform-origin:12px 12px}
+  @keyframes hm-ic-home{0%{translate:0 0}38%{translate:0 -1.6px}100%{translate:0 0}}
+  @keyframes hm-ic-door{from{scale:1 .35}to{scale:1 1}}
+  @keyframes hm-ic-bell{0%,100%{rotate:0deg}18%{rotate:17deg}38%{rotate:-13deg}58%{rotate:8deg}78%{rotate:-4deg}}
+  @keyframes hm-ic-clapper{0%,100%{translate:0 0}25%{translate:-1.6px 0}50%{translate:1.2px 0}75%{translate:-.6px 0}}
+  @keyframes hm-ic-grid{from{scale:.55;opacity:.3}to{scale:1;opacity:1}}
+  @keyframes hm-ic-chat{0%,100%{translate:0 0}30%{translate:0 -1.8px}60%{translate:0 .5px}}
+  @keyframes hm-ic-draw{from{stroke-dashoffset:9}to{stroke-dashoffset:0}}
+  @keyframes hm-ic-join{from{translate:3px 0;opacity:0}to{translate:0 0;opacity:1}}
+  @keyframes hm-ic-lines{from{opacity:.15}to{opacity:1}}
+  @keyframes hm-ic-open-r{from{scale:.8 1}to{scale:1 1}}
+  @keyframes hm-ic-cup{0%,100%{rotate:0deg}30%{rotate:-9deg}65%{rotate:6deg}}
+  @keyframes hm-ic-bars{from{scale:1 .5}to{scale:1 1}}
+  @keyframes hm-ic-blink{0%,100%{scale:1 1}35%{scale:1 .08}}
+  @keyframes hm-ic-db{from{scale:.72 1}to{scale:1 1}}
+  @keyframes hm-ic-gear{from{rotate:-80deg}to{rotate:0deg}}
+  @keyframes hm-ic-head{0%,100%{translate:0 0}35%{translate:0 -1.7px}}
+  @keyframes hm-ic-dot{0%,100%{translate:0 0}35%{translate:0 -2.2px}}
+  @keyframes hm-ic-ring{0%,100%{rotate:0deg}15%{rotate:20deg}32%{rotate:-16deg}50%{rotate:11deg}68%{rotate:-6deg}84%{rotate:2deg}}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=home] path:first-child{animation:hm-ic-home 560ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=home] path:last-child{transform-origin:12px 21px;animation:hm-ic-door 520ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=notifications] path:first-child{transform-origin:12px 3px;animation:hm-ic-bell 760ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=notifications] path:last-child{animation:hm-ic-clapper 760ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=halaqas] path{animation:hm-ic-grid 480ms var(--hm-spring-pop) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=halaqas] path:nth-child(2){animation-delay:45ms}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=halaqas] path:nth-child(3){animation-delay:90ms}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=halaqas] path:nth-child(4){animation-delay:135ms}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=community] path:last-child{animation:hm-ic-chat 620ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=sessions] path:last-child{stroke-dasharray:9;animation:hm-ic-draw 520ms var(--hm-ease-out) 90ms backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=students] path:last-child{animation:hm-ic-join 520ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=plans] path:last-child{stroke-dasharray:9;animation:hm-ic-draw 520ms var(--hm-ease-out) 90ms backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=certificates] path:last-child{stroke-dasharray:9;animation:hm-ic-draw 520ms var(--hm-ease-out) 90ms backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=reports] path:last-child{animation:hm-ic-lines 560ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=quran] path:first-child{transform-origin:12px 12px;animation:hm-ic-open-r 560ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=quran] path:last-child{transform-origin:12px 12px;animation:hm-ic-open-r 560ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=ranking] path:nth-child(2){animation:hm-ic-cup 680ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=competition] path{transform-origin:12px 20px;animation:hm-ic-bars 520ms var(--hm-spring-pop) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=supervision] path:last-child{animation:hm-ic-blink 520ms var(--hm-ease-std) 60ms backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=users] path:last-child{stroke-dasharray:9;animation:hm-ic-draw 520ms var(--hm-ease-out) 90ms backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=data] path:first-child{animation:hm-ic-db 520ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=settings] path{animation:hm-ic-gear 640ms var(--hm-ease-out) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=profile] path:first-child{animation:hm-ic-head 520ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=more] path{animation:hm-ic-dot 520ms var(--hm-spring-sheet) backwards}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=more] path:nth-child(2){animation-delay:70ms}
+  html:not(.rc27-reduce-motion) .hm-nav-pop svg[data-ic=more] path:nth-child(3){animation-delay:140ms}
+  /* the header bell rings when a NEW notification arrives (class set by core/motion-system.js) */
+  html:not(.rc27-reduce-motion) #notificationBell svg.hm-ring{transform-box:view-box;transform-origin:12px 3px;animation:hm-ic-ring 900ms var(--hm-ease-out) backwards}
+}
 
 /* ---- one chevron, two states (the drawer's section headers): the icon is constant, the state rotates it ---- */
 html .d86-gh svg{transition:transform var(--hm-dur-base) var(--hm-ease-std)}

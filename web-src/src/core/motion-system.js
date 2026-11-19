@@ -71,7 +71,27 @@ function animateNumber(el, from, to, unit, dur, delay, width) {
   el.textContent = from.toFixed(decimals) + unit;
 }
 
+const lastRing = new Map(); /* "page|index" -> last ring fill length, so a refresh moves the ring from the old value */
+/* Progress rings fill to their value and line charts are revealed in reading direction (the app is RTL: from the right) on page entry.
+   A re-render with the same numbers plays nothing; a changed number moves the ring from its previous value. Final state is always the real markup. */
+function runCharts(scope, page, pageChanged) {
+  const play = !reduced() && !document.hidden;
+  scope.querySelectorAll('svg circle[stroke-dasharray]').forEach((c, i) => {
+    const parts = c.getAttribute('stroke-dasharray').trim().split(/[\s,]+/), to = parseFloat(parts[0]);
+    if (!(to >= 0)) return;
+    const key = page + '|' + i, prev = lastRing.get(key); lastRing.set(key, to);
+    const from = pageChanged ? 0 : prev, rest = parts[1] || '200';
+    if (!play || from === undefined || from === to) return;
+    c.animate([{ strokeDasharray: `${from} ${rest}` }, { strokeDasharray: `${to} ${rest}` }], { duration: pageChanged ? 1000 : 600, delay: pageChanged ? 150 : 0, easing: 'cubic-bezier(0,.55,.45,1)', fill: 'backwards' }); /* ease-out-circ: a meter fills, it does not spring */
+  });
+  if (!pageChanged || !play) return;
+  scope.querySelectorAll('svg polyline').forEach(l => {
+    const svg = l.ownerSVGElement; if (!svg) return;
+    svg.animate([{ clipPath: 'inset(0 0 0 100%)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 700, delay: 200, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+  });
+}
 function runCounters(scope, page, pageChanged) {
+  runCharts(scope, page, pageChanged);
   const fold = innerHeight + 60;
   const els = countTargets(scope);
   const plan = [];
@@ -314,7 +334,10 @@ function watchNav(selector) {
   const reset = () => { last = null; };
   window.addEventListener('resize', reset);
   window.addEventListener('halaqati:viewchange', reset);
+  /* name each icon after its page (from the button's onclick) so CSS can give every icon its own gesture, whichever layer built the SVG */
+  const tagIcons = () => c.querySelectorAll('button svg:not([data-ic])').forEach(s => { const oc = s.closest('button').getAttribute('onclick') || '', m = oc.match(/go\('([a-z_]+)'\)/); s.setAttribute('data-ic', m ? m[1] : /toggleDrawer/.test(oc) ? 'more' : 'none'); });
   new MutationObserver(() => {
+    tagIcons();
     const active = c.querySelector('button.active');
     if (!active) return;
     if (!visibleNow(c)) { last = null; return; }
@@ -322,9 +345,24 @@ function watchNav(selector) {
     if (last && last.key !== cur.key && !reduced() && !document.hidden && cur.w && last.w) slidePill(c, active, last, cur);
     /* the arriving icon springs in. The bar is rebuilt by several layers after this callback, so the animation is bound to a class on the
        container (CSS), not to a node that may be replaced a few ms later. No node is ever inserted into the bar. */
-    if (last && last.key !== cur.key && !reduced() && !document.hidden) { c.classList.add('hm-nav-pop'); clearTimeout(c.__hmPopT); c.__hmPopT = setTimeout(() => c.classList.remove('hm-nav-pop'), 520); }
+    if (last && last.key !== cur.key && !reduced() && !document.hidden) { c.classList.add('hm-nav-pop'); clearTimeout(c.__hmPopT); c.__hmPopT = setTimeout(() => c.classList.remove('hm-nav-pop'), 900); }
     last = cur;
   }).observe(c, { childList: true });
+}
+
+/* The header bell rings when a NEW notification arrives (unread count rises), never when it falls or stays the same. */
+function watchBell() {
+  const cnt = document.getElementById('notificationBellCount'), svg = document.querySelector('#notificationBell svg');
+  if (!cnt || !svg) return;
+  let prev = parseInt(cnt.textContent, 10) || 0;
+  new MutationObserver(() => {
+    const now = parseInt(cnt.textContent, 10) || 0;
+    if (now > prev && !reduced() && !document.hidden) {
+      svg.classList.remove('hm-ring'); void svg.getBoundingClientRect(); svg.classList.add('hm-ring');
+      clearTimeout(svg.__hmRingT); svg.__hmRingT = setTimeout(() => svg.classList.remove('hm-ring'), 950);
+    }
+    prev = now;
+  }).observe(cnt, { childList: true, characterData: true, subtree: true });
 }
 
 /* The pill is the container's ::before (see motion.css), driven by custom properties. No node is inserted into the bar:
@@ -396,6 +434,7 @@ const FAIL = /(تعذر|تعذّر|فشل|خطأ|غير مكتمل)/;
 const CHECK_SVG = '<svg class="hm-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
 function decorateToast(message) {
   const t = document.getElementById('toast');
+  if (FAIL.test(message)) failBusyButton();
   if (!t || reduced()) return;
   if (OK.test(message)) {
     confirmBusyButton();
@@ -447,7 +486,7 @@ function installButtonStates() {
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.matches && document.activeElement.matches('button')) lastPress = { el: document.activeElement, t: performance.now() }; }, true);
   const endBusy = b => {
     b.el.classList.remove('hm-busy'); b.el.removeAttribute('aria-busy'); b.ended = performance.now();
-    if (b.ok) flashOk(b.el);
+    if (b.ok) flashOk(b.el); else if (b.err) flashErr(b.el);
   };
   new MutationObserver(list => {
     for (const m of list) {
@@ -465,6 +504,17 @@ function flashOk(el) {
   el.classList.add('hm-ok');
   el.animate([{ scale: 1 }, { scale: 1.045 }, { scale: 1 }], { duration: 420, easing: spring('pop') });
   setTimeout(() => el.classList.remove('hm-ok'), 700);
+}
+/* a failed operation: the button that was just busy gets a red ring and one short shake (the ring stays under reduced motion, the shake does not) */
+function flashErr(el) {
+  if (!el.isConnected || document.hidden) return;
+  el.classList.add('hm-err');
+  if (!reduced()) el.animate([{ translate: '0 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '-3px 0' }, { translate: '0 0' }], { duration: 360, easing: 'ease-in-out' });
+  setTimeout(() => el.classList.remove('hm-err'), 900);
+}
+function failBusyButton() {
+  const b = lastBusy; if (!b || performance.now() - b.t0 > 6000) return;
+  if (b.ended && performance.now() - b.ended < 1500) { if (!b.errShown) { b.errShown = true; flashErr(b.el); } } else b.err = true;
 }
 /* called by the toast decoration: a success message confirms the button that was just busy */
 function confirmBusyButton() {
@@ -504,6 +554,7 @@ function install() {
   installToast();
   watchNav('#mobileNav');
   watchNav('#nav');
+  watchBell();
   installOrnament();
   installDrawerDrag();
   installButtonStates();
