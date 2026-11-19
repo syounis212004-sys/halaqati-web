@@ -16,3 +16,6 @@
 
 ## ponytail-audit (تدقيق جودة)
 مثبّتة بتاريخ 2026-11-19 نسخةً حرفيةً (SHA-256 `2b3223a02c386d1263e1b08343cb8eb3a53e444cdafb1d79e26c8ec2a8fcad28`) من مستودع المالك `syounis212004-sys/halaqati-app`، المسار `.claude/skills/ponytail-audit/SKILL.md` (commit `7ca6ef6`). ملف توثيق واحد؛ تقرير للقراءة فقط ("One-shot report, changes no code")، بلا سكربتات. يشترطها `.claude/enforce/` لمهام التدقيق.
+
+## halaqati-motion-guidance (سياسة الحركة)
+مثبّتة بتاريخ 2026-11-19 بإذن المالك، نسخةً حرفيةً (SHA-256 `f5db2cb485be1eb5fb11a085cc537eaadb3140a2bcc9803621d35aa40e778e7f`) من `syounis212004-sys/halaqati-app`، المسار `.claude/skills/halaqati-motion-guidance/SKILL.md` (commit `7ca6ef6`). سياسة نصية بلا سكربتات؛ موجّهة أساساً لتطبيق Android وتعدّ الويب مرجعاً ثانوياً، وتحدد قيود RTL وreduced-motion والأداء وعدم إضافة مكتبات حركة دون موافقة. قاعدة الإنفاذ `motion` تشترط استدعاءها قبل تعديل حركة `web-src/src`.
