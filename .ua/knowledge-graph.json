@@ -28,10 +28,6 @@
     "enrichment": {
       "tool": ".ua/tools/enrich-graph.mjs",
       "stats": {
-        "tool_confirmed": 461,
-        "tool_inferred": 14,
-        "dropped_unbacked_related": 2,
-        "dropped_unbacked_configures": 1,
         "reads_from": 175,
         "rpc_calls": 101,
         "writes_to": 62,

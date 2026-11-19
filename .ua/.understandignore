@@ -82,3 +82,4 @@ web-src/package-lock.json
 *.apk
 *.png
 *.svg
+docs/KNOWLEDGE_GRAPH_AR.md

@@ -10,9 +10,10 @@
  * Usage: node .ua/tools/enrich-graph.mjs <repo-root> <graph.json in> <graph.json out> */
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { safeLiteral } from './safe-literal.mjs';
 
 const [root = process.cwd(), inP, outP] = process.argv.slice(2);
+if (!inP || !outP) { console.error('usage: node enrich-graph.mjs <repo-root> <graph-in.json> <graph-out.json>'); process.exit(2); }
 const g = JSON.parse(fs.readFileSync(inP, 'utf8'));
 const TAG = 'static-analysis';
 g.nodes = g.nodes.filter(n => !(n.tags || []).includes(TAG));
@@ -48,13 +49,14 @@ const owner = (fp, line) => { let best = null; for (const f of funcsByFile.get(f
 const rdCache = new Map();
 const rd = fp => { if (!rdCache.has(fp)) { try { rdCache.set(fp, fs.readFileSync(path.join(root, fp), 'utf8')); } catch { rdCache.set(fp, ''); } } return rdCache.get(fp); };
 const named = (fp, name) => new RegExp('\\b' + String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(rd(fp));
+const called = (fp, name) => new RegExp('(^|[^\\w$])' + String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(').test(rd(fp));
 const STRUCTURAL = new Set(['contains', 'exports', 'imports', 'migrates']), SPECULATIVE = new Set(['related', 'similar_to', 'configures']);
 const labeled = e => /^\[(مؤكد|مستنتج)-(تحليل|أداة)\]/.test(e.description || '');
 g.edges = g.edges.filter(e => {
   if (labeled(e)) return true;
   const s = byId.get(e.source), t = byId.get(e.target); if (!s || !t) return false;
   let sure = STRUCTURAL.has(e.type);
-  if (!sure && s.filePath) sure = e.type === 'tested_by' ? false : (t.type === 'function' ? named(s.filePath, t.name) : t.filePath ? named(s.filePath, t.filePath.split('/').pop()) || (['reads_from', 'writes_to'].includes(e.type) && named(s.filePath, t.name)) : ['reads_from', 'writes_to'].includes(e.type) && named(s.filePath, t.name));
+  if (!sure && s.filePath) sure = e.type === 'tested_by' ? false : (t.type === 'function' ? called(s.filePath, t.name) : t.filePath ? named(s.filePath, t.filePath.split('/').pop()) || (['reads_from', 'writes_to'].includes(e.type) && named(s.filePath, t.name)) : ['reads_from', 'writes_to'].includes(e.type) && named(s.filePath, t.name));
   if (!sure && (SPECULATIVE.has(e.type) || (e.type === 'calls' && t.type === 'function'))) { bump('dropped_unbacked_' + e.type); return false; }
   e.description = sure ? '[مؤكد-أداة] ' + (STRUCTURAL.has(e.type) ? 'استخراج هيكلي' : 'الهدف مذكور في نص ملف المصدر') : '[مستنتج-أداة] حكم المحلل دون دليل نصي مباشر';
   bump(sure ? 'tool_confirmed' : 'tool_inferred'); return true;
@@ -101,7 +103,7 @@ for (const f of jsFiles) for (const m of (text.get(f.filePath) || '').matchAll(/
 const parity = text.get('web-src/src/features/rc86/parity.js') || '';
 const dm = parity.match(/const DRAWER=(\{[\s\S]*?\n  \});/);
 if (dm) {
-  let DR = {}; try { DR = vm.runInNewContext('(' + dm[1] + ')'); } catch (err) { console.error('DRAWER literal not parseable, role->page edges skipped:', err.message); }
+  let DR = {}; try { DR = safeLiteral(dm[1]); } catch (err) { console.error('DRAWER literal not parseable, role->page edges skipped:', err.message); }
   for (const [role, items] of Object.entries(DR)) for (const [pid, label] of items) { pageNode(pid).summary = `صفحة «${label}» (${pid}).`; addEdge(`concept:role:${role}`, `concept:page:${pid}`, 'routes', true, `القائمة الجانبية للدور ${role} (DRAWER في rc86/parity.js): «${label}»`) && bump('role_page_drawer'); }
 }
 for (const n of jsFiles) {

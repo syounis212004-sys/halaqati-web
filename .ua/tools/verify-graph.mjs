@@ -16,12 +16,11 @@ const ids = new Map(g.nodes.map(n => [n.id, n]));
 ok(g.nodes.length === ids.size, `V1 node ids unique (${g.nodes.length})`);
 ok(g.edges.every(e => ids.has(e.source) && ids.has(e.target)), `V2 no dangling edges (${g.edges.length})`);
 
-/* V3: every tracked source file the project owns (same ignore rules) has a node; no node for a missing file */
-const tracked = execSync('git ls-files', { cwd: root, maxBuffer: 1 << 26 }).toString().split('\n').filter(Boolean);
-const ignored = /(^\.claude\/|^\.ua\/|^docs\/KNOWLEDGE_GRAPH_AR\.md$|\.(zip|apk|png|svg|webp)$|package-lock\.json$|\.min\.js$|^web-src\/public\/(vendor|motion)\/|^web-src\/public\/core\/lottie|^web-src\/\.artifacts\/|^\.playwright-mcp\/|^web-src\/public\/(assets|brand)\/)/;
+/* V3: every file in the analyzer's inventory (.ua/intermediate/scan-result.json, built with .understandignore) has a node */
+const inventory = JSON.parse(fs.readFileSync(path.join(root, '.ua/intermediate/scan-result.json'), 'utf8')).files.map(f => f.path).filter(f => !f.startsWith('.ua/'));
 const nodePaths = new Set(g.nodes.map(n => n.filePath).filter(Boolean));
-const missing = tracked.filter(f => !ignored.test(f) && /\.(js|mjs|ts|css|html|py|sql|yml|yaml|md|json|webmanifest)$/.test(f) && !nodePaths.has(f));
-ok(missing.length === 0, `V3 every tracked source/doc file has a node (missing ${missing.length}${missing.length ? ': ' + missing.slice(0, 8).join(', ') : ''})`);
+const missing = inventory.filter(f => !nodePaths.has(f));
+ok(missing.length === 0, `V3 every inventory file (${inventory.length}) has a node (missing ${missing.length}${missing.length ? ': ' + missing.slice(0, 8).join(', ') : ''})`);
 const stale = [...nodePaths].filter(p => !fs.existsSync(path.join(root, p)));
 ok(stale.length === 0, `V4 no node points at a file that no longer exists (${stale.length})`);
 
@@ -75,8 +74,8 @@ ok(enr.length > 500, `V14 enrichment edges carry a confirmed/inferred label (${e
 const unlabeled = g.edges.filter(e => !/^\[(مؤكد|مستنتج)-(تحليل|أداة)\]/.test(e.description || ''));
 ok(unlabeled.length === 0, `V16 every edge is labeled confirmed/inferred (${unlabeled.length} unlabeled)`);
 const srcText = f => { try { return fs.readFileSync(path.join(root, f), 'utf8'); } catch { return ''; } };
-const unbacked = g.edges.filter(e => e.type === 'calls' && ids.get(e.source)?.type === 'function' && ids.get(e.target)?.type === 'function' && !new RegExp('\\b' + ids.get(e.target).name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(srcText(ids.get(e.source).filePath)));
-ok(unbacked.length === 0, `V17 every function->function call names its target in the caller's file (${unbacked.length} without evidence)`);
+const unbacked = g.edges.filter(e => e.type === 'calls' && ids.get(e.source)?.type === 'function' && ids.get(e.target)?.type === 'function' && !new RegExp('(^|[^\\w$])' + ids.get(e.target).name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(').test(srcText(ids.get(e.source).filePath)));
+ok(unbacked.length === 0, `V17 every function->function call calls its target by name( in the caller's file (${unbacked.length} without evidence)`);
 const speculative = g.edges.filter(e => ['related', 'similar_to'].includes(e.type) && !/^\[مؤكد/.test(e.description || ''));
 ok(speculative.length === 0, `V18 no speculative related/similar_to edges (${speculative.length})`);
 
