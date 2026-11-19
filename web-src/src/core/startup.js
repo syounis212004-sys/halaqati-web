@@ -40,7 +40,7 @@ async function hfRestoreCachedShell(last,{refreshDelay=180}={}){
     try{
       let session=await hfGetStartupSession(3500);
       if(session?.user){state.user=session.user;saveOfflineAuth(session.user);state.authNeedsLogin=false}
-      if(typeof refreshFromServer==='function')await refreshFromServer({renderAfter:true});
+      if(typeof refreshFromServer==='function'&&autoRefreshDue())await refreshFromServer({renderAfter:true});
     }catch(_e){}
   },refreshDelay);
   if(typeof cacheRecentSessionRostersForOffline==='function')setTimeout(()=>cacheRecentSessionRostersForOffline(30),1800);
@@ -54,9 +54,9 @@ async function hfStartApplication(){
     if(recoveryInUrl){showPasswordRecovery();return}
 
     const last=readOfflineAuth();
-    // Fast path used only immediately after a native print hand-off. Identity and page were
-    // persisted just before opening Android's print UI, so restore them before any network wait.
-    if(hfFreshPrintResume()&&last&&await hfRestoreCachedShell(last,{refreshDelay:250}))return;
+    // Local-first: a known account with a saved snapshot opens at once. getSession() can wait for
+    // a token refresh over a slow or missing network, which used to leave the login screen visible.
+    if(last&&await hfRestoreCachedShell(last,{refreshDelay:hfFreshPrintResume()?250:60}))return;
 
     const session=await hfGetStartupSession(3000);
     if(session?.user){

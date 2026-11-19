@@ -1,0 +1,17 @@
+import { chromium } from 'playwright';
+const DELAY=+(process.env.DELAY||8000), REF='xlxzwucqdtggkfwwqibk';
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',headless:true,args:['--no-sandbox']});
+const ctx=await b.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+let slow=false;
+await ctx.route(/https:\/\//,async r=>{const u=new URL(r.request().url());if(!/supabase\.co/.test(u.host))return r.abort();if(slow)await new Promise(s=>setTimeout(s,DELAY));r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','content-range':'0-0/0'},body:'[]'}).catch(()=>{})});
+const p=await ctx.newPage();await p.goto((process.env.BASE_URL||'http://127.0.0.1:4173/'));
+await p.waitForFunction(()=>!!window.HalaqatiCertificates&&window.__hmRender,null,{timeout:45000});
+await p.evaluate(({REF})=>{const id='00000000-0000-4000-8000-000000000001';state.user={id,email:'a@b.c'};state.profile={id,role:'admin',full_name:'د. محمد',active:true,approval_status:'approved'};state.halaqas=[];state.students=[];state.sessions=[];saveOfflineAuth(state.user);cacheSnapshot();
+const exp=Math.floor(Date.now()/1000)-3600;localStorage.setItem(Object.keys(localStorage).find(k=>/auth-token/.test(k))||`sb-${REF}-auth-token`,JSON.stringify({access_token:'x.y.z',refresh_token:'r',expires_at:exp,expires_in:3600,token_type:'bearer',user:{id,email:'a@b.c'}}))},{REF});
+slow=true;
+await p.addInitScript(()=>{window.__t=[];const iv=setInterval(()=>{const a=document.getElementById('auth'),s=document.getElementById('rc27Splash');if(a)window.__t.push([Math.round(performance.now()),!a.classList.contains('hidden'),!!s])},50)});
+await p.reload();await p.waitForTimeout(9000);
+const t=await p.evaluate(()=>window.__t);
+const vis=t.filter(x=>x[1]&&!x[2]);
+const app=await p.evaluate(()=>!document.getElementById('app').classList.contains('hidden'));console.log(vis.length===0&&app?'PASS B1 signed-in launch never shows the login screen (expired session, 8 s network)':'FAIL B1 login visible '+vis.length+' frames');if(vis.length||!app)process.exitCode=1;
+await b.close();
