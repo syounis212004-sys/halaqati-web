@@ -308,6 +308,7 @@ async function clearLocalStudentData(uid){
   // Sign-out must not leave the account's downloaded student data in the browser. Unsynced operations stay (same owner id).
   try{if(uid){localStorage.removeItem(`halaqati_v214_cache_${uid}`);localStorage.removeItem(`halaqati_roster_cache_at_${uid}`);localStorage.removeItem(`halaqati_full_load_${uid}`)}}catch(e){}
   try{if(typeof legacyCacheKey==='function'){const k=legacyCacheKey();if(k)localStorage.removeItem(k)}}catch(e){}
+  try{if(uid)await Promise.race([HalaqatiSwr.purge(uid),sleep(1200)])}catch(e){}
   try{const s=window.HalaqatiOfflineStore;if(uid&&s?.clearSnapshot)await Promise.race([s.clearSnapshot(uid),sleep(1200)])}catch(e){}
 }
 async function logout(){const uid=state.user?.id;try{if(typeof unregisterPushDevice==='function')await unregisterPushDevice()}catch(e){}try{await db.auth.signOut()}catch(e){}clearOfflineAuth();await clearLocalStudentData(uid);location.reload()}

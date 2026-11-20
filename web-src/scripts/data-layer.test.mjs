@@ -293,3 +293,118 @@ test('photos: students that only exist in the unscoped master list (RC27.master)
   assert.equal(await S.v230HydrateStudentPhotos(), 2);
   assert.equal(shared.photo_path, 'data:image/a'); assert.equal(onlyMaster.photo_path, 'data:image/m');
 });
+
+/* ---------- persistent SWR: reads survive a reload; a NETWORK failure falls back to the saved answer ---------- */
+function loadSwrP(stateOver = {}) {
+  const code = between(read('core/runtime.js'), 'const HalaqatiSwr=(()=>{', '})();');
+  const sandbox = { state: { user: { id: 'u1' }, profile: { role: 'admin' }, ...stateOver }, navigator: { onLine: true }, document: { getElementById: () => null, querySelector: () => null, hidden: false, activeElement: null }, scrollY: 0, render() {}, Response, Headers, URL, Date, setTimeout, clearTimeout, Math, Map, JSON, Promise };
+  vm.createContext(sandbox);
+  const S = vm.runInContext(code + ';HalaqatiSwr', sandbox);
+  const rows = new Map();
+  const adapter = { get: async k => rows.get(k) || null, put: async r => { rows.set(r.k, r); }, purge: async pred => { for (const [k, r] of [...rows]) if (pred(r)) rows.delete(k); } };
+  S.persist(adapter); return { S, rows, sandbox };
+}
+const okGo = (body = '[{"id":1}]') => () => Promise.resolve(new Response(body, { status: 200, headers: { 'content-type': 'application/json' } }));
+const failGo = () => Promise.reject(new TypeError('Failed to fetch'));
+const flush = () => new Promise(r => setTimeout(r, 5));
+const get = (S, path, hdr = {}, go) => S.fetch(U(path), { method: 'GET', headers: hdr }, go);
+
+test('persistent SWR: a successful read is saved under a key that does not contain the JWT', async () => {
+  const { S, rows } = loadSwrP(); await get(S, 'students?select=*', { authorization: 'Bearer AAA' }, okGo()); await flush();
+  assert.equal(rows.size, 1); const [r] = [...rows.values()];
+  assert.ok(!r.k.includes('AAA')); assert.equal(r.uid, 'u1'); assert.equal(r.role, 'admin'); assert.equal(r.text, '[{"id":1}]');
+});
+test('persistent SWR: after a reload (empty memory) a network failure is answered from the saved copy, marked stale', async () => {
+  const a = loadSwrP(); await get(a.S, 'exam_students?x=1', { authorization: 'Bearer AAA' }, okGo()); await flush();
+  const b = loadSwrP(); a.rows.forEach((v, k) => b.rows.set(k, v));
+  const r = await get(b.S, 'exam_students?x=1', { authorization: 'Bearer BBB' }, failGo);
+  assert.equal(r.status, 200); assert.equal(await r.text(), '[{"id":1}]'); assert.equal(r.headers.get('x-halaqati-stale'), '1');
+});
+test('persistent SWR: nothing saved means the network error still reaches the caller', async () => {
+  const { S } = loadSwrP(); await assert.rejects(get(S, 'students?select=*', {}, failGo), /Failed to fetch/);
+});
+test('persistent SWR: a server error answer is never replaced by the saved copy', async () => {
+  const a = loadSwrP(); await get(a.S, 'students?select=*', {}, okGo()); await flush();
+  const b = loadSwrP(); a.rows.forEach((v, k) => b.rows.set(k, v));
+  const bad = await get(b.S, 'students?select=*', {}, () => Promise.resolve(new Response('{"message":"boom"}', { status: 500 })));
+  assert.equal(bad.status, 500);
+});
+test('persistent SWR: expired (> 7 days), other-user and role-changed copies are not served', async () => {
+  const a = loadSwrP(); await get(a.S, 'students?select=*', {}, okGo()); await flush(); const [row] = [...a.rows.values()];
+  const mk = (over, st) => { const b = loadSwrP(st); b.rows.set(row.k, { ...row, ...over }); return b.S; };
+  await assert.rejects(get(mk({ t: Date.now() - 8 * 86400000 }), 'students?select=*', {}, failGo), /Failed/);
+  await assert.rejects(get(mk({ uid: 'someone-else' }), 'students?select=*', {}, failGo), /Failed/);
+  await assert.rejects(get(mk({}, { profile: { role: 'teacher' } }), 'students?select=*', {}, failGo), /Failed/);
+  const fine = await get(mk({ t: Date.now() - 6 * 86400000 }), 'students?select=*', {}, failGo); assert.equal(fine.status, 200);
+});
+test('persistent SWR: live feeds (notifications, chat) and writes are never persisted', async () => {
+  const { S, rows } = loadSwrP();
+  await get(S, 'notifications?select=*', {}, okGo()); await get(S, 'rpc/rc54_chat_overview', {}, okGo());
+  await S.fetch(U('students'), { method: 'POST', body: '{"x":1}' }, okGo()); await flush();
+  assert.equal(rows.size, 0);
+});
+test('persistent SWR: a read RPC (POST) is persisted per body; oversized answers are not', async () => {
+  const { S, rows } = loadSwrP();
+  await S.fetch(U('rpc/rc49_donor_report'), { method: 'POST', body: '{"m":"2026-11"}' }, okGo('{"a":1}')); await flush(); assert.equal(rows.size, 1);
+  await get(S, 'recitation_entries?select=*', {}, okGo('x'.repeat(450000))); await flush(); assert.equal(rows.size, 1);
+});
+test('persistent SWR: purgeOthers keeps only the current user; purge(uid) removes that user', async () => {
+  const { S, rows } = loadSwrP(); rows.set('a', { k: 'a', uid: 'u1' }); rows.set('b', { k: 'b', uid: 'u2' });
+  await S.purgeOthers('u1'); assert.deepEqual([...rows.keys()], ['a']);
+  await S.purge('u1'); assert.equal(rows.size, 0);
+});
+test('persistent SWR: the IndexedDB adapter is installed, other users are purged on sign-in, the user is purged on sign-out', () => {
+  const rt = read('core/runtime.js');
+  assert.match(rt, /function halaqatiSwrIdb\(/); assert.match(rt, /HalaqatiSwr\.persist\(/);
+  assert.match(between(rt, 'async function prepareOfflineStorageForUser', '\n}\n'), /HalaqatiSwr\.purgeOthers\(userId\)/);
+  assert.match(between(read('features/auth/runtime.js'), 'async function clearLocalStudentData', 'async function logout'), /HalaqatiSwr\.purge\(uid\)/);
+});
+test('persistent SWR: the adapter keeps at most 400 rows and drops rows older than 7 days when trimming', () => {
+  const a = between(read('core/runtime.js'), 'function halaqatiSwrIdb', '\n}\n');
+  assert.match(a, /400/); assert.match(a, /604800000|7\*86400000/);
+});
+
+/* ---------- retention policy: snapshot age caps and other users' leftovers ---------- */
+function loadRetention() {
+  const rt = read('core/runtime.js');
+  const code = between(rt, 'function snapshotMaxAgeMs', '\n') + '\n' + between(rt, 'function snapshotExpired', '\n') + '\n' + between(rt, 'function purgeOtherUsersLocal', '\n}\n');
+  const sandbox = { Date, JSON, Array, Number, Object }; vm.createContext(sandbox); vm.runInContext(code, sandbox); return sandbox;
+}
+const DAY = 86400000;
+test('retention: staff snapshots live 14 days, guardian and donor snapshots 7', () => {
+  const R = loadRetention();
+  assert.equal(R.snapshotMaxAgeMs('admin'), 14 * DAY); assert.equal(R.snapshotMaxAgeMs('teacher'), 14 * DAY); assert.equal(R.snapshotMaxAgeMs('supervisor'), 14 * DAY);
+  assert.equal(R.snapshotMaxAgeMs('guardian'), 7 * DAY); assert.equal(R.snapshotMaxAgeMs('observer'), 7 * DAY); assert.equal(R.snapshotMaxAgeMs('unknown'), 7 * DAY);
+});
+test('retention: a snapshot older than its cap is expired, a missing savedAt is treated as expired', () => {
+  const R = loadRetention(), now = Date.parse('2026-11-20T00:00:00Z');
+  assert.equal(R.snapshotExpired({ profile: { role: 'admin' }, savedAt: new Date(now - 13 * DAY).toISOString() }, now), false);
+  assert.equal(R.snapshotExpired({ profile: { role: 'admin' }, savedAt: new Date(now - 15 * DAY).toISOString() }, now), true);
+  assert.equal(R.snapshotExpired({ profile: { role: 'guardian' }, savedAt: new Date(now - 8 * DAY).toISOString() }, now), true);
+  assert.equal(R.snapshotExpired({ profile: { role: 'admin' } }, now), true);
+});
+test('retention: age counts from the last SYNC, so re-saving the snapshot offline does not extend it', () => {
+  const R = loadRetention(), now = Date.parse('2026-11-20T00:00:00Z');
+  assert.equal(R.snapshotExpired({ profile: { role: 'admin' }, savedAt: new Date(now - 1000).toISOString(), syncedAt: now - 20 * DAY }, now), true);
+  assert.equal(R.snapshotExpired({ profile: { role: 'admin' }, savedAt: new Date(now - 20 * DAY).toISOString(), syncedAt: now - 1 * DAY }, now), false);
+  assert.match(between(read('core/runtime.js'), 'function cacheSnapshot', '\n}\n'), /syncedAt:/);
+});
+test('retention: restoreSnapshot refuses an expired snapshot', () => {
+  assert.match(between(read('core/runtime.js'), 'function restoreSnapshot', '\n}\n'), /snapshotExpired\(/);
+});
+test('retention: other users\' cached data is removed on sign-in unless they still have unsent operations', () => {
+  const R = loadRetention(), store = new Map(Object.entries({
+    'halaqati_v214_cache_me': '{}', 'halaqati_v214_cache_other': '{}', 'halaqati_v18_cache_other': '{}', 'halaqati_v214_cache_pending': '{}', 'halaqati_v214_queue_pending': '[{"id":1}]',
+    'halaqati_v214_queue_other': '[]', 'halaqati_v214_session_map_other': '{}', 'halaqati_v214_sync_recovery_other': '{}', 'halaqati_full_load_other': '1', 'halaqati_roster_cache_at_other': '1', 'halaqati_v24_last_auth': '{}', 'unrelated': 'x' }));
+  const ls = { get length() { return store.size; }, key: i => [...store.keys()][i], getItem: k => (store.has(k) ? store.get(k) : null), removeItem: k => store.delete(k) };
+  const removed = R.purgeOtherUsersLocal(ls, 'me');
+  assert.ok(removed >= 5);
+  for (const k of ['halaqati_v214_cache_me', 'halaqati_v214_cache_pending', 'halaqati_v214_queue_pending', 'halaqati_v24_last_auth', 'unrelated']) assert.ok(store.has(k), k + ' must stay');
+  for (const k of ['halaqati_v214_cache_other', 'halaqati_v18_cache_other', 'halaqati_v214_queue_other', 'halaqati_v214_session_map_other', 'halaqati_v214_sync_recovery_other', 'halaqati_full_load_other', 'halaqati_roster_cache_at_other']) assert.ok(!store.has(k), k + ' must go');
+});
+test('retention: sign-in prepares storage by purging other users', () => {
+  assert.match(between(read('core/runtime.js'), 'async function prepareOfflineStorageForUser', '\n}\n'), /purgeOtherUsersLocal\(localStorage,userId\)/);
+});
+test('sync badge shows the last successful sync as a tooltip', () => {
+  assert.match(between(read('core/runtime.js'), 'function updateSyncBadge', '\n'), /v230LastFullLoadAt/);
+});

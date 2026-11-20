@@ -14,6 +14,7 @@
     "android:sync": "npx cap sync android",
     "check:data-layer": "node --test scripts/data-layer.test.mjs",
     "check:data-usage": "node scripts/data-usage-check.mjs",
+    "check:offline-pages": "node scripts/offline-pages-check.mjs",
     "check:regression": "node scripts/regression-check.mjs",
     "check:audit-fixes": "node scripts/audit-fixes-check.mjs",
     "check:reports-module": "node scripts/reports-module-check.mjs",

@@ -32,27 +32,54 @@ function halaqatiPagedFetch(input,init){
    that started before a write is not stored. Chat, notifications and other live feeds are never cached.
    shortcut: memory only (cleared on reload), upgrade to IndexedDB if cold starts need it. */
 const HalaqatiSwr=(()=>{
-  const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000;let gen=0,tm=0,last=0;
+  const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000,MAXAGE=7*86400000,MAXP=400000;let gen=0,tm=0,last=0,P=null;
   const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts|rc_pending_requests|rc49_support_cards|rc49_support_defaults|rc49_my_pledges|rc49_donor_impact|rc49_donor_report|rc49_news_list|rc32_observer_overview|rc40_observer_breakdown)$/,KEEP=/\/rpc\/rc27_cleanup_notifications$/;
-  const res=e=>new Response(e.text,{status:e.status,headers:e.headers});
+  const NOP=/chat|thread|message|notification|push|device|rc54_/i; /* never saved on disk: conversations and live feeds */
+  const res=(e,stale)=>new Response(e.text,{status:e.status,headers:stale?{...e.headers,'x-halaqati-stale':'1'}:e.headers});
+  const who=()=>({uid:(typeof state!=='undefined'&&state&&state.user&&state.user.id)||'',role:(typeof state!=='undefined'&&state&&state.profile&&state.profile.role)||''});
   const changed=()=>{clearTimeout(tm);tm=setTimeout(()=>{const c=document.getElementById('content'),a=document.activeElement;
     if(Date.now()-last<3000||document.hidden||!c||Math.max(c.scrollTop,scrollY)>40||document.querySelector('dialog[open],.drawer.open')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
     last=Date.now();try{render()}catch(_e){}},400)};
-  const load=(k,go,old)=>{if(F.has(k))return F.get(k);const g=gen;
+  const load=(k,go,old,pk)=>{if(F.has(k))return F.get(k);const g=gen;
     const p=go().then(async r=>{if(!r.ok)return r;const text=await r.clone().text();
       if(g===gen&&text.length<MAXB){const e={text,status:r.status,headers:{'content-type':r.headers.get('content-type')||'application/json','content-range':r.headers.get('content-range')||''},t:Date.now()};
-        if(!e.headers['content-range'])delete e.headers['content-range'];M.delete(k);M.set(k,e);if(M.size>MAX)M.delete(M.keys().next().value);if(old&&old.text!==text)changed()}
+        if(!e.headers['content-range'])delete e.headers['content-range'];if(pk&&text.length<=MAXP){const w=who();P.put({k:pk,uid:w.uid,role:w.role,t:e.t,text:e.text,status:e.status,headers:e.headers}).catch(()=>{})}M.delete(k);M.set(k,e);if(M.size>MAX)M.delete(M.keys().next().value);if(old&&old.text!==text)changed()}
       return r}).finally(()=>F.delete(k));F.set(k,p);return p};
   return{
     clear(){gen++;M.clear()},
+    persist(a){P=a},
+    purgeOthers(uid){return P?P.purge(r=>r.uid!==uid):Promise.resolve()},
+    purge(uid){return P?P.purge(r=>r.uid===uid):Promise.resolve()},
     fetch(input,init,go){let u,m;try{u=new URL(typeof input==='string'?input:input.url);m=String(init?.method||input.method||'GET').toUpperCase()}catch(_e){return go()}
       if(!u.pathname.includes('/rest/v1/')||LIVE.test(u.pathname))return go();
       const read=m==='GET'||(m==='POST'&&READ_RPC.test(u.pathname));
       if(KEEP.test(u.pathname))return go();if(!read){gen++;M.clear();return go()}
       const h=new Headers(init?.headers||input.headers||{}),k=[m,u.href,h.get('authorization'),h.get('range'),h.get('accept'),h.get('prefer'),typeof init?.body==='string'?init.body:''].join('|'),e=M.get(k);
       if(e){if(Date.now()-e.t>FRESH)load(k,go,e).catch(()=>{});return Promise.resolve(res(e))}
-      return load(k,go,null).then(r=>r.ok&&M.get(k)?res(M.get(k)):r.clone())}
+      const w=who(),pk=P&&w.uid&&!NOP.test(u.pathname)?w.uid+'|'+[m,u.origin+u.pathname+u.search,h.get('range'),h.get('accept'),h.get('prefer'),typeof init?.body==='string'?init.body:''].join('|'):null;
+      /* a NETWORK failure (the request itself threw) falls back to the copy saved on this device for this user and role, at most 7 days old */
+      return load(k,go,null,pk).then(r=>r.ok&&M.get(k)?res(M.get(k)):r.clone(),async err=>{
+        if(pk){const row=await P.get(pk).catch(()=>null);if(row&&row.uid===w.uid&&row.role===w.role&&row.status<400&&Date.now()-row.t<MAXAGE)return res(row,true)}
+        throw err})}
   }})();
+/* On-disk copy of read answers for HalaqatiSwr (IndexedDB 'halaqati-swr-v1'). Rows carry uid + role; they are purged on sign-out and for other users on sign-in. */
+function halaqatiSwrIdb(){
+  if(typeof indexedDB==='undefined')return null;
+  let dbp=null,puts=0;
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('halaqati-swr-v1',1);r.onupgradeneeded=()=>{r.result.createObjectStore('e',{keyPath:'k'}).createIndex('t','t')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);r.onblocked=()=>rej(new Error('swr db blocked'))}).catch(e=>{dbp=null;throw e}));
+  const done=tx=>new Promise((res,rej)=>{tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>rej(tx.error)});
+  const req=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+  const walk=(st,fn)=>new Promise((res,rej)=>{const c=st.openCursor();c.onsuccess=()=>{const cur=c.result;if(!cur)return res();fn(cur);cur.continue()};c.onerror=()=>rej(c.error)});
+  return{
+    async get(k){const d=await open();return (await req(d.transaction('e','readonly').objectStore('e').get(k)))||null},
+    async put(row){const d=await open(),tx=d.transaction('e','readwrite');tx.objectStore('e').put(row);await done(tx);if(++puts%25===0)this.trim().catch(()=>{})},
+    async purge(pred){const d=await open(),tx=d.transaction('e','readwrite');await walk(tx.objectStore('e'),cur=>{if(pred(cur.value))cur.delete()});await done(tx)},
+    async trim(){const d=await open(),tx=d.transaction('e','readwrite'),st=tx.objectStore('e'),cut=Date.now()-604800000;let n=await req(st.count());
+      await walk(st.index('t'),cur=>{if(cur.value.t<cut||n>400){cur.delete();n--}});await done(tx)}
+  }
+}
+try{const a=halaqatiSwrIdb();if(a)HalaqatiSwr.persist(a)}catch(_e){}
+
 /* Automatic refreshes (coming back to the app, going online, launch) only run when the last full load is older than 5 minutes.
    User actions (pull-to-refresh, the refresh button, saving) are not limited by this. */
 function autoRefreshDue(){let t=state.v230LastFullLoadAt||0;if(!t)try{t=Number(localStorage.getItem('halaqati_full_load_'+state.user?.id))||0}catch(_e){}return Date.now()-t>300000}
@@ -98,6 +125,18 @@ function evalDot(e){return 'eval-'+(e||'repeat')}
 function visibleStudents(){return state.students}
 function avatarHtml(s,cls='avatar'){let u=state.photoUrls[s.id];return u?`<div class="${cls}"><img src="${u}" alt=""></div>`:`<div class="${cls}">${(s.full_name||'ط')[0]}</div>`}
 
+/* Retention: staff snapshots are shown offline for at most 14 days, guardian/donor snapshots 7 (then a sync is required first). */
+function snapshotMaxAgeMs(role){return (['admin','supervisor','teacher'].includes(role)?14:7)*86400000}
+function snapshotExpired(x,now){const t=Number(x&&x.syncedAt)||Date.parse(x&&x.savedAt);return !t||now-t>snapshotMaxAgeMs(x.profile&&x.profile.role)}
+/* On sign-in, everything another account left in this browser is removed unless that account still has unsent operations. */
+function purgeOtherUsersLocal(ls,uid){
+  const re=/^(halaqati_(?:v214|v18)_(?:cache|queue|session_map|sync_recovery)_|halaqati_full_load_|halaqati_roster_cache_at_|halaqati_plan_health_memo_|halaqati_notif_cleanup_)(.+)$/,by=new Map();
+  for(let i=0;i<ls.length;i++){const k=ls.key(i),m=k&&re.exec(k);if(m&&m[2]!==uid)(by.get(m[2])||by.set(m[2],[]).get(m[2])).push(k)}
+  let n=0;
+  for(const [u,keys] of by){let pending=false;try{for(const q of ['halaqati_v214_queue_'+u,'halaqati_v18_queue_'+u]){const a=JSON.parse(ls.getItem(q)||'[]');if(Array.isArray(a)&&a.length)pending=true}}catch(_e){pending=true}
+    if(pending)continue;for(const k of keys){ls.removeItem(k);n++}}
+  return n
+}
 function cacheKey(){return state.user?.id?`halaqati_v214_cache_${state.user.id}`:null}
 function legacyCacheKey(){return state.user?.id?`halaqati_v18_cache_${state.user.id}`:null}
 function queueKey(){return state.user?.id?`halaqati_v214_queue_${state.user.id}`:null}
@@ -123,6 +162,8 @@ function persistOfflineQueueAsync(q){let store=window.HalaqatiOfflineStore;if(st
 function writeOfflineQueue(q){let rows=(Array.isArray(q)?q:[]).map(normalizeOfflineOperation);state.offlineQueueCache=rows;state.pendingSync=rows.length;let k=queueKey();try{if(k)localStorage.setItem(k,JSON.stringify(rows))}catch(e){}persistOfflineQueueAsync(rows);updateSyncBadge()}
 async function prepareOfflineStorageForUser(userId){
   if(!userId)return false;
+  try{HalaqatiSwr.purgeOthers(userId).catch(()=>{})}catch(e){}
+  try{purgeOtherUsersLocal(localStorage,userId)}catch(e){}
   let localQ=readJsonLocal(`halaqati_v214_queue_${userId}`,null);if(!localQ)localQ=readJsonLocal(`halaqati_v18_queue_${userId}`,[]);localQ=Array.isArray(localQ)?localQ.map(normalizeOfflineOperation):[];
   let localSnap=readJsonLocal(`halaqati_v214_cache_${userId}`,null)||readJsonLocal(`halaqati_v18_cache_${userId}`,null);
   let store=window.HalaqatiOfflineStore;
@@ -259,16 +300,16 @@ async function ensureServerAuthSession({forceRefresh=false,silent=false}={}){
 async function serverWriteReady(){if(!(await internetReachable()))return false;return await ensureServerAuthSession({silent:true})}
 function cacheSnapshot(){
   let k=cacheKey();if(!k||!state.profile)return;
-  let snap={savedAt:new Date().toISOString(),profile:state.profile,halaqas:state.halaqas,students:state.students,sessions:state.sessions,announcements:state.announcements,goals:state.goals,monthly:state.monthly,homeMonthly:state.homeMonthly,homeSelectedMonth:state.homeSelectedMonth,homeMonthlyLoadedKey:state.homeMonthlyLoadedKey,leaderDaily:state.leaderDaily,leaderMonthly:state.leaderMonthly,dailySummary:state.dailySummary,forum:state.forum,comments:state.comments,categories:state.categories,halaqaTeachers:state.halaqaTeachers,halaqaSupervisors:state.halaqaSupervisors||[],guardianAccounts:state.guardianAccounts,guardianDirectory:state.guardianDirectory,guardianRanksMonth:state.guardianRanksMonth,guardianRanksDay:state.guardianRanksDay,guardianRangeRanks:state.guardianRangeRanks,guardianRangeDashboards:state.guardianRangeDashboards||{},guardianCompetition:state.guardianCompetition,guardianActivities:state.guardianActivities,guardianDashboards:state.guardianDashboards,guardianTrendDays:state.guardianTrendDays,guardianPeriodMode:state.guardianPeriodMode,guardianPeriodDay:state.guardianPeriodDay,guardianPeriodMonth:state.guardianPeriodMonth,guardianPeriodFrom:state.guardianPeriodFrom,guardianPeriodTo:state.guardianPeriodTo,guardianChildFilter:state.guardianChildFilter,guardianAnalyticsUpdatedAt:state.guardianAnalyticsUpdatedAt,guardianAnalyticsError:state.guardianAnalyticsError,competitionTrack:state.competitionTrack,competitionPeriod:state.competitionPeriod,settings:state.settings,offlineRosterCache:state.offlineRosterCache,notifications:(state.notifications||[]).slice(0,120),notificationPreferences:state.notificationPreferences,notificationUnread:state.notificationUnread};
+  let snap={savedAt:new Date().toISOString(),syncedAt:state.v230LastFullLoadAt||state.offlineSnapshotCache?.syncedAt||Date.now(),profile:state.profile,halaqas:state.halaqas,students:state.students,sessions:state.sessions,announcements:state.announcements,goals:state.goals,monthly:state.monthly,homeMonthly:state.homeMonthly,homeSelectedMonth:state.homeSelectedMonth,homeMonthlyLoadedKey:state.homeMonthlyLoadedKey,leaderDaily:state.leaderDaily,leaderMonthly:state.leaderMonthly,dailySummary:state.dailySummary,forum:state.forum,comments:state.comments,categories:state.categories,halaqaTeachers:state.halaqaTeachers,halaqaSupervisors:state.halaqaSupervisors||[],guardianAccounts:state.guardianAccounts,guardianDirectory:state.guardianDirectory,guardianRanksMonth:state.guardianRanksMonth,guardianRanksDay:state.guardianRanksDay,guardianRangeRanks:state.guardianRangeRanks,guardianRangeDashboards:state.guardianRangeDashboards||{},guardianCompetition:state.guardianCompetition,guardianActivities:state.guardianActivities,guardianDashboards:state.guardianDashboards,guardianTrendDays:state.guardianTrendDays,guardianPeriodMode:state.guardianPeriodMode,guardianPeriodDay:state.guardianPeriodDay,guardianPeriodMonth:state.guardianPeriodMonth,guardianPeriodFrom:state.guardianPeriodFrom,guardianPeriodTo:state.guardianPeriodTo,guardianChildFilter:state.guardianChildFilter,guardianAnalyticsUpdatedAt:state.guardianAnalyticsUpdatedAt,guardianAnalyticsError:state.guardianAnalyticsError,competitionTrack:state.competitionTrack,competitionPeriod:state.competitionPeriod,settings:state.settings,offlineRosterCache:state.offlineRosterCache,notifications:(state.notifications||[]).slice(0,120),notificationPreferences:state.notificationPreferences,notificationUnread:state.notificationUnread};
   state.offlineSnapshotCache=cloneJson(snap);try{localStorage.setItem(k,JSON.stringify(snap))}catch(e){}
   let store=window.HalaqatiOfflineStore;if(store?.putSnapshot&&state.user?.id)store.putSnapshot(state.user.id,snap).catch(e=>console.warn('IndexedDB snapshot write failed',e))
 }
 function restoreSnapshot(){
-  let x=state.offlineSnapshotCache||readJsonLocal(cacheKey(),null)||readJsonLocal(legacyCacheKey(),null);if(!x||!x.profile)return false;
+  let x=state.offlineSnapshotCache||readJsonLocal(cacheKey(),null)||readJsonLocal(legacyCacheKey(),null);if(!x||!x.profile)return false;if(snapshotExpired(x,Date.now()))return false;
   try{state.profile=x.profile;for(let p of ['halaqas','students','sessions','announcements','goals','monthly','leaderDaily','leaderMonthly','dailySummary','forum','comments','categories','halaqaTeachers','halaqaSupervisors','guardianAccounts','guardianDirectory'])state[p]=x[p]||[];state.homeMonthly=x.homeMonthly||[];state.homeSelectedMonth=x.homeSelectedMonth||today().slice(0,7);state.homeMonthlyLoadedKey=x.homeMonthlyLoadedKey||'';state.guardianRanksMonth=x.guardianRanksMonth||{};state.guardianRanksDay=x.guardianRanksDay||{};state.guardianRangeRanks=x.guardianRangeRanks||{};state.guardianRangeDashboards=x.guardianRangeDashboards||{};state.guardianCompetition=x.guardianCompetition||{};state.guardianActivities=x.guardianActivities||{};state.guardianDashboards=x.guardianDashboards||{};state.guardianTrendDays=Number(x.guardianTrendDays||7);state.guardianPeriodMode=x.guardianPeriodMode||'month';state.guardianPeriodDay=x.guardianPeriodDay||today();state.guardianPeriodMonth=x.guardianPeriodMonth||today().slice(0,7);state.guardianPeriodFrom=x.guardianPeriodFrom||monthStart();state.guardianPeriodTo=x.guardianPeriodTo||today();state.guardianChildFilter=x.guardianChildFilter||'all';state.guardianAnalyticsUpdatedAt=x.guardianAnalyticsUpdatedAt||'';state.guardianAnalyticsError=x.guardianAnalyticsError||'';state.competitionTrack=x.competitionTrack||'hifz';state.competitionPeriod=x.competitionPeriod||'month';state.settings=x.settings||null;state.offlineRosterCache=x.offlineRosterCache||{};state.notifications=x.notifications||[];state.notificationPreferences=x.notificationPreferences||null;state.notificationUnread=Number(x.notificationUnread||state.notifications.filter(n=>!n.read_at).length);state.users=[];state.offline=true;return true}catch(e){return false}
 }
 function syncQueueStats(q=readOfflineQueue()){let failed=q.filter(x=>x.status==='failed').length,pending=q.filter(x=>x.status!=='failed').length;return {total:q.length,failed,pending}}
-function updateSyncBadge(){let b=$('#syncBadge');if(!b)return;let q=readOfflineQueue(),st=syncQueueStats(q);state.pendingSync=q.length;b.className='sync-badge';if(state.syncing){b.classList.add('syncing');b.textContent=`مزامنة ${state.syncProcessed}/${state.syncTotal}`;return}if(state.authNeedsLogin&&q.length){b.classList.add('pending');b.textContent=`تسجيل الدخول للمزامنة · ${q.length}`;return}if(!state.networkVerified||state.offline){b.classList.add('offline');b.textContent=q.length?`بدون نت · ${q.length} محفوظ`:'جاهز دون إنترنت';return}if(st.failed){b.classList.add('pending');b.textContent=`مزامنة ${q.length} · فشل ${st.failed}`;return}if(q.length){b.classList.add('pending');b.textContent=`بانتظار المزامنة ${q.length}`;return}b.textContent='متصل · متزامن'}
+function updateSyncBadge(){let b=$('#syncBadge');if(!b)return;b.title=state.v230LastFullLoadAt?'آخر مزامنة ناجحة: '+new Date(state.v230LastFullLoadAt).toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'}):'';let q=readOfflineQueue(),st=syncQueueStats(q);state.pendingSync=q.length;b.className='sync-badge';if(state.syncing){b.classList.add('syncing');b.textContent=`مزامنة ${state.syncProcessed}/${state.syncTotal}`;return}if(state.authNeedsLogin&&q.length){b.classList.add('pending');b.textContent=`تسجيل الدخول للمزامنة · ${q.length}`;return}if(!state.networkVerified||state.offline){b.classList.add('offline');b.textContent=q.length?`بدون نت · ${q.length} محفوظ`:'جاهز دون إنترنت';return}if(st.failed){b.classList.add('pending');b.textContent=`مزامنة ${q.length} · فشل ${st.failed}`;return}if(q.length){b.classList.add('pending');b.textContent=`بانتظار المزامنة ${q.length}`;return}b.textContent='متصل · متزامن'}
 function enqueueOffline(op){
   let q=readOfflineQueue(),incoming=normalizeOfflineOperation(op),i=q.findIndex(x=>x.dedupeKey===incoming.dedupeKey||x.key===incoming.key);
   if(i>=0&&incoming.type==='session'&&q[i].type==='session'){incoming.obj={...q[i].obj,...incoming.obj};if(q[i].intent==='create'||q[i].intent==='edit'&&incoming.intent==='status')incoming.intent=q[i].intent}
