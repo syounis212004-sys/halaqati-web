@@ -408,3 +408,95 @@ test('retention: sign-in prepares storage by purging other users', () => {
 test('sync badge shows the last successful sync as a tooltip', () => {
   assert.match(between(read('core/runtime.js'), 'function updateSyncBadge', '\n'), /v230LastFullLoadAt/);
 });
+
+/* ---------- delta sync engine (needs docs/sql/2026-11-20-delta-sync.sql; inert while the RPCs are absent or the kill switch is set) ---------- */
+function loadDelta({ rpc, ls = {}, st = {}, win } = {}) {
+  const src = read('core/performance-runtime.js');
+  const code = [between(src, 'const V230_STUDENT_COLUMNS=', '\n'), between(src, 'function v230MergeStudentPhotos', '\n'), between(src, '/* ===== delta sync begin */', '/* ===== delta sync end */')].join('\n');
+  const store = new Map(Object.entries(ls)), calls = [];
+  const sandbox = { state: { user: { id: 'u1' }, networkVerified: true, students: [], halaqas: [], sessions: [], halaqaTeachers: [], halaqaSupervisors: [], ...st },
+    localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) },
+    db: { rpc: async (n, a) => { calls.push([n, a]); return rpc(n, a, calls); } }, Date, JSON, Number, Math, Object, Set, Map, Array, console, ...(win ? { window: win } : {}) };
+  vm.createContext(sandbox); vm.runInContext(code, sandbox); return { S: sandbox, store, calls };
+}
+const dres = (over = {}) => ({ data: { full_resync: false, cursor: 20, has_more: false, upserts: {}, deletes: {}, ...over }, error: null });
+test('delta: ApplyDelta upserts, replaces, deletes and keeps the table order', () => {
+  const { S } = loadDelta({ rpc: () => dres() });
+  const out = S.v230ApplyDelta([{ id: 'b', full_name: 'ب' }, { id: 'a', full_name: 'أ' }, { id: 'c', full_name: 'ج' }], 'students', [{ id: 'a', full_name: 'أحمد' }, { id: 'd', full_name: 'د' }], ['c']);
+  assert.deepEqual([...out].map(r => r.id), ['a', 'b', 'd']); assert.equal(out.find(r => r.id === 'a').full_name, 'أحمد');
+});
+test('delta: a student keeps its known photo when the updated_at did not change, and is "unknown" when it did', () => {
+  const { S } = loadDelta({ rpc: () => dres() });
+  const keep = S.v230ApplyDelta([{ id: 'a', updated_at: 't1', photo_path: 'data:image/a' }], 'students', [{ id: 'a', updated_at: 't1', full_name: 'x' }], []);
+  assert.equal(keep[0].photo_path, 'data:image/a');
+  const drop = S.v230ApplyDelta([{ id: 'a', updated_at: 't1', photo_path: 'data:image/a' }], 'students', [{ id: 'a', updated_at: 't2' }], []);
+  assert.ok(!('photo_path' in drop[0]));
+});
+test('delta: composite keys (halaqa_teachers) delete exactly the pair', () => {
+  const { S } = loadDelta({ rpc: () => dres() });
+  const out = S.v230ApplyDelta([{ halaqa_id: 'h1', teacher_id: 't1' }, { halaqa_id: 'h1', teacher_id: 't2' }], 'halaqa_teachers', [], ['h1:t1']);
+  assert.deepEqual([...out].map(r => r.teacher_id), ['t2']);
+});
+test('delta: sessions are capped at the 120 newest like the full load', () => {
+  const { S } = loadDelta({ rpc: () => dres() });
+  const rows = Array.from({ length: 130 }, (_, i) => ({ id: 's' + i, session_date: '2026-01-' + String(i % 28 + 1).padStart(2, '0'), created_at: String(i).padStart(4, '0') }));
+  assert.equal(S.v230ApplyDelta([], 'sessions', rows, []).length, 120);
+});
+test('delta: without a stored cursor the engine asks for a full load and reads the head first', async () => {
+  const { S, calls } = loadDelta({ rpc: n => (n === 'rc_change_head' ? { data: 15, error: null } : dres()) });
+  assert.equal(await S.v230DeltaRefresh(), 'need-full'); assert.equal(calls.length, 0);
+  assert.equal(await S.v230DeltaHead(), 15);
+});
+test('delta: a refresh applies upserts and deletes to the state arrays and stores the new cursor', async () => {
+  const { S, store } = loadDelta({ ls: { halaqati_delta_cursor_u1: '10' }, st: { students: [{ id: 'a', full_name: 'a' }, { id: 'b', full_name: 'b' }] },
+    rpc: () => dres({ cursor: 33, upserts: { students: [{ id: 'c', full_name: 'c' }] }, deletes: { students: ['a'] } }) });
+  assert.equal(await S.v230DeltaRefresh(), 'done');
+  assert.deepEqual([...S.state.students].map(r => r.id), ['b', 'c']); assert.equal(store.get('halaqati_delta_cursor_u1'), '33');
+});
+test('delta: has_more pages are followed until the server says it is done', async () => {
+  let page = 0; const { S, store, calls } = loadDelta({ ls: { halaqati_delta_cursor_u1: '1' }, rpc: () => dres({ cursor: 10 + ++page, has_more: page < 3 }) });
+  assert.equal(await S.v230DeltaRefresh(), 'done'); assert.equal(calls.length, 3); assert.equal(store.get('halaqati_delta_cursor_u1'), '13');
+});
+test('delta: full_resync from the server means a full load, and the cursor is left alone', async () => {
+  const { S, store } = loadDelta({ ls: { halaqati_delta_cursor_u1: '1' }, rpc: () => dres({ full_resync: true }) });
+  assert.equal(await S.v230DeltaRefresh(), 'need-full'); assert.equal(store.get('halaqati_delta_cursor_u1'), '1');
+});
+test('delta: a missing RPC switches the engine off for the session without further probes', async () => {
+  const { S, calls } = loadDelta({ ls: { halaqati_delta_cursor_u1: '1' }, rpc: () => ({ data: null, error: { code: 'PGRST202', message: 'not found' } }) });
+  assert.equal(await S.v230DeltaRefresh(), 'off'); assert.equal(await S.v230DeltaRefresh(), 'off'); assert.equal(await S.v230DeltaHead(), null); assert.equal(calls.length, 1);
+});
+test('delta: a network or server error leaves state and cursor untouched', async () => {
+  const { S, store } = loadDelta({ ls: { halaqati_delta_cursor_u1: '5' }, st: { students: [{ id: 'a' }] }, rpc: () => ({ data: null, error: { message: 'Failed to fetch' } }) });
+  assert.equal(await S.v230DeltaRefresh(), 'failed'); assert.equal(S.state.students.length, 1); assert.equal(store.get('halaqati_delta_cursor_u1'), '5');
+});
+test('delta: the kill switch halaqati_delta=0 disables it and no RPC is called', async () => {
+  const { S, calls } = loadDelta({ ls: { halaqati_delta: '0', halaqati_delta_cursor_u1: '5' }, rpc: () => dres() });
+  assert.equal(await S.v230DeltaRefresh(), 'off'); assert.equal(await S.v230DeltaHead(), null); assert.equal(calls.length, 0);
+});
+test('delta: reconcile drops local rows the server no longer shows to this account, at most every 30 minutes', async () => {
+  const { S, calls } = loadDelta({ st: { students: [{ id: 'a' }, { id: 'gone' }], halaqas: [{ id: 'h' }] },
+    rpc: (n, a) => ({ data: a.p_table === 'students' ? ['a'] : a.p_table === 'halaqas' ? ['h'] : [], error: null }) });
+  assert.equal(await S.v230DeltaReconcile(), true); assert.deepEqual([...S.state.students].map(r => r.id), ['a']);
+  const before = calls.length; assert.equal(await S.v230DeltaReconcile(), false); assert.equal(calls.length, before);
+});
+test('delta: a reconcile answer that would empty a table while rows exist is not trusted', async () => {
+  const { S } = loadDelta({ st: { students: [{ id: 'a' }, { id: 'b' }] }, rpc: () => ({ data: [], error: null }) });
+  await S.v230DeltaReconcile(); assert.equal(S.state.students.length, 2);
+});
+test('delta: the full-load pipeline tries the delta first and stores the head cursor after a full core load', () => {
+  const src = between(read('core/performance-runtime.js'), 'async function v230FullLoad', '\n}\n');
+  assert.match(src, /v230DeltaRefresh\(/); assert.match(src, /v230DeltaHead\(/); assert.match(src, /v230DeltaReconcile\(/);
+});
+test('delta: a missing RPC is remembered for 6 hours so launches do not keep probing', async () => {
+  const a = loadDelta({ rpc: () => ({ data: null, error: { code: 'PGRST202', message: 'x' } }) });
+  await a.S.v230DeltaHead(); assert.ok(Number(a.store.get('halaqati_delta_absent_at')) > 0);
+  const b = loadDelta({ ls: { halaqati_delta_absent_at: String(Date.now() - 3600000) }, rpc: () => dres() }); assert.equal(await b.S.v230DeltaHead(), null); assert.equal(b.calls.length, 0);
+  const c = loadDelta({ ls: { halaqati_delta_absent_at: String(Date.now() - 7 * 3600000) }, rpc: () => ({ data: 5, error: null }) }); assert.equal(await c.S.v230DeltaHead(), 5);
+});
+test('SWR: the delta sync rpcs are neither cached nor allowed to flush the cache', async () => {
+  const S = loadSwr(), c = { n: 0 }, go = mkGo(c);
+  await S.fetch(U('students?select=*'), { method: 'GET' }, go);
+  for (const n of ['rc_change_head', 'rc_changes_since', 'rc_visible_ids']) { await S.fetch(U('rpc/' + n), { method: 'POST', body: '{}' }, go); await S.fetch(U('rpc/' + n), { method: 'POST', body: '{}' }, go); }
+  assert.equal(c.n, 7, 'six uncached rpc calls + the first read');
+  await S.fetch(U('students?select=*'), { method: 'GET' }, go); assert.equal(c.n, 7, 'the read is still cached');
+});

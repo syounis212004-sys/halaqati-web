@@ -33,7 +33,7 @@ function halaqatiPagedFetch(input,init){
    shortcut: memory only (cleared on reload), upgrade to IndexedDB if cold starts need it. */
 const HalaqatiSwr=(()=>{
   const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000,MAXAGE=7*86400000,MAXP=400000;let gen=0,tm=0,last=0,P=null;
-  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts|rc_pending_requests|rc49_support_cards|rc49_support_defaults|rc49_my_pledges|rc49_donor_impact|rc49_donor_report|rc49_news_list|rc32_observer_overview|rc40_observer_breakdown)$/,KEEP=/\/rpc\/rc27_cleanup_notifications$/;
+  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts|rc_pending_requests|rc49_support_cards|rc49_support_defaults|rc49_my_pledges|rc49_donor_impact|rc49_donor_report|rc49_news_list|rc32_observer_overview|rc40_observer_breakdown)$/,KEEP=/\/rpc\/(rc27_cleanup_notifications|rc_change_head|rc_changes_since|rc_visible_ids)$/;
   const NOP=/chat|thread|message|notification|push|device|rc54_/i; /* never saved on disk: conversations and live feeds */
   const res=(e,stale)=>new Response(e.text,{status:e.status,headers:stale?{...e.headers,'x-halaqati-stale':'1'}:e.headers});
   const who=()=>({uid:(typeof state!=='undefined'&&state&&state.user&&state.user.id)||'',role:(typeof state!=='undefined'&&state&&state.profile&&state.profile.role)||''});

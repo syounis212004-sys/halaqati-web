@@ -15,7 +15,7 @@ const ROLES = {
   observer: ['home', 'donor_awards', 'donor_support', 'donor_impact', 'donor_stats', 'notifications', 'settings'],
 };
 /* budgets: ceilings measured on the fixed build with the synthetic data below (a regression must be a conscious decision) */
-const BUDGET = { loadAll: 25, firstLoadExtra: 1 /* one lazy photo request on the very first load */, guardianLoadAll: 32 /* 22 + 5 per child (2 children): the per-child fan-out is a known cost */, revisitRatio: 0.85 };
+const BUDGET = { loadAll: 25, firstLoadExtra: 8 /* lazy photo request + delta head probe + one-time visible-id reconcile (migration present) */, deltaRepeat: 27, /* with the delta migration a repeat load skips the 7-query core load */ guardianLoadAll: 32 /* 22 + 5 per child (2 children): the per-child fan-out is a known cost */, revisitRatio: 0.85 };
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const STUDENTS = Array.from({ length: 65 }, (_, i) => ({ id: id(100 + i), full_name: 'طالب ' + i, status: 'active', halaqa_id: id(10), track_code: 'general_hifz', enrollment_date: '2026-01-01' }));
 const only = process.argv[2] && ROLES[process.argv[2]] ? [process.argv[2]] : Object.keys(ROLES);
@@ -30,6 +30,13 @@ for (const role of only) {
     const u = new URL(r.request().url());
     if (!/supabase\.co/.test(u.host)) return r.abort();
     log.push(`${r.request().method()} ${u.pathname}`); if (/\/students$/.test(u.pathname)) selects.push(u.searchParams.get('select') || '');
+    const DELTA = process.env.USAGE_DELTA === 'present';
+    if (/\/rpc\/rc_(change_head|changes_since|visible_ids)$/.test(u.pathname)) { /* the delta migration: absent (404 like PostgREST) or present (a plausible server) */
+      const fn = u.pathname.split('/').pop(), pd = r.request().postData() || '{}';
+      if (!DELTA) return r.fulfill({ status: 404, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"code":"PGRST202","message":"Could not find the function"}' });
+      const body = fn === 'rc_change_head' ? '7' : fn === 'rc_changes_since' ? '{"full_resync":false,"cursor":7,"has_more":false,"upserts":{},"deletes":{}}' : JSON.stringify((JSON.parse(pd).p_table === 'students' ? mine : JSON.parse(pd).p_table === 'halaqas' ? [{ id: id(10) }] : []).map(x => x.id));
+      return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body });
+    }
     const rows = /\/students$/.test(u.pathname) ? mine : /\/halaqas$/.test(u.pathname) ? [{ id: id(10), name: 'حلقة', active: true, halaqa_type: 'regular' }] : [];
     const range = r.request().headers().range; let body = rows;
     if (range) { const [a, b] = range.split('-').map(Number); body = rows.slice(a, b + 1); }
@@ -49,7 +56,7 @@ for (const role of only) {
   log.length = 0;
   await page.evaluate(() => loadAll(true)).catch(() => {}); await page.waitForTimeout(800);
   const loadAll = log.length, studentCalls = selects.filter(x => x !== 'id,photo_path').length;
-  log.length = 0; await page.evaluate(() => loadAll(true)).catch(() => {}); await page.waitForTimeout(800); const secondLoad = log.length; log.length = 0;
+  log.length = 0; await page.evaluate(() => { HalaqatiSwr.clear(); /* >20 s later: the memory cache has expired */ return loadAll(true); }).catch(() => {}); await page.waitForTimeout(800); const secondLoad = log.length; log.length = 0;
   const res = { loadAll, secondLoad, studentCalls, pass1: 0, pass2: 0 };
   for (const pass of ['pass1', 'pass2']) for (const pid of ROLES[role]) {
     log.length = 0; await page.evaluate(p => go(p), pid).catch(() => {}); await page.waitForTimeout(700); res[pass] += log.length;
@@ -57,7 +64,7 @@ for (const role of only) {
   res.photoRequests = selects.filter(x => x === 'id,photo_path').length;
   out[role] = res; await ctx.close();
   if (role === 'admin') { const list = selects.find(x => x !== 'id,photo_path'); ok(!!list && list !== '*' && !list.split(',').includes('photo_path'), `admin: the student list does not ask for the inline photo column (select=${(list || '').slice(0, 40)}...)`); ok(res.photoRequests >= 1, `admin: photos are fetched separately (${res.photoRequests} request)`); }
-  if (role !== 'observer') { const cap = role === 'guardian' ? BUDGET.guardianLoadAll : BUDGET.loadAll; ok(loadAll <= cap + BUDGET.firstLoadExtra, `${role}: first full load ${loadAll} requests (budget ${cap + BUDGET.firstLoadExtra})`); ok(secondLoad <= cap, `${role}: repeat full load ${secondLoad} requests, no photo request (budget ${cap})`); ok(studentCalls === 1, `${role}: ${mine.length} students need one request, not one plus an empty page (${studentCalls})`); }
+  if (role !== 'observer') { const cap = role === 'guardian' ? BUDGET.guardianLoadAll : BUDGET.loadAll; ok(loadAll <= cap + BUDGET.firstLoadExtra, `${role}: first full load ${loadAll} requests (budget ${cap + BUDGET.firstLoadExtra})`); const cap2 = process.env.USAGE_DELTA === 'present' ? BUDGET.deltaRepeat : role === 'guardian' ? 33 : 36; /* cold repeat load (memory cache expired): ~35 requests; with the delta migration ~26 */ ok(secondLoad <= cap2, `${role}: repeat full load ${secondLoad} requests, no photo request (budget ${cap2})`); ok(studentCalls === 1, `${role}: ${mine.length} students need one request, not one plus an empty page (${studentCalls})`); }
   ok(res.pass2 <= Math.ceil(res.pass1 * BUDGET.revisitRatio), `${role}: immediate revisits ${res.pass2} <= ${Math.ceil(res.pass1 * BUDGET.revisitRatio)} (first visits ${res.pass1})`);
 }
 console.table(out);

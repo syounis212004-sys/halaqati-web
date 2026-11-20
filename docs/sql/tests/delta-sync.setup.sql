@@ -1,0 +1,20 @@
+create role anon nologin; create role authenticated nologin;
+grant usage on schema public to anon, authenticated;
+create table halaqas(id uuid primary key default gen_random_uuid(), name text, logo_path text, updated_at timestamptz default now());
+create table students(id uuid primary key default gen_random_uuid(), full_name text, halaqa_id uuid, photo_path text, updated_at timestamptz default now());
+create table sessions(id uuid primary key default gen_random_uuid(), halaqa_id uuid, session_date date);
+create table halaqa_teachers(halaqa_id uuid, teacher_id uuid, primary key(halaqa_id,teacher_id));
+create table halaqa_supervisors(halaqa_id uuid, supervisor_id uuid, primary key(halaqa_id,supervisor_id));
+create table student_halaqa_memberships(id uuid primary key default gen_random_uuid(), student_id uuid, halaqa_id uuid);
+create table announcements(id uuid primary key default gen_random_uuid(), title text);
+create table student_goals(id uuid primary key default gen_random_uuid(), student_id uuid);
+create table student_categories(id uuid primary key default gen_random_uuid(), name text);
+create table attendance_records(id uuid primary key default gen_random_uuid(), session_id uuid, student_id uuid);
+create table student_daily_notes(id uuid primary key default gen_random_uuid(), session_id uuid, student_id uuid);
+create table recitation_entries(id uuid primary key default gen_random_uuid(), session_id uuid, student_id uuid);
+create table student_guardians(student_id uuid, guardian_id uuid, primary key(student_id,guardian_id));
+grant select, insert, update, delete on all tables in schema public to authenticated;
+-- RLS: admin sees everything; a teacher sees only students of the halaqas they teach
+alter table students enable row level security;
+create policy s_sel on students for select to authenticated using (current_setting('app.role') = 'admin' or exists (select 1 from halaqa_teachers ht where ht.halaqa_id = students.halaqa_id and ht.teacher_id = current_setting('app.uid')::uuid));
+create policy s_all on students for all to authenticated using (current_setting('app.role') = 'admin') with check (current_setting('app.role') = 'admin');

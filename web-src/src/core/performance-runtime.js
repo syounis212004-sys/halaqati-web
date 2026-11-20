@@ -58,6 +58,73 @@ async function v230HydrateStudentPhotos(){
   return n
 }
 
+/* ===== delta sync begin */
+/* Incremental core refresh. Needs docs/sql/2026-11-20-delta-sync.sql (rc_change_head / rc_changes_since / rc_visible_ids). Inert while those RPCs are absent
+   (switched off for the session on the first "function not found") and when localStorage halaqati_delta === '0' (kill switch). Falls back to the full core load
+   whenever there is no cursor, the server asks for a resync, or anything fails. */
+const V230_DELTA_STATE={halaqas:'halaqas',students:'students',sessions:'sessions',halaqa_teachers:'halaqaTeachers',halaqa_supervisors:'halaqaSupervisors'};
+const V230_DELTA_PK={halaqas:['id'],students:['id'],sessions:['id'],halaqa_teachers:['halaqa_id','teacher_id'],halaqa_supervisors:['halaqa_id','supervisor_id']};
+const v230DeltaKey=(t,r)=>V230_DELTA_PK[t].map(c=>r[c]).join(':');
+let v230DeltaAbsent=false;
+function v230DeltaOn(){if(v230DeltaAbsent)return false;try{if(localStorage.getItem('halaqati_delta')==='0')return false;const a=Number(localStorage.getItem('halaqati_delta_absent_at'))||0;return !(a&&Date.now()-a<21600000)}catch(e){return true}}
+function v230DeltaSetAbsent(){v230DeltaAbsent=true;try{localStorage.setItem('halaqati_delta_absent_at',String(Date.now()))}catch(e){}}
+const v230DeltaCursorKey=()=>'halaqati_delta_cursor_'+(state.user&&state.user.id);
+function v230DeltaMissing(e){return !!e&&(e.code==='PGRST202'||e.code==='42883'||/Could not find the function|does not exist/i.test(e.message||''))}
+function v230ApplyDelta(arr,t,upserts,deletes){
+  const del=new Set(deletes||[]),up=new Map((upserts||[]).map(r=>[v230DeltaKey(t,r),r])),out=[],used=new Set();
+  for(const r of arr||[]){const k=v230DeltaKey(t,r);
+    if(up.has(k)){used.add(k);const n=up.get(k);out.push(t==='students'?v230MergeStudentPhotos([r],[n])[0]:n);continue}
+    if(!del.has(k))out.push(r)}
+  for(const [k,n] of up)if(!used.has(k)&&!del.has(k))out.push(n);
+  if(t==='students')out.sort((a,b)=>String(a.full_name||'').localeCompare(String(b.full_name||''),'ar'));
+  else if(t==='halaqas')out.sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')));
+  else if(t==='sessions'){out.sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||''))||String(b.created_at||'').localeCompare(String(a.created_at||'')));if(out.length>120)out.length=120}
+  return out
+}
+async function v230DeltaHead(){
+  if(!v230DeltaOn()||!state.user)return null;
+  const r=await db.rpc('rc_change_head');
+  if(r.error){if(v230DeltaMissing(r.error))v230DeltaSetAbsent();return null}
+  return Number.isFinite(Number(r.data))?Number(r.data):null
+}
+/* 'done' | 'need-full' | 'failed' | 'off' */
+async function v230DeltaRefresh(){
+  if(!v230DeltaOn()||!state.user||!state.networkVerified)return 'off';
+  let raw=null;try{raw=localStorage.getItem(v230DeltaCursorKey())}catch(e){}
+  if(raw===null||!(Number(raw)>=0))return 'need-full';
+  const tables=Object.keys(V230_DELTA_STATE),next={};let cur=Number(raw),changed=new Set();
+  for(const t of tables)next[t]=state[V230_DELTA_STATE[t]]||[];
+  for(let page=0;page<10;page++){
+    const r=await db.rpc('rc_changes_since',{p_cursor:cur,p_tables:tables,p_limit:2000});
+    if(r.error){if(v230DeltaMissing(r.error)){v230DeltaSetAbsent();return 'off'}return 'failed'}
+    const d=r.data||{};if(d.full_resync)return 'need-full';
+    for(const t of tables){const u=d.upserts&&d.upserts[t],x=d.deletes&&d.deletes[t];if((u&&u.length)||(x&&x.length)){next[t]=v230ApplyDelta(next[t],t,u,x);changed.add(t)}}
+    if(!Number.isFinite(Number(d.cursor)))return 'failed';cur=Number(d.cursor);
+    if(!d.has_more){
+      for(const t of changed)state[V230_DELTA_STATE[t]]=next[t];
+      try{localStorage.setItem(v230DeltaCursorKey(),String(cur))}catch(e){}
+      state.v230LastCoreLoadAt=Date.now();return 'done'}
+  }
+  return 'need-full'
+}
+/* Rows the server stopped showing to this account (moved out, unlinked, permission lost) are removed at most every 30 minutes; never with unsent work. */
+async function v230DeltaReconcile(){
+  if(!v230DeltaOn()||!state.user||!state.networkVerified)return false;
+  if(typeof readOfflineQueue==='function'&&readOfflineQueue().length)return false;
+  const key='halaqati_delta_recon_'+state.user.id;let last=0;try{last=Number(localStorage.getItem(key))||0}catch(e){}
+  if(Date.now()-last<1800000)return false;
+  for(const t of Object.keys(V230_DELTA_STATE)){
+    const r=await db.rpc('rc_visible_ids',{p_table:t});
+    if(r.error){if(v230DeltaMissing(r.error)){v230DeltaSetAbsent();return false}continue}
+    const ids=new Set(r.data||[]),cur=state[V230_DELTA_STATE[t]]||[];
+    if(!ids.size&&cur.length)continue; /* an empty answer for a non-empty table is not trusted */
+    const keep=cur.filter(x=>ids.has(v230DeltaKey(t,x)));if(keep.length!==cur.length)state[V230_DELTA_STATE[t]]=keep
+  }
+  try{localStorage.setItem(key,String(Date.now()))}catch(e){}
+  return true
+}
+/* ===== delta sync end */
+
 async function v230LoadCoreData(forceNetwork=false){
   let start=v230Now(),online=forceNetwork?true:await internetReachable();
   if(!online){
@@ -207,7 +274,16 @@ async function v230FullLoad(forceNetwork=false,{skipCore=false}={}){
   v230FullLoadPromise=(async()=>{
     let start=v230Now();state.v230Hydrating=true;
     try{
-      if(!skipCore){let ok=await v230LoadCoreData(forceNetwork);if(!ok)return false}
+      if(!skipCore){
+        const mode=await v230DeltaRefresh().catch(()=> 'failed');
+        if(mode!=='done'){
+          /* read the head BEFORE the full load so no change can fall in the gap; a failed delta keeps the old cursor */
+          const head=mode==='failed'?null:await v230DeltaHead().catch(()=>null);
+          let ok=await v230LoadCoreData(forceNetwork);if(!ok)return false;
+          if(head!=null)try{localStorage.setItem(v230DeltaCursorKey(),String(head))}catch(e){}
+        }
+        await v230DeltaReconcile().catch(()=>false)
+      }
       if(!state.networkVerified||state.offline)return false;
       /* Independent branches run together. v2.20 did these as serial stages. */
       await Promise.allSettled([v230LoadDashboardData(),loadSmartPlanData(),opsLoadOperationalData(forceNetwork),loadRoleExtras()]);
