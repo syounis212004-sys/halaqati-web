@@ -23,12 +23,11 @@
       "GitHub Actions"
     ],
     "description": "حلقاتي — تطبيق ويب عربي (RTL) لإدارة حلقات تحفيظ القرآن، مبني بـ Vite وCapacitor مع خلفية Supabase. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
-    "analyzedAt": "2026-11-19T11:56:51.666Z",
-    "gitCommitHash": "30ddee6ab62c03bd7489d6d8d38f3cbf83fbfa25",
+    "analyzedAt": "2026-11-20T08:54:24.910Z",
+    "gitCommitHash": "7f8f63cf9fa9aa1977fc244063319a0a868e0371",
     "enrichment": {
       "tool": ".ua/tools/enrich-graph.mjs",
       "stats": {
-        "tool_confirmed": 130,
         "reads_from": 175,
         "rpc_calls": 101,
         "writes_to": 62,
@@ -247,22 +246,6 @@
       "complexity": "simple"
     },
     {
-      "id": "file:web-src/src/main.js",
-      "type": "file",
-      "name": "main.js",
-      "filePath": "web-src/src/main.js",
-      "summary": "نقطة دخول Vite: تستورد الأنماط والوحدات، ثم تحمّل بالتسلسل عشرات السكربتات الكلاسيكية (Supabase والبيئة والميزات) وتهيّئ PWA والتحميل الكسول وتطلق حدث halaqati:ready.",
-      "tags": [
-        "entry-point",
-        "bootstrap",
-        "vite",
-        "script-loading",
-        "startup"
-      ],
-      "complexity": "complex",
-      "languageNotes": "تحمّل السكربتات عبر ?url وloadClassicScript بترتيب يحافظ على البيئة العالمية المشتركة."
-    },
-    {
       "id": "function:web-src/src/features/import/lazy.js:wrap",
       "type": "function",
       "name": "wrap",
@@ -327,23 +310,6 @@
         "export"
       ],
       "complexity": "simple"
-    },
-    {
-      "id": "function:web-src/src/main.js:boot",
-      "type": "function",
-      "name": "boot",
-      "filePath": "web-src/src/main.js",
-      "lineRange": [
-        115,
-        203
-      ],
-      "summary": "يهيّئ المتجر offline والخطة الذكية ثم يحمّل بالتسلسل سكربتات الاعتماديات والميزات ويثبّت التحميل الكسول وPWA ويطلق halaqati:ready.",
-      "tags": [
-        "bootstrap",
-        "async",
-        "startup"
-      ],
-      "complexity": "complex"
     },
     {
       "id": "function:web-src/src/core/install.js:installed",
@@ -3753,20 +3719,6 @@
         "rtl",
         "pwa",
         "markup"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "config:web-src/package.json",
-      "type": "config",
-      "name": "package.json",
-      "filePath": "web-src/package.json",
-      "summary": "حزمة npm لتطبيق Vite/Capacitor مع سكربتات البناء والفحوص (check:legacy وregression وaudit-fixes) وتبعيات المشروع.",
-      "tags": [
-        "configuration",
-        "npm",
-        "build-system",
-        "capacitor"
       ],
       "complexity": "moderate"
     },
@@ -8130,20 +8082,6 @@
       "languageNotes": "CSS مع keyframes مخصصة للأيقونات وحالة الخطأ .hm-err."
     },
     {
-      "id": "config:version.json",
-      "type": "config",
-      "name": "version.json",
-      "filePath": "version.json",
-      "summary": "بيان إصدار التطبيق (2.91.2): رقم الإصدار، رابط APK وبصمة sha256، وملاحظات الإصدار بالعربية.",
-      "tags": [
-        "configuration",
-        "versioning",
-        "release",
-        "android"
-      ],
-      "complexity": "simple"
-    },
-    {
       "id": "file:web-src/scripts/buttons-check.mjs",
       "type": "file",
       "name": "buttons-check.mjs",
@@ -8275,6 +8213,170 @@
         "test-setup"
       ],
       "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/src/main.js",
+      "type": "file",
+      "name": "main.js",
+      "filePath": "web-src/src/main.js",
+      "summary": "نقطة دخول Vite: تستورد الأنماط ووحدات النواة والميزات، ثم تجلب كل السكربتات الكلاسيكية (قائمة BOOT_SCRIPTS) بالتوازي عبر preload وتنفّذها بالتسلسل نفسه، وتهيّئ PWA وتطلق حدث halaqati:ready.",
+      "tags": [
+        "entry-point",
+        "bootstrap",
+        "vite",
+        "performance",
+        "pwa"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "قائمة بيانات BOOT_SCRIPTS مع حلقة await واحدة تحافظ على ترتيب التنفيذ لأن السكربتات تتشارك متغيرات عامة."
+    },
+    {
+      "id": "function:web-src/src/main.js:boot",
+      "type": "function",
+      "name": "boot",
+      "filePath": "web-src/src/main.js",
+      "lineRange": [
+        198,
+        211
+      ],
+      "summary": "دالة الإقلاع: تضيف روابط preload لكل السكربتات، تفتح طبقة IndexedDB، تحمّل السكربتات الكلاسيكية بالتسلسل (مع تحمّل الاختياري منها)، ثم تفعّل التحميل الكسول للتقارير والاستيراد وPWA.",
+      "tags": [
+        "bootstrap",
+        "startup",
+        "async",
+        "performance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/scripts/_static-server.mjs",
+      "type": "file",
+      "name": "_static-server.mjs",
+      "filePath": "web-src/scripts/_static-server.mjs",
+      "summary": "خادم ملفات ساكن يحاكي GitHub Pages للقياسات: ضغط gzip دون brotli وترويسة Cache-Control بمدة 600 ثانية، ويخدم مجلد dist.",
+      "tags": [
+        "test-utility",
+        "static-server",
+        "performance",
+        "node"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:web-src/scripts/_static-server.mjs:serveDist",
+      "type": "function",
+      "name": "serveDist",
+      "filePath": "web-src/scripts/_static-server.mjs",
+      "lineRange": [
+        8,
+        17
+      ],
+      "summary": "يشغّل خادم HTTP على منفذ محدد لخدمة مجلد dist مع gzip وترويسات الكاش، ويعيد العنوان الأساسي ودالة الإغلاق.",
+      "tags": [
+        "server",
+        "http",
+        "gzip",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:web-src/scripts/perf-boot-check.mjs",
+      "type": "file",
+      "name": "perf-boot-check.mjs",
+      "filePath": "web-src/scripts/perf-boot-check.mjs",
+      "summary": "فحص في Chromium يتأكد أن ~65 سكربتاً كلاسيكياً تُنفَّذ بالترتيب المسجّل نفسه وتُجلب بالتوازي، بمقارنتها بملف fixture وقياس ذروة الطلبات المتزامنة.",
+      "tags": [
+        "test",
+        "performance",
+        "boot-order",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:web-src/scripts/perf-startup.mjs",
+      "type": "file",
+      "name": "perf-startup.mjs",
+      "filePath": "web-src/scripts/perf-startup.mjs",
+      "summary": "يقيس أداء الإقلاع على شبكة 3G بطيئة ومعالج مُبطَّأ عبر CDP في Chromium: الزيارة الأولى والمتكررة والتشغيل من اللقطة المحلية، مع قياس الحيوية والمهام الطويلة.",
+      "tags": [
+        "performance",
+        "benchmark",
+        "playwright",
+        "startup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/PERFORMANCE_31_AR.md",
+      "type": "document",
+      "name": "PERFORMANCE_31_AR.md",
+      "filePath": "docs/PERFORMANCE_31_AR.md",
+      "summary": "مراجعة أداء من 31 معياراً مبنية على الخريطة المعرفية وقياسات Chromium، توثّق تحسين الإقلاع (تحميل السكربتات بالتوازي بدل التسلسل) ونتائجه وحالة كل معيار.",
+      "tags": [
+        "documentation",
+        "performance",
+        "audit",
+        "arabic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:version.json",
+      "type": "config",
+      "name": "version.json",
+      "filePath": "version.json",
+      "summary": "بيان إصدار التطبيق (2.91.2): رقم الإصدار، رابط APK وبصمة sha256، وملاحظات الإصدار بالعربية.",
+      "tags": [
+        "configuration",
+        "versioning",
+        "release",
+        "android"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:web-src/package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "web-src/package.json",
+      "summary": "حزمة npm لتطبيق Vite/Capacitor (الإصدار 2.91.15-web.1) مع سكربتات البناء والفحوص بما فيها check:perf وcheck:perf-boot، والتبعيات.",
+      "tags": [
+        "configuration",
+        "npm",
+        "build-system",
+        "capacitor"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:web-src/scripts/fixtures/boot-script-order.json",
+      "type": "config",
+      "name": "boot-script-order.json",
+      "filePath": "web-src/scripts/fixtures/boot-script-order.json",
+      "summary": "قائمة مرجعية بترتيب تنفيذ سكربتات الإقلاع الكلاسيكية، تُقارن بها نتيجة فحص perf-boot-check.",
+      "tags": [
+        "fixture",
+        "configuration",
+        "boot-order",
+        "test-data"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:web-src/scripts/guardian-load-check.mjs",
+      "type": "file",
+      "name": "guardian-load-check.mjs",
+      "filePath": "web-src/scripts/guardian-load-check.mjs",
+      "summary": "فحص في Chromium مع محاكاة Supabase بتأخير 300ms يتأكد أن طلبات ترتيب أبناء ولي الأمر تُرسل معاً وأن البيانات تصل لكل طفل.",
+      "tags": [
+        "test",
+        "performance",
+        "guardian",
+        "playwright"
+      ],
+      "complexity": "simple"
     },
     {
       "complexity": "simple",
@@ -11368,566 +11470,6 @@
       "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
-      "source": "file:web-src/src/main.js",
-      "target": "function:web-src/src/main.js:boot",
-      "type": "contains",
-      "direction": "forward",
-      "weight": 1,
-      "description": "[مؤكد-أداة] استخراج هيكلي"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/features/plans/engine.js:installSmartPlansEngine",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/core/offline-store.js:installHalaqatiOfflineStore",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/core/script-loader.js:loadClassicScript",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/features/reports/lazy.js:installReportLazyLoading",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/features/import/lazy.js:installImportLazyLoading",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "function:web-src/src/main.js:boot",
-      "target": "function:web-src/src/core/pwa.js:registerHalaqatiPwa",
-      "type": "calls",
-      "direction": "forward",
-      "weight": 0.8,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc50/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc50/donor.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc50/admin.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc50/shell.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc52/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc52/staff.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc52/span.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc53/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc54/motion.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc54/chat.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc66/exams.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc85/portal.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc86/parity.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/data.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/sessions/server.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/navigation.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/latin-digits-runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/auth/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/master-data/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/students/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/sessions/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/settings/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/notifications/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/legacy/app.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/startup.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/reports/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/reports/vector-pdf-runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/scope.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/programs.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/icons.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/ui.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/guardian.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/motion.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/phases.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/dashboard.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/insights.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/desktop.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/icons.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/nx.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/sessions.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/roster.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/students.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/plans.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/management.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/reports.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/tools.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/phases.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/community.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/certificates.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/home.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/native/approvals.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/rc27/plans.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/certificates/pdf.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/certificates/server.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/certificates/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/plans/health.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/plans/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/guardian/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/operations/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/core/performance-runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
-      "source": "file:web-src/src/main.js",
-      "target": "file:web-src/src/features/live-halaqa/runtime.js",
-      "type": "depends_on",
-      "direction": "forward",
-      "weight": 0.6,
-      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
-    },
-    {
       "source": "file:web-src/src/core/install.js",
       "target": "function:web-src/src/core/install.js:installed",
       "type": "contains",
@@ -14584,6 +14126,102 @@
       "description": "[مؤكد-أداة] استخراج هيكلي"
     },
     {
+      "source": "file:web-src/src/main.js",
+      "target": "function:web-src/src/main.js:boot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/_static-server.mjs",
+      "target": "function:web-src/scripts/_static-server.mjs:serveDist",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/_static-server.mjs",
+      "target": "function:web-src/scripts/_static-server.mjs:serveDist",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/perf-boot-check.mjs",
+      "target": "config:web-src/scripts/fixtures/boot-script-order.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/scripts/perf-boot-check.mjs",
+      "target": "function:web-src/scripts/_static-server.mjs:serveDist",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/scripts/perf-startup.mjs",
+      "target": "function:web-src/scripts/_static-server.mjs:serveDist",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "document:docs/PERFORMANCE_31_AR.md",
+      "target": "file:web-src/src/main.js",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "document:docs/PERFORMANCE_31_AR.md",
+      "target": "file:web-src/scripts/perf-startup.mjs",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مستنتج-أداة] حكم المحلل دون دليل نصي مباشر"
+    },
+    {
+      "source": "document:docs/PERFORMANCE_31_AR.md",
+      "target": "file:web-src/scripts/perf-boot-check.mjs",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مستنتج-أداة] حكم المحلل دون دليل نصي مباشر"
+    },
+    {
+      "source": "document:docs/PERFORMANCE_31_AR.md",
+      "target": "file:web-src/scripts/guardian-load-check.mjs",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5,
+      "description": "[مستنتج-أداة] حكم المحلل دون دليل نصي مباشر"
+    },
+    {
+      "source": "config:web-src/package.json",
+      "target": "file:web-src/scripts/perf-startup.mjs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "config:web-src/package.json",
+      "target": "file:web-src/scripts/perf-boot-check.mjs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
       "source": "file:web-src/scripts/modules-vm-smoke.mjs",
       "target": "file:web-src/src/features/plans/engine.js",
       "type": "imports",
@@ -14595,6 +14233,24 @@
     {
       "source": "file:web-src/scripts/motion-inventory.mjs",
       "target": "file:web-src/scripts/motion-record.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/perf-boot-check.mjs",
+      "target": "file:web-src/scripts/_static-server.mjs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true,
+      "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "file:web-src/scripts/perf-startup.mjs",
+      "target": "file:web-src/scripts/_static-server.mjs",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7,
@@ -15122,6 +14778,558 @@
       "weight": 0.7,
       "recoveredFromImportMap": true,
       "description": "[مؤكد-أداة] استخراج هيكلي"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/features/plans/engine.js:installSmartPlansEngine",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/core/offline-store.js:installHalaqatiOfflineStore",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/core/script-loader.js:loadClassicScript",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/features/reports/lazy.js:installReportLazyLoading",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/features/import/lazy.js:installImportLazyLoading",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "function:web-src/src/main.js:boot",
+      "target": "function:web-src/src/core/pwa.js:registerHalaqatiPwa",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc50/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc50/donor.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc50/admin.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc50/shell.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc52/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc52/staff.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc52/span.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc53/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc54/motion.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc54/chat.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc66/exams.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc85/portal.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc86/parity.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/data.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/sessions/server.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/navigation.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/latin-digits-runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/auth/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/master-data/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/students/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/sessions/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/settings/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/notifications/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/legacy/app.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/startup.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/reports/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/reports/vector-pdf-runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/scope.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/programs.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/icons.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/ui.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/guardian.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/motion.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/phases.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/dashboard.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/insights.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/desktop.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/icons.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/nx.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/sessions.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/roster.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/students.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/plans.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/management.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/reports.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/tools.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/phases.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/community.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/certificates.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/home.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/native/approvals.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/rc27/plans.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/certificates/pdf.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/certificates/server.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/certificates/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/plans/health.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/plans/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/guardian/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/operations/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/core/performance-runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
+    },
+    {
+      "source": "file:web-src/src/main.js",
+      "target": "file:web-src/src/features/live-halaqa/runtime.js",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6,
+      "description": "[مؤكد-أداة] الهدف مذكور في نص ملف المصدر"
     },
     {
       "source": "function:web-src/src/core/performance-runtime.js:v230LoadCoreData",
@@ -27755,7 +27963,8 @@
         "function:web-src/src/core/navigation.js:roleCanManage",
         "function:web-src/src/core/navigation.js:roleCanAdmin",
         "function:web-src/src/core/navigation.js:canManageStudents",
-        "function:web-src/src/core/navigation.js:canManageUsers"
+        "function:web-src/src/core/navigation.js:canManageUsers",
+        "document:docs/PERFORMANCE_31_AR.md"
       ]
     },
     {
@@ -27994,7 +28203,12 @@
         "file:web-src/scripts/view.test.mjs",
         "file:web-src/scripts/buttons-check.mjs",
         "file:web-src/scripts/charts-check.mjs",
-        "file:web-src/scripts/icons-check.mjs"
+        "file:web-src/scripts/icons-check.mjs",
+        "file:web-src/scripts/_static-server.mjs",
+        "file:web-src/scripts/perf-boot-check.mjs",
+        "file:web-src/scripts/perf-startup.mjs",
+        "config:web-src/scripts/fixtures/boot-script-order.json",
+        "file:web-src/scripts/guardian-load-check.mjs"
       ]
     },
     {

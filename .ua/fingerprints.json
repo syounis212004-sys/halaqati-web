@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "gitCommitHash": "30ddee6ab62c03bd7489d6d8d38f3cbf83fbfa25",
-  "generatedAt": "2026-11-19T11:56:51.947Z",
+  "gitCommitHash": "7f8f63cf9fa9aa1977fc244063319a0a868e0371",
+  "generatedAt": "2026-11-20T08:54:25.100Z",
   "files": {
     ".github/scripts/release_gate.py": {
       "filePath": ".github/scripts/release_gate.py",
@@ -299,7 +299,7 @@
     },
     "version.json": {
       "filePath": "version.json",
-      "contentHash": "68895817b61e8da89b7c72acdcda288b9bb7c3c2654899f3585fa335cb4aec27",
+      "contentHash": "ed392baf22210fd78816c163a1bfcde7b1de22ef2899241db88e81ab55fffccd",
       "functions": [],
       "classes": [],
       "imports": [],
@@ -1119,12 +1119,12 @@
     },
     "web-src/package.json": {
       "filePath": "web-src/package.json",
-      "contentHash": "6591c073341862ff3b6aa8d8d038cfcda1e1eef6bd5cde1ff75ce573c2b000fc",
+      "contentHash": "1a8bba1852777244499501127e2b410e1bcc3ba1780494ae147bfe263da4d16e",
       "functions": [],
       "classes": [],
       "imports": [],
       "exports": [],
-      "totalLines": 92,
+      "totalLines": 95,
       "hasStructuralAnalysis": false
     },
     "web-src/plugins/halaqati-deeplink/package.json": {
@@ -12340,13 +12340,13 @@
     },
     "web-src/src/main.js": {
       "filePath": "web-src/src/main.js",
-      "contentHash": "0ac81557ff14c8d2017417e7507232fc57500f8b61ab0e89ad0463bb7917f8d7",
+      "contentHash": "edfffc39754dc151e2db0190dc8eaf5c4f56486191d84eea94fcf1229508dd16",
       "functions": [
         {
           "name": "boot",
           "params": [],
           "exported": false,
-          "lineCount": 89
+          "lineCount": 14
         }
       ],
       "classes": [],
@@ -12937,7 +12937,7 @@
         }
       ],
       "exports": [],
-      "totalLines": 213,
+      "totalLines": 221,
       "hasStructuralAnalysis": true
     },
     "web-src/src/styles/admin.css": {
@@ -13643,6 +13643,213 @@
       ],
       "exports": [],
       "totalLines": 102,
+      "hasStructuralAnalysis": true
+    },
+    "docs/PERFORMANCE_31_AR.md": {
+      "filePath": "docs/PERFORMANCE_31_AR.md",
+      "contentHash": "32fc32b5d8b006cdcf09be71711874d2eb164e0643b7b8a698ac1d3e5f620644",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 56,
+      "hasStructuralAnalysis": false
+    },
+    "web-src/scripts/_static-server.mjs": {
+      "filePath": "web-src/scripts/_static-server.mjs",
+      "contentHash": "c6be673ad2ff80ec5b53b350119e963e90f373fac31db4e08866248b09157392",
+      "functions": [
+        {
+          "name": "serveDist",
+          "params": [
+            "port"
+          ],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:http",
+          "specifiers": [
+            "http"
+          ]
+        },
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "node:zlib",
+          "specifiers": [
+            "zlib"
+          ]
+        }
+      ],
+      "exports": [
+        "serveDist"
+      ],
+      "totalLines": 18,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/fixtures/boot-script-order.json": {
+      "filePath": "web-src/scripts/fixtures/boot-script-order.json",
+      "contentHash": "65f383e2a749a0730669d46af0c65854c6db3618da78bbd150e5540a9759ceb6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 67,
+      "hasStructuralAnalysis": false
+    },
+    "web-src/scripts/guardian-load-check.mjs": {
+      "filePath": "web-src/scripts/guardian-load-check.mjs",
+      "contentHash": "1b4a7ac25815fd4773272d309319ddc6b35fdf1ddd037c125a526ab5859df3bf",
+      "functions": [
+        {
+          "name": "ok",
+          "params": [
+            "c",
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/perf-boot-check.mjs": {
+      "filePath": "web-src/scripts/perf-boot-check.mjs",
+      "contentHash": "79ed6b10591efd3b6dc5e3f7d23bf7dbaa66ab63c2283a736f9b97203bdfc882",
+      "functions": [
+        {
+          "name": "ok",
+          "params": [
+            "c",
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "done",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        },
+        {
+          "source": "./_static-server.mjs",
+          "specifiers": [
+            "serveDist"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 31,
+      "hasStructuralAnalysis": true
+    },
+    "web-src/scripts/perf-startup.mjs": {
+      "filePath": "web-src/scripts/perf-startup.mjs",
+      "contentHash": "b0b13722063dc58c15e07138b4e7b4abe5e7d8a64bbb2851c159844e48d9d6b0",
+      "functions": [
+        {
+          "name": "newPage",
+          "params": [
+            "ctx",
+            "prof",
+            "cpu"
+          ],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "slim",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "scenario",
+          "params": [
+            "profName",
+            "cpu",
+            "name",
+            "run"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "vitals",
+          "params": [],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "longTasks",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "fs"
+          ]
+        },
+        {
+          "source": "playwright",
+          "specifiers": [
+            "chromium"
+          ]
+        },
+        {
+          "source": "./_static-server.mjs",
+          "specifiers": [
+            "serveDist"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 65,
       "hasStructuralAnalysis": true
     }
   }

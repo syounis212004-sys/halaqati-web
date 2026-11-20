@@ -59,6 +59,12 @@
       "fileCategory": "docs"
     },
     {
+      "path": "docs/PERFORMANCE_31_AR.md",
+      "language": "markdown",
+      "sizeLines": 55,
+      "fileCategory": "docs"
+    },
+    {
       "path": "docs/RC27_47_WEB_AR.md",
       "language": "markdown",
       "sizeLines": 10,
@@ -631,7 +637,7 @@
     {
       "path": "web-src/package.json",
       "language": "json",
-      "sizeLines": 91,
+      "sizeLines": 94,
       "fileCategory": "config"
     },
     {
@@ -693,6 +699,12 @@
       "language": "html",
       "sizeLines": 1,
       "fileCategory": "markup"
+    },
+    {
+      "path": "web-src/scripts/_static-server.mjs",
+      "language": "javascript",
+      "sizeLines": 17,
+      "fileCategory": "code"
     },
     {
       "path": "web-src/scripts/account-name-check.mjs",
@@ -776,6 +788,18 @@
       "path": "web-src/scripts/fetch-vendor.mjs",
       "language": "javascript",
       "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "web-src/scripts/fixtures/boot-script-order.json",
+      "language": "json",
+      "sizeLines": 66,
+      "fileCategory": "config"
+    },
+    {
+      "path": "web-src/scripts/guardian-load-check.mjs",
+      "language": "javascript",
+      "sizeLines": 36,
       "fileCategory": "code"
     },
     {
@@ -969,6 +993,18 @@
       "language": "html",
       "sizeLines": 3,
       "fileCategory": "markup"
+    },
+    {
+      "path": "web-src/scripts/perf-boot-check.mjs",
+      "language": "javascript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "web-src/scripts/perf-startup.mjs",
+      "language": "javascript",
+      "sizeLines": 64,
+      "fileCategory": "code"
     },
     {
       "path": "web-src/scripts/phases-offline.test.mjs",
@@ -1807,7 +1843,7 @@
     {
       "path": "web-src/src/main.js",
       "language": "javascript",
-      "sizeLines": 212,
+      "sizeLines": 220,
       "fileCategory": "code"
     },
     {
@@ -2105,7 +2141,7 @@
       "fileCategory": "code"
     }
   ],
-  "totalFiles": 347,
+  "totalFiles": 353,
   "filteredByIgnore": 94,
   "estimatedComplexity": "large",
   "importMap": {
@@ -2115,6 +2151,7 @@
     ".github/workflows/update_halaqati_latest_release.yml": [],
     "docs/MOTION_SYSTEM_AR.md": [],
     "docs/NATIVE_PORT_BRIEF.md": [],
+    "docs/PERFORMANCE_31_AR.md": [],
     "docs/RC27_47_WEB_AR.md": [],
     "docs/RC27_DESKTOP_AR.md": [],
     "docs/RC27_WEB_RELEASE_AR.md": [],
@@ -2221,6 +2258,7 @@
     "web-src/public/desktop.html": [],
     "web-src/public/manifest.webmanifest": [],
     "web-src/public/mobile.html": [],
+    "web-src/scripts/_static-server.mjs": [],
     "web-src/scripts/account-name-check.mjs": [],
     "web-src/scripts/arabic-pdf-safe-check.mjs": [],
     "web-src/scripts/audit-fixes-check.mjs": [],
@@ -2235,6 +2273,8 @@
     "web-src/scripts/data-integrity-check.mjs": [],
     "web-src/scripts/donor-check.mjs": [],
     "web-src/scripts/fetch-vendor.mjs": [],
+    "web-src/scripts/fixtures/boot-script-order.json": [],
+    "web-src/scripts/guardian-load-check.mjs": [],
     "web-src/scripts/home-session-open-check.mjs": [],
     "web-src/scripts/icons-check.mjs": [],
     "web-src/scripts/loading-check.mjs": [],
@@ -2271,6 +2311,12 @@
     "web-src/scripts/pdf-memory-v2402-smoke.html": [],
     "web-src/scripts/pdf-searchable-smoke.html": [],
     "web-src/scripts/pdf-vector-v2403-smoke.html": [],
+    "web-src/scripts/perf-boot-check.mjs": [
+      "web-src/scripts/_static-server.mjs"
+    ],
+    "web-src/scripts/perf-startup.mjs": [
+      "web-src/scripts/_static-server.mjs"
+    ],
     "web-src/scripts/phases-offline.test.mjs": [],
     "web-src/scripts/plan-health.test.mjs": [],
     "web-src/scripts/postbuild.mjs": [],
@@ -2530,5 +2576,5 @@
     "web-src/supabase/migrations/20261115_auto_close_past_sessions.sql": [],
     "web-src/vite.config.js": []
   },
-  "contentDigest": "47a2fca59c5dc81d46a44fda4e559b5e9f1a777d46d350d2bed1a9cfae34ea7d"
+  "contentDigest": "c06f826d0acc774a2daf9e07573a7835be9f9bde43f11982566ef9ef9935510a"
 }
