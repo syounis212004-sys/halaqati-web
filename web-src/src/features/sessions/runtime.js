@@ -72,12 +72,15 @@ async function loadSessionRosterData(id){
   state.sessionRoster=mergeSessionRosterCache(server,cached||{},id);
   persistSessionRosterCache(id,state.sessionRoster)
 }
+/* Which of the newest sessions really need a download: none inside the TTL window; afterwards the ones never stored locally plus the last 3 days (still being edited). */
+function rosterPrecachePlan(rows,cache,lastAt,now,today,ttl=1800000){if(now-(Number(lastAt)||0)<ttl)return [];const from=new Date(Date.parse(today+'T00:00:00Z')-3*86400000).toISOString().slice(0,10);return rows.filter(x=>x&&x.id&&(!(cache||{})[x.id]||String(x.session_date||'')>=from)).map(x=>x.id)}
 async function cacheRecentSessionRostersForOffline(limit=30){
   if(state.demo||!roleCanManage()||!state.networkVerified||state.offline||!navigator.onLine||!state.user?.id)return 0;
   try{
     if(!(await ensureServerAuthSession({silent:true})))return 0;
     let rows=(state.sessions||[]).filter(x=>!isLocalSessionId(x.id)&&x.status!=='cancelled').sort((a,b)=>String(b.session_date||'').localeCompare(String(a.session_date||''))||String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,Math.max(1,Number(limit)||30));
-    let ids=rows.map(x=>x.id).filter(Boolean);if(!ids.length)return 0;
+    let stampKey='halaqati_roster_cache_at_'+state.user.id,lastAt=0;try{lastAt=Number(localStorage.getItem(stampKey))||0}catch(_e){}
+    let ids=rosterPrecachePlan(rows,state.offlineRosterCache,lastAt,Date.now(),today());if(!ids.length)return 0;
     let [a,n,r]=await Promise.all([
       db.from('attendance_records').select('*').in('session_id',ids),
       db.from('student_daily_notes').select('*').in('session_id',ids),
@@ -89,6 +92,7 @@ async function cacheRecentSessionRostersForOffline(limit=30){
       let server={attendance:group(a.data||[],id),notes:group(n.data||[],id),recitations:group(r.data||[],id)};
       state.offlineRosterCache[id]=cloneJson(mergeSessionRosterCache(server,state.offlineRosterCache[id]||{},id))
     }
+    try{localStorage.setItem(stampKey,String(Date.now()))}catch(_e){}
     cacheSnapshot();return ids.length
   }catch(e){console.warn('Recent session offline cache failed',e);return 0}
 }

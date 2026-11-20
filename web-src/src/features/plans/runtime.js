@@ -428,7 +428,8 @@ async function checkSmartPlanAlerts(){
       let progress=smartPlanProgress(plan,student.id,date),phase=null;
       try{const snap=window.RC27PhaseSnapshot?.(plan,date,student.id);if(snap?.raw){progress=snap.raw;phase=snap.phase}}
       catch(e){console.warn('plan phase health',e)}
-      try{await window.HalaqatiPlanHealth.record(db,plan,student,progress,date,p=>invokeNotify(p,{silent:true}),phase)}catch(e){console.warn('plan health unavailable',e.message)}
+      if(window.HalaqatiPlanHealth.unchanged(state.user.id,plan,student,progress,date))continue;
+      try{if(await window.HalaqatiPlanHealth.record(db,plan,student,progress,date,p=>invokeNotify(p,{silent:true}),phase)==='done')window.HalaqatiPlanHealth.remember(state.user.id,plan,student,progress,date)}catch(e){console.warn('plan health unavailable',e.message)}
     }
     if(evening){let next=smartPlanForSession(student,tomorrow,'tasmee');if(next?.plan?.home_prep_push&&next.progress.assignment.startPage){let a=next.progress.assignment;await invokeNotify({action:'event_student',kind:'system',student_id:student.id,source_key:`smart-plan-prep:${next.plan.id}:${student.id}:${tomorrow}`,title:`تحضير الغد · ${student.full_name}`,body:`مطلوب غداً ${smartPlanAssignmentLabel(a)}.`,deep_link:`student:${student.id}`,data:{smart_plan_id:next.plan.id,plan_date:tomorrow,start_page:a.startPage,end_page:a.endPage}},{silent:true})}}
   }

@@ -2,7 +2,7 @@
    Push registration uses @capacitor/push-notifications only; no custom Push bridge or FID path. */
 const NOTIFY_FUNCTION='halaqati-notify';
 let notificationRefreshTimer=null;
-let notificationLastRefresh=0;
+let notificationLastRefresh=0,notificationAuxAt=0,notificationPollStreak=0,notificationTopKey='';
 let pushListenersReady=false;
 let pushRegistrationToken='';
 let pushActivationPromise=null;
@@ -26,19 +26,24 @@ async function invokeNotify(body,{silent=false}={}){
   }catch(e){if(!silent)toast('تعذر تنفيذ الإشعار: '+(e?.message||e));console.warn('notify failed',e);return null}
 }
 
+/* Poll delay: 60 s while news keeps arriving, then 2, 4 and at most 5 minutes while nothing changes (reset by any change). */
+function notificationPollDelay(streak=notificationPollStreak){return streak<3?60000:streak<5?120000:streak<7?240000:300000}
 async function refreshNotifications({silent=true}={}){
   if(!state.user?.id||!navigator.onLine)return state.notifications||[];
   try{
+    /* inbox every time; sent items and preferences only on first load, a manual refresh, or every 10 minutes (they change rarely) */
+    const aux=!silent||!state.notificationsLoaded||Date.now()-notificationAuxAt>600000;
     let [mine,sent,prefs]=await Promise.all([
       db.from('notifications').select('*').eq('recipient_id',state.user.id).order('created_at',{ascending:false}).limit(120),
-      canSendNotifications()?db.from('notifications').select('*').eq('sender_id',state.user.id).neq('recipient_id',state.user.id).order('created_at',{ascending:false}).limit(80):Promise.resolve({data:[],error:null}),
-      db.from('notification_preferences').select('*').eq('user_id',state.user.id).maybeSingle()
+      !aux?Promise.resolve(null):canSendNotifications()?db.from('notifications').select('*').eq('sender_id',state.user.id).neq('recipient_id',state.user.id).order('created_at',{ascending:false}).limit(80):Promise.resolve({data:[],error:null}),
+      !aux?Promise.resolve(null):db.from('notification_preferences').select('*').eq('user_id',state.user.id).maybeSingle()
     ]);
     if(mine.error)throw mine.error;
     state.notifications=mine.data||[];
-    state.sentNotifications=sent?.data||[];
+    if(aux){state.sentNotifications=sent?.data||[];notificationAuxAt=Date.now()}
     state.notificationUnread=state.notifications.filter(x=>!x.read_at).length;
-    state.notificationPreferences=prefs?.data||{user_id:state.user.id,push_enabled:true,attendance:true,recitation:true,behavior:true,announcements:true,achievements:true};
+    {const key=(state.notifications[0]?.id||'')+'|'+state.notificationUnread;if(key===notificationTopKey)notificationPollStreak++;else{notificationPollStreak=0;notificationTopKey=key}}
+    if(aux||!state.notificationPreferences)state.notificationPreferences=prefs?.data||{user_id:state.user.id,push_enabled:true,attendance:true,recitation:true,behavior:true,announcements:true,achievements:true};
     state.notificationsLoaded=true;
     notificationLastRefresh=Date.now();
     updateNotificationBadges();
@@ -199,11 +204,12 @@ async function sendTestPush(){
   if(r)toast(r.push_configured?(r.push_sent?'تم إرسال إشعار الاختبار إلى الهاتف':'تم إنشاء الاختبار لكن لم يصل Push؛ راجع حالة الجهاز'):'مركز الإشعارات يعمل؛ يلزم إكمال إعداد Firebase لتفعيل Push الخارجي');
 }
 
+function scheduleNotificationPoll(){clearTimeout(notificationRefreshTimer);notificationRefreshTimer=setTimeout(async()=>{if(document.visibilityState==='visible'&&navigator.onLine)await refreshNotifications({silent:true});scheduleNotificationPoll()},notificationPollDelay())}
 async function initHalaqatiNotifications(){
   if(!state.user?.id||!state.profile)return;
   await refreshNotifications({silent:true});
   if(!state.notificationPreferences)state.notificationPreferences=notificationPreferencesDefaults();
-  if(!notificationRefreshTimer)notificationRefreshTimer=setInterval(()=>{if(document.visibilityState==='visible'&&navigator.onLine)refreshNotifications({silent:true})},60000);
+  if(!notificationRefreshTimer){scheduleNotificationPoll();document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&state.user?.id&&Date.now()-notificationLastRefresh>60000){notificationPollStreak=0;refreshNotifications({silent:true})}})}
   if(pushBuildConfigured()&&state.notificationPreferences?.push_enabled!==false){
     setTimeout(()=>enablePushNotifications(false).catch(e=>console.warn('Automatic official Push init skipped',e)),900);
     if(!pushOnlineListenerReady){window.addEventListener('online',()=>{if(state.user?.id&&state.notificationPreferences?.push_enabled!==false&&!state.pushState?.registered)setTimeout(()=>enablePushNotifications(false).catch(()=>{}),350)});pushOnlineListenerReady=true}

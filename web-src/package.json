@@ -12,6 +12,8 @@
     "check:legacy": "node --check src/legacy/app.js && node --check src/core/runtime.js && node --check src/core/navigation.js && node --check src/core/startup.js && node --check src/features/auth/runtime.js && node --check src/features/master-data/runtime.js && node --check src/features/students/runtime.js && node --check src/features/sessions/runtime.js && node --check src/features/plans/runtime.js && node --check src/features/plans/engine.js && node --check src/features/settings/runtime.js && node --check src/features/operations/runtime.js && node --check src/features/notifications/runtime.js && node --check src/features/notifications/push-bridge.js && node --check src/core/latin-digits-runtime.js && node --check src/features/live-halaqa/runtime.js && node --check src/features/reports/runtime.js && node --check src/features/certificates/runtime.js",
     "android:add": "npx cap add android",
     "android:sync": "npx cap sync android",
+    "check:data-layer": "node --test scripts/data-layer.test.mjs",
+    "check:data-usage": "node scripts/data-usage-check.mjs",
     "check:regression": "node scripts/regression-check.mjs",
     "check:audit-fixes": "node scripts/audit-fixes-check.mjs",
     "check:reports-module": "node scripts/reports-module-check.mjs",

@@ -33,7 +33,7 @@ function halaqatiPagedFetch(input,init){
    shortcut: memory only (cleared on reload), upgrade to IndexedDB if cold starts need it. */
 const HalaqatiSwr=(()=>{
   const M=new Map(),F=new Map(),FRESH=20000,MAX=60,MAXB=1500000;let gen=0,tm=0,last=0;
-  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts)$/,KEEP=/\/rpc\/rc27_cleanup_notifications$/;
+  const LIVE=/\/(notifications|chat|thread|message|push|device)/,READ_RPC=/\/rpc\/(rc46_award_months|rc32_observer_requests|rc54_chat_overview|rc53_staff_overview|rc65_exam_students|rc66_my_subscription|list_guardian_accounts|rc_pending_requests|rc49_support_cards|rc49_support_defaults|rc49_my_pledges|rc49_donor_impact|rc49_donor_report|rc49_news_list|rc32_observer_overview|rc40_observer_breakdown)$/,KEEP=/\/rpc\/rc27_cleanup_notifications$/;
   const res=e=>new Response(e.text,{status:e.status,headers:e.headers});
   const changed=()=>{clearTimeout(tm);tm=setTimeout(()=>{const c=document.getElementById('content'),a=document.activeElement;
     if(Date.now()-last<3000||document.hidden||!c||Math.max(c.scrollTop,scrollY)>40||document.querySelector('dialog[open],.drawer.open')||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
@@ -57,7 +57,7 @@ const HalaqatiSwr=(()=>{
    User actions (pull-to-refresh, the refresh button, saving) are not limited by this. */
 function autoRefreshDue(){let t=state.v230LastFullLoadAt||0;if(!t)try{t=Number(localStorage.getItem('halaqati_full_load_'+state.user?.id))||0}catch(_e){}return Date.now()-t>300000}
 /* a real answer from the server proves the connection: it clears a stale "offline" (cached answers do not count) */
-const halaqatiAnswered=r=>{try{if(state.offline||!state.networkVerified){state.networkVerified=true;state.offline=false;updateSyncBadge()}}catch(_e){}return r};
+const halaqatiAnswered=r=>{try{if(r&&r.status<500)state.lastServerAnswerAt=Date.now();if(state.offline||!state.networkVerified){state.networkVerified=true;state.offline=false;updateSyncBadge()}}catch(_e){}return r};
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n).then(halaqatiAnswered))}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';
@@ -181,6 +181,8 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function withTimeout(promise,ms,label='timeout'){let t;try{return await Promise.race([promise,new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error(label)),ms)})])}finally{clearTimeout(t)}}
 async function internetReachable(force=false){
   if(!navigator.onLine){state.networkVerified=false;state.offline=true;return false}
+  /* a real (non-5xx) server answer in the last minute already proves the connection: no extra /auth/v1/health request */
+  if(state.lastServerAnswerAt&&Date.now()-state.lastServerAnswerAt<60000){state.networkVerified=true;state.offline=false;return true}
   if(!force&&state.lastNetworkCheck&&Date.now()-state.lastNetworkCheck<5000)return !!state.networkVerified;
   state.lastNetworkCheck=Date.now();
   const check=async(ms)=>{
