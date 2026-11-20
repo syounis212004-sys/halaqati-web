@@ -38,6 +38,26 @@ function v230RenderIfVisible(){if($('#app')&&!$('#app').classList.contains('hidd
 // shortcut: stats views order by student_id only, so ties may repeat across pages, upgrade to a unique key if rows ever duplicate
 const v230PageAll=(mk,size)=>window.HalaqatiData?window.HalaqatiData.result(mk,()=>state.user?.id,size):mk();
 
+/* Student list = every column EXCEPT photo_path: the inline base64 photo is ~91% of the students payload (measured 562 KB of 614 KB for 65 students).
+   Photos are carried over from the previous load while updated_at is unchanged and fetched lazily otherwise (v230HydrateStudentPhotos).
+   A student whose photo is not known yet has NO photo_path key (unknown), which is different from photo_path:null (known: no photo). */
+const V230_STUDENT_COLUMNS='id,full_name,user_id,halaqa_id,primary_teacher_id,date_of_birth,phone,guardian_phone,enrollment_date,status,notes,target_pages_weekly,target_review_pages_weekly,created_at,updated_at,guardian_email,gender,national_id,program_name,school_grade,address,category_id,track_code,withdrawn_at,withdrawn_by,donor_contact_allowed,association_id';
+function v230MergeStudentPhotos(prev,next){const by=new Map((prev||[]).map(s=>[s.id,s]));return (next||[]).map(s=>{const p=by.get(s.id);return p&&'photo_path' in p&&p.updated_at===s.updated_at?{...s,photo_path:p.photo_path}:s})}
+/* saving a student whose photo is still unknown must leave the column out of the update, never write null over a real photo */
+function keepStudentPhoto(old){return old?('photo_path' in old?(old.photo_path||null):undefined):null}
+async function v230HydrateStudentPhotos(){
+  if(state.demo||!state.networkVerified)return 0;
+  /* state.students may be the scoped subset; RC27.master.students holds everyone the account can see: hydrate both (same objects when not scoped) */
+  const pool=()=>[...new Set([...(state.students||[]),...((typeof window!=='undefined'&&window.RC27&&window.RC27.master&&window.RC27.master.students)||[])])].filter(s=>s&&!('photo_path' in s));
+  const unknown=pool();if(!unknown.length)return 0;
+  const ids=[...new Set(unknown.map(s=>s.id))],r=await(ids.length<=40?db.from('students').select('id,photo_path').in('id',ids):db.from('students').select('id,photo_path').not('photo_path','is',null));
+  if(!r||r.error||!Array.isArray(r.data))return 0;
+  const got=new Map(r.data.map(x=>[x.id,x.photo_path||null])),want=new Set(ids);let n=0;
+  for(const s of pool())if(want.has(s.id)){s.photo_path=got.has(s.id)?got.get(s.id):null;n++}
+  if(n){try{v230RefreshPhotoUrls()}catch(_e){}cacheSnapshot()}
+  return n
+}
+
 async function v230LoadCoreData(forceNetwork=false){
   let start=v230Now(),online=forceNetwork?true:await internetReachable();
   if(!online){
@@ -47,7 +67,7 @@ async function v230LoadCoreData(forceNetwork=false){
   state.networkVerified=true;state.offline=false;
   let tasks=[
     db.from('halaqas').select('*').order('created_at'),
-    v230PageAll(()=>db.from('students').select('*').order('full_name').order('id'),100),
+    v230PageAll(()=>db.from('students').select(V230_STUDENT_COLUMNS).order('full_name').order('id'),100),
     db.from('sessions').select('*').order('session_date',{ascending:false}).limit(120),
     db.from('app_settings').select('*').eq('id',1).single(),
     db.from('student_categories').select('*').order('min_age',{ascending:true,nullsFirst:false}).order('name'),
@@ -65,7 +85,7 @@ async function v230LoadCoreData(forceNetwork=false){
     state.networkVerified=false;state.offline=true;
     if(restoreSnapshot()){state.pendingSync=readOfflineQueue().length;updateSyncBadge();v230Mark('coreMs',start);return true}
   }
-  v230ApplyArray('halaqas',rows[0]);v230ApplyArray('students',rows[1]);v230ApplyArray('sessions',rows[2]);
+  v230ApplyArray('halaqas',rows[0]);{const g=v230Good(rows[1]);if(Array.isArray(g))state.students=v230MergeStudentPhotos(state.students,g)}v230ApplyArray('sessions',rows[2]);
   let settings=v230Good(rows[3]);if(settings)state.settings=settings;
   v230ApplyArray('categories',rows[4]);v230ApplyArray('halaqaTeachers',rows[5]);v230ApplyArray('halaqaSupervisors',rows[6]);
   state.pendingSync=readOfflineQueue().length;state.v230LastCoreLoadAt=Date.now();applySavedTheme();updateSyncBadge();v230Mark('coreMs',start);return true
@@ -191,7 +211,7 @@ async function v230FullLoad(forceNetwork=false,{skipCore=false}={}){
       if(!state.networkVerified||state.offline)return false;
       /* Independent branches run together. v2.20 did these as serial stages. */
       await Promise.allSettled([v230LoadDashboardData(),loadSmartPlanData(),opsLoadOperationalData(forceNetwork),loadRoleExtras()]);
-      state.pendingSync=readOfflineQueue().length;state.v230LastFullLoadAt=Date.now();try{localStorage.setItem('halaqati_full_load_'+state.user?.id,String(state.v230LastFullLoadAt))}catch(e){}applySavedTheme();cacheSnapshot();updateSyncBadge();loadPhotoUrls();v230Mark('fullLoadMs',start);return true
+      state.pendingSync=readOfflineQueue().length;state.v230LastFullLoadAt=Date.now();try{localStorage.setItem('halaqati_full_load_'+state.user?.id,String(state.v230LastFullLoadAt))}catch(e){}applySavedTheme();cacheSnapshot();updateSyncBadge();v230HydrateStudentPhotos().catch(e=>console.warn('student photos',e)).finally(()=>loadPhotoUrls());v230Mark('fullLoadMs',start);return true
     }finally{state.v230Hydrating=false}
   })().finally(()=>{v230FullLoadPromise=null});return v230FullLoadPromise
 }

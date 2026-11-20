@@ -524,7 +524,7 @@
     const nid=E.nid.trim(),dupId=nid&&activeStudents().find(x=>x.id!==id&&x.halaqa_id===hid&&x.national_id===nid);if(dupId)return fail(`رقم الهوية مستخدم للطالب «${dupId.full_name}».`);
     E.saving=true;E.err=null;paintEditor();
     try{
-      const old=id?findStudent(id):null,stableId=id||offlineUuid();let photoPath=(old&&old.photo_path)||null,photoDeferred=false;
+      const old=id?findStudent(id):null,stableId=id||offlineUuid();let photoPath=keepStudentPhoto(old),photoDeferred=false;
       if(E.file){try{photoPath=await window.RC86.photo(E.file,{size:384,square:true})}catch(err){photoDeferred=false;toast((err&&err.message)||'تعذر تجهيز الصورة')}}
       const nz=v=>String(v||'').trim()||null;
       const obj={full_name:name,halaqa_id:hid,gender:E.gender||null,national_id:nid||null,phone:nz(E.phone),date_of_birth:E.dob||null,category_id:E.cat||null,track_code:E.track||null,status:E.status||'active',program_name:nz(E.program),school_grade:nz(E.grade),primary_teacher_id:E.teacher||((!state.networkVerified&&old&&old.primary_teacher_id)?old.primary_teacher_id:null),guardian_phone:nz(E.gphone),enrollment_date:E.join||T(),address:nz(E.address),notes:E.notes||null,photo_path:photoPath};

@@ -58,7 +58,7 @@ const enter = async page => { await page.evaluate(() => { state.page = 'home'; r
   await enter(page); await page.waitForTimeout(1500);
   pct = 40;
   const moved = await page.evaluate(async () => {
-    window.RC50 && (RC50.repCache = {}); render(); await new Promise(r => setTimeout(r, 400));
+    window.RC50 && (RC50.repCache = {}); HalaqatiSwr.clear() /* donor read RPCs are now cached for 20 s like every other read; a refresh clears them */; render(); await new Promise(r => setTimeout(r, 400));
     const ring = document.querySelector('#content svg circle[stroke-dasharray]');
     return { dash: ring.getAttribute('stroke-dasharray'), anims: ring.getAnimations().length };
   });

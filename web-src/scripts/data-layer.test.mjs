@@ -226,3 +226,70 @@ test('notifications: the poller is a self-scheduling timer, not a fixed interval
   const src = between(read('features/notifications/runtime.js'), 'async function initHalaqatiNotifications', '\n}\n');
   assert.doesNotMatch(src, /setInterval\(/); assert.match(src, /scheduleNotificationPoll\(/);
 });
+
+/* ---------- student photos: the list query leaves out the inline base64 photo, which is carried over / fetched lazily ---------- */
+function loadPhotos(stateOver = {}, dbImpl, win) {
+  const src = read('core/performance-runtime.js');
+  const code = [between(src, 'const V230_STUDENT_COLUMNS=', '\n'), between(src, 'function v230MergeStudentPhotos', '\n'), between(src, 'function keepStudentPhoto', '\n'), between(src, 'async function v230HydrateStudentPhotos', '\n}\n')].join('\n');
+  const calls = [];
+  const mk = (cols, mode) => { const b = { not: () => b, in: ids => { b.ids = ids; return b; }, then: (ok, bad) => Promise.resolve(dbImpl(mode(b), b)).then(ok, bad) }; return b; };
+  const sandbox = { state: { demo: false, networkVerified: true, students: [], photoUrls: {}, ...stateOver }, db: { from: t => ({ select: cols => { calls.push({ t, cols }); const b = { _q: { t, cols } }; b.not = (...a) => { b._q.not = a; return b; }; b.in = (c, ids) => { b._q.in = ids; return b; }; b.then = (ok, bad) => Promise.resolve(dbImpl(b._q)).then(ok, bad); return b; } }) }, v230RefreshPhotoUrls() {}, cacheSnapshot() {}, v230RenderIfVisible() {}, $: () => null, console, ...(win ? { window: win } : {}) };
+  vm.createContext(sandbox); vm.runInContext(code, sandbox); return { S: sandbox, calls, cols: vm.runInContext('V230_STUDENT_COLUMNS', sandbox) };
+}
+test('photos: the student list column set is every column except photo_path', () => {
+  const { cols } = loadPhotos(); const list = cols.split(',');
+  assert.ok(!list.includes('photo_path')); for (const c of ['id', 'full_name', 'halaqa_id', 'updated_at', 'primary_teacher_id', 'status', 'national_id', 'association_id']) assert.ok(list.includes(c), c);
+  assert.equal(new Set(list).size, list.length);
+  assert.match(between(read('core/performance-runtime.js'), 'async function v230LoadCoreData', '\n}\n'), /select\(V230_STUDENT_COLUMNS\)/);
+});
+test('photos: merge carries a known photo only while updated_at is unchanged', () => {
+  const { S } = loadPhotos();
+  const prev = [{ id: 'a', updated_at: 't1', photo_path: 'data:image/x' }, { id: 'b', updated_at: 't1', photo_path: null }, { id: 'c', updated_at: 't1' }, { id: 'd', updated_at: 't1', photo_path: 'data:image/d' }];
+  const next = [{ id: 'a', updated_at: 't1' }, { id: 'b', updated_at: 't1' }, { id: 'c', updated_at: 't1' }, { id: 'd', updated_at: 't2' }, { id: 'e', updated_at: 't1' }];
+  const out = S.v230MergeStudentPhotos(prev, next);
+  assert.equal(out[0].photo_path, 'data:image/x'); assert.equal(out[1].photo_path, null); assert.ok(!('photo_path' in out[2]), 'unknown stays unknown');
+  assert.ok(!('photo_path' in out[3]), 'changed row is refetched'); assert.ok(!('photo_path' in out[4]), 'new row is fetched');
+});
+test('photos: a few unknown students are fetched by id in ONE request and missing ones become "no photo"', async () => {
+  const { S, calls } = loadPhotos({ students: [{ id: 'a' }, { id: 'b' }, { id: 'k', photo_path: 'data:image/k' }] }, q => ({ data: [{ id: 'a', photo_path: 'data:image/a' }], error: null }));
+  assert.equal(await S.v230HydrateStudentPhotos(), 2);
+  assert.equal(calls.length, 1); assert.equal(calls[0].cols, 'id,photo_path');
+  const s = S.state.students; assert.equal(s[0].photo_path, 'data:image/a'); assert.equal(s[1].photo_path, null); assert.equal(s[2].photo_path, 'data:image/k');
+});
+test('photos: many unknown students use one "has a photo" request instead of a long id list', async () => {
+  const students = Array.from({ length: 65 }, (_, i) => ({ id: 's' + i }));
+  let seen; const { S, calls } = loadPhotos({ students }, q => { seen = q; return { data: [{ id: 's3', photo_path: 'data:image/3' }], error: null }; });
+  await S.v230HydrateStudentPhotos();
+  assert.equal(calls.length, 1); assert.ok(seen.not && !seen.in);
+  assert.equal(S.state.students[3].photo_path, 'data:image/3'); assert.equal(S.state.students[4].photo_path, null);
+});
+test('photos: a failed fetch leaves students unknown so the next load retries, and offline makes no request', async () => {
+  const bad = loadPhotos({ students: [{ id: 'a' }] }, () => ({ data: null, error: { message: 'x' } }));
+  assert.equal(await bad.S.v230HydrateStudentPhotos(), 0); assert.ok(!('photo_path' in bad.S.state.students[0]));
+  const off = loadPhotos({ networkVerified: false, students: [{ id: 'a' }] }, () => ({ data: [], error: null }));
+  assert.equal(await off.S.v230HydrateStudentPhotos(), 0); assert.equal(off.calls.length, 0);
+});
+test('photos: nothing unknown means no request at all', async () => {
+  const { S, calls } = loadPhotos({ students: [{ id: 'a', photo_path: null }] }, () => ({ data: [], error: null }));
+  assert.equal(await S.v230HydrateStudentPhotos(), 0); assert.equal(calls.length, 0);
+});
+test('photos: a reload during the fetch does not write onto stale rows', async () => {
+  let ctx; const { S } = loadPhotos({ students: [{ id: 'a' }] }, () => { ctx.state.students = [{ id: 'a', note: 'fresh' }]; return { data: [{ id: 'a', photo_path: 'data:image/a' }], error: null }; });
+  ctx = S; await S.v230HydrateStudentPhotos();
+  assert.equal(S.state.students[0].photo_path, 'data:image/a'); assert.equal(S.state.students[0].note, 'fresh');
+});
+test('photos: editing a student whose photo is still unknown must NOT overwrite it with null', () => {
+  const { S } = loadPhotos();
+  assert.equal(S.keepStudentPhoto(undefined), null, 'new student: no photo');
+  assert.equal(S.keepStudentPhoto({ id: 'a' }), undefined, 'unknown: leave the column out of the save');
+  assert.equal(S.keepStudentPhoto({ id: 'a', photo_path: null }), null);
+  assert.equal(S.keepStudentPhoto({ id: 'a', photo_path: 'data:image/a' }), 'data:image/a');
+  for (const f of ['features/native/students.js', 'features/students/runtime.js']) assert.match(read(f), /keepStudentPhoto\(old\)/, f);
+});
+
+test('photos: students that only exist in the unscoped master list (RC27.master) are hydrated too', async () => {
+  const shared = { id: 'a' }, onlyMaster = { id: 'm' };
+  const { S } = loadPhotos({ students: [shared] }, () => ({ data: [{ id: 'a', photo_path: 'data:image/a' }, { id: 'm', photo_path: 'data:image/m' }], error: null }), { RC27: { master: { students: [shared, onlyMaster] } } });
+  assert.equal(await S.v230HydrateStudentPhotos(), 2);
+  assert.equal(shared.photo_path, 'data:image/a'); assert.equal(onlyMaster.photo_path, 'data:image/m');
+});
