@@ -9,7 +9,7 @@ html:root{
   --hm-primary:#0D9488;--hm-primary-deep:#0F766E;--hm-primary-ink:#134E4A;--hm-secondary:#2DD4BF;
   --hm-accent:#D97706;--hm-accent-ink:#B45309;--hm-bg:#F0FDFA;--hm-card:#FFFFFF;--hm-muted:#E8F1F4;--hm-muted-fg:#475569;--hm-border:#5EEAD4;--hm-line:#CDE8E3;
   --hm-danger:#DC2626;--hm-danger-bg:#FEF2F2;--hm-danger-ink:#7F1D1D;--hm-warn:#D97706;--hm-warn-bg:#FFFBEB;--hm-warn-ink:#78350F;
-  --hm-info:#0369A1;--hm-info-bg:#F0F9FF;--hm-info-ink:#0C4A6E;--hm-ok:#15803D;--hm-ok-bg:#ECFDF5;--hm-ok-ink:#14532D;--hm-ring:#0D9488;
+  --hm-info:#0369A1;--hm-info-bg:#F0F9FF;--hm-info-ink:#0C4A6E;--hm-ok:#15803D;--hm-ok-bg:#ECFDF5;--hm-ok-ink:#14532D;--hm-ring:#0D9488;--hm-mint:#D5F5EF;
   /* legacy variable bridge */
   --green:#134E4A;--green2:#0F766E;--green3:#0D9488;--mint:#D5F5EF;--mint2:#F0FDFA;--gold:#B45309;--cream:#F0FDFA;--ink:#134E4A;--muted:#475569;--line:#CDE8E3;
   --danger:#DC2626;--good:#15803D;--warn:#D97706;--blue:#0369A1;--card:#fff;--shadow:0 10px 32px rgba(19,78,74,.08);
@@ -18,17 +18,17 @@ html:root{
   --h86-deep:linear-gradient(135deg,#134E4A,#0F766E);--h86-gold:linear-gradient(135deg,#B45309,#D97706);
   --t-tone-present:#15803D;--t-tone-absent:#DC2626;--t-tone-excused:#D97706;--t-tone-late:#0369A1;--t-tone-neutral:#475569;
 }
-html:not([data-theme="dark"]) body{background:var(--hm-bg)}
+html body:not(.dark){background:var(--hm-bg)}
 :focus-visible{outline:2px solid var(--hm-ring);outline-offset:2px}
 /* status blocks: calm tinted cards + start accent bar (colour is never the only signal: the icon and the count stay) */
-.nh-bucket.nx-s-danger,.nh-bucket.nx-s-warning,.nh-bucket.nx-s-info,.nh-bucket.nx-s-success{box-shadow:none;border:1px solid var(--hm-line);border-inline-start-width:5px}
-.nh-bucket.nx-s-danger{background:var(--hm-danger-bg);border-color:#FCA5A5;color:var(--hm-danger-ink)}
-.nh-bucket.nx-s-warning{background:var(--hm-warn-bg);border-color:#FCD34D;color:var(--hm-warn-ink)}
-.nh-bucket.nx-s-info{background:var(--hm-info-bg);border-color:#7DD3FC;color:var(--hm-info-ink)}
-.nh-bucket.nx-s-success{background:var(--hm-ok-bg);border-color:#86EFAC;color:var(--hm-ok-ink)}
-.nh-bucket.nx-s-danger{border-inline-start-color:var(--hm-danger)}.nh-bucket.nx-s-warning{border-inline-start-color:var(--hm-warn)}
-.nh-bucket.nx-s-info{border-inline-start-color:var(--hm-info)}.nh-bucket.nx-s-success{border-inline-start-color:var(--hm-ok)}
-.nh-bucket[class*="nx-s-"] *{color:inherit}
+body:not(.dark) .nh-bucket.nx-s-danger,body:not(.dark) .nh-bucket.nx-s-warning,body:not(.dark) .nh-bucket.nx-s-info,body:not(.dark) .nh-bucket.nx-s-success{box-shadow:none;border:1px solid var(--hm-line);border-inline-start-width:5px}
+body:not(.dark) .nh-bucket.nx-s-danger{background:var(--hm-danger-bg);border-color:#FCA5A5;color:var(--hm-danger-ink)}
+body:not(.dark) .nh-bucket.nx-s-warning{background:var(--hm-warn-bg);border-color:#FCD34D;color:var(--hm-warn-ink)}
+body:not(.dark) .nh-bucket.nx-s-info{background:var(--hm-info-bg);border-color:#7DD3FC;color:var(--hm-info-ink)}
+body:not(.dark) .nh-bucket.nx-s-success{background:var(--hm-ok-bg);border-color:#86EFAC;color:var(--hm-ok-ink)}
+body:not(.dark) .nh-bucket.nx-s-danger{border-inline-start-color:var(--hm-danger)}body:not(.dark) .nh-bucket.nx-s-warning{border-inline-start-color:var(--hm-warn)}
+body:not(.dark) .nh-bucket.nx-s-info{border-inline-start-color:var(--hm-info)}body:not(.dark) .nh-bucket.nx-s-success{border-inline-start-color:var(--hm-ok)}
+body:not(.dark) .nh-bucket[class*="nx-s-"] *{color:inherit}
 /* ---- desktop layout ---- */
 html[data-view="desktop"]{--page-width:1360px}
 html[data-view="desktop"] .h86-short{width:100%}
@@ -41,3 +41,6 @@ html[data-view="desktop"] .ngm-hqcard h3,html[data-view="desktop"] .ngm-hqcard .
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 /* status pairs (nx-s-*, roster counters): tinted fill + dark ink, all >= 7:1 (dark theme keeps its own values via body.dark) */
 html:root{--st-ok-bg:#D1FAE5;--st-ok-fg:#14532D;--st-warn-bg:#FEF3C7;--st-warn-fg:#78350F;--st-bad-bg:#FEE2E2;--st-bad-fg:#7F1D1D;--st-bad-text:#7F1D1D;--st-info-bg:#E0F2FE;--st-info-fg:#0C4A6E;--st-neutral-bg:#E8F1F4;--st-neutral-fg:#334155}
+/* gold surfaces carrying white text must reach 4.5:1 (measured: the old gold gradient was 2.8:1) */
+html body .mobile-nav .dn-plus{background:linear-gradient(135deg,var(--hm-accent-ink),#92400E);color:#fff}
+.ngm-tp{background:rgba(19,78,74,.55)}

@@ -1,8 +1,8 @@
 /* Supervisor skin for the screens shared with other roles (students, reports, exams, announcements, settings).
    Scoped to body.sv-role, so teachers, guardians, donors and the administrator keep their current look. Markup is untouched. */
 body.sv-role {
-  --sv-emerald: #0b6e4f;
-  --sv-emerald-deep: #07503b;
+  --sv-emerald: var(--hm-ok-ink);
+  --sv-emerald-deep: var(--hm-ok-ink);
   --sv-gold: #c9a227;
   --sv-mint: #e3f2ea;
   --sv-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64' fill='none' stroke='%23e3c56b' stroke-width='1.2'%3E%3Cpath d='M32 4l6.5 15.5L54 13l-6.5 15.5L63 32l-15.5 3.5L54 51l-15.5-6.5L32 60l-6.5-15.5L10 51l6.5-15.5L1 32l15.5-3.5L10 13l15.5 6.5z'/%3E%3Ccircle cx='32' cy='32' r='7'/%3E%3C/svg%3E");
@@ -27,7 +27,7 @@ body.dark.sv-role .dn-tile {
 /* hero banners get the eight-point star and a gold base line */
 body.sv-role .nx-hero {
   background:
-    radial-gradient(120% 140% at 100% 0%, #13845f 0%, transparent 60%),
+    radial-gradient(120% 140% at 100% 0%, var(--hm-primary) 0%, transparent 60%),
     linear-gradient(160deg, var(--sv-emerald) 0%, var(--sv-emerald-deep) 100%);
   box-shadow: inset 0 -3px 0 var(--sv-gold);
 }

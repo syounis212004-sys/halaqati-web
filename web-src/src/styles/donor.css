@@ -1,8 +1,8 @@
 /* Halaqati web — donor pages polish (review fixes). Loaded last.
    Goals: WCAG AA text contrast in light and dark, 44px touch targets, no sub‑12px text, one disabled/tonal/text button language
    that matches the Android donor screens, and calm desktop width. Colours are tokens; nothing here changes behaviour. */
-:root{--dn-mut-aa:#46564f;--dn-gold-aa:#7a5600;--dn-danger:#a32619;--dn-up:#0b6b3a;--dn-down:#b3261e;--dn-tonal:rgba(11,93,79,.12);--dn-on-em:#fff;
-  --dn-m1:#7a5600;--dn-m2:#475467;--dn-m3:#8a4b12}
+:root{--dn-mut-aa:var(--hm-primary-ink);--dn-gold-aa:var(--hm-warn-ink);--dn-danger:var(--hm-danger-ink);--dn-up:var(--hm-ok);--dn-down:var(--hm-danger);--dn-tonal:rgba(11,93,79,.12);--dn-on-em:#fff;
+  --dn-m1:var(--hm-warn-ink);--dn-m2:var(--hm-info-ink);--dn-m3:var(--hm-warn-ink)}
 body.dark{--dn-mut-aa:#b9c9c0;--dn-gold-aa:#EBC66F;--dn-danger:#ff9a8f;--dn-up:#7fe0a8;--dn-down:#ff9a8f;--dn-tonal:rgba(143,221,191,.16);--dn-on-em:#06291F;
   --dn-m1:#EBC66F;--dn-m2:#d3dcd7;--dn-m3:#e8b184}
 

@@ -108,7 +108,7 @@ function hqCard(x,sel){
       <div class="ngm-sub2">${ic('SupervisorAccount',20)}<span>المشرفون: ${h(d.sNames||'غير معيّنين')}</span></div>
       <div class="ngm-sub2">${ic('Person',20)}<span>المحفّظون: ${h(d.tNames||teacherFallback)}</span></div>
       ${endNotice(x)}
-      <div class="ngm-stats ngm-stats-g"><div class="ngm-gs" style="--g1:#0B6E4F;--g2:#1FA37A"><b>${h(d.list.length)}</b><span>الطلاب</span></div><div class="ngm-gs" style="--g1:#9A6B00;--g2:#D9A94B"><b>${h(d.cats.length)}</b><span>الفئات</span></div><div class="ngm-gs" style="--g1:#1451A3;--g2:#3F8EE0"><b>${h(d.sIds.length)}</b><span>المشرفون</span></div></div>
+      <div class="ngm-stats ngm-stats-g"><div class="ngm-gs" style="--g1:#0F766E;--g2:#115E59"><b>${h(d.list.length)}</b><span>الطلاب</span></div><div class="ngm-gs" style="--g1:#B45309;--g2:#92400E"><b>${h(d.cats.length)}</b><span>الفئات</span></div><div class="ngm-gs" style="--g1:#0369A1;--g2:#075985"><b>${h(d.sIds.length)}</b><span>المشرفون</span></div></div>
       ${d.addIds.size?`<div class="ngm-lab ngm-pri">الانتساب: أساسي ${d.primary.length} · إضافي ${d.addIds.size}</div>`:''}
       <div class="ngm-lab">المسارات: حفظ عام ${d.general} · تثبيت ${d.tathbit}</div>
       ${(type!=='regular'||x.allow_secondary_members!==false)?NX.btn(type==='regular'?'الطلاب المنتسبون':'إدارة المشاركين في البرنامج',{kind:'tonal',full:true,icon:'GroupAdd',onclick:stop+`NGM.members('${x.id}')`}):''}

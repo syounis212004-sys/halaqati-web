@@ -244,7 +244,7 @@
   const effDark=()=>{const m=themeMode();return m==='system'?sysDark():m==='dark'};
   const homeStyle=()=>{try{return localStorage.getItem(HOME_KEY)||'modern'}catch(_e){return 'modern'}};
   window.NXHomeStyle=homeStyle;
-  const PRESETS=[['#0B5D4F','#1B7F6B','أخضر حلقاتي'],['#3B4929','#5B7A3A','زيتوني الشعار'],['#12345B','#2D6CDF','الأزرق'],['#5A3825','#AD744F','البني'],['#342B5F','#765BC4','البنفسجي']];
+  const PRESETS=[['#134E4A','#0F766E','هوية حلقاتي'],['#3B4929','#5B7A3A','زيتوني الشعار'],['#12345B','#2D6CDF','الأزرق'],['#5A3825','#AD744F','البني'],['#342B5F','#765BC4','البنفسجي']];
   if(typeof applySavedTheme==='function'){
     const baseTheme=applySavedTheme;
     applySavedTheme=function(){

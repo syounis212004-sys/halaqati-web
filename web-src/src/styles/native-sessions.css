@@ -26,9 +26,9 @@ html:not([data-view="desktop"]) .ns-top-t small{font-size:13px;line-height:20px}
 /* action row: Button(52dp, r16) + FilledTonalIconButton(52dp) */
 .ns-actions{display:flex;gap:8px;align-items:center}
 .ns-start{flex:1;min-height:52px;border-radius:16px;font-weight:700;gap:7px}
-.ns-tools-btn{position:relative;width:52px;height:52px;flex:none;border:0;border-radius:16px;display:grid;place-items:center;background:var(--nx-secondary-container);color:var(--on-primary-container,#0A4A3D);cursor:pointer}
+.ns-tools-btn{position:relative;width:52px;height:52px;flex:none;border:0;border-radius:16px;display:grid;place-items:center;background:var(--nx-secondary-container);color:var(--on-primary-container,var(--hm-primary-ink));cursor:pointer}
 .ns-tools-btn:hover{filter:brightness(.97)}
-.ns-tools-btn .nx-badge{top:-4px;inset-inline-start:-4px;background:var(--st-bad-fg,#B3261E)}
+.ns-tools-btn .nx-badge{top:-4px;inset-inline-start:-4px;background:var(--st-bad-fg,var(--hm-danger))}
 
 /* AssistChip */
 .ns-scopechip{justify-self:start;display:inline-flex;align-items:center;gap:8px;min-height:36px;max-width:100%;padding:0 6px 0 12px;border-radius:10px;border:1px solid var(--outline);background:transparent;color:var(--ink);font:500 14px Cairo,sans-serif;cursor:pointer}
@@ -74,13 +74,13 @@ html[dir=rtl] .ns-chev svg.mi[data-mirror]{transform:none} /* Icons.Default.Chev
 .ns-ov-head{display:flex;align-items:center;gap:8px}
 .ns-ov-head b{flex:1;min-width:0;font:700 16px/24px Cairo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ns-ov-pill{padding:4px 8px;border-radius:10px;background:var(--st-warn-bg);color:var(--st-warn-fg);font:500 12px/18px Cairo,sans-serif}
-.ns-ov-pill.on{background:var(--primary-container);color:var(--on-primary-container,#0A4A3D)}
+.ns-ov-pill.on{background:var(--primary-container);color:var(--on-primary-container,var(--hm-primary-ink))}
 .ns-ov-stats{display:flex;flex-wrap:wrap;gap:4px 16px;font:500 14px/20px Cairo,sans-serif}
 .ns-ov-stats .mut{color:var(--muted)}
 
 /* tools sheet */
 .ns-sheet{--x:0}
-.ns-scopebar{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--nx-touch);padding:8px 12px;border:0;border-radius:14px;background:var(--nx-secondary-container);color:var(--on-primary-container,#0A4A3D);cursor:pointer;font-family:Cairo,sans-serif;text-align:start}
+.ns-scopebar{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--nx-touch);padding:8px 12px;border:0;border-radius:14px;background:var(--nx-secondary-container);color:var(--on-primary-container,var(--hm-primary-ink));cursor:pointer;font-family:Cairo,sans-serif;text-align:start}
 .ns-scopebar small{font:500 12px/18px Cairo,sans-serif}
 .ns-scopebar b{flex:1;min-width:0;font:700 14px/20px Cairo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ns-scopebar em{font:500 12px Cairo,sans-serif;font-style:normal;color:var(--green)}
@@ -132,7 +132,7 @@ html[dir=rtl] .ns-chev svg.mi[data-mirror]{transform:none} /* Icons.Default.Chev
 .ns-qduty b{font:700 16px/24px Cairo,sans-serif;color:var(--ink)}
 .ns-qatt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .ns-qatt .nx-btn{min-height:48px;border-radius:999px}
-.ns-qatt .nx-btn.ns-err{background:var(--st-bad-fg,#B3261E);color:#fff}
+.ns-qatt .nx-btn.ns-err{background:var(--st-bad-fg,var(--hm-danger));color:#fff}
 .ns-qatt .nx-outlined.on{background:var(--nx-surface-var);border-color:var(--green)}
 .ns-qcounters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ns-counter{display:grid;justify-items:center;gap:6px;padding:10px;border-radius:16px;background:var(--card);border:1px solid var(--outline)}

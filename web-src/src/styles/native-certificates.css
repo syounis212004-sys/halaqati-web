@@ -3,7 +3,7 @@
 .ncc-head{display:flex;align-items:center;gap:10px;padding:0 4px}
 .nc-head-ic{width:38px;height:38px;border-radius:12px;background:var(--green);color:#fff;display:grid;place-items:center;flex:none}
 .ncc-head b{display:block;font:800 16px/24px Cairo,sans-serif}.ncc-head small{display:block;font:500 11px/16px Cairo,sans-serif;color:var(--muted)}
-.nc-ver{border-radius:999px;padding:4px 9px;background:var(--nx-secondary-container);color:var(--on-primary-container,#0A4A3D);font:700 11px/16px Cairo,sans-serif}
+.nc-ver{border-radius:999px;padding:4px 9px;background:var(--nx-secondary-container);color:var(--on-primary-container,var(--hm-primary-ink));font:700 11px/16px Cairo,sans-serif}
 .nc-grid{display:grid;gap:12px;min-width:0;grid-template-columns:minmax(0,1fr)}
 .nc-controls,.nc-preview,.ncc-aside{min-width:0}
 .ncc-aside{display:none}

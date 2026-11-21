@@ -1,5 +1,5 @@
 /* Halaqati web RC86 — staff home exactly as the app (TodayHeroCard, OrgSummaryCard, HomeShortcuts), «المتابعة والمقارنة», student card. */
-:root{--h86-deep:linear-gradient(135deg,#084F39,#0B6E4F);--h86-gold:linear-gradient(135deg,#9A6B00,#D9A94B);
+:root{--h86-deep:linear-gradient(135deg,var(--hm-ok-ink),var(--hm-ok-ink));--h86-gold:linear-gradient(135deg,var(--hm-accent-ink),#D9A94B);
   --h86-girih:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath d='M22 2l5.5 14.5L42 22l-14.5 5.5L22 42l-5.5-14.5L2 22l14.5-5.5z' fill='none' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E")}
 .h86 .nh-top{display:grid;gap:10px}
 /* TodayHeroCard */
@@ -22,10 +22,10 @@
 .h86-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .h86-nums span{display:flex;align-items:center;gap:8px;border-radius:16px;background:rgba(255,255,255,.16);padding:8px 14px;font:600 14px/20px Cairo,sans-serif}
 .h86-nums b{font:800 24px/32px Cairo,sans-serif;color:#fff}
-.h86-go{min-height:56px;border:0;border-radius:18px;background:#fff;color:#0B6E4F;font:800 16px/22px Cairo,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.h86-go{min-height:56px;border:0;border-radius:18px;background:#fff;color:var(--hm-ok-ink);font:800 16px/22px Cairo,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
 .h86-go svg{fill:currentColor}
-.h86-go:disabled{background:rgba(255,255,255,.92);color:#42564D;cursor:default}
-.h86-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid #42564D;border-top-color:transparent;animation:h86spin .8s linear infinite}
+.h86-go:disabled{background:rgba(255,255,255,.92);color:var(--hm-primary-ink);cursor:default}
+.h86-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--hm-primary-ink);border-top-color:transparent;animation:h86spin .8s linear infinite}
 @keyframes h86spin{to{transform:rotate(360deg)}}
 /* OrgSummaryCard */
 .h86-org{position:relative;overflow:hidden;width:100%;border:0;border-radius:24px;padding:16px;background:var(--h86-deep);color:#fff;display:flex;align-items:center;gap:12px;text-align:start;cursor:pointer}
@@ -68,7 +68,7 @@
 .fu86-h b{font:800 36px/44px Cairo,sans-serif;color:var(--a)}
 .fu86 strong{font:700 14px/20px Cairo,sans-serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fu86 small{font:500 12px/16px Cairo,sans-serif;color:var(--muted)}
-.fu86-ok{--a:var(--green)}.fu86-danger{--a:#C62828}.fu86-warning{--a:#B8861B}.fu86-info{--a:#2F6FB3}
+.fu86-ok{--a:var(--green)}.fu86-danger{--a:var(--hm-danger)}.fu86-warning{--a:var(--hm-accent)}.fu86-info{--a:var(--hm-info)}
 .fu86-stamp{font:500 11px/16px Cairo,sans-serif;color:var(--muted)}
 .fu86-sum{margin:0 0 8px;color:var(--muted)}
 .fu86-list{max-height:420px;overflow:auto;display:grid}
@@ -78,7 +78,7 @@
 .fu86-dlg .nx-full{margin-top:10px}
 /* student card (GoldenStudentCard) */
 .nst-card{border:1.5px solid color-mix(in srgb,var(--green) 45%,transparent);border-radius:16px;padding:6px 10px;gap:4px}
-.ns-info-dot{display:inline-grid;place-items:center;color:#B8861B;flex:none}.ns-info-dot svg{fill:currentColor}
+.ns-info-dot{display:inline-grid;place-items:center;color:var(--hm-accent);flex:none}.ns-info-dot svg{fill:currentColor}
 .nst-card .ns-idpill{margin:2px 0}
 @media (prefers-reduced-motion:reduce){.ins86-in{animation:none}.h86-spin{animation-duration:2s}}
 /* drawer (GoldenDrawerContent) */
@@ -92,7 +92,7 @@
 .d86-row .dtile{flex:1;min-width:0}
 .d86-fav{flex:none;width:40px!important;min-width:40px;max-width:40px;height:40px;padding:0!important;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;opacity:.35}
 .d86-fav svg{fill:var(--muted)}
-.d86-fav.on{opacity:1}.d86-fav.on svg{fill:var(--gold,#B8861B)}
+.d86-fav.on{opacity:1}.d86-fav.on svg{fill:var(--gold,var(--hm-accent))}
 .d86-row:hover .d86-fav{opacity:.8}.d86-fav.on{opacity:1}
 .d86-none{padding:16px;color:var(--muted)}
 .d86-av{flex:none;display:grid;place-items:center}
@@ -105,10 +105,10 @@
 .ngm-hqhead>*{position:relative}
 .ngm-logowrap{position:relative;flex:none;width:70px;height:70px}
 .ngm-logo{width:62px;height:62px;border-radius:20px;object-fit:cover;background:#fff;border:3px solid #fff;display:block}
-.ngm-logo-ph{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--g1,#0B6E4F),var(--g2,#1FA37A))}
+.ngm-logo-ph{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--g1,var(--hm-ok-ink)),var(--g2,var(--hm-primary)))}
 .ngm-logo-ph svg{fill:#fff}
 .ngm-hqhead .ngm-logo-ph{border-color:#fff}
-.ngm-cam{position:absolute;inset-inline-end:0;bottom:0;width:28px;height:28px;border-radius:50%;border:0;background:var(--gold,#B8861B);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.ngm-cam{position:absolute;inset-inline-end:0;bottom:0;width:28px;height:28px;border-radius:50%;border:0;background:var(--gold,var(--hm-accent));color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .ngm-cam svg{fill:#fff}
 .ngm-hn{font:800 16px/24px Cairo,sans-serif;color:#fff;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ngm-tp{display:inline-block;margin:3px 0;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.22);font:700 12px/18px Cairo,sans-serif;color:#fff}
@@ -154,7 +154,7 @@ html[data-view="desktop"] .ngm-hqcard.ngm-hq2 .ngm-brief{padding:8px 14px 12px}
 .nr-compare .nr-cmp em{font:700 12px/20px Cairo,sans-serif;white-space:nowrap;text-align:end}
 .nr-cmp-bars{grid-column:1/-1;display:grid;gap:3px;margin-top:2px}
 .nr-cmp-bars i{display:block;height:5px;border-radius:3px;background:var(--outline,#9bb0a6);min-width:3px}
-.nr-cmp-bars i.cur{background:var(--green)}.nr-cmp-bars i.cur.bad{background:var(--st-bad-fg,#c62828)}
+.nr-cmp-bars i.cur{background:var(--green)}.nr-cmp-bars i.cur.bad{background:var(--st-bad-fg,var(--hm-danger))}
 
 /* ======================= RC90 — the contract: one size for top-bar actions, one capsule bottom bar ======================= */
 :root{--c90-icon:44px;--c90-r:14px}
@@ -236,7 +236,7 @@ html body .nr-av{border-radius:50%;width:44px;height:44px;object-fit:cover}
 .k86-card>summary svg{fill:#fff;flex:none;transition:transform .2s}.k86-card[open]>summary>svg:last-child{transform:rotate(180deg)}
 .k86-av{flex:none}.k86-av .rc85-ph{box-shadow:0 0 0 2px #fff}
 .k86-t{flex:1;min-width:0;display:grid}.k86-t b{font:800 15px/22px Cairo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.k86-t small{font:500 12px/16px Cairo,sans-serif;color:rgba(255,255,255,.95);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.k86-warn{font-style:normal;font:800 11px/1 Cairo,sans-serif;background:#fff;color:#A81E1E;padding:5px 8px;border-radius:999px;flex:none}
+.k86-warn{font-style:normal;font:800 11px/1 Cairo,sans-serif;background:#fff;color:var(--hm-danger-ink);padding:5px 8px;border-radius:999px;flex:none}
 .k86-b{padding:12px;display:grid;gap:10px}
 .k86-chips{display:flex;flex-wrap:wrap;gap:6px}
 .k86-chip{border:0;border-radius:999px;padding:6px 12px;background:var(--nx-surface-var,var(--mint2));color:var(--green);font:700 13px Cairo,sans-serif;cursor:pointer}
