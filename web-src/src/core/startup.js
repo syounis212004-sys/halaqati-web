@@ -39,7 +39,15 @@ async function hfRestoreCachedShell(last,{refreshDelay=180}={}){
   setTimeout(async()=>{
     try{
       let session=await hfGetStartupSession(3500);
-      if(session?.user){state.user=session.user;saveOfflineAuth(session.user);state.authNeedsLogin=false}
+      if(session?.user){
+        const prev=state.user?.id;
+        if(prev&&prev!==session.user.id){/* security: the browser session is another account than the cached shell - re-prepare storage for it and reboot once, never reuse the cached owner's data under it */
+          try{await prepareOfflineStorageForUser(session.user.id)}catch(_e){}
+          saveOfflineAuth(session.user);
+          try{if(!sessionStorage.getItem('halaqati_owner_switch')){sessionStorage.setItem('halaqati_owner_switch','1');location.reload();return}}catch(_e){}
+        }
+        try{sessionStorage.removeItem('halaqati_owner_switch')}catch(_e){}
+        state.user=session.user;saveOfflineAuth(session.user);state.authNeedsLogin=false}
       if(typeof refreshFromServer==='function'&&autoRefreshDue())await refreshFromServer({renderAfter:true});
     }catch(_e){}
   },refreshDelay);
@@ -68,6 +76,8 @@ async function hfStartApplication(){
     // Normal local-first fallback. This is the same trusted offline identity snapshot used by
     // the app elsewhere, but now it is reached after a realistic session-read timeout/retry.
     if(last)await hfRestoreCachedShell(last,{refreshDelay:450});
+    /* an OAuth return that this browser did not start was discarded on purpose: say so instead of failing silently */
+    if(globalThis.__halaqatiOAuthRejected&&!state.user){globalThis.__halaqatiOAuthRejected=false;try{toast('لم يُقبل رابط تسجيل الدخول لأنه لم يبدأ من هذا المتصفح. اضغط «الدخول بحساب Google» من جديد.')}catch(_e){}}
   }finally{hfStartupRecoveryBusy=false}
 }
 

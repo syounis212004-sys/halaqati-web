@@ -223,6 +223,7 @@ async function loginWithGoogle(){
       ? (location.origin+location.pathname)
       : GOOGLE_REDIRECT_URL;
 
+    try{sessionStorage.setItem('halaqati_web_oauth_pending',String(Date.now()))}catch(_e){}
     const {error}=await db.auth.signInWithOAuth({
       provider:'google',
       options:{

@@ -17,13 +17,24 @@ def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
+def committed_meta():
+    """Baseline fallback: the version.json committed on the checked-out HEAD (the previous release), never the file the workflow just rewrote."""
+    import subprocess
+    try:
+        return json.loads(subprocess.run(["git", "show", "HEAD:version.json"], capture_output=True, text=True, check=True, timeout=20).stdout)
+    except Exception:
+        return None
+
+
 def live_meta():
     try:
         with urllib.request.urlopen(urllib.request.Request(LIVE, headers={"User-Agent": "release-gate"}), timeout=20) as r:
             return json.load(r)
     except Exception as e:
-        print("::warning::could not read the live version.json (%s); skipping the 'not lower than published' check" % e)
-        return None
+        print("::warning::could not read the live version.json (%s); falling back to the committed one" % e)
+        c = committed_meta()
+        # fail closed: with no baseline the downgrade/same-code check cannot run, so the release must not proceed silently
+        return c if c else {"__no_baseline__": True}
 
 
 def fail(msgs):
@@ -33,7 +44,9 @@ def fail(msgs):
 
 
 def not_lower(meta, live, problems):
-    if live:
+    if live and live.get("__no_baseline__"):
+        problems.append("cannot establish the published baseline (live version.json and the committed copy are both unreadable)")
+    elif live:
         if int(meta["versionCode"]) < int(live.get("versionCode", 0)):
             problems.append("versionCode %s is lower than the published %s" % (meta["versionCode"], live.get("versionCode")))
         elif int(meta["versionCode"]) == int(live.get("versionCode", 0)) and live.get("sha256") and meta["sha256"] != live["sha256"]:

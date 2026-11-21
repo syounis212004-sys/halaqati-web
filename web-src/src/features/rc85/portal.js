@@ -204,7 +204,7 @@
   K.ef=null;
   function entityDlg(){
     const f=K.ef,isC=f.kind==='center';
-    const logo=f.logo?`<img class="ngm-logo" src="${f.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${isC?'🏛':'🕌'}</span>`;
+    const logo=f.logo?`<img class="ngm-logo" src="${safeImgSrc(f.logo)}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${isC?'🏛':'🕌'}</span>`;
     R.sheet('rc85Ent',(f.id?'تعديل ':'إضافة ')+(isC?'مركز أو مسجد':'جمعية'),
       `<label class="dn-field"><span>الاسم</span><input id="rc85EName" class="dn-in" value="${e(f.name)}" oninput="RC50.k85.ef.name=this.value"></label>
        ${isC?`<label class="dn-field"><span>النوع</span><select class="dn-in" onchange="RC50.k85.ef.ckind=this.value"><option value="center" ${f.ckind==='center'?'selected':''}>مركز</option><option value="mosque" ${f.ckind==='mosque'?'selected':''}>مسجد</option></select></label>`:''}

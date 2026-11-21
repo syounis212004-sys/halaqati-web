@@ -262,8 +262,9 @@
     const plans=plansForScope();
     const tools=w?`<div class="nph-tools">${NX.btn('إدارة جماعية للحفظ والسرد',{kind:'tonal',icon:'Groups',onclick:'rc27BulkCycle()'})}${NX.btn('قوالب المراحل',{kind:'tonal',icon:'BookmarkAdd',onclick:'rc27PhaseTemplates()'})}${NX.btn('بدء دورة شهر جديد',{kind:'tonal',icon:'CalendarMonth',onclick:'rc27StartMonth()'})}${NX.btn('ضبط نطاق الخطط',{kind:'tonal',icon:'Tune',onclick:'rc27RebaseOpen()'})}</div>`:'';
     const queue=q?NX.notice(`<div class="nph-queue">${ic('CloudUpload',20)}<span>${q} عملية على المراحل بانتظار الرفع</span>${navigator.onLine?NX.btn('رفع الآن',{kind:'text',small:true,onclick:'RC27Phases.flush()'}):''}</div>`,'warning'):'';
+    const issues=typeof rc27PhaseIssuesHtml==='function'?rc27PhaseIssuesHtml():'';
     const adv=w?`${NX.btn(window.__nphAdv?'إخفاء الأدوات المتقدمة':'أدوات متقدمة: إنهاء جماعي، نقل الطلاب، القوالب',{kind:'text',full:true,onclick:'rc27ToggleAdv()'})}${window.__nphAdv?tools:''}`:'';
-    return `${NX.section('مراحل الخطط',NX.iconBtn('Refresh',{title:'تحديث',onclick:'rc27RefreshPhases()'}))}${queue}${adv}${plans.length?`<div class="nph-plans">${plans.map(planCard).join('')}</div>`:NX.empty('لا توجد خطط فعّالة لطلاب هذا النطاق.',{icon:'Timeline'})}`;
+    return `${NX.section('مراحل الخطط',NX.iconBtn('Refresh',{title:'تحديث',onclick:'rc27RefreshPhases()'}))}${queue}${issues}${adv}${plans.length?`<div class="nph-plans">${plans.map(planCard).join('')}</div>`:NX.empty('لا توجد خطط فعّالة لطلاب هذا النطاق.',{icon:'Timeline'})}`;
   }
   let ready=false;
   function paint(box){

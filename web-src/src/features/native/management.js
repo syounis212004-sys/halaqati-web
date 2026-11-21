@@ -24,7 +24,7 @@ async function chk(p){const r=await p;if(r&&r.error)throw r.error;return r}
 const stop='event.stopPropagation();';
 /* RC86: rows saved by an older version hold the literal text "null"; never show it. */
 const cs=v=>v==null||String(v).trim()==='null'?'':String(v).trim();
-const isLogo=v=>typeof v==='string'&&v.startsWith('data:image/');
+const isLogo=v=>!!safeImgSrc(v);
 /* RC86: a logo is compressed to a 384px JPEG under about 100 KB (same limit as the app). */
 function compressLogo(file){return window.RC86.photo(file,{size:384,square:false})}
 const hqPair=t=>t==='training'?['#1451A3','#3F8EE0']:t==='course'?['#B5471C','#E88A4B']:(t==='tajweed'||t==='tilawah')?['#0B6B7A','#2BB3C0']:t==='other'?['#5B3FA3','#8E6BE0']:['#084F39','#0B6E4F'];
@@ -92,7 +92,7 @@ function hqStatus(x){return isArch(x)?NX.pill('مؤرشفة','neutral'):x.active
 function hqHead(x,big){
   const type=x.halaqa_type||'regular',meta=hqMeta(x),g=hqPair(type),admin=isOwner();
   const place=[cs(x.location),cs(x.schedule_text)].filter(Boolean).join(' · ')||'المكان والبرنامج غير محددين';
-  const logo=isLogo(x.logo_path)?`<img class="ngm-logo" src="${x.logo_path}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`;
+  const logo=isLogo(x.logo_path)?`<img class="ngm-logo" src="${safeImgSrc(x.logo_path)}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`;
   const cam=admin?`<button type="button" class="ngm-cam" aria-label="إضافة أو تغيير شعار الحلقة" onclick="${stop}NGM.logo('${h(x.id)}')">${ic('AddPhotoAlternate',17)}</button>`:'';
   return `<div class="ngm-hqhead" style="--g1:${g[0]};--g2:${g[1]}"><i class="ngm-waves" aria-hidden="true"></i>
     <div class="ngm-logowrap">${logo}${cam}</div>
@@ -214,7 +214,7 @@ function hqDlg(){
     <label class="ngm-switch"><span><b>يؤثر على الخطة الأساسية</b><small>فعّله فقط إذا كان إنجاز هذا البرنامج يجب أن يدخل في تقدم خطة الطالب الأساسية.</small></span><input type="checkbox" class="nx-switch" ${F.affects?'checked':''} onchange="NGM.hqSet('affects',this.checked,1)"></label>
     <div class="ngm-two">${NX.field('بداية البرنامج',{type:'date',value:F.starts,onchange:"NGM.hqSet('starts',this.value)"})}${NX.field('نهاية البرنامج',{type:'date',value:F.ends,onchange:"NGM.hqSet('ends',this.value)"})}</div>`:'';
   const body=`<div class="ngm-form">
-    <div class="ngm-logorow">${F.logo?`<img class="ngm-logo" src="${F.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
+    <div class="ngm-logorow">${F.logo?`<img class="ngm-logo" src="${safeImgSrc(F.logo)}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
       <label class="nx-btn nx-outlined ngm-filebtn">${F.logo?'تغيير الشعار':'إضافة شعار'}<input type="file" accept="image/*" hidden onchange="NGM.hqLogo(this)"></label>${F.logo?NX.btn('إزالة',{kind:'text',onclick:"NGM.hqLogoClear()"}):''}</div>
     <small class="ngm-sub">يُضغط الشعار تلقائيًا إلى أقل من 100 كيلوبايت.</small>
     ${NX.field('اسم الحلقة',{value:F.name,oninput:"NGM.hqSet('name',this.value,1)"})}
@@ -244,7 +244,7 @@ G.logo=function(id){
   const x=hqFind(id);if(!x)return;LG={id,name:x.name||'الحلقة',logo:isLogo(x.logo_path)?x.logo_path:null,saving:false,error:''};logoDlg();
 };
 function logoDlg(){
-  const body=`<div class="ngm-form"><div class="ngm-logorow">${LG.logo?`<img class="ngm-logo" src="${LG.logo}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
+  const body=`<div class="ngm-form"><div class="ngm-logorow">${LG.logo?`<img class="ngm-logo" src="${safeImgSrc(LG.logo)}" alt="">`:`<span class="ngm-logo ngm-logo-ph">${ic('Groups',32)}</span>`}
     <label class="nx-btn nx-outlined ngm-filebtn">${LG.logo?'تغيير الشعار':'إضافة شعار'}<input type="file" accept="image/*" hidden onchange="NGM.lgPick(this)"></label>${LG.logo?NX.btn('إزالة',{kind:'text',onclick:"NGM.lgClear()"}):''}</div>
     <small class="ngm-sub">يُضغط الشعار تلقائيًا إلى أقل من 100 كيلوبايت.</small>${LG.error?`<div class="ngm-err">${h(LG.error)}</div>`:''}</div>`;
   NX.dialog('ngmLogo','شعار '+LG.name,body,{cls:'ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmLogo')"})}${NX.btn(LG.saving?'جاري الحفظ…':'حفظ',{disabled:LG.saving,onclick:'NGM.lgSave()'})}`});
@@ -620,7 +620,7 @@ G.uAct=function(k,id){
 };
 /* RC53: staff photo (small JPEG data URL in profiles.avatar_path, same idea as the student photo). */
 function uPhoto(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{const data=await window.RC86.photo(f,{size:384,square:true});uRun(id,()=>chk(db.from('profiles').update({avatar_path:data}).eq('id',id)),'تم تحديث الصورة')}catch(e){toast(err(e)||'تعذر قراءة الصورة')}};inp.click()}
-const uAv=u=>u.avatar_path&&String(u.avatar_path).startsWith('data:image/')?`<img class="s3-av" alt="" src="${u.avatar_path}">`:`<span class="ngm-uic ngm-uinit">${h((window.RC86&&RC86.initial)?RC86.initial(u.full_name):'؟')}</span>`;
+const uAv=u=>safeImgSrc(u.avatar_path)?`<img class="s3-av" alt="" src="${safeImgSrc(u.avatar_path)}">`:`<span class="ngm-uic ngm-uinit">${h((window.RC86&&RC86.initial)?RC86.initial(u.full_name):'؟')}</span>`;
 function uReject(u){
   NX.dialog('ngmRej','رفض حساب '+(u.full_name||''),NX.field('سبب الرفض (اختياري)',{html:'<textarea id="ngmRejReason" rows="3"></textarea>'}),{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRej')"})}${NX.btn('رفض الحساب',{kind:'danger',onclick:`NGM.uRejectGo('${u.id}')`})}`});
 }

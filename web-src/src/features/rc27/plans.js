@@ -100,7 +100,7 @@
     await window.RC27Phases.S.recs&&await loadRecsFor(plans.map(p=>p.student_id));
     if(!box.isConnected)return;
     const tools=canWrite()?`<div class="actions" style="margin-bottom:8px"><button class="btn btn-soft" onclick="rc27BulkCycle()">إدارة جماعية للحفظ والسرد</button><button class="btn btn-soft" onclick="rc27PhaseTemplates()">قوالب المراحل</button><button class="btn btn-soft" onclick="rc27StartMonth()">بدء دورة شهر جديد</button><button class="btn btn-soft" onclick="rc27RebaseOpen()">ضبط نطاق الخطط</button></div>`:'';
-    const q=typeof rc27PhaseQueueCount==='function'?rc27PhaseQueueCount():0;box.innerHTML=`<div class="section-head"><h3>مراحل الخطط</h3></div>${q?`<div class="notice">${q} عملية على المراحل بانتظار الرفع${navigator.onLine?' <button class="mini" onclick="RC27Phases.flush()">رفع الآن</button>':''}</div>`:''}${tools}${plans.map(planCard).join('')||'<div class="empty">لا توجد خطط فعّالة لطلاب هذا النطاق.</div>'}`;
+    const q=typeof rc27PhaseQueueCount==='function'?rc27PhaseQueueCount():0;box.innerHTML=`<div class="section-head"><h3>مراحل الخطط</h3></div>${q?`<div class="notice">${q} عملية على المراحل بانتظار الرفع${navigator.onLine?' <button class="mini" onclick="RC27Phases.flush()">رفع الآن</button>':''}</div>`:''}${typeof rc27PhaseIssuesHtml==='function'?rc27PhaseIssuesHtml():''}${tools}${plans.map(planCard).join('')||'<div class="empty">لا توجد خطط فعّالة لطلاب هذا النطاق.</div>'}`;
   }
   async function loadRecsFor(ids){try{await window.RC27Phases.loadRecs(ids)}catch(_e){}}
   window.rc27RefreshPhases=async function(){await P().load(true);if(typeof render==='function')render()};
