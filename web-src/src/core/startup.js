@@ -39,7 +39,15 @@ async function hfRestoreCachedShell(last,{refreshDelay=180}={}){
   setTimeout(async()=>{
     try{
       let session=await hfGetStartupSession(3500);
-      if(session?.user){state.user=session.user;saveOfflineAuth(session.user);state.authNeedsLogin=false}
+      if(session?.user){
+        const prev=state.user?.id;
+        if(prev&&prev!==session.user.id){/* security: the browser session is another account than the cached shell - re-prepare storage for it and reboot once, never reuse the cached owner's data under it */
+          try{await prepareOfflineStorageForUser(session.user.id)}catch(_e){}
+          saveOfflineAuth(session.user);
+          try{if(!sessionStorage.getItem('halaqati_owner_switch')){sessionStorage.setItem('halaqati_owner_switch','1');location.reload();return}}catch(_e){}
+        }
+        try{sessionStorage.removeItem('halaqati_owner_switch')}catch(_e){}
+        state.user=session.user;saveOfflineAuth(session.user);state.authNeedsLogin=false}
       if(typeof refreshFromServer==='function'&&autoRefreshDue())await refreshFromServer({renderAfter:true});
     }catch(_e){}
   },refreshDelay);

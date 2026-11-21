@@ -18,8 +18,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: halaqati-update-and-pages
-  cancel-in-progress: true
+  group: halaqati-publish-main
+  cancel-in-progress: false
 
 jobs:
   publish:

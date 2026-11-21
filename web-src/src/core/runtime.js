@@ -85,6 +85,9 @@ try{const a=halaqatiSwrIdb();if(a)HalaqatiSwr.persist(a)}catch(_e){}
 function autoRefreshDue(){let t=state.v230LastFullLoadAt||0;if(!t)try{t=Number(localStorage.getItem('halaqati_full_load_'+state.user?.id))||0}catch(_e){}return Date.now()-t>300000}
 /* a real answer from the server proves the connection: it clears a stale "offline" (cached answers do not count) */
 const halaqatiAnswered=r=>{try{if(r&&r.status<500)state.lastServerAnswerAt=Date.now();if(state.offline||!state.networkVerified){state.networkVerified=true;state.offline=false;updateSyncBadge()}}catch(_e){}return r};
+/* Security (audit fingerprint auth-web-oauth-implicit-no-state-login-fixation): the implicit OAuth return (#access_token without type=) is accepted only for a sign-in this tab started (flag set by signInWithOAuth, 15 min). Recovery/confirmation links carry type= and are untouched. */
+function halaqatiStripUnboundOAuthHash(){try{const h=location.hash||'';if(!/[#&]access_token=/.test(h)||/[#&]type=/.test(h))return false;const t=Number(sessionStorage.getItem('halaqati_web_oauth_pending')||0);sessionStorage.removeItem('halaqati_web_oauth_pending');if(t&&Date.now()-t<15*60*1000)return false;history.replaceState(null,'',location.pathname+location.search);return true}catch(_e){return false}}
+halaqatiStripUnboundOAuthHash();
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:(i,n)=>HalaqatiSwr.fetch(i,n,()=>halaqatiPagedFetch(i,n).then(halaqatiAnswered))}});
 const OFFICIAL_APP_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-reset/';
 const GOOGLE_REDIRECT_URL='https://xlxzwucqdtggkfwwqibk.supabase.co/functions/v1/halaqati-app/';
@@ -123,7 +126,9 @@ function stat(l,v){return `<div class="stat"><span>${l}</span><b>${v}</b></div>`
 function evalClass(e){return e==='excellent'?'blue':e==='very_good'?'good':e==='good'?'warn':'red'}
 function evalDot(e){return 'eval-'+(e||'repeat')}
 function visibleStudents(){return state.students}
-function avatarHtml(s,cls='avatar'){let u=state.photoUrls[s.id];return u?`<div class="${cls}"><img src="${u}" alt=""></div>`:`<div class="${cls}">${(s.full_name||'ط')[0]}</div>`}
+/* Security: an image src may only be a strict base64 data URL or an https URL with no markup characters (stored data:image/ values are user-writable). */
+function safeImgSrc(v){v=String(v==null?'':v);if(/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v))return v;return /^https:\/\/[^\s"'<>`\\]+$/.test(v)?v.replace(/&/g,'&amp;'):''}
+function avatarHtml(s,cls='avatar'){let u=safeImgSrc(state.photoUrls[s.id]);return u?`<div class="${cls}"><img src="${u}" alt=""></div>`:`<div class="${cls}">${esc((s.full_name||'ط')[0])}</div>`}
 
 /* Retention: staff snapshots are shown offline for at most 14 days, guardian/donor snapshots 7 (then a sync is required first). */
 function snapshotMaxAgeMs(role){return (['admin','supervisor','teacher'].includes(role)?14:7)*86400000}

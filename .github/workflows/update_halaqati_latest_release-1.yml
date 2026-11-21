@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: halaqati-web-latest-update
-  cancel-in-progress: true
+  group: halaqati-publish-main
+  cancel-in-progress: false
 
 jobs:
   update:

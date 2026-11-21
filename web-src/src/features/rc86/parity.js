@@ -75,8 +75,8 @@
     const w=t.find(x=>!skip.test(x))||t[0]||'';return (w.charAt(0)||'؟').toUpperCase();
   };
   R.avatar=(photo,name,size)=>{
-    const sz=size||44,img=typeof photo==='string'&&photo.startsWith('data:image/');
-    return img?`<img class="rc85-ph" src="${photo}" alt="" style="width:${sz}px;height:${sz}px">`
+    const sz=size||44,safe=safeImgSrc(photo),img=!!safe;
+    return img?`<img class="rc85-ph" src="${safe}" alt="" style="width:${sz}px;height:${sz}px">`
       :`<span class="rc85-ph rc85-ini" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz*.44)}px">${e(RC86.initial(name))}</span>`;
   };
 

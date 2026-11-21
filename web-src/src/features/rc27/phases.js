@@ -114,7 +114,16 @@
   const readQ=()=>{try{return JSON.parse(localStorage.getItem(QK)||'[]')}catch(_e){return []}};
   const writeQ=q=>{try{localStorage.setItem(QK,JSON.stringify(q))}catch(_e){}};
   const isOnline=()=>navigator.onLine&&state.networkVerified!==false&&!state.offline;
+  /* Security (audit fingerprint offline-outbox-not-bound-to-account-replays-under-next-login): ops are stamped with the creating account,
+     replayed only by that account, and may only touch the smart-plan tables/RPCs this module itself writes. */
+  const ALLOW_T=new Set(['smart_plans','smart_plan_phases','smart_plan_events','smart_plan_phase_states','smart_plan_phase_templates']);
+  const ALLOW_R=new Set(['rc112_transition_plan_students','rc112_update_plan_phase','rc113_bulk_configure_plan_cycles']);
+  const OPS_TTL=7*864e5;
+  const snapOwner=()=>{try{return (JSON.parse(localStorage.getItem(SK)||'null')||{}).u||null}catch(_e){return null}};
+  const ownedBy=(op,me)=>!!me&&(op.u?op.u===me:snapOwner()===me);
+  const stamp=op=>({...op,id:crypto.randomUUID(),at:Date.now(),u:state.user?.id||null});
   async function exec(op){
+    if(op.kind==='rpc'?!ALLOW_R.has(op.name):!ALLOW_T.has(op.table))throw new Error('phase op not allowed');
     let r;
     if(op.kind==='upsert')r=await db.from(op.table).upsert(op.obj,{onConflict:op.onConflict});
     else if(op.kind==='update')r=await db.from(op.table).update(op.obj).eq(op.key,op.val);
@@ -124,19 +133,21 @@
   }
   const isNetErr=e=>/Failed to fetch|NetworkError|network|timeout|load failed/i.test(String(e?.message||e));
   async function send(op){
-    if(!isOnline()){const q=readQ();q.push({...op,id:crypto.randomUUID(),at:Date.now()});writeQ(q);S.queued=q.length;toast('حُفظ على الجهاز وسيُرفع عند عودة الاتصال');return {queued:true}}
-    try{return {data:await exec(op)}}catch(e){if(isNetErr(e)){const q=readQ();q.push({...op,id:crypto.randomUUID(),at:Date.now()});writeQ(q);S.queued=q.length;toast('انقطع الاتصال؛ حُفظت العملية وستُرفع تلقائيًا');return {queued:true}}throw e}
+    if(!isOnline()){const q=readQ();q.push(stamp(op));writeQ(q);S.queued=q.length;toast('حُفظ على الجهاز وسيُرفع عند عودة الاتصال');return {queued:true}}
+    try{return {data:await exec(op)}}catch(e){if(isNetErr(e)){const q=readQ();q.push(stamp(op));writeQ(q);S.queued=q.length;toast('انقطع الاتصال؛ حُفظت العملية وستُرفع تلقائيًا');return {queued:true}}throw e}
   }
   let flushing=false;
   async function flush(){
     if(flushing||!isOnline())return;const q=readQ();if(!q.length)return;flushing=true;
     try{
       const left=[];let failed=false;
+      const me=state.user?.id||null;
       for(const op of q){
+        if(!ownedBy(op,me)){if(Date.now()-(op.at||0)<OPS_TTL)left.push(op);continue}/* another account op: left untouched for its owner, dropped after 7 days */
         if(failed){left.push(op);continue}
         try{await exec(op)}catch(e){if(isNetErr(e)){failed=true;left.push(op)}else{console.warn('phase op dropped',op.kind,op.name||op.table,e);op.error=String(e.message||e);op.dead=true;left.push(op)}}
       }
-      writeQ(left.filter(o=>!o.dead||true));S.queued=left.filter(o=>!o.dead).length;
+      writeQ(left.filter(o=>!o.dead||Date.now()-(o.at||0)<OPS_TTL));S.queued=left.filter(o=>!o.dead).length;
       if(left.length!==q.length){await load(true);if(typeof render==='function'&&state.page==='plans')render()}
     }finally{flushing=false}
   }
