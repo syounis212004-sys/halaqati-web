@@ -16,7 +16,7 @@ html[dir=rtl] svg.mi[data-mirror]{transform:scaleX(-1)}
 .nx-btn:disabled{opacity:.42;cursor:not-allowed}
 .nx-btn span{overflow:hidden;text-overflow:ellipsis}
 .nx-filled{background:var(--green);color:#fff}.nx-filled:hover:not(:disabled){filter:brightness(1.08)}
-.nx-tonal{background:var(--nx-secondary-container);color:var(--on-primary-container,#0A4A3D)}.nx-tonal:hover:not(:disabled){filter:brightness(.97)}
+.nx-tonal{background:var(--nx-secondary-container);color:var(--on-primary-container,var(--hm-primary-ink))}.nx-tonal:hover:not(:disabled){filter:brightness(.97)}
 .nx-outlined{background:transparent;color:var(--green);border-color:var(--outline)}.nx-outlined:hover:not(:disabled){background:var(--nx-surface-var)}
 .nx-text{background:transparent;color:var(--green);padding:0 12px}.nx-text:hover:not(:disabled){background:var(--nx-surface-var)}
 .nx-danger{background:var(--st-bad-bg);color:var(--st-bad-fg)}

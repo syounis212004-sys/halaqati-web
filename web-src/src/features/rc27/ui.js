@@ -14,8 +14,8 @@
       baseTheme.apply(this,arguments);
       const p=getThemePrefs(),g=state.settings||{},root=document.documentElement;
       const pr=(p.primary||g.primary_color||'').toLowerCase(),ac=(p.accent||g.accent_color||'').toLowerCase();
-      const oldPair=(pr===''||pr==='#0d3b2f'||pr==='#155643')&&(ac===''||ac==='#2f8b69');
-      if(oldPair){root.style.setProperty('--green','#0B5D4F');root.style.setProperty('--green3','#1B7F6B');document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#0B5D4F')}
+      const oldPair=(pr===''||pr==='#0d3b2f'||pr==='#155643'||pr==='#0b5d4f'||pr==='#0b6e4f')&&(ac===''||ac==='#2f8b69'||ac==='#1b7f6b'||ac==='#0b7a55');
+      if(oldPair){/* identity v3 (ui-ux-pro-max palette): default org theme = deep teal + teal; custom org colours are untouched */root.style.setProperty('--green','#134E4A');root.style.setProperty('--green3','#0F766E');document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#134E4A')}
     };
   }
 

@@ -1,6 +1,6 @@
 /* Supervisor workspace. All colors and geometry are scoped; other roles keep their shell. */
 .sv-dashboard {
-  --sv-brand: #0b6e4f;
+  --sv-brand: var(--hm-ok-ink);
   --sv-gold: #9a740d;
   --sv-line: var(--line, #dfe7e2);
   display: grid;
@@ -57,7 +57,7 @@
   object-fit: cover;
   opacity: 1;
   background: #e3f3e9;
-  color: #07553f;
+  color: var(--hm-ok-ink);
 }
 .sv-identity {
   display: grid;
@@ -281,7 +281,7 @@
   background: var(--mint2, #e0f0e8);
 }
 .sv-button-primary {
-  background: var(--sv-brand, #0b6e4f);
+  background: var(--sv-brand, var(--hm-ok-ink));
   color: #fff;
 }
 .sv-button-tonal {
@@ -384,11 +384,11 @@
 }
 .sv-status[data-state="none"] {
   background: #fff0ed;
-  color: #a7352b;
+  color: var(--hm-danger-ink);
 }
 .sv-status[data-state="open"] {
-  background: #fff4d7;
-  color: #795600;
+  background: var(--hm-warn-bg);
+  color: var(--hm-warn-ink);
 }
 .sv-progress {
   height: 6px;
@@ -475,7 +475,7 @@ body.dark .sv-status[data-state="open"] {
   color: #f1d887;
 }
 .sv-dashboard button:focus-visible {
-  outline: 3px solid var(--sv-accent, #0b6e4f);
+  outline: 3px solid var(--sv-accent, var(--hm-ok-ink));
   outline-offset: 2px;
 }
 @media (min-width: 700px) {
@@ -580,10 +580,10 @@ body.dark .sv-status[data-state="open"] {
   line-height: 1.6;
 }
 .sv-kpi[data-tone="ok"] strong {
-  color: var(--sv-accent, #0b6e4f);
+  color: var(--sv-accent, var(--hm-ok-ink));
 }
 .sv-kpi[data-tone="bad"] strong {
-  color: #b3261e;
+  color: var(--hm-danger);
 }
 body.dark .sv-kpi[data-tone="bad"] strong {
   color: #ffb4ab;
@@ -632,7 +632,7 @@ body.dark .sv-kpi[data-tone="bad"] strong {
   border-radius: 50%;
   object-fit: cover;
   background: var(--mint2, #e0f0e8);
-  color: var(--sv-accent, #0b6e4f);
+  color: var(--sv-accent, var(--hm-ok-ink));
   font: 800 18px Cairo, sans-serif;
 }
 .sv-person-id {
@@ -678,30 +678,30 @@ body.dark .sv-kpi[data-tone="bad"] strong {
 }
 .sv-pill[data-tone="ok"] {
   background: #dcf2e3;
-  color: #0e5a2c;
+  color: var(--hm-ok-ink);
 }
 .sv-pill[data-tone="warn"] {
-  background: #ffeebf;
-  color: #6a4600;
+  background: var(--hm-warn-bg);
+  color: var(--hm-warn-ink);
 }
 .sv-pill[data-tone="bad"] {
-  background: #fcdfdc;
-  color: #8a1912;
+  background: var(--hm-danger-bg);
+  color: var(--hm-danger-ink);
 }
 .sv-pill[data-today="none"] {
   background: transparent;
-  box-shadow: inset 0 0 0 1px #d9a49f;
-  color: #8a1912;
+  box-shadow: inset 0 0 0 1px var(--hm-danger-bg);
+  color: var(--hm-danger-ink);
 }
 .sv-pill[data-today="open"] {
   background: transparent;
   box-shadow: inset 0 0 0 1px #d8bd6a;
-  color: #6a4600;
+  color: var(--hm-warn-ink);
 }
 .sv-pill[data-today="closed"] {
   background: transparent;
-  box-shadow: inset 0 0 0 1px #9fd1b6;
-  color: #0e5a2c;
+  box-shadow: inset 0 0 0 1px var(--hm-ok-bg);
+  color: var(--hm-ok-ink);
 }
 body.dark .sv-pill[data-tone="ok"] {
   background: #17402a;
@@ -754,7 +754,7 @@ body.dark .sv-pill[data-today] {
   font: 800 16px/1.5 Cairo, sans-serif;
 }
 .sv-warn-text {
-  color: #b3261e !important;
+  color: var(--hm-danger) !important;
   font-weight: 700;
 }
 .sv-person-actions {
@@ -779,7 +779,7 @@ body.dark .sv-pill[data-today] {
   cursor: default;
 }
 .sv-program .sv-person-av {
-  color: var(--sv-accent, #0b6e4f);
+  color: var(--sv-accent, var(--hm-ok-ink));
 }
 
 /* Visits, daily sessions and comparison cards share the same calm card language as the new screens. */
@@ -790,13 +790,13 @@ body.dark .sv-pill[data-today] {
   gap: 8px;
 }
 .s3-card.ok {
-  border-color: color-mix(in srgb, #1f8a5f 45%, var(--sv-line, #dfe7e2));
+  border-color: color-mix(in srgb, var(--hm-ok) 45%, var(--sv-line, #dfe7e2));
 }
 .s3-card.warn {
-  border-color: color-mix(in srgb, #c8940f 55%, var(--sv-line, #dfe7e2));
+  border-color: color-mix(in srgb, var(--hm-accent) 55%, var(--sv-line, #dfe7e2));
 }
 .s3-card.bad {
-  border-color: color-mix(in srgb, #c4382d 50%, var(--sv-line, #dfe7e2));
+  border-color: color-mix(in srgb, var(--hm-danger) 50%, var(--sv-line, #dfe7e2));
 }
 .s3-card small {
   line-height: 1.8;
@@ -805,13 +805,13 @@ body.dark .sv-pill[data-today] {
 /* ===== Visual identity: emerald, gold and a geometric eight-point star ===== */
 .sv-dashboard {
   --sv-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64' fill='none' stroke='%23e3c56b' stroke-width='1.2'%3E%3Cpath d='M32 4l6.5 15.5L54 13l-6.5 15.5L63 32l-15.5 3.5L54 51l-15.5-6.5L32 60l-6.5-15.5L10 51l6.5-15.5L1 32l15.5-3.5L10 13l15.5 6.5z'/%3E%3Ccircle cx='32' cy='32' r='7'/%3E%3C/svg%3E");
-  --sv-emerald-deep: #07503b;
-  --sv-emerald: #0b6e4f;
+  --sv-emerald-deep: var(--hm-ok-ink);
+  --sv-emerald: var(--hm-ok-ink);
   --sv-gold-soft: #c9a227;
 }
 .sv-welcome.s3-welcome {
   background:
-    radial-gradient(120% 140% at 100% 0%, #13845f 0%, transparent 60%),
+    radial-gradient(120% 140% at 100% 0%, var(--hm-primary) 0%, transparent 60%),
     linear-gradient(160deg, var(--sv-emerald) 0%, var(--sv-emerald-deep) 100%);
   box-shadow: inset 0 -3px 0 var(--sv-gold-soft);
 }
@@ -889,10 +889,10 @@ body.dark .sv-stat-icon {
   opacity: 0.8;
 }
 .sv-kpi[data-tone="ok"]::after {
-  background: #1f8a5f;
+  background: var(--hm-ok);
 }
 .sv-kpi[data-tone="bad"]::after {
-  background: #c4382d;
+  background: var(--hm-danger);
 }
 
 /* ===== Visits, sessions, comparison ===== */
@@ -908,8 +908,8 @@ body.dark .sv-stat-icon {
 }
 .sv-button-danger {
   background: transparent;
-  color: #b3261e;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #b3261e 40%, transparent);
+  color: var(--hm-danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hm-danger) 40%, transparent);
 }
 body.dark .sv-button-danger {
   color: #ffb4ab;
@@ -964,8 +964,8 @@ body.dark .sv-button-danger {
   align-items: flex-start;
   padding: 10px 12px;
   border-radius: 12px;
-  background: #fff4d7;
-  color: #6a4600;
+  background: var(--hm-warn-bg);
+  color: var(--hm-warn-ink);
   font-size: 13px;
   line-height: 1.8;
 }
@@ -975,7 +975,7 @@ body.dark .sv-button-danger {
 }
 .sv-todo[data-done="1"] {
   background: #dcf2e3;
-  color: #0e5a2c;
+  color: var(--hm-ok-ink);
 }
 body.dark .sv-todo {
   background: #4a390c;
@@ -1011,16 +1011,16 @@ body.dark .sv-todo[data-done="1"] {
   font: 800 14px Cairo, sans-serif;
 }
 .sv-rank.gold .sv-rank-n {
-  background: #f6e3a1;
-  color: #6b4e00;
+  background: var(--hm-warn-bg);
+  color: var(--hm-warn-ink);
 }
 .sv-rank.silver .sv-rank-n {
   background: #e3e7ea;
-  color: #3e4a52;
+  color: var(--hm-primary-ink);
 }
 .sv-rank.bronze .sv-rank-n {
-  background: #ecd0ad;
-  color: #6a431a;
+  background: var(--hm-warn-bg);
+  color: var(--hm-warn-ink);
 }
 .sv-rank-body {
   display: grid;
@@ -1070,13 +1070,13 @@ body.dark .sv-todo[data-done="1"] {
   font-variant-numeric: tabular-nums;
 }
 .sv-pm[data-tone="ok"] i {
-  background: linear-gradient(90deg, #5fb88f, #0b6e4f);
+  background: linear-gradient(90deg, var(--hm-secondary), var(--hm-ok-ink));
 }
 .sv-pm[data-tone="warn"] i {
-  background: linear-gradient(90deg, #e3c56b, #c8940f);
+  background: linear-gradient(90deg, #e3c56b, var(--hm-accent));
 }
 .sv-pm[data-tone="bad"] i {
-  background: linear-gradient(90deg, #e58f86, #c4382d);
+  background: linear-gradient(90deg, #e58f86, var(--hm-danger));
 }
 .sv-pm[data-tone="idle"] {
   opacity: 0.55;

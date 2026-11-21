@@ -4,7 +4,7 @@
    2) 44px touch targets and no sub‑12px text on phones
    3) one raised ("3D") filled button + calmer outlined/tonal buttons, like NourButton in the app */
 body.dark{--ad-link:#8FDDBF;--ad-on-fill:#06291F}
-:root{--ad-link:var(--dn-em,#0B5D4F);--ad-on-fill:#fff}
+:root{--ad-link:var(--dn-em,var(--hm-primary-ink));--ad-on-fill:#fff}
 
 /* ---------- 1. dark legibility ---------- */
 body.dark .nx-outlined,body.dark .nx-text,body.dark .nx-chip.on,body.dark .nx-metric-ic,body.dark .nx-empty-ic,
@@ -24,7 +24,7 @@ body.dark .nt-settings .nt-shero small,body.dark .nt-settings .nt-shero .nx-mute
 body.dark .nh-banner-n,body.dark .ns-group,body.dark .c90-tab.on,body.dark .c90-tab.on span,body.dark .nc-slider-h b,body.dark .nc-pct,body.dark .nx-grow>span.nx-muted{color:var(--ad-link)}
 body.dark .nx-danger-solid,body.dark .nx-danger-solid span{color:#2b0503}
 body.dark .nx-s-success{background:#0f6b41;color:#fff}
-.s3-danger,.dn-btn.s3-danger{color:var(--dn-danger,#a32619)!important}
+.s3-danger,.dn-btn.s3-danger{color:var(--dn-danger,var(--hm-danger-ink))!important}
 body.dark .nh-scope-c{color:#b6f0d8}
 
 /* ---------- 2. touch + type floor ---------- */
@@ -69,7 +69,7 @@ body.dark .nx-card,body.dark .nx-metric{box-shadow:none}
 .nt-quick .nt-q-shape>small{flex:none;font:600 13px/18px Cairo,sans-serif;color:var(--dn-mut-aa,var(--muted))}
 .nt-quick .dn-seg{flex:1;min-width:210px;margin:0}
 .nt-quick .nt-q-sw{justify-content:space-between;cursor:pointer;min-height:44px}
-.nt-quick .nt-q-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--dn-tonal,rgba(11,93,79,.12));color:var(--dn-em,#0B5D4F)}
+.nt-quick .nt-q-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--dn-tonal,rgba(11,93,79,.12));color:var(--dn-em,var(--hm-primary-ink))}
 .nt-quick .nt-q-copy{display:flex;align-items:center;gap:10px;background:var(--dn-soft,rgba(11,93,79,.08));border-radius:14px;padding:8px 12px}
 .nt-quick .nt-q-copy .nt-q-t b{font:800 17px/24px Cairo,sans-serif;letter-spacing:.3px;font-variant-numeric:tabular-nums;text-align:end}
 .nt-quick details{border-top:1px solid var(--dn-line,var(--line));padding-top:8px}.nt-quick summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 14px Cairo,sans-serif;color:var(--dn-em,var(--green))}
