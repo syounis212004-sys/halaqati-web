@@ -112,15 +112,18 @@
   // ================= durable outbox (writes made offline replay in order when the connection returns) =================
   const QK='halaqati_phase_outbox_v1',SK='halaqati_phase_snapshot_v1';
   const readQ=()=>{try{return JSON.parse(localStorage.getItem(QK)||'[]')}catch(_e){return []}};
-  const writeQ=q=>{try{localStorage.setItem(QK,JSON.stringify(q))}catch(_e){}};
+  const writeQ=q=>{try{localStorage.setItem(QK,JSON.stringify(q));return true}catch(_e){return false}};
   const isOnline=()=>navigator.onLine&&state.networkVerified!==false&&!state.offline;
   /* Security (audit fingerprint offline-outbox-not-bound-to-account-replays-under-next-login): ops are stamped with the creating account,
      replayed only by that account, and may only touch the smart-plan tables/RPCs this module itself writes. */
   const ALLOW_T=new Set(['smart_plans','smart_plan_phases','smart_plan_events','smart_plan_phase_states','smart_plan_phase_templates']);
   const ALLOW_R=new Set(['rc112_transition_plan_students','rc112_update_plan_phase','rc113_bulk_configure_plan_cycles']);
-  const OPS_TTL=7*864e5;
-  const snapOwner=()=>{try{return (JSON.parse(localStorage.getItem(SK)||'null')||{}).u||null}catch(_e){return null}};
-  const ownedBy=(op,me)=>!!me&&(op.u?op.u===me:snapOwner()===me);
+  /* An op is replayed ONLY by the account that created it (op.u). Ops without u (written before this fix) are "orphans": never sent
+     automatically under any account, kept until the user explicitly adopts them or discards them. Nothing here is ever deleted by age. */
+  const ownedBy=(op,me)=>!!me&&!!op.u&&op.u===me;
+  const RETRY_MS=10*60*1000;
+  const meId=()=>state.user?.id||null;
+  const mineAll=()=>readQ().filter(o=>ownedBy(o,meId()));
   const stamp=op=>({...op,id:crypto.randomUUID(),at:Date.now(),u:state.user?.id||null});
   async function exec(op){
     if(op.kind==='rpc'?!ALLOW_R.has(op.name):!ALLOW_T.has(op.table))throw new Error('phase op not allowed');
@@ -132,22 +135,26 @@
     return r&&r.data;
   }
   const isNetErr=e=>/Failed to fetch|NetworkError|network|timeout|load failed/i.test(String(e?.message||e));
+  function queue(op){const q=readQ();q.push(stamp(op));if(!writeQ(q))throw new Error('تعذر حفظ العملية على الجهاز (مساحة التخزين ممتلئة)؛ لم تُحفظ');S.queued=mineAll().filter(o=>!o.dead).length}
   async function send(op){
-    if(!isOnline()){const q=readQ();q.push(stamp(op));writeQ(q);S.queued=q.length;toast('حُفظ على الجهاز وسيُرفع عند عودة الاتصال');return {queued:true}}
-    try{return {data:await exec(op)}}catch(e){if(isNetErr(e)){const q=readQ();q.push(stamp(op));writeQ(q);S.queued=q.length;toast('انقطع الاتصال؛ حُفظت العملية وستُرفع تلقائيًا');return {queued:true}}throw e}
+    if(!isOnline()){queue(op);toast('حُفظ على الجهاز وسيُرفع عند عودة الاتصال');return {queued:true}}
+    try{return {data:await exec(op)}}catch(e){if(isNetErr(e)){queue(op);toast('انقطع الاتصال؛ حُفظت العملية وستُرفع تلقائيًا');return {queued:true}}throw e}
   }
   let flushing=false;
   async function flush(){
     if(flushing||!isOnline())return;const q=readQ();if(!q.length)return;flushing=true;
     try{
-      const left=[];let failed=false;
+      const left=[],before=new Set(q.map(o=>JSON.stringify(o)));let failed=false;
       const me=state.user?.id||null;
       for(const op of q){
-        if(!ownedBy(op,me)){if(Date.now()-(op.at||0)<OPS_TTL)left.push(op);continue}/* another account op: left untouched for its owner, dropped after 7 days */
-        if(failed){left.push(op);continue}
-        try{await exec(op)}catch(e){if(isNetErr(e)){failed=true;left.push(op)}else{console.warn('phase op dropped',op.kind,op.name||op.table,e);op.error=String(e.message||e);op.dead=true;left.push(op)}}
+        if(!ownedBy(op,me)){left.push(op);continue}/* another account's op / orphan: kept untouched, never sent here, never deleted by age */
+        if(failed||(op.dead&&Date.now()-(op.tried||0)<RETRY_MS)){left.push(op);continue}/* a failed op is retried at most every 10 minutes (a transient 5xx or an expired token recovers by itself) */
+        try{await exec(op)}catch(e){if(isNetErr(e)){failed=true;left.push(op)}else{console.warn('phase op failed (kept)',op.kind,op.name||op.table,e);op.error=String(e.message||e);op.dead=true;op.tried=Date.now();left.push(op)}}
       }
-      writeQ(left.filter(o=>!o.dead||Date.now()-(o.at||0)<OPS_TTL));S.queued=left.filter(o=>!o.dead).length;
+      const added=readQ().filter(o=>!before.has(JSON.stringify(o)));left.push(...added);/* ops queued while this flush was awaiting the network must not be overwritten */
+      if(!writeQ(left))console.warn('phase outbox could not be saved; ops stay in the previous stored copy');
+      S.queued=left.filter(o=>ownedBy(o,me)&&!o.dead).length;
+      if(left.some(o=>o.dead&&ownedBy(o,me))&&typeof toast==='function')toast('تعذّر رفع بعض عمليات المراحل؛ راجعها من قسم مراحل الخطط');
       if(left.length!==q.length){await load(true);if(typeof render==='function'&&state.page==='plans')render()}
     }finally{flushing=false}
   }
@@ -155,7 +162,20 @@
   function saveSnap(){try{localStorage.setItem(SK,JSON.stringify({u:state.user?.id,plans:S.plans,phases:S.phases,states:S.states,templates:S.templates}))}catch(_e){}}
   function loadSnap(){try{const j=JSON.parse(localStorage.getItem(SK)||'null');if(j&&state.user?.id&&j.u===state.user.id){S.plans=j.plans||[];S.phases=j.phases||[];S.states=j.states||[];S.templates=j.templates||[]}}catch(_e){}}
   loadSnap();
-  window.rc27PhaseQueueCount=()=>readQ().filter(o=>!o.dead).length;
+  window.rc27PhaseQueueCount=()=>mineAll().filter(o=>!o.dead).length;
+  /* explicit, user-confirmed actions on the non-replayable ops of this device */
+  const cnt=()=>{const me=meId(),q=readQ();return {failed:q.filter(o=>o.dead&&ownedBy(o,me)).length,orphan:q.filter(o=>!o.u).length,other:q.filter(o=>o.u&&o.u!==me).length}};
+  window.rc27PhaseIssues=cnt;
+  window.rc27PhaseIssuesHtml=()=>{const c=cnt(),b=[];
+    if(c.failed)b.push(`${c.failed} عملية على المراحل فشل رفعها <button class="mini" onclick="rc27PhaseRetryFailed()">إعادة المحاولة</button> <button class="mini" onclick="rc27PhaseDismissFailed()">تجاهل</button>`);
+    if(c.orphan)b.push(`${c.orphan} عملية قديمة غير مرتبطة بحساب لن تُرفع تلقائيًا <button class="mini" onclick="rc27PhaseAdoptOrphans()">أنا صاحبها، ارفعها</button> <button class="mini" onclick="rc27PhaseDiscardOrphans()">حذف</button>`);
+    if(c.other)b.push(`${c.other} عملية محفوظة لحساب آخر على هذا الجهاز؛ تُرفع عند دخول صاحبها`);
+    return b.length?`<div class="notice">${b.join('<br>')}</div>`:''};
+  const mutate=fn=>{const me=meId();if(!me)return;const q=readQ();if(!writeQ(fn(q,me)))toast('تعذر حفظ التغيير على الجهاز');S.queued=mineAll().filter(o=>!o.dead).length;if(typeof render==='function')render();setTimeout(flush,200)};
+  window.rc27PhaseRetryFailed=()=>mutate((q,me)=>q.map(o=>o.dead&&ownedBy(o,me)?{...o,dead:false,error:undefined}:o));
+  window.rc27PhaseDismissFailed=()=>{if(confirm('ستُحذف العمليات الفاشلة نهائيًا ولن تُرفع. متابعة؟'))mutate((q,me)=>q.filter(o=>!(o.dead&&ownedBy(o,me))))};
+  window.rc27PhaseAdoptOrphans=()=>{if(confirm('هل هذه العمليات القديمة من عملك أنت على هذا الجهاز؟ ستُرفع باسم حسابك الحالي.'))mutate((q,me)=>q.map(o=>o.u?o:{...o,u:me}))};
+  window.rc27PhaseDiscardOrphans=()=>{if(confirm('ستُحذف العمليات القديمة غير المرتبطة بحساب نهائيًا. متابعة؟'))mutate(q=>q.filter(o=>!!o.u))};
 
   // ================= native parity: phase-aware plan + engine progress (HalaqatiRepository.phaseAwarePlan) =================
   const eng=()=>window.HalaqatiSmartPlansEngine;

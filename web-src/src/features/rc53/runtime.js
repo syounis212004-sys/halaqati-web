@@ -42,25 +42,37 @@
   async function vqFlush(){
     if(!navigator.onLine||typeof db==='undefined')return;
     const q=vqGet();if(!q.length)return;
-    const rest=[];let blocked=false;
+    const rest=[],before=new Set(q.map(o=>JSON.stringify(o)));let blocked=false;
     for(const op of q){
-      if(op.u&&op.u!==state.user?.id){rest.push(op);continue}/* queued by another account: keep for its owner, never replay under this session */
-      if(blocked){rest.push(op);continue}
+      if(!op.u||op.u!==state.user?.id){rest.push(op);continue}/* another account's op or an old op with no owner: kept untouched, never replayed here, never deleted by age */
+      if(blocked||(op.dead&&Date.now()-(op.tried||0)<600000)){rest.push(op);continue}/* a failed op is retried at most every 10 minutes */
       try{
         let r;
         if(op.t==='ins')r=await db.from('supervisor_visits').upsert(op.row,{onConflict:'id'});
         else if(op.t==='upd')r=await db.from('supervisor_visits').update(op.row).eq('id',op.id);
         else r=await db.from('supervisor_visits').delete().eq('id',op.id);
         if(r.error)throw r.error;
-      }catch(err){if(isNet(err)){blocked=true;rest.push(op)}/* a permanent error drops the operation */}
+      }catch(err){if(isNet(err)){blocked=true;rest.push(op)}else{op.dead=true;op.tried=Date.now();op.error=String((err&&err.message)||err);rest.push(op)}/* a permanent server error keeps the op marked as failed for the user to retry or dismiss */}
     }
+    rest.push(...vqGet().filter(o=>!before.has(JSON.stringify(o))));/* visits queued while this flush was awaiting the network */
     vqSet(rest);if(rest.length!==q.length){B.at=0;try{if(['visits','supervision','home'].includes(state.page))render()}catch(_e){}}
   }
   window.addEventListener('online',()=>setTimeout(vqFlush,800));
   setInterval(()=>{if(['admin','supervisor'].includes(role()))vqFlush()},30000);
+  const vqCnt=()=>{const me=state.user?.id,q=vqGet();return {failed:q.filter(o=>o.dead&&o.u===me).length,orphan:q.filter(o=>!o.u).length,other:q.filter(o=>o.u&&o.u!==me).length}};
+  const vqMut=fn=>{const me=state.user?.id;if(!me)return;vqSet(fn(vqGet(),me));B.at=0;try{if(typeof render==='function')render()}catch(_e){}setTimeout(vqFlush,200)};
+  window.rc53VisitRetry=()=>vqMut((q,me)=>q.map(o=>o.dead&&o.u===me?{...o,dead:false,error:undefined}:o));
+  window.rc53VisitDismiss=()=>{if(confirm('ستُحذف زيارات فشل رفعها نهائيًا. متابعة؟'))vqMut((q,me)=>q.filter(o=>!(o.dead&&o.u===me)))};
+  window.rc53VisitAdopt=()=>{if(confirm('هل هذه الزيارات القديمة من عملك على هذا الجهاز؟ ستُرفع باسم حسابك.'))vqMut((q,me)=>q.map(o=>o.u?o:{...o,u:me}))};
+  window.rc53VisitDiscard=()=>{if(confirm('ستُحذف الزيارات القديمة غير المرتبطة بحساب نهائيًا. متابعة؟'))vqMut(q=>q.filter(o=>!!o.u))};
+  window.rc53VisitIssuesHtml=()=>{const c=vqCnt(),b=[];
+    if(c.failed)b.push(`${c.failed} زيارة فشل رفعها <button class="mini" onclick="rc53VisitRetry()">إعادة المحاولة</button> <button class="mini" onclick="rc53VisitDismiss()">تجاهل</button>`);
+    if(c.orphan)b.push(`${c.orphan} زيارة قديمة غير مرتبطة بحساب لن تُرفع تلقائيًا <button class="mini" onclick="rc53VisitAdopt()">أنا صاحبها، ارفعها</button> <button class="mini" onclick="rc53VisitDiscard()">حذف</button>`);
+    return b.length?`<div class="notice">${b.join('<br>')}</div>`:''};
   function applyQ(list){
     const rows=new Map(list.map(v=>[v.id,{...v}])),pend=new Set();
     vqGet().forEach(op=>{
+      if(op.u!==state.user?.id||op.dead)return;/* the view only merges this account's live pending visits */
       if(op.t==='ins'){rows.set(op.row.id,{...(rows.get(op.row.id)||{}),...op.row});pend.add(op.row.id)}
       else if(op.t==='upd'&&rows.has(op.id)){Object.assign(rows.get(op.id),op.row);pend.add(op.id)}
       else if(op.t==='del'){rows.delete(op.id);pend.delete(op.id)}
@@ -248,7 +260,7 @@
   const sc=(v,k)=>v[k]==null?'—':`${v[k]}/5`;
   R.page('visits',{title:'زيارات المشرف',roles:['admin','supervisor'],render:async()=>{
     const d=await load(true),hq=Object.fromEntries(d.all.map(h=>[h.id,h])),U=window.SupervisorUI;
-    return U.visitsPage(d.visits.map(v=>U.visitCard(v,{e,halaqa:hq[v.halaqa_id]?.name||'حلقة',logo:hq[v.halaqa_id]?.logo,text:val})).join(''),"RC50.s3.visitNew('')",'لا توجد زيارات مسجلة بعد. سجّل أول زيارة من الزر أعلاه.');
+    return window.rc53VisitIssuesHtml()+U.visitsPage(d.visits.map(v=>U.visitCard(v,{e,halaqa:hq[v.halaqa_id]?.name||'حلقة',logo:hq[v.halaqa_id]?.logo,text:val})).join(''),"RC50.s3.visitNew('')",'لا توجد زيارات مسجلة بعد. سجّل أول زيارة من الزر أعلاه.');
   }});
 
   // month attendance + recitation coverage per halaqa, used for the teacher evaluation

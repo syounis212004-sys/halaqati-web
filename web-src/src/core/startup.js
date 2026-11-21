@@ -76,6 +76,8 @@ async function hfStartApplication(){
     // Normal local-first fallback. This is the same trusted offline identity snapshot used by
     // the app elsewhere, but now it is reached after a realistic session-read timeout/retry.
     if(last)await hfRestoreCachedShell(last,{refreshDelay:450});
+    /* an OAuth return that this browser did not start was discarded on purpose: say so instead of failing silently */
+    if(globalThis.__halaqatiOAuthRejected&&!state.user){globalThis.__halaqatiOAuthRejected=false;try{toast('لم يُقبل رابط تسجيل الدخول لأنه لم يبدأ من هذا المتصفح. اضغط «الدخول بحساب Google» من جديد.')}catch(_e){}}
   }finally{hfStartupRecoveryBusy=false}
 }
 

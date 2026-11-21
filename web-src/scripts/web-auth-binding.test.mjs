@@ -10,3 +10,7 @@ test('recovery and confirmation links (type=) and plain hashes are untouched',()
 test('the strip runs before createClient, the flag is set before signInWithOAuth, and startup re-prepares storage on an owner switch',()=>{const c=r('core/runtime.js');assert.ok(c.indexOf('halaqatiStripUnboundOAuthHash();')<c.indexOf('window.supabase.createClient('));
  {const a=r('features/auth/runtime.js'),w=a.indexOf("setItem('halaqati_web_oauth_pending'");assert.ok(w>0&&w<a.lastIndexOf('db.auth.signInWithOAuth'),'web flag is set right before the web signInWithOAuth call')};
  const s=r('core/startup.js');assert.match(s,/prev&&prev!==session\.user\.id/);assert.match(s,/prepareOfflineStorageForUser\(session\.user\.id\)/)});
+test('a discarded OAuth return is announced to the user (not a silent failed login) and nothing else sets the notice',()=>{
+ const run2=(hash,pendingAt)=>{const ss={halaqati_web_oauth_pending:pendingAt==null?null:String(pendingAt)};const ctx={location:{hash,pathname:'/',search:''},history:{replaceState(){}},sessionStorage:{getItem:k=>ss[k]??null,removeItem(){}},Date,Number};vm.createContext(ctx);vm.runInContext(fn+';halaqatiStripUnboundOAuthHash()',ctx);return ctx.__halaqatiOAuthRejected===true};
+ assert.equal(run2('#access_token=A',null),true);assert.equal(run2('#access_token=A',Date.now()),false);assert.equal(run2('#access_token=A&type=recovery',null),false);
+ assert.match(r('core/startup.js'),/__halaqatiOAuthRejected&&!state\.user/)});

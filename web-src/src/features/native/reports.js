@@ -457,7 +457,7 @@
     if(!items.length)return NX.empty(emptyText,{icon:'EmojiEvents'});
     const medal=['gold','silver','bronze'];
     const photoOf=(id,name)=>{const c=id&&state.photoUrls&&state.photoUrls[id];if(c)return c;if(!id&&!name)return '';const st=[...((window.RC27&&RC27.master&&RC27.master.students)||[]),...(state.students||[])].find(x=>id?String(x.id)===String(id):x.full_name===name);const p=st&&st.photo_path;return typeof p==='string'&&p.startsWith('data:image/')?p:''};
-    const ph=x=>{const u=photoOf(x.id,x.name);return u?`<img src="${u}" alt="" class="rc85-ph" style="width:44px;height:44px">`:`<span class="rc85-ph" aria-hidden="true" style="width:44px;height:44px">${h((x.name||'ط').trim()[0]||'ط')}</span>`};
+    const ph=x=>{const u=safeImgSrc(photoOf(x.id,x.name));return u?`<img src="${u}" alt="" class="rc85-ph" style="width:44px;height:44px">`:`<span class="rc85-ph" aria-hidden="true" style="width:44px;height:44px">${h((x.name||'ط').trim()[0]||'ط')}</span>`};
     const av=(x,size)=>{const u=safeImgSrc(photoOf(x.id,x.name));return u?`<img src="${u}" alt="" class="rc85-ph" style="width:${size}px;height:${size}px">`:NX.avatar(x.name,{size})};
     const phone=items.map((x,i)=>`<div class="nx-card nx-emph nr-rk-row"><span class="nr-rk-n">${i+1}</span>${ph(x)}<div class="nx-grow"><b class="nx-ellipsis nx-t-title-m">${h(x.name)}</b><small class="nx-muted nx-t-body-s">${h(x.sub)}</small></div><div class="nr-rk-v"><b>${h(x.value)}</b>${x.valueLabel?`<small>${h(x.valueLabel)}</small>`:''}</div></div>`).join('');
     const top=items.slice(0,3);

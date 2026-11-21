@@ -25,3 +25,37 @@ select 'H4 frozen events=' || coalesce((public.rc_changes_since(0, array['studen
 set app.uid='99999999-0000-0000-0000-000000000009'; set app.role='admin';
 select 'H5 admin deletes count=' || jsonb_array_length(public.rc_changes_since(0, array['student_guardians'])->'deletes'->'student_guardians') || ' (expect 2)';
 reset role;
+
+-- ---- blocked callers must be told to resync, never "up to date"; reactivation must not lose changes ----
+insert into profiles values ('ffffffff-0000-0000-0000-00000000000f','admin',true,'approved',true),   -- frozen ADMIN: the web client lets admins through
+  ('eeeeeeee-0000-0000-0000-00000000000e','teacher',true,'approved',false),('11111111-0000-0000-0000-000000000011','teacher',false,'approved',false);
+set role authenticated; set app.role='guardian';
+set app.uid='cccccccc-0000-0000-0000-00000000000c';
+select 'H6 pending => ' || (public.rc_changes_since(0, array['student_guardians']))::text || ' (expect full_resync true, blocked true, cursor -1)';
+select 'H7a pending head=' || public.rc_change_head() || ' (expect -1)';
+set app.uid='aaaaaaaa-0000-0000-0000-00000000000a';
+select 'H7b approved head>0=' || (public.rc_change_head() > 0) || ' (expect true)';
+set app.uid='11111111-0000-0000-0000-000000000011';
+select 'H8 inactive => ' || (public.rc_changes_since(0, array['halaqas'])->>'blocked') || ' (expect true)';
+set app.uid='ffffffff-0000-0000-0000-00000000000f'; set app.role='admin';
+select 'H9 frozen admin delivered: blocked=' || coalesce(public.rc_changes_since(0, array['student_guardians'])->>'blocked','absent') || ' deletes=' || jsonb_array_length(public.rc_changes_since(0, array['student_guardians'])->'deletes'->'student_guardians') || ' (expect absent, 2)';
+reset role;
+-- H10: a teacher is frozen while changes happen, then reactivated
+insert into halaqas(id, name) values ('a0000000-0000-0000-0000-0000000000a1', 'before');
+update rc_internal.change_log set at = at - interval '10 seconds';
+set role authenticated; set app.role='teacher'; set app.uid='eeeeeeee-0000-0000-0000-00000000000e';
+select public.rc_change_head() as n \gset
+reset role;
+update profiles set frozen = true where id = 'eeeeeeee-0000-0000-0000-00000000000e';
+insert into halaqas(id, name) values ('a0000000-0000-0000-0000-0000000000a2', 'while frozen');
+update rc_internal.change_log set at = at - interval '10 seconds';
+set role authenticated; set app.role='teacher'; set app.uid='eeeeeeee-0000-0000-0000-00000000000e';
+select 'H10a frozen => ' || (public.rc_changes_since(:n, array['halaqas']))::text || ' (expect full_resync true, blocked true)';
+select 'H10b frozen head=' || public.rc_change_head() || ' (the client stores this as its cursor; expect -1)';
+reset role;
+update profiles set frozen = false where id = 'eeeeeeee-0000-0000-0000-00000000000e';
+set role authenticated; set app.role='teacher'; set app.uid='eeeeeeee-0000-0000-0000-00000000000e';
+select 'H10c reactivated with the stored -1 => full_resync=' || (public.rc_changes_since(-1, array['halaqas'])->>'full_resync') || ' cursor>0=' || ((public.rc_changes_since(-1, array['halaqas'])->>'cursor')::bigint > 0) || ' (expect true, true: client reloads everything)';
+select 'H10d old cursor still sees the change made while frozen=' || ((public.rc_changes_since(:n, array['halaqas'])->'upserts'->'halaqas') @> '[{"id":"a0000000-0000-0000-0000-0000000000a2"}]'::jsonb) || ' (expect true)';
+reset role;
+
