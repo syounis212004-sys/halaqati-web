@@ -519,13 +519,14 @@
   // ================= bulk Hifz → Sard cycle (SmartPlanBulkCycleSheet) =================
   const bulkRoot=()=>document.querySelector(`#${DID} .nph-form[data-kind="bulk"]`);
   const bn=v=>{v=Number(v)||0;return Math.abs(v-Math.round(v))<.005?String(Math.round(v)):v.toFixed(1)};
+  const PD=()=>window.HalaqatiPhaseDays;
   function bulkReqs(){
     const root=bulkRoot(),items=window.__rc27BulkItems||[],days=picked(root,'rcb').map(Number);
     const picks=[...root.querySelectorAll('.rcb-pick:checked')].map(x=>+x.dataset.n);
     let invalid=0;const reqs=[];
     picks.forEach(n=>{
       const i=items[n],o=k=>val('rcbi'+n+k),wd=picked(root,'rcbw'+n).map(Number);
-      const r={planId:i.plan.id,studentId:i.plan.student_id,hifzCompleted:i.done,hifzTarget:i.target,hifzStart:o('HS')||val('rcbHS'),hifzEnd:o('HE')||val('rcbHE'),sardStart:o('SS')||val('rcbSS'),sardEnd:o('SE')||val('rcbSE'),sardTarget:(o('T')!==''?Number(o('T')):num('rcbT')),route:o('R')||val('rcbR'),weekdays:wd.length?wd:days,carry:0};
+      const r={planId:i.plan.id,studentId:i.plan.student_id,hifzCompleted:i.done,hifzTarget:i.target,hifzStart:o('HS')||val('rcbHS'),hifzEnd:o('HE')||val('rcbHE'),sardStart:o('SS')||val('rcbSS'),sardEnd:o('SE')||val('rcbSE'),sardTarget:(o('T')!==''?Number(o('T')):num('rcbT')),route:o('R')||val('rcbR'),weekdays:PD().resolveBulkDays({custom:wd,common:days,initial:window.__rc27BulkInitialDays,existing:i.sard?.schedule_weekdays}),carry:0};
       const ok=r.hifzStart&&r.hifzEnd&&r.sardStart&&r.sardEnd&&r.hifzEnd>=r.hifzStart&&r.sardStart>r.hifzEnd&&r.sardEnd>=r.sardStart&&r.sardTarget>0&&r.weekdays.length;
       if(ok)reqs.push(r);else invalid++;
     });
@@ -563,12 +564,14 @@
     window.__rc27BulkItems=items;
     const starts=items.map(i=>D10(i.hf?.start_date||i.plan.start_date)),cnt=new Map;starts.forEach(s=>cnt.set(s,(cnt.get(s)||0)+1));
     const mostStart=[...cnt.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+    const PD=window.HalaqatiPhaseDays,defaultDays=PD.commonDays(items.map(i=>i.sard?.schedule_weekdays))||[0,1,2,3,4,5];window.__rc27BulkInitialDays=defaultDays;
+    const daysNote=PD.commonDays(items.map(i=>i.sard?.schedule_weekdays))?'الأيام المحدّدة هي أيام السرد الحالية لمعظم الطلاب. لن تتغير أيام أي طالب إلا إذا عدّلت هذه الأيام أو اخترت أياماً له.':'لا توجد مرحلة سرد حالية لهؤلاء الطلاب: هذه الأيام ستُطبَّق عليهم.';
     const routeSel=(id,blank)=>NX.select(blank?'اتجاه السرد':'اتجاه السرد',(blank?[{value:'',label:'كالموحد'}]:[]).concat([{value:ROUTE_NAS,label:'من الناس إلى البقرة'},{value:ROUTE_BAQ,label:'من البقرة إلى الناس'}]),{id,value:blank?'':ROUTE_NAS});
     const rowsHtml=items.map((i,n)=>{
       const nm=sName(i.plan.student_id),sSt=i.sard?stateOf(i.sard.id,i.plan.student_id):null,hSt=i.hf?stateOf(i.hf.id,i.plan.student_id):null;
       const hLbl=hSt?.status==='completed'?'مكتملة':hSt?.status==='active'?'نشطة':'حسب الخطة الحالية',sLbl=({completed:'مكتملة',active:'نشطة',not_started:'مجدولة'})[sSt?.status]||'لم تبدأ';
       const sT=sSt?.target_pages_override??i.sard?.target_pages??25;
-      return `<div class="nx-card nph-brow" data-n="${n}" data-name="${h(nm)}"><div class="nph-brow-h"><input type="checkbox" class="nph-check rcb-pick" data-n="${n}" checked aria-label="${h(nm)}"><div class="nph-grow"><b class="nph-name">${h(nm)}</b>${!i.hf&&!i.sard?'<small class="nph-ok">لا توجد مراحل بعد · سيتم إنشاؤها عند الاعتماد</small>':''}</div><button type="button" class="nx-btn nx-text nx-small nph-cust-btn" onclick="nxBulkCust(${n})">${ic('Tune',18)}<span>تخصيص</span></button></div>
+      return `<div class="nx-card nph-brow" data-n="${n}" data-name="${h(nm)}"><div class="nph-brow-h"><input type="checkbox" class="nph-check rcb-pick" data-n="${n}" checked aria-label="${h(nm)}"><div class="nph-grow"><b class="nph-name">${h(nm)}</b>${i.sard?.schedule_weekdays?.length&&!PD.sameDays(i.sard.schedule_weekdays,defaultDays)?`<small class="nph-ok">أيام السرد الحالية: ${PD.cleanDays(i.sard.schedule_weekdays).map(d=>DAYS[d]).join('، ')}</small>`:''}${!i.hf&&!i.sard?'<small class="nph-ok">لا توجد مراحل بعد · سيتم إنشاؤها عند الاعتماد</small>':''}</div><button type="button" class="nx-btn nx-text nx-small nph-cust-btn" onclick="nxBulkCust(${n})">${ic('Tune',18)}<span>تخصيص</span></button></div>
         <div class="nph-two"><div class="nph-mini a"><b>مرحلة الحفظ</b><span>${bn(i.done)} / ${bn(i.target??0)} ص</span><small>${hLbl}</small></div><div class="nph-mini b"><b>مرحلة السرد</b><span>${bn(sT)} ص</span><small>${sLbl}</small></div></div>
         <div class="nph-cust">${NX.divider()}<b class="nph-lab">تخصيص هذا الطالب فقط</b><div class="nph-two">${dateF(`rcbi${n}HS`,'بداية الحفظ','')}${dateF(`rcbi${n}HE`,'نهاية الحفظ','')}</div><div class="nph-two">${dateF(`rcbi${n}SS`,'بداية السرد','')}${dateF(`rcbi${n}SE`,'نهاية السرد','')}</div><div class="nph-two">${numField(`rcbi${n}T`,'هدف سرد خاص','')}${routeSel(`rcbi${n}R`,true)}</div>${lab('أيام السرد لهذا الطالب (اتركها فارغة للموحد)')}${dayChips('rcbw'+n,[])}${NX.btn('إزالة التخصيص والعودة للإعداد الموحد',{kind:'text',small:true,onclick:`nxBulkReset(${n})`})}</div></div>`;
     }).join('');
@@ -579,7 +582,7 @@
         <div class="nph-two">${dateF('rcbSS','بداية السرد',next)}${dateF('rcbSE','نهاية السرد',eom<next?next:eom)}</div>
         ${numField('rcbT','هدف السرد الموحد بالصفحات',25,{hint:'الافتراضي 25 صفحة. هدف الحفظ يبقى مختلفًا لكل طالب.'})}
         ${routeSel('rcbR',false)}
-        ${lab('أيام السرد')}${dayChips('rcb',[0,1,2,3,4,5])}
+        ${lab('أيام السرد')}${dayChips('rcb',defaultDays)}<p class="nph-sub" id="nphDaysNote">${daysNote}</p>
         <p class="nph-err" id="nphSat" hidden>تنبيه: السبت إجازة ثابتة في الحلقة؛ اختره فقط إذا أردت مرحلة استثنائية.</p>
       </div>
       ${NX.search('','بحث باسم الطالب',{oninput:'nxBulkSearch(this.value)'})}

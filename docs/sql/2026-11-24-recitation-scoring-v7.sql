@@ -43,7 +43,9 @@ begin
 
   pe := lines / 15.0;
   allowance := greatest(1, ceil(pe - 0.000000001));
-  over_ := m > allowance or pr > 2 * allowance;
+  -- a page that went over the per-page limit while marking on the mushaf makes the whole result a repeat
+  over_ := m > allowance or pr > 2 * allowance
+    or (case when jsonb_typeof(new.selection_data->'over_limit_pages') = 'array' then jsonb_array_length(new.selection_data->'over_limit_pages') > 0 else false end);
   raw := 100 - (15 * (20 * m + 5 * pr)) / lines;
   s := greatest(0, least(100, case when over_ then least(raw, 69.9) else raw end));
 

@@ -82,7 +82,7 @@
         var over = session.overLimitPages();
         html = '<span>التقدير: <b>' + digits(v.safety) + '٪ ' + H(v.label || '') + '</b></span>' +
           '<small>' + (v.pages ? 'محسوب على ' + digits(Math.round(v.pages * 100) / 100) + ' صفحة: ' + digits(c.mistakes) + ' أخطاء و' + digits(c.prompts) + ' تلقينات. ' : '') + 'الحد الأعلى للصفحة: خطأ (جملة) وتلقينان</small>' +
-          (over.length ? '<small class="hm-over" role="status">تنبيه: ' + over.map(function (o) { return 'صفحة ' + digits(o.page) + ' فيها ' + digits(o.mistakes) + ' أخطاء و' + digits(o.prompts) + ' تلقينات'; }).join('، ') + ' (فوق الحد، والتقدير متوسط على كل الصفحات)</small>' : '');
+          (over.length ? '<small class="hm-over" role="status">تنبيه: ' + over.map(function (o) { return 'صفحة ' + digits(o.page) + ' فيها ' + digits(o.mistakes) + ' أخطاء و' + digits(o.prompts) + ' تلقينات'; }).join('، ') + ' (فوق الحد، فالنتيجة إعادة)</small>' : '');
       } else html = '<small>اختر المقرر أولاً ليظهر التقدير.</small>';
       $('[data-score]').innerHTML = html;
     }

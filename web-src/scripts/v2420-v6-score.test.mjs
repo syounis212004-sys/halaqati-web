@@ -50,3 +50,11 @@ test('no pages means not rated even if line keys are present (same as the server
   const r=c({pages_count:0,mistakes:0,prompts:0,selection_data:{qcf_line_keys:['1:1','1:2','1:3']}});
   assert.equal(r.evaluation,'not_rated'); assert.equal(r.safety_percentage,0);
 });
+test('a page over the per-page limit makes the whole result a repeat, even when the average is fine (9 prompts on one page of 25)', () => {
+  const average = c({pages_count:25,mistakes:0,prompts:9});
+  assert.equal(average.evaluation,'excellent'); assert.equal(average.safety_percentage,98.2);
+  const flagged = c({pages_count:25,mistakes:0,prompts:9,selection_data:{over_limit_pages:[477]}});
+  assert.equal(flagged.evaluation,'repeat'); assert.ok(flagged.safety_percentage<70,'the percentage never contradicts the grade');
+  const none = c({pages_count:25,mistakes:0,prompts:9,selection_data:{over_limit_pages:[]}});
+  assert.equal(none.evaluation,'excellent');
+});
