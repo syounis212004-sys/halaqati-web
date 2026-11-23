@@ -906,9 +906,7 @@
     const sopts=(list,sel)=>list.map(s=>`<option value="${s}" ${s===sel?'selected':''}>${s}. ${h(surahName(s))}</option>`).join('');
     const aopts=(n,sel)=>Array.from({length:maxAyah(n)},(_,i)=>`<option value="${i+1}" ${i+1===sel?'selected':''}>${i+1}</option>`).join('');
     const sel=(label,id,opts,fn)=>NX.field(label,{html:`<select id="${id}" onchange="${fn}">${opts}</select>`});
-    if(P.view==='mushaf'){
-      content='<div id="nrMushaf" class="nr-mushaf-host"></div>';
-    }else if(P.mode==='pages'){
+    if(P.mode==='pages'){
       const so=pageAyahs(+P.sp),eo=pageAyahs(+P.ep);
       const o=(list,cur)=>list.map((x,i)=>`<option value="${x.s}:${x.a}" ${cur&&cur.s===x.s&&cur.a===x.a?'selected':''}>${h(surahName(x.s))} · آية ${x.a}</option>`).join('');
       content=`<p class="nr-hint">اختر الصفحة، ثم اختر الآية الدقيقة داخلها. لن تُحسب الصفحة كاملة إلا إذا اخترت أول آية وآخر آية فيها.</p>
@@ -934,36 +932,20 @@
         <div class="nr-two">${sel('من آية','nrPSa',aopts(P.ss,P.sa),"NSR.pk('sa',+this.value)")}${sel('إلى آية','nrPEa',aopts(P.es,P.ea),"NSR.pk('ea',+this.value)")}</div>
         ${P.ss===P.es?`<div class="nr-sliders"><input type="range" min="1" max="${maxAyah(P.ss)}" value="${P.sa}" aria-label="من آية" oninput="NSR.pkSlide('sa',+this.value)"><input type="range" min="1" max="${maxAyah(P.es)}" value="${P.ea}" aria-label="إلى آية" oninput="NSR.pkSlide('ea',+this.value)"></div>`:''}`;
     }
-    const tabs=[['ayahs','آية','MenuBook'],['pages','صفحات','Description'],['surahs','سور','FormatListNumbered'],['juz','أجزاء','Apps'],['mushaf','المصحف','AutoStories']],cur=P.view==='mushaf'?'mushaf':P.mode;
-    return `<div class="nr-modes" role="tablist">${tabs.map(([k,l,i])=>`<button type="button" role="tab" class="nr-mode ${cur===k?'on':''}" aria-selected="${cur===k}" onclick="NSR.pkMode('${k}')">${ic(i,20)}<span>${l}</span></button>`).join('')}</div>
+    const tabs=[['ayahs','آية','MenuBook'],['pages','صفحات','Description'],['surahs','سور','FormatListNumbered'],['juz','أجزاء','Apps']];
+    return `<div class="nr-modes" role="tablist">${tabs.map(([k,l,i])=>`<button type="button" role="tab" class="nr-mode ${P.mode===k?'on':''}" aria-selected="${P.mode===k}" onclick="NSR.pkMode('${k}')">${ic(i,20)}<span>${l}</span></button>`).join('')}</div>
       ${P.hifzLike?`<b class="nr-lab">اتجاه الحفظ / التقدم</b><div class="nr-chipgrid">${TRAV.map(([k,l])=>NX.chip(l,{selected:P.dir===k,onclick:`NSR.pkDir('${k}')`})).join('')}</div><p class="nr-hint">${P.dir==='reverse'?'بعد نهاية السورة ننتقل إلى السورة السابقة رقمًا، مع بقاء الآيات داخل السورة تصاعدية.':'نتقدم حسب ترتيب المصحف من السورة الأقل رقمًا إلى الأعلى، والآيات داخل السورة تصاعدية.'}</p>`:''}
-      ${content}<hr class="nx-divider"><div id="nrPickRes">${mushafIdle()?'':pickResultHtml(pickCalc())}</div>`;
+      ${content}<hr class="nx-divider"><div id="nrPickRes">${pickResultHtml(pickCalc())}</div>`;
   }
-  // In the «المصحف» tab nothing is applied until the teacher taps a start and an end ayah; until then «اعتماد» only closes (the current range stays as it is)
-  const mushafIdle=()=>R.pick?.view==='mushaf'&&!R.pick.picked;
   function pickFooter(){
-    const r=pickCalc(),idle=mushafIdle();
-    return `${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('nrPickDlg')"})}<button type="button" id="nrPickOk" class="nx-btn nx-filled" ${(r.ok||idle)?'':'disabled'} onclick="NSR.pickOk()"><span>${idle?'تم':'اعتماد الاختيار'}</span></button>`;
+    const r=pickCalc();
+    return `${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('nrPickDlg')"})}<button type="button" id="nrPickOk" class="nx-btn nx-filled" ${r.ok?'':'disabled'} onclick="NSR.pickOk()"><span>اعتماد الاختيار</span></button>`;
   }
   function drawPicker(){
-    redraw('nrPickDlg',()=>NX.dialog('nrPickDlg','اختيار المقرر من المصحف',pickBody(),{cls:'nr-pick-dlg',footer:pickFooter(),onClose:()=>{if(R.pick){R.pick.open=false;if(R.pick.mushafInst){try{R.pick.mushafInst.destroy()}catch(_e){}R.pick.mushafInst=null}}if(R.rec&&!R.rec.saving)drawRec()}}));
-    mountMushaf();
+    redraw('nrPickDlg',()=>NX.dialog('nrPickDlg','اختيار المقرر من المصحف',pickBody(),{cls:'nr-pick-dlg',footer:pickFooter(),onClose:()=>{if(R.pick)R.pick.open=false}}));
   }
-  // «المصحف» tab of the picker: the page view keeps its marks in R.rec.mushaf, and reports mark deltas that become the mistakes / prompts counters of the recitation
-  function mountMushaf(){
-    const P=R.pick,D=R.rec,host=$id('nrMushaf'),M=window.HalaqatiMushaf,MS=window.HalaqatiMushafState;
-    if(P?.mushafInst){try{P.mushafInst.destroy()}catch(_e){}P.mushafInst=null}
-    if(!P||P.view!=='mushaf'||!D||!host)return;
-    if(!M||!MS){host.innerHTML=NX.notice('تعذر تحميل المصحف التفاعلي؛ استخدم التبويبات الأخرى أو العدّادات اليدوية.','warning');return}
-    if(!D.mushaf){const rg=D.range;D.mushaf=MS.createMushafSession({initialPage:rg?.startSurah?MS.resolvePageForAyah(rg.startSurah,rg.startAyah||1):(rg?.startPage||1),studentId:D.sid})}
-    P.mushafInst=M.mount(host,{session:D.mushaf,recitation:D.type!=='tilawah',
-      getRange:()=>P.picked?{startSurah:P.ss,startAyah:P.sa,endSurah:P.es,endAyah:P.ea}:(D.range||null),
-      keepSurahOrder:()=>!!(P.hifzLike&&P.dir==='reverse'),
-      onMark:d=>{D.mistakes=Math.max(0,(D.mistakes||0)+(d.mist||0));D.prompts=Math.max(0,(D.prompts||0)+(d.prompt||0))},
-      onRange:r=>{P.mode='ayahs';P.ss=r.startSurah;P.sa=r.startAyah;P.es=r.endSurah;P.ea=r.endAyah;P.spl=null;P.epl=null;P.picked=true;pickPartial()}});
-  }
-  function pickPartial(){const r=pickCalc();setHtml('nrPickRes',mushafIdle()?'':pickResultHtml(r));const b=$id('nrPickOk');if(b){b.disabled=!(r.ok||mushafIdle());const sp=b.querySelector('span');if(sp)sp.textContent=mushafIdle()?'تم':'اعتماد الاختيار'}}
-  NS.pkMode=m=>{if(m==='mushaf')R.pick.view='mushaf';else{R.pick.view=null;R.pick.mode=m;R.pick.picked=false}drawPicker()};
+  function pickPartial(){const r=pickCalc();setHtml('nrPickRes',pickResultHtml(r));const b=$id('nrPickOk');if(b)b.disabled=!r.ok}
+  NS.pkMode=m=>{R.pick.mode=m;drawPicker()};
   NS.pkDir=d=>{R.pick.dir=d;drawPicker()};
   NS.pkJuz=j=>{const P=R.pick;P.juzF=j;const l=surahsForJuz(j);P.ss=l[0];P.sa=1;if(!l.includes(P.es)){P.es=l[0];P.ea=maxAyah(l[0])}drawPicker()};
   NS.pk=(k,v)=>{
@@ -984,7 +966,6 @@
   NS.pq=v=>{const P=R.pick;P.q=v;const box=$id('nrSurahs');if(!box)return;const q=norm(v);
     box.innerHTML=Array.from({length:114},(_,i)=>i+1).filter(s=>!q||String(s).includes(q)||norm(surahName(s)).includes(q)).map(s=>`<button type="button" class="nr-sur ${P.surahSet.has(s)?'on':''}" onclick="NSR.pkSet('surah',${s})"><i>${s}</i><span>${h(surahName(s))}</span>${P.surahSet.has(s)?ic('Check',16):''}</button>`).join('')};
   NS.pickOk=function(){
-    if(mushafIdle()){R.pick.open=false;NX.closeDialog('nrPickDlg');return}
     const r=pickCalc();if(!r.ok)return;
     R.rec.range=r.res;R.pick.open=false;NX.closeDialog('nrPickDlg');
     // an explicitly picked range is no longer the plan's prefill, but the plan link stays so progress is credited

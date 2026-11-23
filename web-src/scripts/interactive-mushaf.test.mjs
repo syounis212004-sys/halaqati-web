@@ -15,24 +15,12 @@ vm.runInContext(fs.readFileSync(new URL('../public/core/quran-layout.js', import
 globalThis.HALAQATI_QURAN_LAYOUT = layoutCtx.HALAQATI_QURAN_LAYOUT;
 const S = require('../src/features/native/mushaf-state.js');
 
-test('marks: add, replace, toggle-off and clear report the counter deltas the picker applies', () => {
-  const s = S.createMushafSession({ initialPage: 42 });
-  assert.deepEqual(s.toggleMark('2:254', 'mistake', 42).delta, { mist: 1, prompt: 0, tajweed: 0 });
-  assert.deepEqual(s.toggleMark('2:254', 'prompt', 42).delta, { mist: -1, prompt: 1, tajweed: 0 }, 'a replaced mark moves the count');
-  assert.deepEqual(s.toggleMark('2:254', 'prompt', 42).delta, { mist: 0, prompt: -1, tajweed: 0 }, 'same type again removes it');
-  s.toggleMark('2:255', 'mistake', 42); s.toggleMark('2:256', 'prompt', 42);
-  assert.deepEqual(s.getCounts(42), { page: { mistakes: 1, prompts: 1, tajweed: 0 }, total: { mistakes: 1, prompts: 1, tajweed: 0 } });
-  assert.equal(s.clearMark('2:255').delta.mist, -1);
-  assert.equal(s.clearMark('2:255').action, 'noop', 'clearing twice is a no-op');
-  assert.throws(() => s.toggleMark('999:1', 'mistake'), /Invalid ayah_key/);
-  assert.throws(() => s.toggleMark('2:255', 'bogus'), /Invalid mark type/);
-});
-
 test('the engine never writes to storage and has no draft API (marks live only in the session object)', () => {
   const src = read('features/native/mushaf-state.js') + read('features/native/mushaf.js');
   assert.doesNotMatch(src, /localStorage|sessionStorage|setItem\(|indexedDB/);
   assert.equal(S.buildDraftKey, undefined);
   assert.equal(S.createMushafSession({}).clearDraft, undefined);
+  assert.deepEqual(S.VALID_MARK_TYPES, ['mistake', 'prompt'], 'tajweed marks are gone: they were never saved anywhere');
 });
 
 test('page mapping uses the shipped layout: known ayahs land on their Madinah pages', () => {
@@ -42,19 +30,13 @@ test('page mapping uses the shipped layout: known ayahs land on their Madinah pa
   assert.equal(S.clampPage(0), 1); assert.equal(S.clampPage('9999'), 604); assert.equal(S.clampPage('x'), 1);
 });
 
-test('range taps: ascending order is normalised, a reverse-direction memorisation range keeps the order of the taps', () => {
-  const a = S.createMushafSession({});
-  assert.equal(a.selectRangeAyah(114, 6).complete, false);
-  assert.deepEqual(a.selectRangeAyah(112, 1), { complete: true, startSurah: 112, startAyah: 1, endSurah: 114, endAyah: 6 }, 'swapped to ascending by default');
-  const b = S.createMushafSession({});
-  b.selectRangeAyah(114, 6);
-  const r = b.selectRangeAyah(112, 1, { keepSurahOrder: true });
-  assert.deepEqual([r.startSurah, r.startAyah, r.endSurah, r.endAyah], [114, 6, 112, 1], 'reverse direction keeps An-Nas -> Al-Ikhlas');
-  const c = S.createMushafSession({});
-  c.selectRangeAyah(2, 20);
-  assert.deepEqual([c.selectRangeAyah(2, 10, { keepSurahOrder: true }).startAyah], [10], 'same surah is always ascending even with keepSurahOrder');
-  assert.equal(S.isAyahInRange(2, 255, { startSurah: 2, startAyah: 250, endSurah: 3, endAyah: 5 }), true);
-  assert.equal(S.isAyahInRange(3, 6, { startSurah: 2, startAyah: 250, endSurah: 3, endAyah: 5 }), false);
+test('a chosen range (from any old picker) contains its ayahs across surahs, and nothing outside', () => {
+  const r = { startSurah: 2, startAyah: 250, endSurah: 3, endAyah: 5 };
+  assert.equal(S.isAyahInRange(2, 255, r), true);
+  assert.equal(S.isAyahInRange(3, 5, r), true);
+  assert.equal(S.isAyahInRange(3, 6, r), false);
+  assert.equal(S.isAyahInRange(2, 249, r), false);
+  assert.equal(S.selectRangeAyah, undefined, 'the range is picked with the old pickers, not by tapping the page');
 });
 
 test('tap vs scroll: a quick still tap is a tap, a drag, a long press or a cancelled gesture is not', () => {
@@ -107,15 +89,13 @@ test('escaping: hostile text from the API or the page never becomes markup', () 
   assert.match(comp, /H\(v\.text\)/); assert.doesNotMatch(comp, /innerHTML\s*=\s*[^;]*\bv\.text\b(?!\))/);
 });
 
-// ---- the real picker is wired to the component (these are contract checks of the integration, the behaviour was run in a browser)
-test('roster picker: 5th tab, mount, counters and re-sync of the recording dialog are wired', () => {
-  const r = read('features/native/roster.js');
-  assert.match(r, /\['mushaf','المصحف','AutoStories'\]/);
-  assert.match(r, /NS\.pkMode=m=>\{if\(m==='mushaf'\)/);
-  assert.match(r, /M\.mount\(host,\{session:D\.mushaf/);
-  assert.match(r, /onMark:d=>\{D\.mistakes=Math\.max\(0,/, 'marks become the mistakes / prompts counters');
-  assert.match(r, /if\(R\.rec&&!R\.rec\.saving\)drawRec\(\)/, 'cancelling the picker redraws the recording dialog so counters match the data');
-  assert.match(r, /const mushafIdle=/, 'no hidden default range is applied when only marks were made');
+// ---- the four old range pickers stay exactly as they were; the mushaf is a separate screen (T1)
+test('the old Quran-range picker keeps its four methods and has no mushaf tab or mounting code', () => {
+  const r = read('features/native/roster.js'), css = fs.readFileSync(new URL('../src/styles/native-roster.css', import.meta.url), 'utf8');
+  assert.match(r, /const tabs=\[\['ayahs','آية','MenuBook'\],\['pages','صفحات','Description'\],\['surahs','سور','FormatListNumbered'\],\['juz','أجزاء','Apps'\]\]/);
+  assert.doesNotMatch(r, /\['mushaf','المصحف'/);
+  assert.doesNotMatch(r, /mountMushaf|mushafIdle|nrMushaf\b/);
+  assert.match(css, /\.nr-modes\{display:grid;grid-template-columns:repeat\(4,1fr\)/);
 });
 test('the legacy #reportDlg monkey-patching is gone and the assets are loaded at boot', () => {
   const c = read('features/native/mushaf.js') + read('features/native/mushaf-state.js');

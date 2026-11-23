@@ -6,7 +6,8 @@
   'use strict';
 
   var TOTAL_PAGES = 604;
-  var VALID_MARK_TYPES = ['mistake', 'prompt', 'tajweed'];
+  var VALID_MARK_TYPES = ['mistake', 'prompt'];
+  var VALID_KINDS = ['word', 'harakah', 'ayah_start'];
   var QURAN_API_BASE = 'https://api.quran.com/api/v4/verses/by_page/';
   var CACHE_NAME = 'halaqati-mushaf-pages-v1';
 
@@ -141,19 +142,34 @@
     return dist <= maxMovePx;
   }
 
+  function parseWordId(id) {
+    var m = /^(\d{1,3}):(\d{1,3}):(\d{1,3})$/.exec(String(id == null ? '' : id));
+    if (!m) return null;
+    var surah = +m[1], ayah = +m[2], pos = +m[3];
+    if (surah < 1 || surah > 114 || ayah < 1 || pos < 1) return null;
+    return { surah: surah, ayah: ayah, pos: pos, ayah_key: surah + ':' + ayah };
+  }
+
   function normalizeApiPageResponse(page, payload) {
     var versesRaw = payload && Array.isArray(payload.verses) ? payload.verses : [];
+    var words = [];
     var verses = versesRaw.map(function (v) {
-      var parsed = parseAyahKey(v.verse_key || v.ayah_key);
-      var words = Array.isArray(v.words) ? v.words : [];
-      var text = v.text_uthmani || words
-        .filter(function (w) { return w && w.char_type_name !== 'end'; })
-        .map(function (w) { return w.text_uthmani || w.text || ''; })
-        .join(' ')
-        .trim();
-      var lines = words.map(function (w) { return Number(w.line_number) || 0; }).filter(Boolean);
+      var key = v.verse_key || v.ayah_key;
+      var parsed = parseAyahKey(key);
+      var raw = Array.isArray(v.words) ? v.words : [];
+      var textWords = raw.filter(function (w) { return w && w.char_type_name !== 'end'; });
+      if (parsed) {
+        textWords.forEach(function (w) {
+          var pos = Number(w.position);
+          if (!(pos >= 1)) return;
+          words.push({ id: parsed.surah + ':' + parsed.ayah + ':' + pos, ayah_key: parsed.surah + ':' + parsed.ayah, surah: parsed.surah, ayah: parsed.ayah, pos: pos,
+            text: w.text_uthmani || w.text || '', line: Number(w.line_number) || 0, ayahStart: pos === 1 });
+        });
+      }
+      var text = v.text_uthmani || textWords.map(function (w) { return w.text_uthmani || w.text || ''; }).join(' ').trim();
+      var lines = raw.map(function (w) { return Number(w.line_number) || 0; }).filter(Boolean);
       return {
-        ayah_key: v.verse_key || v.ayah_key || (parsed ? parsed.surah + ':' + parsed.ayah : ''),
+        ayah_key: key || (parsed ? parsed.surah + ':' + parsed.ayah : ''),
         surah: parsed ? parsed.surah : 0,
         ayah: parsed ? parsed.ayah : 0,
         text: text,
@@ -162,12 +178,28 @@
       };
     }).filter(function (v) { return v.ayah_key && v.text; });
     var juz = versesRaw[0] && versesRaw[0].juz_number ? versesRaw[0].juz_number : null;
-    return {
-      page: clampPage(page),
-      juz: juz,
-      source: 'quran-api-v4',
-      verses: verses
-    };
+    return { page: clampPage(page), juz: juz, source: 'quran-api-v4', verses: verses, words: words };
+  }
+
+  /* The printed Madinah page has 15 lines. Lines without words are the surah banner / basmala lines (right before a surah's first ayah) or empty. */
+  function buildPageLines(pageData) {
+    var byLine = {};
+    ((pageData && pageData.words) || []).forEach(function (w) { if (w.line >= 1 && w.line <= 15) (byLine[w.line] = byLine[w.line] || []).push(w); });
+    var lines = [];
+    for (var i = 1; i <= 15; i++) lines.push({ n: i, kind: byLine[i] ? 'text' : 'empty', words: byLine[i] || [] });
+    lines.forEach(function (line, idx) {
+      var first = line.words[0];
+      if (!first || first.pos !== 1 || first.ayah !== 1) return;
+      var s = first.surah, above = idx - 1;
+      var hasBasmalaLine = s !== 1 && s !== 9;
+      if (above >= 0 && lines[above].kind === 'empty') {
+        if (hasBasmalaLine && above - 1 >= 0 && lines[above - 1].kind === 'empty') {
+          lines[above].kind = 'basmala'; lines[above].surah = s;
+          lines[above - 1].kind = 'banner'; lines[above - 1].surah = s;
+        } else { lines[above].kind = 'banner'; lines[above].surah = s; }
+      }
+    });
+    return { lines: lines };
   }
 
   // Page fetcher with in-memory cache + Cache API copy (offline) and a timeout; failures are reported, never papered over
@@ -271,199 +303,117 @@
 
   function createMushafSession(options) {
     var opts = options || {};
-    var studentId = opts.studentId || null;
-    var sessionId = opts.sessionId || null;
-    var rowId = opts.rowId || null;
     var nowFn = typeof opts.now === 'function' ? opts.now : Date.now;
+    var state = { page: clampPage(opts.initialPage || 1), studentId: opts.studentId || null, marks: [] };
+    var past = [], future = [];
 
-    var state = {
-      page: clampPage(opts.initialPage || 1),
-      readingMode: !studentId,
-      studentId: studentId,
-      interactionMode: 'recitation', // 'recitation' | 'range'
-      marks: [], // { ayah_key, word: null|n, type, page, at }
-      rangeDraft: { start: null, end: null }
-    };
-
-    function findMarkIndex(ayahKey, word) {
-      var targetWord = word == null ? null : Number(word);
-      for (var i = 0; i < state.marks.length; i++) {
-        if (state.marks[i].ayah_key === ayahKey && state.marks[i].word === targetWord) {
-          return i;
-        }
-      }
+    function indexOfId(id) {
+      for (var i = 0; i < state.marks.length; i++) if (state.marks[i].id === id) return i;
       return -1;
     }
-
-    function deltaFor(prevType, nextType) {
-      var d = { mist: 0, prompt: 0, tajweed: 0 };
-      if (prevType === 'mistake') d.mist -= 1;
-      else if (prevType === 'prompt') d.prompt -= 1;
-      else if (prevType === 'tajweed') d.tajweed -= 1;
-
-      if (nextType === 'mistake') d.mist += 1;
-      else if (nextType === 'prompt') d.prompt += 1;
-      else if (nextType === 'tajweed') d.tajweed += 1;
-      return d;
+    function bump(delta, mark, sign) {
+      if (!mark) return;
+      if (mark.type === 'mistake') delta.mist += sign; else if (mark.type === 'prompt') delta.prompt += sign;
     }
-
-    function toggleMark(ayahKey, type, page, word) {
-      if (!parseAyahKey(ayahKey)) {
-        throw new Error('Invalid ayah_key: ' + ayahKey);
-      }
-      if (VALID_MARK_TYPES.indexOf(type) === -1) {
-        throw new Error('Invalid mark type: ' + type);
-      }
-      var targetWord = word == null ? null : Number(word);
-      var idx = findMarkIndex(ayahKey, targetWord);
-      var p = clampPage(page || state.page);
-
-      if (idx !== -1) {
-        var existing = state.marks[idx];
-        if (existing.type === type) {
-          state.marks.splice(idx, 1);
-          return { action: 'removed', mark: existing, delta: deltaFor(existing.type, null) };
-        }
-        var prevType = existing.type;
-        var updated = {
-          ayah_key: ayahKey,
-          word: targetWord,
-          type: type,
-          page: p,
-          at: nowFn()
-        };
-        state.marks[idx] = updated;
-        return { action: 'replaced', mark: updated, prevType: prevType, delta: deltaFor(prevType, type) };
-      }
-
-      var created = {
-        ayah_key: ayahKey,
-        word: targetWord,
-        type: type,
-        page: p,
-        at: nowFn()
-      };
-      state.marks.push(created);
-      return { action: 'added', mark: created, delta: deltaFor(null, type) };
+    function setMark(id, mark) {
+      var i = indexOfId(id);
+      if (mark) { if (i === -1) state.marks.push(mark); else state.marks[i] = mark; }
+      else if (i !== -1) state.marks.splice(i, 1);
     }
-
-    function clearMark(ayahKey, word) {
-      var targetWord = word == null ? null : Number(word);
-      var idx = findMarkIndex(ayahKey, targetWord);
-      if (idx === -1) {
-        return { action: 'noop', mark: null, delta: { mist: 0, prompt: 0, tajweed: 0 } };
-      }
-      var removed = state.marks.splice(idx, 1)[0];
-      return { action: 'removed', mark: removed, delta: deltaFor(removed.type, null) };
+    // apply a list of {id, before, after}: going forward uses `after`, going back uses `before`
+    function apply(changes, forward) {
+      var delta = { mist: 0, prompt: 0 };
+      changes.forEach(function (c) {
+        var from = forward ? c.before : c.after, to = forward ? c.after : c.before;
+        bump(delta, from, -1); bump(delta, to, +1); setMark(c.id, to);
+      });
+      return delta;
     }
-
-    function getMark(ayahKey, word) {
-      var idx = findMarkIndex(ayahKey, word);
-      return idx === -1 ? null : state.marks[idx];
+    function commit(changes) {
+      if (!changes.length) return { delta: { mist: 0, prompt: 0 }, changed: 0 };
+      var delta = apply(changes, true);
+      past.push(changes); future = [];
+      return { delta: delta, changed: changes.length };
     }
+    function checkType(type) { if (VALID_MARK_TYPES.indexOf(type) === -1) throw new Error('Invalid mark type: ' + type); }
+    function checkKind(kind) { if (VALID_KINDS.indexOf(kind) === -1) throw new Error('Invalid kind: ' + kind); }
+    function parsedOrThrow(id) { var w = parseWordId(id); if (!w) throw new Error('Invalid word id: ' + id); return w; }
+    function build(id, w, type, kind, page) { return { id: id, ayah_key: w.ayah_key, word: w.pos, type: type, kind: kind, page: clampPage(page || state.page), at: nowFn() }; }
 
+    function markWord(id, type, o) {
+      o = o || {}; checkType(type); if (o.kind) checkKind(o.kind);
+      var w = parsedOrThrow(id), i = indexOfId(id), existing = i === -1 ? null : state.marks[i];
+      var before = existing ? JSON.parse(JSON.stringify(existing)) : null;
+      var removing = existing && existing.type === type && (!o.kind || o.kind === existing.kind);
+      var after = removing ? null : build(id, w, type, o.kind || 'word', o.page);
+      return commit([{ id: id, before: before, after: after }]);
+    }
+    function markSpan(ids, type, o) {
+      o = o || {}; checkType(type); var kind = o.kind || 'word'; checkKind(kind);
+      var seen = {}, changes = [];
+      (ids || []).forEach(function (id) {
+        if (seen[id]) return; seen[id] = true;
+        var w = parsedOrThrow(id), i = indexOfId(id), existing = i === -1 ? null : state.marks[i];
+        if (existing && existing.type === type && existing.kind === kind) return;
+        changes.push({ id: id, before: existing ? JSON.parse(JSON.stringify(existing)) : null, after: build(id, w, type, kind, o.page) });
+      });
+      return commit(changes);
+    }
+    function eraseWords(ids) {
+      var seen = {}, changes = [];
+      (ids || []).forEach(function (id) {
+        if (seen[id]) return; seen[id] = true;
+        var i = indexOfId(id);
+        if (i !== -1) changes.push({ id: id, before: JSON.parse(JSON.stringify(state.marks[i])), after: null });
+      });
+      return commit(changes);
+    }
+    function undo() {
+      var changes = past.pop();
+      if (!changes) return null;
+      future.push(changes);
+      return { delta: apply(changes, false) };
+    }
+    function redo() {
+      var changes = future.pop();
+      if (!changes) return null;
+      past.push(changes);
+      return { delta: apply(changes, true) };
+    }
+    function getMark(id) { var i = indexOfId(id); return i === -1 ? null : state.marks[i]; }
     function getCounts(pageNum) {
-      var p = clampPage(pageNum || state.page);
-      var pageCounts = { mistakes: 0, prompts: 0, tajweed: 0 };
-      var totalCounts = { mistakes: 0, prompts: 0, tajweed: 0 };
-      for (var i = 0; i < state.marks.length; i++) {
-        var m = state.marks[i];
-        var bucket = m.type === 'mistake' ? 'mistakes' : m.type === 'prompt' ? 'prompts' : 'tajweed';
-        totalCounts[bucket] += 1;
-        if (m.page === p) pageCounts[bucket] += 1;
-      }
-      return { page: pageCounts, total: totalCounts };
+      var p = clampPage(pageNum || state.page), page = { mistakes: 0, prompts: 0 }, total = { mistakes: 0, prompts: 0 };
+      state.marks.forEach(function (m) {
+        var k = m.type === 'mistake' ? 'mistakes' : 'prompts';
+        total[k] += 1; if (m.page === p) page[k] += 1;
+      });
+      return { page: page, total: total };
     }
-
-    function setStudent(nextStudentId) {
-      state.studentId = nextStudentId || null;
-      state.readingMode = !state.studentId;
-        return { studentId: state.studentId, readingMode: state.readingMode };
-    }
-
-    function setPage(nextPage) {
-      state.page = clampPage(nextPage);
-      return state.page;
-    }
-
-    function setInteractionMode(mode) {
-      state.interactionMode = mode === 'range' ? 'range' : 'recitation';
-      if (state.interactionMode === 'recitation') {
-        state.rangeDraft = { start: null, end: null };
-      }
-      return state.interactionMode;
-    }
-
-    // keepSurahOrder: a reverse-direction memorisation range (e.g. An-Nas down to Al-Naba) keeps the order of the two taps when the surahs differ
-    function selectRangeAyah(surah, ayah, opts) {
-      var ref = { surah: parseInt(surah, 10), ayah: parseInt(ayah, 10) };
-      if (!Number.isFinite(ref.surah) || !Number.isFinite(ref.ayah)) return null;
-      if (!state.rangeDraft.start || state.rangeDraft.end) {
-        state.rangeDraft = { start: ref, end: null };
-        return { complete: false, start: ref, end: null };
-      }
-      var start = state.rangeDraft.start;
-      var end = ref;
-      var keep = !!(opts && opts.keepSurahOrder) && start.surah > end.surah;
-      if (!keep && compareAyahRef(start, end) > 0) {
-        var tmp = start; start = end; end = tmp;
-      }
-      state.rangeDraft = { start: start, end: end };
-      return {
-        complete: true,
-        startSurah: start.surah,
-        startAyah: start.ayah,
-        endSurah: end.surah,
-        endAyah: end.ayah
-      };
-    }
-
+    function setPage(n) { state.page = clampPage(n); return state.page; }
     function exportPayload() {
-      var counts = getCounts(state.page);
-      return {
-        version: 1,
-        granularity: 'ayah',
-        student_id: state.studentId,
-        session_id: sessionId,
-        reading_mode: state.readingMode,
-        mistakes: counts.total.mistakes,
-        prompts: counts.total.prompts,
-        tajweed: counts.total.tajweed,
-        marks: state.marks.map(function (m) {
-          return {
-            ayah_key: m.ayah_key,
-            word: m.word,
-            type: m.type,
-            at: m.at
-          };
-        })
-      };
+      var c = getCounts(state.page).total;
+      var list = state.marks.slice().sort(function (a, b) {
+        var pa = parseAyahKey(a.ayah_key), pb = parseAyahKey(b.ayah_key);
+        return (pa.surah - pb.surah) || (pa.ayah - pb.ayah) || (a.word - b.word);
+      }).map(function (m) { return { ayah_key: m.ayah_key, word: m.word, type: m.type, kind: m.kind, at: m.at }; });
+      return { version: 2, granularity: 'word', student_id: state.studentId, mistakes: c.mistakes, prompts: c.prompts, marks: list };
     }
-
-    function reset() {
-      state.marks = [];
-      state.interactionMode = 'recitation';
-      state.rangeDraft = { start: null, end: null };
-    }
+    function reset() { state.marks = []; past = []; future = []; }
 
     return {
       getState: function () { return state; },
-      setPage: setPage,
-      setStudent: setStudent,
-      setInteractionMode: setInteractionMode,
-      selectRangeAyah: selectRangeAyah,
-      toggleMark: toggleMark,
-      clearMark: clearMark,
-      getMark: getMark,
-      getCounts: getCounts,
-      exportPayload: exportPayload,
-      reset: reset
+      setPage: setPage, markWord: markWord, markSpan: markSpan, eraseWords: eraseWords, undo: undo, redo: redo,
+      canUndo: function () { return past.length > 0; }, canRedo: function () { return future.length > 0; },
+      getMark: getMark, getCounts: getCounts, exportPayload: exportPayload, reset: reset
     };
   }
 
   var api = {
     TOTAL_PAGES: TOTAL_PAGES,
     VALID_MARK_TYPES: VALID_MARK_TYPES,
+    VALID_KINDS: VALID_KINDS,
+    parseWordId: parseWordId,
+    buildPageLines: buildPageLines,
     QURAN_API_BASE: QURAN_API_BASE,
     CACHE_NAME: CACHE_NAME,
     SURAHS: SURAHS,

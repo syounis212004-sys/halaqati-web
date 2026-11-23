@@ -141,8 +141,8 @@ body.dark .nr-snack{background:#1d2823;border:1px solid var(--line)}
 .nr-f-save{flex:1.4}.nr-f-cancel{flex:.8}
 .nr-rec-dlg .nx-dlg-foot{align-items:center}
 .nr-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.nr-modes{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
-.nr-mode{display:grid;justify-items:center;gap:2px;padding:8px 2px;border-radius:12px;border:1px solid var(--line);background:var(--nx-surface-var,var(--mint2));color:var(--muted);font:600 12px Cairo,sans-serif;cursor:pointer;min-width:0}
+.nr-modes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.nr-mode{display:grid;justify-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:1px solid var(--line);background:var(--nx-surface-var,var(--mint2));color:var(--muted);font:600 13px Cairo,sans-serif;cursor:pointer}
 .nr-mode.on{background:var(--primary-container);color:var(--green);border-color:var(--green)}
 .nr-surahs{display:grid;grid-template-columns:1fr 1fr;gap:7px;max-height:300px;overflow:auto}
 .nr-sur{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:500 14px Cairo,sans-serif;cursor:pointer;text-align:start}
