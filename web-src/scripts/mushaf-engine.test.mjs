@@ -158,3 +158,14 @@ test('keyboard map: 1/2 type, T/H/E tools, Ctrl+Z undo, Ctrl+Shift+Z or Ctrl+Y r
   assert.equal(S.shortcutAction({ key: '1', altKey: true }), null);
   assert.equal(S.shortcutAction({ key: 'x' }), null);
 });
+
+test('undo/redo report the page of the mark they changed so the view can follow', () => {
+  const s = session();
+  s.markWord('112:1:1', 'mistake', { page: 604 }); s.setPage(603);
+  assert.equal(s.undo().page, 604); assert.equal(s.redo().page, 604);
+});
+
+test('a non-contiguous surah selection highlights only the chosen surahs', () => {
+  const r = { startSurah: 2, endSurah: 5, selectedSurahs: [2, 5] };
+  assert.equal(S.isAyahInRange(3, 1, r), false); assert.equal(S.isAyahInRange(5, 1, r), true);
+});

@@ -108,6 +108,9 @@
     var s = parseInt(surah, 10);
     var a = parseInt(ayah, 10);
     if (!Number.isFinite(s) || !Number.isFinite(a)) return false;
+    if (Array.isArray(range.selectedSurahs) && range.selectedSurahs.length) {
+      return range.selectedSurahs.indexOf(s) !== -1;
+    }
     if (range.startSurah && range.endSurah) {
       var start = { surah: +range.startSurah, ayah: +range.startAyah || 1 };
       var end = { surah: +range.endSurah, ayah: +range.endAyah || (getSurah(+range.endSurah)?.ayahs || 999) };
@@ -366,6 +369,7 @@
       });
       return delta;
     }
+    function pageOf(changes) { var m = changes[0] && (changes[0].after || changes[0].before); return m && m.page ? m.page : null; }
     function commit(changes) {
       if (!changes.length) return { delta: { mist: 0, prompt: 0 }, changed: 0 };
       var delta = apply(changes, true);
@@ -409,13 +413,13 @@
       var changes = past.pop();
       if (!changes) return null;
       future.push(changes);
-      return { delta: apply(changes, false) };
+      return { delta: apply(changes, false), page: pageOf(changes) };
     }
     function redo() {
       var changes = future.pop();
       if (!changes) return null;
       past.push(changes);
-      return { delta: apply(changes, true) };
+      return { delta: apply(changes, true), page: pageOf(changes) };
     }
     function getMark(id) { var i = indexOfId(id); return i === -1 ? null : state.marks[i]; }
     function getCounts(pageNum) {

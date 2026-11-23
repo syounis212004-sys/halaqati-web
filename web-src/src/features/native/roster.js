@@ -785,14 +785,14 @@
   NS.setType=function(k){
     const D=R.rec;D.note=$id('nrRecNote')?.value??D.note;D.type=k;
     // switching the activity discards the picked range (Android: selectedQuranRange=null, pages=0) unless it came from the plan; re-apply the plan duty when one exists
-    D.range=null;D.planId=null;D.planType=null;
+    D.range=null;D.planId=null;D.planType=null;D.mushaf=null;
     if(!D.existing&&k!=='tilawah'){
       const se=sessionOf(D.seId),sn=snapshotFor(D.sid,k,se.session_date);
       if(sn){D.planId=sn.plan.id;D.planType=sn.plan.plan_type;const a=sn.act?(sn.act.scheduledToday?sn.act.assignment:null)||sn.act.assignment||sn.act.extraAssignment:null;D.range=rangeFromAssignment(a)}
     }
     drawRec();
   };
-  NS.cnt=function(key,delta){const D=R.rec;D[key]=Math.max(0,(D[key]||0)+delta);drawRec()};
+  NS.cnt=function(key,delta){const D=R.rec,floor=D.mushaf?D.mushaf.getCounts().total[key]||0:0;D[key]=Math.max(floor,(D[key]||0)+delta);drawRec()}; // marks on the mushaf are a floor: erase them there to go lower
   NS.tl=function(key,val,live){
     const D=R.rec;D.tl[key]=val;
     if(live){const o=$id('nrRv_'+key);if(o)o.textContent=val+'/5';partialRec();return}

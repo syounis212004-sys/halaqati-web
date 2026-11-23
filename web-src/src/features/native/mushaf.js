@@ -58,7 +58,7 @@
     var linesEl = $('[data-lines]'), pageEl = $('.hm-page'), liveEl = $('[data-live]'), inputEl = $('[data-act="page"]');
 
     function curRange() { try { return (opts.getRange && opts.getRange()) || null; } catch (_e) { return null; } }
-    function rangeStartPage() { var r = curRange(); return r && r.startSurah ? S.resolvePageForAyah(r.startSurah, r.startAyah || 1) : null; }
+    function rangeStartPage() { var r = curRange(); if (!r) return null; if (r.startSurah) return S.resolvePageForAyah(r.startSurah, r.startAyah || 1); return r.startPage ? S.clampPage(Math.min(+r.startPage, +(r.endPage || r.startPage))) : null; }
     function counters() {
       var c = session.getCounts().total, ext = opts.getCounters ? opts.getCounters() : null;
       return ext ? { mistakes: ext.mistakes, prompts: ext.prompts, marked: c } : { mistakes: c.mistakes, prompts: c.prompts, marked: c };
@@ -84,6 +84,11 @@
       $('[data-score]').innerHTML = html;
     }
 
+    function undoRedo(kind) {
+      var r = kind === 'undo' ? session.undo() : session.redo(); if (!r) return;
+      applyResult({ delta: r.delta, changed: 1 }, kind === 'undo' ? 'تراجع' : 'إعادة');
+      if (r.page && r.page !== session.getState().page) { loadPage(r.page); liveEl.textContent += '. انتقلنا إلى صفحة ' + r.page; }
+    }
     function announce(r, what) { if (r && r.changed) { var c = counters(); liveEl.textContent = what + '. أخطاء ' + c.mistakes + '، تلقين ' + c.prompts; } }
     function applyResult(r, what) {
       if (r && r.delta && (r.delta.mist || r.delta.prompt) && typeof opts.onMark === 'function') opts.onMark({ mist: r.delta.mist, prompt: r.delta.prompt });
@@ -134,7 +139,7 @@
         el.classList.toggle('is-mistake', !!m && m.type === 'mistake');
         el.classList.toggle('is-prompt', !!m && m.type === 'prompt');
         el.classList.toggle('is-harakah', !!m && m.kind === 'harakah');
-        el.classList.toggle('in-range', !!(range && w && S.isAyahInRange(w.surah, w.ayah, range)));
+        el.classList.toggle('in-range', !!(range && w && S.isAyahInRange(w.surah, w.ayah, range.startSurah || (range.selectedSurahs && range.selectedSurahs.length) ? range : Object.assign({}, range, { page: session.getState().page }))));
         if (m) el.setAttribute('aria-label', el.textContent + ' — ' + (m.type === 'mistake' ? 'خطأ' : 'تلقين') + (m.kind === 'harakah' ? ' في الحركة' : m.kind === 'ayah_start' ? ' في بداية الآية' : ''));
         else el.removeAttribute('aria-label');
       });
@@ -144,7 +149,7 @@
     function loadPage(n) {
       var token = ++ui.token, p = session.setPage(n);
       ui.loading = true; ui.error = null; closeKinds(); renderPage(); updateHud();
-      return loader.loadPage(p).then(function (res) {
+      return Promise.resolve().then(function () { return loader.loadPage(p); }).catch(function () { return { ok: false, error: 'تعذر تحميل بيانات الصفحة' }; }).then(function (res) {
         if (ui.dead || token !== ui.token) return res;
         ui.loading = false;
         if (res && res.ok) { ui.data = res.data; ui.lines = S.buildPageLines(res.data).lines; ui.error = null; loader.prefetchNext(p); }
@@ -187,7 +192,8 @@
     // ---- pointer: tap, long press, drag span
     linesEl.addEventListener('pointerdown', function (e) {
       var w = e.target.closest && e.target.closest('.hm-word'); if (!w) return;
-      closeKinds();
+      if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      clearTimeout(ui.pressTimer); closeKinds();
       var id = w.getAttribute('data-wid');
       ui.drag = { x: e.clientX, y: e.clientY, t: Date.now(), anchor: id, current: id, moved: false, long: false };
       if (ui.tool === 'tap') ui.pressTimer = setTimeout(function () { if (ui.drag && !ui.drag.moved) { ui.drag.long = true; openKinds(w); } }, 450);
@@ -212,6 +218,11 @@
     linesEl.addEventListener('pointercancel', function (e) { endPointer(e, true); });
     linesEl.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('.hm-word')) e.preventDefault(); });
 
+    linesEl.addEventListener('focusin', function (e) {
+      var w = e.target.closest && e.target.closest('.hm-word'); if (!w || w.getAttribute('data-wid') === ui.focusId) return;
+      var cur = wordEl(ui.focusId); if (cur) cur.setAttribute('tabindex', '-1');
+      w.setAttribute('tabindex', '0'); ui.focusId = w.getAttribute('data-wid');
+    });
     // ---- buttons, page input, keyboard
     container.addEventListener('click', function (e) {
       var t = e.target.closest('[data-tool],[data-type],[data-act]'); if (!t) return;
@@ -220,10 +231,9 @@
       var a = t.getAttribute('data-act'), page = session.getState().page;
       if (a === 'prev') loadPage(page - 1); else if (a === 'next') loadPage(page + 1); else if (a === 'retry') loadPage(page);
       else if (a === 'range') loadPage(rangeStartPage() || page);
-      else if (a === 'undo') { var u = session.undo(); if (u) applyResult({ delta: u.delta, changed: 1 }, 'تراجع'); }
-      else if (a === 'redo') { var r = session.redo(); if (r) applyResult({ delta: r.delta, changed: 1 }, 'إعادة'); }
+      else if (a === 'undo' || a === 'redo') undoRedo(a);
     });
-    inputEl.addEventListener('change', function () { if (!ui.dead) loadPage(inputEl.value); });
+    inputEl.addEventListener('change', function () { if (ui.dead || inputEl.value === '') { inputEl.value = session.getState().page; return; } loadPage(inputEl.value).then(function () { inputEl.value = session.getState().page; }); });
     function focusWord(id) {
       var el = id && wordEl(id); if (!el) return;
       var cur = wordEl(ui.focusId); if (cur) cur.setAttribute('tabindex', '-1');
@@ -242,14 +252,13 @@
     }
     container.addEventListener('keydown', function (e) {
       var t = e.target;
-      if (t && t.tagName === 'INPUT') { if (e.key === 'Enter') { e.preventDefault(); loadPage(t.value); } return; }
-      if (e.key === 'Escape' && pageEl.querySelector('.hm-kinds')) { e.stopPropagation(); closeKinds(); return; }
-      if ((e.key === 'Enter' || e.key === ' ') && t && t.classList && t.classList.contains('hm-word')) { e.preventDefault(); actOnWord(t.getAttribute('data-wid')); return; }
+      if (t && t.tagName === 'INPUT') { if (e.key === 'Enter') { e.preventDefault(); t.blur(); } return; }
+      if (e.key === 'Escape' && pageEl.querySelector('.hm-kinds')) { e.preventDefault(); e.stopPropagation(); closeKinds(); var f = wordEl(ui.focusId); if (f) f.focus(); return; }
+      if ((e.key === 'Enter' || e.key === ' ') && t && t.classList && t.classList.contains('hm-word')) { e.preventDefault(); if (e.repeat) return; actOnWord(t.getAttribute('data-wid')); return; }
       var a = S.shortcutAction(e); if (!a) return;
       e.preventDefault();
       if (a.type === 'type') setType(a.value); else if (a.type === 'tool') setTool(a.value);
-      else if (a.type === 'undo') { var u = session.undo(); if (u) applyResult({ delta: u.delta, changed: 1 }, 'تراجع'); }
-      else if (a.type === 'redo') { var r = session.redo(); if (r) applyResult({ delta: r.delta, changed: 1 }, 'إعادة'); }
+      else if (a.type === 'undo' || a.type === 'redo') undoRedo(a.type);
       else if (a.type === 'move' && t && t.classList && t.classList.contains('hm-word')) moveFocus(a.value);
     });
 
