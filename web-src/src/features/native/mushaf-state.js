@@ -9,7 +9,15 @@
   var VALID_MARK_TYPES = ['mistake', 'prompt'];
   var VALID_KINDS = ['word', 'harakah', 'ayah_start'];
   var QURAN_API_BASE = 'https://api.quran.com/api/v4/verses/by_page/';
-  var CACHE_NAME = 'halaqati-mushaf-pages-v1';
+  var CACHE_NAME = 'halaqati-mushaf-pages-v2';
+  var OLD_CACHES = ['halaqati-mushaf-pages-v1'];
+  var FONT_CACHE_NAME = 'halaqati-mushaf-fonts-v1';
+  var PAGE_FONT_URL = 'https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/p';
+  var SURAH_NAMES_FONT_URL = 'https://verses.quran.foundation/fonts/quran/surah-names/v1/sura_names.woff2';
+  // Quran Foundation terms: API text may be cached for one week at most (font files are exempt)
+  var DATA_MAX_AGE_MS = 7 * 24 * 3600 * 1000;
+  // Short lines the 1421H Madinah print centres (page -> line numbers); layout metadata from the QUL page layout. Pages 1-2 are fully centred.
+  var CENTERED_LINES = { 255: [2], 528: [9], 534: [6], 545: [6], 586: [1], 593: [2], 594: [5], 600: [10], 602: [5, 11, 15], 603: [10, 15], 604: [4, 9, 14, 15] };
 
   // Compact 114-surah index: [number, arabicName, ayahCount, madinahStartPage]
   var SURAH_TUPLES = [
@@ -155,18 +163,25 @@
 
   function normalizeApiPageResponse(page, payload) {
     var versesRaw = payload && Array.isArray(payload.verses) ? payload.verses : [];
-    var words = [];
+    var words = [], items = [];
     var verses = versesRaw.map(function (v) {
       var key = v.verse_key || v.ayah_key;
       var parsed = parseAyahKey(key);
       var raw = Array.isArray(v.words) ? v.words : [];
       var textWords = raw.filter(function (w) { return w && w.char_type_name !== 'end'; });
       if (parsed) {
-        textWords.forEach(function (w) {
+        raw.forEach(function (w) {
+          if (!w) return;
+          var line = Number(w.line_number) || 0, fontPage = Number(w.v2_page) || Number(w.page_number) || clampPage(page);
+          if (w.char_type_name === 'end') {
+            items.push({ id: parsed.surah + ':' + parsed.ayah + ':end', ayah_key: parsed.surah + ':' + parsed.ayah, end: true, glyph: w.code_v2 || '', fontPage: fontPage, line: line });
+            return;
+          }
           var pos = Number(w.position);
           if (!(pos >= 1)) return;
-          words.push({ id: parsed.surah + ':' + parsed.ayah + ':' + pos, ayah_key: parsed.surah + ':' + parsed.ayah, surah: parsed.surah, ayah: parsed.ayah, pos: pos,
-            text: w.text_uthmani || w.text || '', line: Number(w.line_number) || 0, ayahStart: pos === 1 });
+          var word = { id: parsed.surah + ':' + parsed.ayah + ':' + pos, ayah_key: parsed.surah + ':' + parsed.ayah, surah: parsed.surah, ayah: parsed.ayah, pos: pos,
+            text: w.text_uthmani || '', glyph: w.code_v2 || '', fontPage: fontPage, line: line, ayahStart: pos === 1 };
+          words.push(word); items.push(word);
         });
       }
       var text = v.text_uthmani || textWords.map(function (w) { return w.text_uthmani || w.text || ''; }).join(' ').trim();
@@ -181,15 +196,15 @@
       };
     }).filter(function (v) { return v.ayah_key && v.text; });
     var juz = versesRaw[0] && versesRaw[0].juz_number ? versesRaw[0].juz_number : null;
-    return { page: clampPage(page), juz: juz, source: 'quran-api-v4', verses: verses, words: words };
+    return { page: clampPage(page), juz: juz, source: 'quran-api-v4', verses: verses, words: words, items: items };
   }
 
   /* The printed Madinah page has 15 lines. Lines without words are the surah banner / basmala lines (right before a surah's first ayah) or empty. */
   function buildPageLines(pageData) {
     var byLine = {};
-    ((pageData && pageData.words) || []).forEach(function (w) { if (w.line >= 1 && w.line <= 15) (byLine[w.line] = byLine[w.line] || []).push(w); });
+    ((pageData && pageData.items) || (pageData && pageData.words) || []).forEach(function (w) { if (w.line >= 1 && w.line <= 15) (byLine[w.line] = byLine[w.line] || []).push(w); });
     var lines = [];
-    for (var i = 1; i <= 15; i++) lines.push({ n: i, kind: byLine[i] ? 'text' : 'empty', words: byLine[i] || [] });
+    for (var i = 1; i <= 15; i++) lines.push({ n: i, kind: byLine[i] ? 'text' : 'empty', items: byLine[i] || [], words: (byLine[i] || []).filter(function (w) { return !w.end; }) });
     lines.forEach(function (line, idx) {
       var first = line.words[0];
       if (!first || first.pos !== 1 || first.ayah !== 1) return;
@@ -205,6 +220,51 @@
     return { lines: lines };
   }
 
+  /* QCF V2 page fonts (King Fahd Complex, unmodified) from the Quran Foundation CDN, kept in the Cache API so a page read once works offline.
+   * Terms: bundling/caching fonts is allowed for an app whose developer account is active and that credits Quran Foundation (credit is in the mushaf footer). */
+  function createFontLoader(options) {
+    var opts = options || {};
+    var fetchImpl = opts.fetchImpl || (typeof fetch === 'function' ? fetch.bind(root) : null);
+    var cachesImpl = opts.cachesImpl || (typeof caches !== 'undefined' ? caches : null);
+    var FaceImpl = opts.FontFaceImpl || (typeof FontFace !== 'undefined' ? FontFace : null);
+    var fontsImpl = opts.fontsImpl || (typeof document !== 'undefined' ? document.fonts : null);
+    var maxFonts = opts.maxFonts || 24;
+    var loaded = new Map(), inflight = new Map();
+
+    async function bytes(url) {
+      var cache = null;
+      try { cache = cachesImpl && cachesImpl.open ? await cachesImpl.open(FONT_CACHE_NAME) : null; } catch (_e) { cache = null; }
+      try { var kept = cache ? await cache.match(url) : null; if (kept) return await kept.arrayBuffer(); } catch (_e) {}
+      if (!fetchImpl) throw new Error('no network');
+      var res = await fetchImpl(url);
+      if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : 'ERR'));
+      var copy = typeof res.clone === 'function' ? res.clone() : null;
+      var buf = await res.arrayBuffer();
+      try { if (cache && copy) await cache.put(url, copy); } catch (_e) {}
+      return buf;
+    }
+    function register(family, url) {
+      if (loaded.has(family)) { var f = loaded.get(family); loaded.delete(family); loaded.set(family, f); return Promise.resolve({ ok: true, family: family }); }
+      if (inflight.has(family)) return inflight.get(family);
+      var p = (async function () {
+        try {
+          if (!FaceImpl || !fontsImpl) throw new Error('no FontFace');
+          var face = new FaceImpl(family, await bytes(url));
+          await face.load(); fontsImpl.add(face); loaded.set(family, face);
+          while (loaded.size > maxFonts) { var oldest = loaded.keys().next().value; try { fontsImpl.delete(loaded.get(oldest)); } catch (_e) {} loaded.delete(oldest); }
+          return { ok: true, family: family };
+        } catch (e) { return { ok: false, family: family, error: String(e && e.message || e) }; }
+        finally { inflight.delete(family); }
+      })();
+      inflight.set(family, p);
+      return p;
+    }
+    return {
+      loadPageFont: function (page) { var n = clampPage(page); return register('qcf-v2-p' + n, PAGE_FONT_URL + n + '.woff2'); },
+      loadSurahNames: function () { return register('qcf-surah-names', SURAH_NAMES_FONT_URL); }
+    };
+  }
+
   // Page fetcher with in-memory cache + Cache API copy (offline) and a timeout; failures are reported, never papered over
   function createPageLoader(options) {
     var opts = options || {};
@@ -213,6 +273,7 @@
     var fetchImpl = opts.fetchImpl || (typeof fetch === 'function' ? fetch.bind(root) : null);
     var cachesImpl = opts.cachesImpl || (typeof caches !== 'undefined' ? caches : null);
     var timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 12000;
+    var now = typeof opts.now === 'function' ? opts.now : Date.now;
 
     function getUrl(page) {
       return QURAN_API_BASE + clampPage(page) +
@@ -225,6 +286,8 @@
         var cache = await cachesImpl.open(CACHE_NAME);
         var match = await cache.match(url);
         if (!match) return null;
+        var at = Number(match.headers && match.headers.get && match.headers.get('x-halaqati-cached-at'));
+        if (at && now() - at > DATA_MAX_AGE_MS) { try { await cache.delete(url); } catch (_e) {} return null; }
         return await match.json();
       } catch (_e) {
         return null;
@@ -235,7 +298,9 @@
       if (!cachesImpl || typeof cachesImpl.open !== 'function' || !responseClone) return;
       try {
         var cache = await cachesImpl.open(CACHE_NAME);
-        await cache.put(url, responseClone);
+        var headers = new Headers({ 'content-type': 'application/json', 'x-halaqati-cached-at': String(now()) });
+        await cache.put(url, new Response(await responseClone.text(), { status: 200, headers: headers }));
+        OLD_CACHES.forEach(function (n) { try { cachesImpl.delete(n); } catch (_e) {} });
       } catch (_e) {
         // Ignore quota/private-mode cache errors
       }
@@ -313,12 +378,16 @@
     return ids.slice(Math.min(a, b), Math.max(a, b) + 1);
   }
 
-  /* One font scale so the widest line fits the page; a line that fills the page after scaling is justified, a shorter one is centred. */
-  function fitLines(naturals, inner) {
-    var list = naturals || [], widest = Math.max.apply(null, [0].concat(list));
-    if (!(inner > 0)) return { scale: 1, modes: list.map(function (n) { return n > 0 ? 'justify' : 'none'; }) };
-    var scale = widest > 0 ? Math.min(1, Math.round(inner * 0.98 / widest * 1000) / 1000) : 1;
-    return { scale: scale, modes: list.map(function (n) { return n <= 0 ? 'none' : (n * scale / inner >= 0.88 ? 'justify' : 'center'); }) };
+  /* QCF lines are drawn edge to edge at one size; only a line wider than the page is made smaller (one ratio), as the print never stretches words. */
+  function overflowScale(natural, available) {
+    if (!(available > 0) || !(natural > available)) return 1;
+    return Math.round(available * 0.99 / natural * 1000) / 1000;
+  }
+  function isOpeningPage(page) { return page === 1 || page === 2; }
+  function isCenteredLine(page, line) {
+    if (isOpeningPage(page)) return true;
+    var c = CENTERED_LINES[page];
+    return !!c && c.indexOf(line) !== -1;
   }
 
   function shortcutAction(e) {
@@ -456,7 +525,11 @@
     parseWordId: parseWordId,
     buildPageLines: buildPageLines,
     spanBetween: spanBetween,
-    fitLines: fitLines,
+    overflowScale: overflowScale,
+    isOpeningPage: isOpeningPage,
+    isCenteredLine: isCenteredLine,
+    createFontLoader: createFontLoader,
+    PAGE_FONT_URL: PAGE_FONT_URL,
     shortcutAction: shortcutAction,
     QURAN_API_BASE: QURAN_API_BASE,
     CACHE_NAME: CACHE_NAME,

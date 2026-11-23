@@ -8,7 +8,7 @@
   var S = root.HalaqatiMushafState, SC = root.HalaqatiMushafScoring;
   if (!S) return;
   var H = function (v) { return S.escapeHtml(v); };
-  var sharedLoader = S.createPageLoader();
+  var sharedLoader = S.createPageLoader(), fontLoader = S.createFontLoader(), basmalaCache = null;
   var GRADE_AR = { excellent: 'ممتاز', very_good: 'جيد جداً', good: 'جيد', repeat: 'إعادة', not_rated: 'غير مقيَّم' };
   var KINDS = [['word', 'كلمة'], ['harakah', 'حركة'], ['ayah_start', 'بداية آية']];
   var ICONS = {
@@ -51,6 +51,7 @@
           '<button type="button" class="hm-tool" data-act="undo" title="تراجع (Ctrl+Z)" aria-label="تراجع">' + icon('undo') + '</button>' +
           '<button type="button" class="hm-tool" data-act="redo" title="إعادة (Ctrl+Shift+Z)" aria-label="إعادة">' + icon('undo', true) + '</button>' +
         '</div>' +
+        '<div class="hm-credit">خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
         '<div class="hm-live" aria-live="polite" data-live></div>' +
       '</div>';
 
@@ -107,28 +108,35 @@
         linesEl.innerHTML = '<div class="hm-error" role="alert" style="grid-row:1 / -1"><p>تعذّر عرض صفحة ' + H(digits(st.page)) + '.</p><p>' + H(ui.error || 'تأكد من الاتصال بالإنترنت.') + ' يمكنك متابعة التسميع بالعدّادات اليدوية دون المصحف.</p><button type="button" class="hm-pagebtn" data-act="retry">إعادة المحاولة</button></div>';
         return;
       }
-      var first = true;
-      linesEl.innerHTML = ui.lines.map(function (l) {
-        if (l.kind === 'banner') return '<div class="hm-line is-banner"><span>سورة ' + H((S.getSurah(l.surah) || {}).name || '') + '</span></div>';
-        if (l.kind === 'basmala') return '<div class="hm-line is-basmala" aria-hidden="true">﷽</div>';
+      var first = true, page = st.page, opening = S.isOpeningPage(page), shown = ui.lines;
+      if (opening) shown = shown.filter(function (l) { return l.kind !== 'empty'; });
+      linesEl.classList.toggle('is-opening', opening);
+      linesEl.innerHTML = shown.map(function (l) {
+        if (l.kind === 'banner') return '<div class="hm-line is-banner"><span class="hm-frame" role="img" aria-label="سورة ' + H((S.getSurah(l.surah) || {}).name || '') + '"><span class="hm-sname" aria-hidden="true">surah</span><span class="hm-sname" aria-hidden="true">' + H(String(l.surah).padStart(3, '0')) + '</span></span></div>';
+        if (l.kind === 'basmala') return '<div class="hm-line is-basmala" role="img" aria-label="بسم الله الرحمن الرحيم" style="font-family:qcf-v2-p1">' + (basmalaCache || []).map(function (g) { return '<span aria-hidden="true">' + H(g) + '</span>'; }).join('') + '</div>';
         if (l.kind === 'empty') return '<div class="hm-line"></div>';
-        return '<div class="hm-line is-justify">' + l.words.map(function (w) {
+        return '<div class="hm-line' + (S.isCenteredLine(page, l.n) ? ' is-center' : '') + '">' + l.items.map(function (w) {
+          var fam = 'style="font-family:qcf-v2-p' + (+w.fontPage || page) + '"';
+          if (w.end) return '<span class="hm-end" aria-hidden="true" ' + fam + '>' + H(w.glyph) + '</span>';
           var tab = first ? 0 : -1; first = false;
-          return '<span class="hm-word" lang="ar" role="button" tabindex="' + tab + '" data-wid="' + H(w.id) + '">' + H(w.text) + '</span>';
+          return '<span class="hm-word" lang="ar" role="button" tabindex="' + tab + '" aria-label="' + H(w.text) + '" data-wid="' + H(w.id) + '" ' + fam + '>' + H(w.glyph) + '</span>';
         }).join('') + '</div>';
       }).join('');
       ui.focusId = pageWords()[0] ? pageWords()[0].id : null;
       fit(); paintMarks();
     }
 
+    // one size for the whole page (CSS); only a line wider than the text block is made smaller, by one ratio
     function fit() {
-      var rows = [].slice.call(linesEl.querySelectorAll('.hm-line'));
-      linesEl.style.setProperty('--fit', '1');
-      rows.forEach(function (r) { r.classList.remove('is-justify', 'is-center'); r.style.justifyContent = 'flex-start'; });
-      var naturals = rows.map(function (r) { return r.querySelector('.hm-word') ? r.scrollWidth : 0; });
-      var res = S.fitLines(naturals, linesEl.clientWidth);
-      linesEl.style.setProperty('--fit', String(res.scale));
-      rows.forEach(function (r, i) { r.style.justifyContent = ''; if (res.modes[i] === 'justify') r.classList.add('is-justify'); else if (res.modes[i] === 'center') r.classList.add('is-center'); });
+      linesEl.querySelectorAll('.hm-line').forEach(function (row) {
+        row.style.fontSize = '';
+        if (!row.querySelector('.hm-word')) return;
+        var natural = 0, gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+        for (var i = 0; i < row.children.length; i++) natural += row.children[i].getBoundingClientRect().width;
+        natural += gap * Math.max(0, row.children.length - 1);
+        var k = S.overflowScale(natural, row.getBoundingClientRect().width);
+        if (k < 1) row.style.fontSize = 'calc(1em * ' + k + ')';
+      });
     }
 
     function paintMarks() {
@@ -146,14 +154,40 @@
       updateHud();
     }
 
+    // the glyph fonts (page font, surah names, page-1 font for the basmala) must be ready before the page is drawn
+    function prepareGlyphs(data, p) {
+      var fams = {}; (data.items || []).forEach(function (w) { fams[+w.fontPage || p] = 1; });
+      var needsBasmala = S.isOpeningPage(p) ? false : S.buildPageLines(data).lines.some(function (l) { return l.kind === 'basmala'; });
+      var jobs = Object.keys(fams).map(function (n) { return fontLoader.loadPageFont(+n); });
+      jobs.push(fontLoader.loadSurahNames());
+      if (needsBasmala || S.buildPageLines(data).lines.some(function (l) { return l.kind === 'basmala'; })) {
+        jobs.push(fontLoader.loadPageFont(1));
+        if (!basmalaCache) jobs.push(Promise.resolve(loader.loadPage(1)).then(function (r) {
+          if (r && r.ok) basmalaCache = (r.data.words || []).filter(function (w) { return w.ayah_key === '1:1'; }).slice(0, 4).map(function (w) { return w.glyph; });
+        }));
+      }
+      return Promise.all(jobs).then(function (r) {
+        var bad = r.filter(function (x) { return x && x.ok === false && /qcf-v2-p/.test(x.family || ''); });
+        if (bad.length) return 'تعذر تحميل خط الصفحة. تأكد من الاتصال بالإنترنت (تُحفظ الخطوط بعد أول تحميل).';
+        return null;
+      }).catch(function () { return 'تعذر تحميل خط الصفحة'; });
+    }
+
     function loadPage(n) {
       var token = ++ui.token, p = session.setPage(n);
       ui.loading = true; ui.error = null; closeKinds(); renderPage(); updateHud();
       return Promise.resolve().then(function () { return loader.loadPage(p); }).catch(function () { return { ok: false, error: 'تعذر تحميل بيانات الصفحة' }; }).then(function (res) {
         if (ui.dead || token !== ui.token) return res;
-        ui.loading = false;
-        if (res && res.ok) { ui.data = res.data; ui.lines = S.buildPageLines(res.data).lines; ui.error = null; loader.prefetchNext(p); }
-        else { ui.data = null; ui.lines = null; ui.error = (res && res.error) || 'تعذر تحميل بيانات الصفحة'; }
+        if (res && res.ok) {
+          return prepareGlyphs(res.data, p).then(function (fe) {
+            if (ui.dead || token !== ui.token) return res;
+            ui.loading = false;
+            if (fe) { ui.data = null; ui.lines = null; ui.error = fe; }
+            else { ui.data = res.data; ui.lines = S.buildPageLines(res.data).lines; ui.error = null; loader.prefetchNext(p); }
+            renderPage(); updateHud(); return res;
+          });
+        }
+        else { ui.loading = false; ui.data = null; ui.lines = null; ui.error = (res && res.error) || 'تعذر تحميل بيانات الصفحة'; }
         renderPage(); updateHud();
         return res;
       });

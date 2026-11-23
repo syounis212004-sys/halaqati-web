@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const S = require('../src/features/native/mushaf-state.js');
 
-const word = (pos, line, text = 'w' + pos, type = 'word') => ({ position: pos, line_number: line, char_type_name: type, text_uthmani: text });
+const word = (pos, line, text = 'w' + pos, type = 'word') => ({ position: pos, line_number: line, char_type_name: type, text_uthmani: text, code_v2: (type === 'end' ? 'E' : 'G') + pos, v2_page: 604 });
 const verse = (key, words) => ({ verse_key: key, juz_number: 1, words: [...words, word(words.length + 1, words.at(-1).line_number, String(key.split(':')[1]), 'end')] });
 // a page like page 604: three short surahs, banner + basmala lines before each, gaps elsewhere
 const shortSurahs = () => ({ verses: [
@@ -20,7 +20,9 @@ const firstPage = () => ({ verses: [verse('1:1', [word(1, 2), word(2, 2)]), vers
 test('normalize keeps every text word with its line, drops the end marker, flags the first word of each ayah', () => {
   const p = S.normalizeApiPageResponse(604, shortSurahs());
   assert.equal(p.words.length, 11, 'end markers are not words');
-  assert.deepEqual(p.words[0], { id: '112:1:1', ayah_key: '112:1', surah: 112, ayah: 1, pos: 1, text: 'w1', line: 3, ayahStart: true });
+  assert.deepEqual(p.words[0], { id: '112:1:1', ayah_key: '112:1', surah: 112, ayah: 1, pos: 1, text: 'w1', glyph: 'G1', fontPage: 604, line: 3, ayahStart: true });
+  assert.equal(p.items.length, 16, 'the printed page also draws the ayah-end markers (5 ayahs)');
+  assert.deepEqual(p.items.find(i => i.end && i.ayah_key === '112:1'), { id: '112:1:end', ayah_key: '112:1', end: true, glyph: 'E3', fontPage: 604, line: 3 });
   assert.equal(p.words[1].ayahStart, false);
   assert.equal(p.words.find(w => w.id === '113:2:3').line, 9);
   assert.equal(p.verses[0].text, 'w1 w2', 'the ayah text view used elsewhere is unchanged');
@@ -133,15 +135,6 @@ test('spanBetween: reading order across lines, either drag direction, unknown id
   assert.deepEqual(S.spanBetween(lines, '1:1:1', '112:1:1'), []);
 });
 
-test('fitLines: one font scale so the longest line fits the page, full lines are justified, short lines centred, empty lines ignored', () => {
-  const r = S.fitLines([290, 320, 0, 120], 300);
-  assert.equal(r.scale, 0.919); // 300 * 0.98 / 320, rounded to 3 places
-  assert.deepEqual(r.modes, ['justify', 'justify', 'none', 'center']);
-  assert.equal(S.fitLines([100, 200], 300).scale, 1, 'never scales up');
-  assert.deepEqual(S.fitLines([], 300), { scale: 1, modes: [] });
-  assert.equal(S.fitLines([100], 0).scale, 1, 'a zero-width page (not laid out yet) is not a reason to shrink to nothing');
-});
-
 test('keyboard map: 1/2 type, T/H/E tools, Ctrl+Z undo, Ctrl+Shift+Z or Ctrl+Y redo, arrows move; other keys and other modifiers do nothing', () => {
   assert.deepEqual(S.shortcutAction({ key: '1' }), { type: 'type', value: 'mistake' });
   assert.deepEqual(S.shortcutAction({ key: '2' }), { type: 'type', value: 'prompt' });
@@ -168,4 +161,48 @@ test('undo/redo report the page of the mark they changed so the view can follow'
 test('a non-contiguous surah selection highlights only the chosen surahs', () => {
   const r = { startSurah: 2, endSurah: 5, selectedSurahs: [2, 5] };
   assert.equal(S.isAyahInRange(3, 1, r), false); assert.equal(S.isAyahInRange(5, 1, r), true);
+});
+
+test('each line keeps the words for marking and also the ayah-end markers for drawing, in print order', () => {
+  const lines = S.buildPageLines(S.normalizeApiPageResponse(604, shortSurahs())).lines;
+  assert.deepEqual(lines[2].items.map(i => i.glyph), ['G1', 'G2', 'E3']);
+  assert.deepEqual(lines[2].words.map(w => w.id), ['112:1:1', '112:1:2'], 'markers are never markable words');
+  assert.equal(S.spanBetween(lines, '112:1:2', '112:2:1').length, 2, 'a span never contains a marker');
+});
+
+test('layout facts: pages 1-2 are the 8-line opening pages; centred short lines come from the print layout table', () => {
+  assert.equal(S.isOpeningPage(1), true); assert.equal(S.isOpeningPage(2), true); assert.equal(S.isOpeningPage(3), false);
+  assert.equal(S.isCenteredLine(604, 4), true); assert.equal(S.isCenteredLine(602, 15), true);
+  assert.equal(S.isCenteredLine(604, 3), false); assert.equal(S.isCenteredLine(3, 5), false);
+  assert.equal(S.isCenteredLine(1, 5), true, 'opening pages are fully centred');
+});
+
+test('overflowScale: only a line wider than the page is made smaller, by one ratio (no per-line tuning of fitting lines)', () => {
+  assert.equal(S.overflowScale(290, 300), 1); assert.equal(S.overflowScale(300, 300), 1);
+  assert.equal(S.overflowScale(330, 300), 0.9); // 300 * 0.99 / 330
+  assert.equal(S.overflowScale(100, 0), 1);
+});
+
+const fontFace = () => { const made = []; class FF { constructor(fam, src) { this.family = fam; this.src = src; made.push(this); } async load() { return this; } } return { FF, made }; };
+const fakeFonts = () => { const set = new Set(); return { set, add: f => set.add(f), delete: f => set.delete(f) }; };
+const okBin = () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(8), clone() { return okBin(); } });
+const memCaches = () => { const m = new Map(); return { m, open: async () => ({ match: async u => m.get(u) || null, put: async (u, r) => { m.set(u, r); } }) }; };
+
+test('font loader: fetches a page font from the official CDN once, keeps a copy for offline, and registers it under its own family', async () => {
+  const { FF, made } = fontFace(), fonts = fakeFonts(), caches = memCaches(); let calls = [];
+  const L = S.createFontLoader({ fetchImpl: async u => { calls.push(u); return okBin(); }, cachesImpl: caches, FontFaceImpl: FF, fontsImpl: fonts });
+  assert.equal((await L.loadPageFont(3)).family, 'qcf-v2-p3');
+  assert.deepEqual(calls, ['https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/p3.woff2']);
+  await L.loadPageFont(3); assert.equal(calls.length, 1, 'already registered');
+  const L2 = S.createFontLoader({ fetchImpl: async () => { throw new Error('offline'); }, cachesImpl: caches, FontFaceImpl: FF, fontsImpl: fakeFonts() });
+  assert.equal((await L2.loadPageFont(3)).ok, true, 'a later session works offline from the kept copy');
+  assert.equal((await L2.loadPageFont(9)).ok, false, 'a font never downloaded cannot be drawn offline');
+  assert.equal(made.length >= 2, true);
+});
+
+test('font loader: only the most recent page fonts stay registered (memory)', async () => {
+  const { FF } = fontFace(), fonts = fakeFonts();
+  const L = S.createFontLoader({ fetchImpl: async () => okBin(), cachesImpl: memCaches(), FontFaceImpl: FF, fontsImpl: fonts, maxFonts: 3 });
+  for (const p of [1, 2, 3, 4, 5]) await L.loadPageFont(p);
+  assert.equal(fonts.set.size, 3);
 });

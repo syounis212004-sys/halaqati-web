@@ -49,7 +49,7 @@ test('tap vs scroll: a quick still tap is a tap, a drag, a long press or a cance
 
 // ---- loader: the Quran text only ever comes from the API / its cache; failures are reported, never papered over
 const apiPage = (n, words = ['w1', 'w2']) => ({ verses: [{ verse_key: n + ':1', juz_number: 1, words: [...words.map((t, i) => ({ char_type_name: 'word', text_uthmani: t, line_number: i + 1 })), { char_type_name: 'end', text_uthmani: '1', line_number: 9 }] }] });
-const okRes = body => ({ ok: true, status: 200, json: async () => body, clone() { return okRes(body); } });
+const okRes = body => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body), clone() { return okRes(body); } });
 const noCache = { open: async () => ({ match: async () => null, put: async () => {} }) };
 
 test('loader: success is normalised (end marker dropped), cached in memory, and fetched once', async () => {
@@ -103,4 +103,14 @@ test('the legacy #reportDlg monkey-patching is gone and the assets are loaded at
   const m = read('main.js');
   assert.match(m, /native-mushaf\.css/); assert.match(m, /nativeMushafStateUrl/); assert.match(m, /nativeMushafUrl/);
   assert.ok(m.indexOf('nativeMushafStateUrl, ') < m.indexOf('nativeMushafUrl, '), 'engine loads before the component');
+});
+
+test('page data older than a week is refetched (Quran Foundation caching limit); fresh copies are used offline', async () => {
+  const body = JSON.stringify(apiPage(9, ['c1']));
+  const store = new Map(), cachesImpl = { open: async () => ({ match: async u => store.get(u) || null, put: async (u, r) => { store.set(u, r); } }) };
+  let calls = 0; const mk = () => S.createPageLoader({ cachesImpl, fetchImpl: async () => { calls++; return okRes(JSON.parse(body)); }, now: () => clock });
+  let clock = 1000000;
+  await mk().loadPage(9); assert.equal(calls, 1);
+  clock += 6 * 86400000; await mk().loadPage(9); assert.equal(calls, 1, 'fresh copy');
+  clock += 2 * 86400000; await mk().loadPage(9); assert.equal(calls, 2, 'stale copy is refetched');
 });

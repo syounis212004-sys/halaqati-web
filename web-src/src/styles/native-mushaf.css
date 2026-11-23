@@ -163,45 +163,57 @@ body.dark .hm-mushaf-root {
 }
 .hm-page-foot { justify-content: center; font-size: 3cqw; }
 
+/* the printed text block: the 15 lines share the height, each line is the glyph words of its own page font, edge to edge */
 .hm-lines {
-  --fit: 1;
+  /* QCF V2: a full printed line is ~15.6em wide and 15 lines need ~1.8em each, so the size is the smaller of the two limits.
+     Declared here, not on .hm-page: cqw on the container itself would measure the parent container. */
+  --qcf: min(calc(98cqw / 16), calc(146cqw / 27));
   flex: 1;
   min-height: 0;
+  width: calc(var(--qcf) * 15.9);
+  max-width: 100%;
+  margin-inline: auto;
   display: grid;
   grid-template-rows: repeat(15, 1fr);
-  font-family: 'KFGQPC Uthmanic Script HAFS', 'Amiri', serif;
-  font-size: calc(5.1cqw * var(--fit));
+  font-size: var(--qcf);
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
+.hm-lines.is-opening { grid-template-rows: none; align-content: center; gap: 0.4em; font-size: calc(var(--qcf) * 1.3); }
 .hm-lines.is-drag { touch-action: none; }
 .hm-line {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   min-height: 0;
-  line-height: 1;
+  line-height: 1.5;
   white-space: nowrap;
+  direction: rtl;
 }
-.hm-line.is-justify { justify-content: space-between; }
-.hm-line.is-center { justify-content: center; gap: 0.5em; }
-.hm-line.is-banner {
+.hm-line.is-center { justify-content: center; column-gap: 0.25em; }
+.hm-line.is-banner { justify-content: center; }
+.hm-frame {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  font: 700 3.3cqw Cairo, sans-serif;
+  width: 100%;
+  height: 1.75em;
+  box-sizing: border-box;
+  border: 0.14em double var(--hm-page-rule);
+  border-radius: 0.3em;
+  background: linear-gradient(var(--hm-page-bg), var(--hm-range-bg));
   color: var(--hm-page-frame);
+  pointer-events: none;
 }
-.hm-line.is-banner span {
-  padding: 0.2em 2.4em;
-  border: 0.3cqw solid var(--hm-page-rule);
-  border-radius: 1cqw;
-  background: var(--hm-range-bg);
-}
-.hm-line.is-basmala { justify-content: center; font-size: 5.4cqw; opacity: 0.85; }
+.hm-frame { column-gap: 0.45em; }
+.hm-sname { font-family: 'qcf-surah-names', Cairo, sans-serif; font-size: 1.15em; line-height: 1; }
+.hm-line.is-basmala { justify-content: center; column-gap: 0.2em; }
 
 .hm-word {
   position: relative;
   display: inline-block;
-  padding: 0 0.12em;
+  padding: 0;
   border-radius: 0.18em;
   cursor: pointer;
   transition: background-color 120ms ease;
@@ -317,7 +329,6 @@ body.dark .hm-mushaf-root {
 .hm-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
 @media (min-width: 900px) {
-  .hm-lines { font-size: calc(5.3cqw * var(--fit)); }
   .hm-mushaf-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto auto 1fr auto; column-gap: 20px; align-content: start; }
   .hm-pagewrap { grid-column: 1; grid-row: 1 / -1; }
   .hm-nav, .hm-types, .hm-score, .hm-dock { grid-column: 2; }
@@ -331,3 +342,6 @@ body.dark .hm-mushaf-root {
     animation: none !important;
   }
 }
+
+.hm-end { display: inline-block; pointer-events: none; }
+.hm-credit { font: 500 11px Cairo, sans-serif; opacity: 0.75; text-align: center; }
