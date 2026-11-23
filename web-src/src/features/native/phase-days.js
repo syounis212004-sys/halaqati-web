@@ -25,7 +25,17 @@
     if (existing.length && same(common, o && o.initial)) return existing;
     return common;
   }
-  var api = { commonDays: commonDays, resolveBulkDays: resolveBulkDays, sameDays: same, cleanDays: clean };
+  /* pace of a Sard phase against its own schedule: pages due so far = target x scheduled days already passed / scheduled days.
+   * Same bands as the plan engine (ratio > 1.10 ahead, >= 0.90 on track, >= 0.75 needs attention, else needs follow-up). */
+  function sardPace(pp) {
+    var target = Number(pp && pp.target) || 0, done = Number(pp && pp.completed) || 0, all = Number(pp && pp.scheduledDays) || 0, rem = Number(pp && pp.remainingDays) || 0;
+    var elapsed = Math.max(0, all - rem), expected = target > 0 && all > 0 ? Math.round(target * elapsed / all * 100) / 100 : 0;
+    if (!(expected > 0.001)) return { expected: 0, behind: 0, ahead: 0, health: 'green' };
+    var ratio = done / expected, behind = Math.max(0, Math.round((expected - done) * 100) / 100), ahead = Math.max(0, Math.round((done - expected) * 100) / 100);
+    var health = ratio > 1.10 ? 'blue' : ratio >= 0.90 ? 'green' : ratio >= 0.75 ? 'yellow' : 'red';
+    return { expected: expected, behind: ratio >= 0.90 && ratio <= 1.10 ? 0 : behind, ahead: ratio > 1.10 ? ahead : 0, health: health };
+  }
+  var api = { sardPace: sardPace, commonDays: commonDays, resolveBulkDays: resolveBulkDays, sameDays: same, cleanDays: clean };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.HalaqatiPhaseDays = api;
 })(typeof window !== 'undefined' ? window : globalThis);
