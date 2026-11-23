@@ -191,10 +191,7 @@ function isPassing(record, planInput) {
   if (!evaluation || evaluation === 'not_rated') {
     const pages = Number(record?.pages_count) || 0;
     if (pages > 0) {
-      const effective = Math.max(1, pages);
-      const density = (Number(record?.mistakes || 0) + Number(record?.prompts || 0) * 0.25) / effective;
-      const safety = Math.max(0, Math.min(100, 100 - (density * 15)));
-      evaluation = safety > 85 ? 'excellent' : safety >= 75 ? 'very_good' : safety >= 70 ? 'good' : 'repeat';
+      evaluation = typeof computeRecitationV7 === 'function' ? computeRecitationV7(record).evaluation : 'good';
     }
   }
   if (evaluation === 'repeat' || evaluation === 'weak' || evaluation === 'إعادة' || evaluation === 'ضعيف') return false;

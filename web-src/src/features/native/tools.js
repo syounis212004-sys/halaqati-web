@@ -342,10 +342,10 @@
     if(role()!=='admin')return '';
     return ncard(`<div class="nx-stack-s"><b class="nt-t-m">نسخة احتياطية كاملة</b><p class="nt-p">تحفظ كل بيانات الحلقات (الطلاب، الجلسات، التسميع، الخطط، الشهادات…) في ملف zip تختار مكانه. يحتوي بيانات طلاب وأولياء أمور فاحفظه في مكان آمن ولا ترسله لأحد. يُنصح بنسخة أسبوعية.</p>${NX.btn('إنشاء نسخة احتياطية الآن',{full:true,onclick:'rc27Backup(this)'})}<div class="nx-row nx-wrap">${typeof exportHalaqatiBackup==='function'?NX.btn('تصدير JSON',{kind:'text',small:true,onclick:'exportHalaqatiBackup()'}):''}${typeof chooseHalaqatiBackup==='function'?NX.btn('استرجاع نسخة',{kind:'text',small:true,onclick:'chooseHalaqatiBackup()'}):''}${typeof rc27OpenDeletedSessions==='function'?NX.btn('الجلسات المحذوفة',{kind:'text',small:true,onclick:'rc27OpenDeletedSessions()'}):''}</div></div>`,'nt-elev');
   }
-  // ---- V6 scoring card (V6ScoringSettingsCard)
+  // ---- scoring card (V7: the circle's rule)
   function v6Card(){
     const band=(l,r)=>`<div class="nt-band"><b>${l}</b><small><bdi dir="ltr">${r}</bdi></small></div>`;
-    return ncard(`<div class="nx-stack-s"><b class="nt-t-m">معيار جودة التسميع V6</b><p class="nt-p">الخطأ = 1 · التلقين = 0.5 · تطبيع على 15 سطرًا حسب السطور المسمعة فعليًا.</p><div class="nt-bands">${band('ممتاز','90–100%')}${band('جيد جدًا','80–&lt;90%')}${band('جيد','70–&lt;80%')}${band('يحتاج إعادة','&lt;70%')}</div></div>`,'nt-outline');
+    return ncard(`<div class="nx-stack-s"><b class="nt-t-m">معيار جودة التسميع</b><p class="nt-p">الخطأ = جملة (مرة واحدة) · التلقين = كلمة أو حركتان · الحد الأعلى للصفحة: خطأ وتلقينان.</p><div class="nt-bands">${band('ممتاز','90–100%')}${band('جيد جدًا','80–&lt;90%')}${band('جيد','70–&lt;80%')}${band('يحتاج إعادة','&lt;70%')}</div></div>`,'nt-outline');
   }
   // ---- appearance (المظهر)
   function appearanceCard(){

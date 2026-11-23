@@ -439,23 +439,44 @@
       for (var i = 0; i < state.marks.length; i++) if (state.marks[i].id === id) return i;
       return -1;
     }
-    function bump(delta, mark, sign) {
-      if (!mark) return;
-      if (mark.type === 'mistake') delta.mist += sign; else if (mark.type === 'prompt') delta.prompt += sign;
+    var spanSeq = 0;
+    // Counting rules of the circle: a mistake is a phrase (one highlighted span, or words that sit next to each other in an ayah) = 1;
+    // a prompt is one word, and every two harakat are one prompt.
+    function tally(list) {
+      var mist = list.filter(function (m) { return m.type === 'mistake'; }), parent = mist.map(function (_m, i) { return i; });
+      function find(i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
+      function join(a, b) { parent[find(a)] = find(b); }
+      var bySpan = {}, byKey = {}, loc = [];
+      mist.forEach(function (m, i) {
+        var pa = parseAyahKey(m.ayah_key); loc[i] = { s: pa ? pa.surah : 0, a: pa ? pa.ayah : 0 };
+        if (m.span) (bySpan[m.span] = bySpan[m.span] || []).push(i);
+        byKey[m.ayah_key + ':' + m.word] = i;
+      });
+      // a highlighted span is one phrase only while its words stay in a run: erasing a word in the middle splits it (the next ayah's first word continues the run)
+      Object.keys(bySpan).forEach(function (k) {
+        var idx = bySpan[k].sort(function (x, y) { return (loc[x].s - loc[y].s) || (loc[x].a - loc[y].a) || (mist[x].word - mist[y].word); });
+        for (var q = 1; q < idx.length; q++) {
+          var A = mist[idx[q - 1]], B = mist[idx[q]], la = loc[idx[q - 1]], lb = loc[idx[q]];
+          if ((A.ayah_key === B.ayah_key && B.word === A.word + 1) || (B.word === 1 && ((lb.s === la.s && lb.a === la.a + 1) || (lb.s === la.s + 1 && lb.a === 1)))) join(idx[q - 1], idx[q]);
+        }
+      });
+      mist.forEach(function (m, i) { var n = byKey[m.ayah_key + ':' + (m.word + 1)]; if (n !== undefined) join(i, n); });
+      var roots = {}; mist.forEach(function (_m, i) { roots[find(i)] = 1; });
+      var exact = 0;
+      list.forEach(function (m) { if (m.type === 'prompt') exact += m.kind === 'harakah' ? 0.5 : 1; });
+      return { mistakes: Object.keys(roots).length, prompts: Math.floor(exact), promptsExact: exact };
     }
     function setMark(id, mark) {
       var i = indexOfId(id);
       if (mark) { if (i === -1) state.marks.push(mark); else state.marks[i] = mark; }
       else if (i !== -1) state.marks.splice(i, 1);
     }
-    // apply a list of {id, before, after}: going forward uses `after`, going back uses `before`
+    // apply a list of {id, before, after}: going forward uses `after`, going back uses `before`; the delta is the change of the circle's counters
     function apply(changes, forward) {
-      var delta = { mist: 0, prompt: 0 };
-      changes.forEach(function (c) {
-        var from = forward ? c.before : c.after, to = forward ? c.after : c.before;
-        bump(delta, from, -1); bump(delta, to, +1); setMark(c.id, to);
-      });
-      return delta;
+      var t0 = tally(state.marks);
+      changes.forEach(function (c) { setMark(c.id, forward ? c.after : c.before); });
+      var t1 = tally(state.marks);
+      return { mist: t1.mistakes - t0.mistakes, prompt: t1.prompts - t0.prompts };
     }
     function pageOf(changes) { var m = changes[0] && (changes[0].after || changes[0].before); return m && m.page ? m.page : null; }
     function commit(changes) {
@@ -467,7 +488,7 @@
     function checkType(type) { if (VALID_MARK_TYPES.indexOf(type) === -1) throw new Error('Invalid mark type: ' + type); }
     function checkKind(kind) { if (VALID_KINDS.indexOf(kind) === -1) throw new Error('Invalid kind: ' + kind); }
     function parsedOrThrow(id) { var w = parseWordId(id); if (!w) throw new Error('Invalid word id: ' + id); return w; }
-    function build(id, w, type, kind, page) { return { id: id, ayah_key: w.ayah_key, word: w.pos, type: type, kind: kind, page: clampPage(page || state.page), at: nowFn() }; }
+    function build(id, w, type, kind, page, span) { var m = { id: id, ayah_key: w.ayah_key, word: w.pos, type: type, kind: kind, page: clampPage(page || state.page), at: nowFn() }; if (span) m.span = span; return m; }
 
     function markWord(id, type, o) {
       o = o || {}; checkType(type); if (o.kind) checkKind(o.kind);
@@ -479,12 +500,12 @@
     }
     function markSpan(ids, type, o) {
       o = o || {}; checkType(type); var kind = o.kind || 'word'; checkKind(kind);
-      var seen = {}, changes = [];
+      var seen = {}, changes = [], span = ++spanSeq;
       (ids || []).forEach(function (id) {
         if (seen[id]) return; seen[id] = true;
         var w = parsedOrThrow(id), i = indexOfId(id), existing = i === -1 ? null : state.marks[i];
         if (existing && existing.type === type && existing.kind === kind) return;
-        changes.push({ id: id, before: existing ? JSON.parse(JSON.stringify(existing)) : null, after: build(id, w, type, kind, o.page) });
+        changes.push({ id: id, before: existing ? JSON.parse(JSON.stringify(existing)) : null, after: build(id, w, type, kind, o.page, span) });
       });
       return commit(changes);
     }
@@ -511,12 +532,8 @@
     }
     function getMark(id) { var i = indexOfId(id); return i === -1 ? null : state.marks[i]; }
     function getCounts(pageNum) {
-      var p = clampPage(pageNum || state.page), page = { mistakes: 0, prompts: 0 }, total = { mistakes: 0, prompts: 0 };
-      state.marks.forEach(function (m) {
-        var k = m.type === 'mistake' ? 'mistakes' : 'prompts';
-        total[k] += 1; if (m.page === p) page[k] += 1;
-      });
-      return { page: page, total: total };
+      var p = clampPage(pageNum || state.page);
+      return { page: tally(state.marks.filter(function (m) { return m.page === p; })), total: tally(state.marks) };
     }
     function setPage(n) { state.page = clampPage(n); return state.page; }
     function exportPayload() {

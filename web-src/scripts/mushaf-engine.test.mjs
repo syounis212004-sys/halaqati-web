@@ -60,7 +60,7 @@ test('markWord: add, same type removes, other type replaces; the delta is what t
   assert.deepEqual(s.markWord('112:1:1', 'mistake', { page: 604 }).delta, { mist: 1, prompt: 0 });
   assert.deepEqual(s.markWord('112:1:1', 'prompt', { page: 604 }).delta, { mist: -1, prompt: 1 });
   assert.deepEqual(s.markWord('112:1:1', 'prompt', { page: 604 }).delta, { mist: 0, prompt: -1 });
-  assert.deepEqual(s.getCounts(604).total, { mistakes: 0, prompts: 0 });
+  assert.deepEqual(s.getCounts(604).total, { mistakes: 0, prompts: 0, promptsExact: 0 });
   assert.throws(() => s.markWord('bad id', 'mistake'), /Invalid word id/);
   assert.throws(() => s.markWord('112:1:1', 'nope'), /Invalid mark type/);
 });
@@ -74,27 +74,42 @@ test('kinds: word by default, harakah on request, invalid kinds rejected', () =>
   assert.throws(() => s.markWord('112:2:2', 'mistake', { kind: 'zzz' }), /Invalid kind/);
 });
 
-test('markSpan marks every word once (no toggling), returns the summed delta, and only changes what changed', () => {
+test('a highlighted phrase is ONE mistake however many words it covers; words next to each other join the same phrase', () => {
   const s = session();
-  s.markWord('112:1:2', 'mistake', { page: 604 });
-  const r = s.markSpan(['112:1:1', '112:1:2', '112:2:1'], 'mistake', { page: 604 });
-  assert.deepEqual(r.delta, { mist: 2, prompt: 0 }, 'the already-marked word adds nothing');
-  const r2 = s.markSpan(['112:1:1', '112:1:2'], 'prompt', { page: 604 });
-  assert.deepEqual(r2.delta, { mist: -2, prompt: 2 }, 'replacing mistakes with prompts moves the counts');
+  assert.deepEqual(s.markSpan(['112:1:1', '112:1:2', '112:2:1'], 'mistake', { page: 604 }).delta, { mist: 1, prompt: 0 }, 'three words, one phrase');
+  assert.deepEqual(s.markWord('112:2:2', 'mistake', { page: 604 }).delta, { mist: 0, prompt: 0 }, 'the next word joins the phrase (same ayah, next position)');
+  assert.deepEqual(s.markWord('113:1:1', 'mistake', { page: 604 }).delta, { mist: 1, prompt: 0 }, 'a word far away is a new mistake');
+  assert.deepEqual(s.getCounts(604).total, { mistakes: 2, prompts: 0, promptsExact: 0 });
 });
 
-test('eraseWords removes only marked words and reports the delta', () => {
+test('prompts: every word is one prompt, every two harakat are one prompt (an odd one counts only once its pair is marked)', () => {
   const s = session();
-  s.markSpan(['112:1:1', '112:1:2'], 'mistake', { page: 604 }); s.markWord('112:2:1', 'prompt', { page: 604 });
-  const r = s.eraseWords(['112:1:2', '112:2:1', '112:2:2']);
-  assert.deepEqual(r.delta, { mist: -1, prompt: -1 });
-  assert.equal(s.getMark('112:1:1').type, 'mistake'); assert.equal(s.getMark('112:1:2'), null);
+  assert.deepEqual(s.markWord('112:1:1', 'prompt', { page: 604 }).delta, { mist: 0, prompt: 1 });
+  assert.deepEqual(s.markWord('112:1:2', 'prompt', { page: 604, kind: 'harakah' }).delta, { mist: 0, prompt: 0 }, 'one harakah is half a prompt');
+  assert.deepEqual(s.markWord('112:2:1', 'prompt', { page: 604, kind: 'harakah' }).delta, { mist: 0, prompt: 1 }, 'the second harakah completes a prompt');
+  assert.deepEqual(s.getCounts(604).total, { mistakes: 0, prompts: 2, promptsExact: 2 });
+  assert.deepEqual(s.markWord('112:2:2', 'prompt', { page: 604, kind: 'ayah_start' }).delta, { mist: 0, prompt: 1 }, 'a start-of-ayah prompt is a word prompt');
+});
+
+test('a mistake mark replaced by a prompt (and back) moves the counts correctly', () => {
+  const s = session();
+  s.markSpan(['112:1:1', '112:1:2'], 'mistake', { page: 604 });
+  assert.deepEqual(s.markSpan(['112:1:1', '112:1:2'], 'prompt', { page: 604 }).delta, { mist: -1, prompt: 2 });
+  assert.deepEqual(s.undo().delta, { mist: 1, prompt: -2 });
+});
+
+test('eraseWords removes only marked words; a highlighted phrase stays one mistake until its last word is erased', () => {
+  const s = session();
+  s.markSpan(['112:1:1', '112:1:2', '112:2:1'], 'mistake', { page: 604 }); s.markWord('113:1:1', 'prompt', { page: 604 });
+  assert.deepEqual(s.eraseWords(['113:1:1', '113:1:2']).delta, { mist: 0, prompt: -1 });
+  assert.deepEqual(s.eraseWords(['112:1:2']).delta, { mist: 0, prompt: 0 }, 'the phrase is still one mistake');
+  assert.deepEqual(s.eraseWords(['112:1:1', '112:2:1']).delta, { mist: -1, prompt: 0 });
 });
 
 test('undo and redo walk the history and return the opposite delta, including after a page change', () => {
   const s = session();
   s.markWord('112:1:1', 'mistake', { page: 604 });
-  s.markSpan(['112:2:1', '112:2:2'], 'prompt', { page: 604 });
+  s.markSpan(['113:2:1', '113:2:2'], 'prompt', { page: 604 });
   s.setPage(603);
   assert.deepEqual(s.undo().delta, { mist: 0, prompt: -2 });
   assert.deepEqual(s.undo().delta, { mist: -1, prompt: 0 });
@@ -103,7 +118,7 @@ test('undo and redo walk the history and return the opposite delta, including af
   assert.deepEqual(s.redo().delta, { mist: 0, prompt: 2 });
   assert.equal(s.redo(), null);
   assert.equal(s.canUndo(), true); assert.equal(s.canRedo(), false);
-  s.undo(); s.markWord('112:4:1', 'mistake', { page: 604 });
+  s.undo(); s.markWord('114:4:1', 'mistake', { page: 604 });
   assert.equal(s.canRedo(), false, 'a new action drops the redo branch');
 });
 
@@ -112,9 +127,9 @@ test('a no-op never enters the history, and counts per page follow the mark page
   assert.equal(s.eraseWords(['112:1:1']).delta.mist, 0);
   assert.equal(s.canUndo(), false);
   s.markWord('112:1:1', 'mistake', { page: 604 }); s.markWord('2:255:3', 'prompt', { page: 42 });
-  assert.deepEqual(s.getCounts(604).page, { mistakes: 1, prompts: 0 });
-  assert.deepEqual(s.getCounts(42).page, { mistakes: 0, prompts: 1 });
-  assert.deepEqual(s.getCounts(42).total, { mistakes: 1, prompts: 1 });
+  assert.deepEqual(s.getCounts(604).page, { mistakes: 1, prompts: 0, promptsExact: 0 });
+  assert.deepEqual(s.getCounts(42).page, { mistakes: 0, prompts: 1, promptsExact: 1 });
+  assert.deepEqual(s.getCounts(42).total, { mistakes: 1, prompts: 1, promptsExact: 1 });
 });
 
 test('exportPayload lists marks with word, kind and type in reading order', () => {
@@ -232,4 +247,15 @@ test('a surah header printed at the very bottom of a page (18 places) puts its b
   assert.equal(p77[1].kind, 'text');
   const p3 = S.buildPageLines(S.normalizeApiPageResponse(3, { verses: [{ verse_key: '2:6', words: [w(1, 1, 3)] }] })).lines;
   assert.equal(p3[14].kind, 'empty', 'other pages are not affected');
+});
+
+test('erasing the middle of a highlighted phrase leaves two phrases; a phrase crossing into the next ayah stays one', () => {
+  const s = session();
+  s.markSpan(['2:1:1', '2:1:2', '2:1:3', '2:1:4', '2:1:5'], 'mistake', { page: 2 });
+  assert.equal(s.getCounts(2).total.mistakes, 1);
+  assert.deepEqual(s.eraseWords(['2:1:3']).delta, { mist: 1, prompt: 0 }, 'one phrase became two');
+  assert.deepEqual(s.undo().delta, { mist: -1, prompt: 0 });
+  const t = session();
+  t.markSpan(['2:1:4', '2:1:5', '2:2:1', '2:2:2'], 'mistake', { page: 2 });
+  assert.equal(t.getCounts(2).total.mistakes, 1, 'the phrase continues into the next ayah');
 });

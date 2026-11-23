@@ -70,7 +70,7 @@
   const pos=(s,a,route)=>((route===ROUTE_NAS?200-s:s)*1000)+a;
   function passing(r){
     let ev=String(r.evaluation||'').toLowerCase();
-    if(!ev||ev==='not_rated'){const pages=Number(r.pages_count)||0;if(pages>0){const dens=((Number(r.mistakes)||0)+(Number(r.prompts)||0)*.25)/Math.max(1,pages),safety=Math.max(0,Math.min(100,100-dens*15));ev=safety>85?'excellent':safety>=75?'very_good':safety>=70?'good':'repeat'}}
+    if(!ev||ev==='not_rated'){const pages=Number(r.pages_count)||0;if(pages>0){ev=typeof computeRecitationV7==='function'?computeRecitationV7(r).evaluation:'good'}}
     return !['repeat','weak','إعادة','ضعيف'].includes(ev);
   }
   function lineKeysAlong(from,to,route){
