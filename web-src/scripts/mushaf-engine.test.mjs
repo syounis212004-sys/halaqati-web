@@ -259,3 +259,13 @@ test('erasing the middle of a highlighted phrase leaves two phrases; a phrase cr
   t.markSpan(['2:1:4', '2:1:5', '2:2:1', '2:2:2'], 'mistake', { page: 2 });
   assert.equal(t.getCounts(2).total.mistakes, 1, 'the phrase continues into the next ayah');
 });
+
+test('pages that go over the per-page limit (one mistake, two prompts) are listed, even when the whole recitation averages out fine', () => {
+  const s = session();
+  ['112:1:1', '112:1:2', '112:1:3'].forEach(id => s.markWord(id, 'prompt', { page: 604 }));
+  s.markWord('113:1:1', 'prompt', { page: 603 }); s.markWord('113:2:1', 'mistake', { page: 603 }); s.markWord('113:4:1', 'mistake', { page: 603 });
+  assert.deepEqual(s.overLimitPages(), [{ page: 603, mistakes: 2, prompts: 1 }, { page: 604, mistakes: 0, prompts: 3 }]);
+  assert.deepEqual(session().overLimitPages(), []);
+  const t = session(); t.markWord('112:1:1', 'prompt', { page: 604 }); t.markWord('112:1:2', 'prompt', { page: 604 }); t.markWord('112:2:1', 'mistake', { page: 604 });
+  assert.deepEqual(t.overLimitPages(), [], 'one mistake and two prompts is exactly the limit, not over it');
+});

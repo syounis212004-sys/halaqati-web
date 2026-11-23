@@ -88,6 +88,7 @@ import nativePlansUrl from './features/native/plans.js?url';
 import nativeManagementUrl from './features/native/management.js?url';
 import nativeReportsUrl from './features/native/reports.js?url';
 import nativeToolsUrl from './features/native/tools.js?url';
+import nativePhaseDaysUrl from './features/native/phase-days.js?url';
 import nativePhasesUrl from './features/native/phases.js?url';
 import nativeCommunityUrl from './features/native/community.js?url';
 import nativeCertificatesUrl from './features/native/certificates.js?url';
@@ -178,6 +179,7 @@ const BOOT_SCRIPTS = [
   [nativeManagementUrl, 'halaqati-native-management'],
   [nativeReportsUrl, 'halaqati-native-reports'],
   [nativeToolsUrl, 'halaqati-native-tools'],
+  [nativePhaseDaysUrl, 'halaqati-native-phase-days'],
   [nativePhasesUrl, 'halaqati-native-phases'],
   [nativeCommunityUrl, 'halaqati-native-community'],
   [nativeCertificatesUrl, 'halaqati-native-certificates'],

@@ -730,10 +730,12 @@
   const clamp=(v,d)=>{v=Number(v);return v>=1&&v<=5?Math.round(v):d};
   const tlScore=a=>Math.round(Math.max(0,Math.min(100,((a.makharij+a.tajweed+a.waqf_ibtida+a.fluency)/20)*100-a.lahn_jali*8-a.lahn_khafi*3))*10)/10;
   const tlEval=s=>s>=90?'excellent':s>=80?'very_good':s>=70?'good':'repeat';
+  // pages that went over the circle's per-page limit while marking on the mushaf (saved so the server grades the same way)
+  const overLimitPagesOf=D=>D?.mushaf?D.mushaf.overLimitPages().map(o=>o.page):(Array.isArray(D?.existing?.selection_data?.over_limit_pages)?D.existing.selection_data.over_limit_pages:[]);
   function recDerived(){
     const D=R.rec,pages=D.range?.pages||0;
     if(D.type==='tilawah'){const s=tlScore(D.tl);return {pages,safety:s,ev:tlEval(s),tilawah:true}}
-    let v;try{v=computeRecitationV6({pages_count:pages,mistakes:D.mistakes,prompts:D.prompts,selection_data:{qcf_line_keys:D.range?.lineKeys||[]}})}catch(_e){v={safety_percentage:0,evaluation:'not_rated'}}
+    let v;try{v=computeRecitationV6({pages_count:pages,mistakes:D.mistakes,prompts:D.prompts,selection_data:{qcf_line_keys:D.range?.lineKeys||[],over_limit_pages:overLimitPagesOf(D)}})}catch(_e){v={safety_percentage:0,evaluation:'not_rated'}}
     return {pages,safety:v.safety_percentage,ev:pages>0?v.evaluation:'not_rated',tilawah:false};
   }
   const counter=(label,val,dec,inc)=>`<div class="nr-cnt"><b>${label}</b><div><button type="button" class="nr-cbtn" aria-label="إنقاص" ${val<=0?'disabled':''} onclick="NSR.${dec}">${ic('Remove',20)}</button><output>${val}</output><button type="button" class="nr-cbtn" aria-label="زيادة" onclick="NSR.${inc}">${ic('Add',20)}</button></div></div>`;
@@ -811,7 +813,7 @@
     try{
       const tl=D.type==='tilawah';
       const dbId=D.existing?.id||offlineUuid();
-      const sd={mode:rg.mode||'ayahs',selected_juz:rg.selectedJuz||[],start_global:null,end_global:null,qcf_line_keys:rg.lineKeys||[],smart_plan_id:D.planId||null,smart_plan_type:D.planType||null,smart_plan_date:D.planId?(D.planDate||se.session_date):null};
+      const sd={mode:rg.mode||'ayahs',selected_juz:rg.selectedJuz||[],start_global:null,end_global:null,qcf_line_keys:rg.lineKeys||[],over_limit_pages:overLimitPagesOf(D),smart_plan_id:D.planId||null,smart_plan_type:D.planType||null,smart_plan_date:D.planId?(D.planDate||se.session_date):null};
       if(tl){const a=D.tl;sd.tilawah_assessment={version:1,riwayah:a.riwayah,lahn_jali:a.lahn_jali,lahn_khafi:a.lahn_khafi,makharij:a.makharij,tajweed:a.tajweed,waqf_ibtida:a.waqf_ibtida,fluency:a.fluency,issue_keys:[...a.issues].sort(),overall_score:tlScore(a),manual_teacher_assessment:true}}
       const data={session_id:se.id,student_id:D.sid,activity_type:D.type,input_method:rg.mode||'ayahs',start_surah:rg.startSurah||null,start_ayah:rg.startAyah||null,end_surah:rg.endSurah||null,end_ayah:rg.endAyah||null,start_page:rg.startPage||null,end_page:rg.endPage||null,pages_count:d.pages,ayahs_count:rg.ayahs||0,surahs_count:rg.surahs||0,mistakes:tl?D.tl.lahn_jali+D.tl.lahn_khafi:D.mistakes,prompts:tl?0:D.prompts,teacher_note:(D.note||'').trim()||null,selected_surahs:rg.selectedSurahs||[],selection_data:sd,created_by:uid()};
       const wasEdit=!!D.existing;
@@ -978,7 +980,7 @@
       session:D.mushaf,
       getRange:()=>D.range,
       getCounters:()=>({mistakes:D.mistakes,prompts:D.prompts}),
-      getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev)}:null},
+      getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev),pages:d.pages}:null},
       onMark:dl=>{D.mistakes=Math.max(0,D.mistakes+dl.mist);D.prompts=Math.max(0,D.prompts+dl.prompt)}
     });
   };

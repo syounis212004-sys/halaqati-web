@@ -78,8 +78,12 @@
       var jump = $('[data-act="range"]'); jump.hidden = !(start && start !== page);
       if (document.activeElement !== inputEl) inputEl.value = page;
       var v = opts.getV6 ? opts.getV6() : null, html;
-      if (v) html = '<span>التقدير: <b>' + digits(v.safety) + '٪ ' + H(v.label || '') + '</b></span><small>الحد الأعلى للصفحة: خطأ (جملة) وتلقينان</small>';
-      else html = '<small>اختر المقرر أولاً ليظهر التقدير.</small>';
+      if (v) {
+        var over = session.overLimitPages();
+        html = '<span>التقدير: <b>' + digits(v.safety) + '٪ ' + H(v.label || '') + '</b></span>' +
+          '<small>' + (v.pages ? 'محسوب على ' + digits(Math.round(v.pages * 100) / 100) + ' صفحة: ' + digits(c.mistakes) + ' أخطاء و' + digits(c.prompts) + ' تلقينات. ' : '') + 'الحد الأعلى للصفحة: خطأ (جملة) وتلقينان</small>' +
+          (over.length ? '<small class="hm-over" role="status">تنبيه: ' + over.map(function (o) { return 'صفحة ' + digits(o.page) + ' فيها ' + digits(o.mistakes) + ' أخطاء و' + digits(o.prompts) + ' تلقينات'; }).join('، ') + ' (فوق الحد، فالنتيجة إعادة)</small>' : '');
+      } else html = '<small>اختر المقرر أولاً ليظهر التقدير.</small>';
       $('[data-score]').innerHTML = html;
     }
 

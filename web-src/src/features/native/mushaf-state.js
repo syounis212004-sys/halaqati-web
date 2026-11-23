@@ -535,6 +535,14 @@
       var p = clampPage(pageNum || state.page);
       return { page: tally(state.marks.filter(function (m) { return m.page === p; })), total: tally(state.marks) };
     }
+    // pages where the marks go over the circle's limit for one page (one mistake, two prompts), however the whole recitation averages out
+    function overLimitPages() {
+      var pages = {}; state.marks.forEach(function (m) { pages[m.page] = 1; });
+      return Object.keys(pages).map(Number).sort(function (x, y) { return x - y; }).map(function (p) {
+        var t = tally(state.marks.filter(function (m) { return m.page === p; }));
+        return t.mistakes > 1 || t.promptsExact > 2 ? { page: p, mistakes: t.mistakes, prompts: t.prompts } : null;
+      }).filter(Boolean);
+    }
     function setPage(n) { state.page = clampPage(n); return state.page; }
     function exportPayload() {
       var c = getCounts(state.page).total;
@@ -550,7 +558,7 @@
       getState: function () { return state; },
       setPage: setPage, markWord: markWord, markSpan: markSpan, eraseWords: eraseWords, undo: undo, redo: redo,
       canUndo: function () { return past.length > 0; }, canRedo: function () { return future.length > 0; },
-      getMark: getMark, getCounts: getCounts, exportPayload: exportPayload, reset: reset
+      getMark: getMark, getCounts: getCounts, overLimitPages: overLimitPages, exportPayload: exportPayload, reset: reset
     };
   }
 
