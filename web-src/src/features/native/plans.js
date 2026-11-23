@@ -26,7 +26,16 @@ function withConfirm(fn){const c=window.confirm;window.confirm=()=>true;try{retu
 /* ---------------------------------------------------------------- data helpers */
 /* RC58: students of programs (courses, qualifying, tajweed) never have smart plans; plans left over from before are hidden. */
 const isProgHalaqa=hid=>{const h=(state.halaqas||[]).find(x=>x.id===hid);return !!(h&&typeof rc27IsProgram==='function'&&rc27IsProgram(h))};
-function rowsFor(students){const out=[];for(const st of students){if(isProgHalaqa(st.halaqa_id))continue;for(const plan of effectiveSmartPlans(st))out.push({student:st,plan,progress:smartPlanProgress(plan,st.id)})}return out}
+// While a student is in the Sard phase the card must show the Sard phase (its own target and schedule), not the month's Hifz progress measured against the Sard target
+function withSardPace(plan,sid,p){
+  try{
+    const P=window.RC27Phases,PD=window.HalaqatiPhaseDays;if(!P||!PD||!P.snapshot)return p;
+    const sn=P.snapshot(plan,today()),pp=sn&&sn.phaseProgress;if(!pp||sn.phase?.phase_type!=='sard')return p;
+    const k=PD.sardPace(pp),r2=x=>Math.round((Number(x)||0)*100)/100;
+    return {...p,completed:r2(pp.completed),remaining:pp.remaining==null?0:r2(pp.remaining),plannedByToday:k.expected,behindBy:k.behind,aheadBy:k.ahead,health:k.health,healthLabel:HL[k.health],sardTarget:pp.target,sardPhase:true};
+  }catch(e){return p}
+}
+function rowsFor(students){const out=[];for(const st of students){if(isProgHalaqa(st.halaqa_id))continue;for(const plan of effectiveSmartPlans(st))out.push({student:st,plan,progress:withSardPace(plan,st.id,smartPlanProgress(plan,st.id))})}return out}
 function rowByKey(key){const [sid,pid]=String(key).split(':');const st=state.students.find(x=>String(x.id)===sid);if(!st)return null;const plan=effectiveSmartPlans(st).find(p=>String(p.id)===pid);if(!plan)return null;return {student:st,plan,progress:smartPlanProgress(plan,st.id)}}
 const keyOf=r=>`${r.student.id}:${r.plan.id}`;
 function phaseOf(plan,sid){try{const P=window.RC27Phases;if(!P||!P.S||!P.S.phases)return null;const phs=P.S.phases.filter(p=>p.plan_id===plan.id&&p.status!=='archived');if(!phs.length)return null;return P.activePhase(phs.map(P.enginePhase),P.S.states||[],sid,today())}catch(e){return null}}
@@ -87,7 +96,7 @@ function phaseMini(title,dates,target,active){return `<div class="np-phase ${act
 function cardHtml(r,manage){
   const p=r.progress,c=core(r),ph=phaseOf(r.plan,r.student.id),key=keyOf(r),open=!!S().open[key]&&!desktop(),code=HK[p.health]?p.health:'green',label=HL[code];
   const a=p.assignment||{},tath=isTath(r),end=Number(String(r.plan.end_date).slice(8,10))||30;
-  const activeTarget=ph&&ph.type==='sard'?25:(Number(r.plan.target_pages)||0);
+  const activeTarget=ph&&ph.type==='sard'?(Number(p.sardTarget)>.001?Number(p.sardTarget):25):(Number(r.plan.target_pages)||0);
   const pct=activeTarget<=.001?0:Math.max(0,Math.min(100,(Number(p.completed)||0)/activeTarget*100));
   const hifzTarget=Number(r.plan.settings?.monthly_hifz_target_pages)>.001?Number(r.plan.settings.monthly_hifz_target_pages):Number(r.plan.target_pages)||0;
   const aText=a.blockedByRetry?`إعادة تثبيت · ${assignmentText(a).split(': ').slice(1).join(': ')||assignmentText(a)}`:(Number(a.pages)<=0?(p.remaining<=0?'تم إكمال الهدف الحالي':'لا يوجد مقرر اليوم'):assignmentText(a));

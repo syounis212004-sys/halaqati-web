@@ -23,3 +23,15 @@ test('students keep their own days unless the manager changed the common days', 
 test('days come back sorted, unique and limited to 0-6', () => {
   assert.deepEqual(D.resolveBulkDays({ common: [5, 0, 5, 9, -1], initial: [], custom: [], existing: null }), [0, 5]);
 });
+
+test('Sard pace: the card measures the Sard phase itself (its target and its scheduled days), not the month of Hifz', () => {
+  // 8 scheduled days, none done, first day: nothing is due yet, so the student is on track
+  assert.deepEqual(D.sardPace({ target: 25, completed: 0, scheduledDays: 8, remainingDays: 8 }), { expected: 0, behind: 0, ahead: 0, health: 'green' });
+  // 4 of 8 days passed: 12.5 pages were due
+  assert.deepEqual(D.sardPace({ target: 25, completed: 12.5, scheduledDays: 8, remainingDays: 4 }), { expected: 12.5, behind: 0, ahead: 0, health: 'green' });
+  assert.equal(D.sardPace({ target: 25, completed: 0, scheduledDays: 8, remainingDays: 4 }).health, 'red');
+  assert.equal(D.sardPace({ target: 25, completed: 10, scheduledDays: 8, remainingDays: 4 }).health, 'yellow', '10 of 12.5 due = 80%');
+  const fast = D.sardPace({ target: 25, completed: 15, scheduledDays: 8, remainingDays: 4 });
+  assert.equal(fast.health, 'blue'); assert.equal(fast.ahead, 2.5);
+  assert.deepEqual(D.sardPace({ target: null, completed: 3, scheduledDays: 0, remainingDays: 0 }), { expected: 0, behind: 0, ahead: 0, health: 'green' });
+});
