@@ -1,15 +1,6 @@
 /* Halaqati interactive mushaf v2: a full printed-proportion page (14:20, 15 lines) with marking tools.
    Colours: the page is paper; red + solid underline + × = mistake, blue + dashed underline + ت = prompt (never colour alone).
-   The KFGQPC font file must come from the King Fahd Complex site with its licence before any publish (docs/INTERACTIVE_MUSHAF_AR.md). */
-
-@font-face {
-  font-family: 'KFGQPC Uthmanic Script HAFS';
-  src: local('KFGQPC Uthmanic Script HAFS'),
-       url('../assets/fonts/kfgqpc-uthman-taha-naskh-regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+   Page fonts (QCF V2) are loaded at runtime from the Quran Foundation CDN by mushaf-state.js; nothing is bundled. */
 
 .hm-mushaf-root {
   --hm-page-bg: #fffcf3;
