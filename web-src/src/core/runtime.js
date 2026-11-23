@@ -335,11 +335,11 @@ function recitationLineCountV6(input){let d=input&&typeof input==='object'?input
    The most allowed on one page is one mistake and two prompts (a started page has the full allowance, more pages allow proportionally more).
    safety = 100 - (20*mistakes + 5*prompts) / pages; going over the allowance is always 'repeat' and never shows 70% or more.
    The old name computeRecitationV6 is kept as an alias: dozens of screens call it. */
-function computeRecitationV7(input,mistakes,prompts){let d=input&&typeof input==='object'?input:null,p=Math.max(0,Number(d?.pages_count??input)||0),m=Math.max(0,Number(d?.mistakes??mistakes)||0),pr=Math.max(0,Number(d?.prompts??prompts)||0),lines=recitationLineCountV6(d||p),pe=lines/15,allowance=Math.max(1,Math.ceil(pe-1e-9)),over=m>allowance||pr>2*allowance,raw=pe>0?100-((20*m+5*pr)/pe):0,safety=pe>0?Math.max(0,Math.min(100,over?Math.min(raw,69.9):raw)):0,ev=lines<=0?'not_rated':over?'repeat':safety>=90?'excellent':safety>=80?'very_good':safety>=70?'good':'repeat',units=m+pr/4,points=p<=0?0:Math.max(0,Math.round((p-(units*.25))*100)/100),pp=p>0?units/p:0;return {penalty_units:units,penalty_per_page:pp,safety_percentage:Math.round(safety*10)/10,evaluation:ev,points,scoring_version:'V7'}}
+function computeRecitationV7(input,mistakes,prompts){let d=input&&typeof input==='object'?input:null,p=Math.max(0,Number(d?.pages_count??input)||0),m=Math.max(0,Number(d?.mistakes??mistakes)||0),pr=Math.max(0,Number(d?.prompts??prompts)||0),lines=p>0?recitationLineCountV6(d||p):0,pe=lines/15,allowance=Math.max(1,Math.ceil(pe-1e-9)),over=m>allowance||pr>2*allowance,raw=lines>0?100-(15*(20*m+5*pr))/lines:0,safety=lines>0?Math.max(0,Math.min(100,over?Math.min(raw,69.9):raw)):0,shown=Math.round(safety*10+1e-9)/10,ev=lines<=0?'not_rated':over?'repeat':shown>=90?'excellent':shown>=80?'very_good':shown>=70?'good':'repeat',units=m+pr/4,points=p<=0?0:Math.max(0,Math.round((p-(units*.25))*100+1e-9)/100),pp=p>0?units/p:0;return {penalty_units:units,penalty_per_page:pp,safety_percentage:shown,evaluation:ev,points,scoring_version:'V7'}}
 window.computeRecitationV7=computeRecitationV7;
 function computeRecitationV6(input,mistakes,prompts){return computeRecitationV7(input,mistakes,prompts)}
 window.computeRecitationV6=computeRecitationV6;
-// Compatibility alias for older modules; it now returns V6 results.
+// Compatibility alias for older modules; it now returns V7 results.
 function computeRecitationV5(input,mistakes,prompts){return computeRecitationV6(input,mistakes,prompts)}
 window.computeRecitationV5=computeRecitationV5;
 function decorateRecForOffline(d){return {...d,...computeRecitationV6(d)}}

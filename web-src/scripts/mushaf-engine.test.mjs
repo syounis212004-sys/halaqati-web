@@ -248,3 +248,14 @@ test('a surah header printed at the very bottom of a page (18 places) puts its b
   const p3 = S.buildPageLines(S.normalizeApiPageResponse(3, { verses: [{ verse_key: '2:6', words: [w(1, 1, 3)] }] })).lines;
   assert.equal(p3[14].kind, 'empty', 'other pages are not affected');
 });
+
+test('erasing the middle of a highlighted phrase leaves two phrases; a phrase crossing into the next ayah stays one', () => {
+  const s = session();
+  s.markSpan(['2:1:1', '2:1:2', '2:1:3', '2:1:4', '2:1:5'], 'mistake', { page: 2 });
+  assert.equal(s.getCounts(2).total.mistakes, 1);
+  assert.deepEqual(s.eraseWords(['2:1:3']).delta, { mist: 1, prompt: 0 }, 'one phrase became two');
+  assert.deepEqual(s.undo().delta, { mist: -1, prompt: 0 });
+  const t = session();
+  t.markSpan(['2:1:4', '2:1:5', '2:2:1', '2:2:2'], 'mistake', { page: 2 });
+  assert.equal(t.getCounts(2).total.mistakes, 1, 'the phrase continues into the next ayah');
+});

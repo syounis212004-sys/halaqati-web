@@ -984,7 +984,7 @@
   };
   NS.pickOk=function(){
     const r=pickCalc();if(!r.ok)return;
-    R.rec.range=r.res;R.pick.open=false;NX.closeDialog('nrPickDlg');
+    R.rec.range=r.res;R.rec.mushaf=null;R.pick.open=false;NX.closeDialog('nrPickDlg');
     // an explicitly picked range is no longer the plan's prefill, but the plan link stays so progress is credited
     drawRec();
   };

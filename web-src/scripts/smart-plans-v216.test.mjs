@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import './_score-fixture.mjs';
 import { createSmartPlansEngine } from '../src/features/plans/engine.js';
 
 const engine = createSmartPlansEngine();

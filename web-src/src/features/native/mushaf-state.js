@@ -446,10 +446,19 @@
       var mist = list.filter(function (m) { return m.type === 'mistake'; }), parent = mist.map(function (_m, i) { return i; });
       function find(i) { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
       function join(a, b) { parent[find(a)] = find(b); }
-      var bySpan = {}, byKey = {};
+      var bySpan = {}, byKey = {}, loc = [];
       mist.forEach(function (m, i) {
-        if (m.span) { if (bySpan[m.span] !== undefined) join(i, bySpan[m.span]); else bySpan[m.span] = i; }
+        var pa = parseAyahKey(m.ayah_key); loc[i] = { s: pa ? pa.surah : 0, a: pa ? pa.ayah : 0 };
+        if (m.span) (bySpan[m.span] = bySpan[m.span] || []).push(i);
         byKey[m.ayah_key + ':' + m.word] = i;
+      });
+      // a highlighted span is one phrase only while its words stay in a run: erasing a word in the middle splits it (the next ayah's first word continues the run)
+      Object.keys(bySpan).forEach(function (k) {
+        var idx = bySpan[k].sort(function (x, y) { return (loc[x].s - loc[y].s) || (loc[x].a - loc[y].a) || (mist[x].word - mist[y].word); });
+        for (var q = 1; q < idx.length; q++) {
+          var A = mist[idx[q - 1]], B = mist[idx[q]], la = loc[idx[q - 1]], lb = loc[idx[q]];
+          if ((A.ayah_key === B.ayah_key && B.word === A.word + 1) || (B.word === 1 && ((lb.s === la.s && lb.a === la.a + 1) || (lb.s === la.s + 1 && lb.a === 1)))) join(idx[q - 1], idx[q]);
+        }
       });
       mist.forEach(function (m, i) { var n = byKey[m.ayah_key + ':' + (m.word + 1)]; if (n !== undefined) join(i, n); });
       var roots = {}; mist.forEach(function (_m, i) { roots[find(i)] = 1; });

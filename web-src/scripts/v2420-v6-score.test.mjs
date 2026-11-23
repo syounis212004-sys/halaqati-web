@@ -40,3 +40,13 @@ test('points keep the old shape: pages minus a quarter per penalty unit (unit = 
   assert.equal(c(1,1,2).points,0.63);
   assert.equal(c(1,1,2).scoring_version,'V7');
 });
+test('rounding follows the server exactly: exact ties round up, and the grade follows the percentage that is shown', () => {
+  assert.equal(c({pages_count:0.6,mistakes:0,prompts:6}).points,0.23,'0.225 is a tie: the server (numeric) gives 0.23');
+  const keys=n=>Array.from({length:n},(_,i)=>`1:${i+1}`);
+  const r=c({pages_count:112/15,mistakes:1,prompts:11,selection_data:{qcf_line_keys:keys(112)}});
+  assert.equal(r.safety_percentage,90); assert.equal(r.evaluation,'excellent','89.955 is shown as 90.0, so it is excellent everywhere');
+});
+test('no pages means not rated even if line keys are present (same as the server)', () => {
+  const r=c({pages_count:0,mistakes:0,prompts:0,selection_data:{qcf_line_keys:['1:1','1:2','1:3']}});
+  assert.equal(r.evaluation,'not_rated'); assert.equal(r.safety_percentage,0);
+});

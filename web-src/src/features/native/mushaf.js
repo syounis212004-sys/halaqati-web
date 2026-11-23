@@ -1,7 +1,7 @@
 /* Halaqati interactive mushaf v2: a full 15-line page with marking tools (tap a word, drag to highlight, eraser, undo/redo).
  * The component owns only its DOM. Marks and history live in the HalaqatiMushafState session the caller keeps; mark deltas are reported through
  * opts.onMark({mist, prompt}) and the caller turns them into the recitation counters. No storage, no Supabase, no Quran text typed in this repo.
- * opts: { session, loader?, lines():number of mushaf lines recited, getRange():range|null, getCounters():{mistakes,prompts}, getV6():{safety,label}|null, onMark(delta) } */
+ * opts: { session, loader?, getRange():range|null, getCounters():{mistakes,prompts}, getV6():{safety,label}|null (the official score), onMark(delta) } */
 (function (root) {
   'use strict';
 
@@ -39,6 +39,7 @@
           '<div class="hm-lines" data-lines></div>' +
           '<div class="hm-page-foot" data-foot></div>' +
         '</div></div>' +
+        '<div class="hm-credit">خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
         '<div class="hm-bottom">' +
         '<div class="hm-types" role="group" aria-label="نوع العلامة">' +
           '<button type="button" class="hm-type is-mistake" data-type="mistake" aria-pressed="true"><span class="hm-swatch" aria-hidden="true"></span><span>خطأ</span><b data-count="mistakes">٠</b></button>' +
@@ -51,7 +52,6 @@
           '<button type="button" class="hm-tool" data-act="undo" title="تراجع (Ctrl+Z)" aria-label="تراجع">' + icon('undo') + '</button>' +
           '<button type="button" class="hm-tool" data-act="redo" title="إعادة (Ctrl+Shift+Z)" aria-label="إعادة">' + icon('undo', true) + '</button>' +
         '</div>' +
-        '<div class="hm-credit">خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
         '</div>' +
         '<div class="hm-live" aria-live="polite" data-live></div>' +
       '</div>';
