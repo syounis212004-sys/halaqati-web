@@ -351,3 +351,5 @@ body.dark .hm-mushaf-root {
 
 .hm-end { display: inline-block; pointer-events: none; }
 .hm-credit { font: 500 11px Cairo, sans-serif; opacity: 0.75; text-align: center; }
+
+.hm-over { flex-basis: 100%; color: var(--hm-mark-mistake); font-weight: 600; }

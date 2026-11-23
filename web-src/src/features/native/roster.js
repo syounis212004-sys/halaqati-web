@@ -978,7 +978,7 @@
       session:D.mushaf,
       getRange:()=>D.range,
       getCounters:()=>({mistakes:D.mistakes,prompts:D.prompts}),
-      getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev)}:null},
+      getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev),pages:d.pages}:null},
       onMark:dl=>{D.mistakes=Math.max(0,D.mistakes+dl.mist);D.prompts=Math.max(0,D.prompts+dl.prompt)}
     });
   };
