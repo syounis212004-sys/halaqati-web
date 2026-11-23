@@ -16,6 +16,10 @@
   var SURAH_NAMES_FONT_URL = 'https://verses.quran.foundation/fonts/quran/surah-names/v1/sura_names.woff2';
   // Quran Foundation terms: API text may be cached for one week at most (font files are exempt)
   var DATA_MAX_AGE_MS = 7 * 24 * 3600 * 1000;
+  // The only six places where the API line number differs from the printed layout (QUL page layout, checked against all 604 pages): page -> {word id: printed line}
+  var LINE_OVERRIDES = { 27: { '2:181:5': 15 }, 177: { '8:6:10': 12 }, 254: { '13:37:8': 6 }, 400: { '29:33:11': 6 }, 443: { '36:52:10': 13 }, 589: { '84:21:end': 14 } };
+  // Pages whose last printed line is a surah header (the surah's first ayah starts on the next page): page -> surah
+  var HEADER_AT_PAGE_END = { 76: 4, 207: 10, 331: 22, 341: 23, 349: 24, 366: 26, 376: 27, 414: 32, 417: 33, 445: 37, 452: 38, 498: 45, 506: 47, 525: 53, 548: 60, 555: 64, 557: 65, 584: 80 };
   // Short lines the 1421H Madinah print centres (page -> line numbers); layout metadata from the QUL page layout. Pages 1-2 are fully centred.
   var CENTERED_LINES = { 255: [2], 528: [9], 534: [6], 545: [6], 586: [1], 593: [2], 594: [5], 600: [10], 602: [5, 11, 15], 603: [10, 15], 604: [4, 9, 14, 15] };
 
@@ -161,9 +165,11 @@
     return { surah: surah, ayah: ayah, pos: pos, ayah_key: surah + ':' + ayah };
   }
 
+  function printedLine(page, id, line) { var o = LINE_OVERRIDES[clampPage(page)]; return o && o[id] ? o[id] : line; }
+
   function normalizeApiPageResponse(page, payload) {
     var versesRaw = payload && Array.isArray(payload.verses) ? payload.verses : [];
-    var words = [], items = [];
+    var words = [], items = [], seen = {};
     var verses = versesRaw.map(function (v) {
       var key = v.verse_key || v.ayah_key;
       var parsed = parseAyahKey(key);
@@ -172,15 +178,21 @@
       if (parsed) {
         raw.forEach(function (w) {
           if (!w) return;
+          // the API also returns the words of a verse that belong to the neighbouring page: they are drawn on their own page only
+          if (Number(w.page_number) && Number(w.page_number) !== clampPage(page)) return;
+          var uid = parsed.surah + ':' + parsed.ayah + ':' + (w.char_type_name === 'end' ? 'end' : w.position);
+          if (seen[uid]) return; seen[uid] = 1;
           var line = Number(w.line_number) || 0, fontPage = Number(w.v2_page) || Number(w.page_number) || clampPage(page);
           if (w.char_type_name === 'end') {
-            items.push({ id: parsed.surah + ':' + parsed.ayah + ':end', ayah_key: parsed.surah + ':' + parsed.ayah, end: true, glyph: w.code_v2 || '', fontPage: fontPage, line: line });
+            var eid = parsed.surah + ':' + parsed.ayah + ':end';
+            items.push({ id: eid, ayah_key: parsed.surah + ':' + parsed.ayah, end: true, glyph: w.code_v2 || '', fontPage: fontPage, line: printedLine(page, eid, line) });
             return;
           }
           var pos = Number(w.position);
           if (!(pos >= 1)) return;
           var word = { id: parsed.surah + ':' + parsed.ayah + ':' + pos, ayah_key: parsed.surah + ':' + parsed.ayah, surah: parsed.surah, ayah: parsed.ayah, pos: pos,
-            text: w.text_uthmani || '', glyph: w.code_v2 || '', fontPage: fontPage, line: line, ayahStart: pos === 1 };
+            text: w.text_uthmani || '', glyph: w.code_v2 || '', fontPage: fontPage, line: 0, ayahStart: pos === 1 };
+          word.line = printedLine(page, word.id, line);
           words.push(word); items.push(word);
         });
       }
@@ -217,6 +229,9 @@
         } else { lines[above].kind = 'banner'; lines[above].surah = s; }
       }
     });
+    var pg = pageData && pageData.page;
+    if (HEADER_AT_PAGE_END[pg] && lines[14].kind === 'empty') { lines[14].kind = 'banner'; lines[14].surah = HEADER_AT_PAGE_END[pg]; }
+    if (HEADER_AT_PAGE_END[pg - 1] && lines[0].kind !== 'text') { lines[0].kind = 'basmala'; lines[0].surah = HEADER_AT_PAGE_END[pg - 1]; }
     return { lines: lines };
   }
 
@@ -306,26 +321,17 @@
       }
     }
 
-    async function loadPage(pageNum) {
-      var p = clampPage(pageNum);
-      if (memCache.has(p)) {
-        return { ok: true, data: memCache.get(p), fromCache: true };
-      }
-      if (inflight.has(p)) return inflight.get(p);
-
-      var promise = (async function () {
-        var url = getUrl(p);
-        // 1) Try Cache API first if offline or previously opened
+    // one API page, from memory, the Cache API (max a week old) or the network
+    var rawMem = new Map(), rawInflight = new Map();
+    function rawPage(n) {
+      if (rawMem.has(n)) return Promise.resolve({ ok: true, json: rawMem.get(n) });
+      if (rawInflight.has(n)) return rawInflight.get(n);
+      var pr = (async function () {
+        var url = getUrl(n);
         var cachedJson = await readFromCacheApi(url);
-        if (cachedJson) {
-          var cachedData = normalizeApiPageResponse(p, cachedJson);
-          if (cachedData.verses.length) {
-            memCache.set(p, cachedData);
-            return { ok: true, data: cachedData, fromCache: true };
-          }
-        }
-        // 2) Fetch single page from Quran.com API v4 (never substitute text typed in this repo: the Quran text only ever comes from the API or its cache)
-        if (!fetchImpl) return { ok: false, error: 'لا يتوفر اتصال بالشبكة لتحميل الصفحة', page: p };
+        if (cachedJson && Array.isArray(cachedJson.verses) && cachedJson.verses.length) { rawMem.set(n, cachedJson); return { ok: true, json: cachedJson }; }
+        // the Quran text only ever comes from the API or its cache: nothing typed in this repo is ever substituted
+        if (!fetchImpl) return { ok: false, error: 'لا يتوفر اتصال بالشبكة لتحميل الصفحة' };
         var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
         var timer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (_e) {} }, timeoutMs) : null;
         try {
@@ -333,25 +339,38 @@
           if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : 'ERR'));
           var clone = typeof res.clone === 'function' ? res.clone() : null;
           var json = await res.json();
-          var normalized = normalizeApiPageResponse(p, json);
-          if (!normalized.verses.length) throw new Error('EMPTY_PAGE_DATA');
-          memCache.set(p, normalized);
+          if (!json || !Array.isArray(json.verses) || !json.verses.length) throw new Error('EMPTY_PAGE_DATA');
+          rawMem.set(n, json);
           if (clone) await writeToCacheApi(url, clone);
-          return { ok: true, data: normalized, fromCache: false };
+          return { ok: true, json: json };
         } catch (err) {
-          var aborted = err && err.name === 'AbortError';
-          return { ok: false, error: aborted ? 'انتهت مهلة تحميل الصفحة' : 'تعذر تحميل بيانات الصفحة', page: p };
-        } finally {
-          if (timer) clearTimeout(timer);
-        }
+          return { ok: false, error: err && err.name === 'AbortError' ? 'انتهت مهلة تحميل الصفحة' : 'تعذر تحميل بيانات الصفحة' };
+        } finally { if (timer) clearTimeout(timer); }
       })();
+      rawInflight.set(n, pr);
+      return pr.finally(function () { rawInflight.delete(n); });
+    }
 
+    // A verse that runs from one printed page to the next is listed by only one of the two API pages, so a printed page is built from its
+    // own API page plus both neighbours (words are kept by their own page_number); a neighbour that cannot be read fails the page.
+    async function loadPage(pageNum) {
+      var p = clampPage(pageNum);
+      if (memCache.has(p)) return { ok: true, data: memCache.get(p), fromCache: true };
+      if (inflight.has(p)) return inflight.get(p);
+      var promise = (async function () {
+        var wanted = [p - 1, p, p + 1].filter(function (n) { return n >= 1 && n <= TOTAL_PAGES; });
+        var got = await Promise.all(wanted.map(rawPage));
+        var bad = got.filter(function (g) { return !g.ok; })[0];
+        if (bad) return { ok: false, error: bad.error, page: p };
+        var verses = [];
+        got.forEach(function (g) { verses = verses.concat(g.json.verses); });
+        var data = normalizeApiPageResponse(p, { verses: verses });
+        if (!data.verses.length) return { ok: false, error: 'تعذر تحميل بيانات الصفحة', page: p };
+        memCache.set(p, data);
+        return { ok: true, data: data, fromCache: false };
+      })();
       inflight.set(p, promise);
-      try {
-        return await promise;
-      } finally {
-        inflight.delete(p);
-      }
+      try { return await promise; } finally { inflight.delete(p); }
     }
 
     function prefetchNext(pageNum) {

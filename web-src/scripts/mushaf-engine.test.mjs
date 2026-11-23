@@ -206,3 +206,30 @@ test('font loader: only the most recent page fonts stay registered (memory)', as
   for (const p of [1, 2, 3, 4, 5]) await L.loadPageFont(p);
   assert.equal(fonts.set.size, 3);
 });
+
+test('a verse continued from the previous page: its words that belong to the other page are not drawn on this one', () => {
+  const w = (pos, line, pg) => ({ position: pos, line_number: line, page_number: pg, char_type_name: 'word', text_uthmani: 'w' + pos, code_v2: 'G' + pos });
+  const p = S.normalizeApiPageResponse(121, { verses: [{ verse_key: '5:77', words: [w(1, 13, 120), w(2, 14, 120), w(3, 1, 121), w(4, 1, 121)] }] });
+  assert.deepEqual(p.words.map(x => x.id), ['5:77:3', '5:77:4']);
+  assert.equal(p.items.length, 2);
+});
+
+test('the six words where the API line number differs from the printed layout (QUL) are placed on the printed line', () => {
+  const w = (pos, line) => ({ position: pos, line_number: line, page_number: 27, char_type_name: 'word', text_uthmani: 'w', code_v2: 'G' });
+  const p = S.normalizeApiPageResponse(27, { verses: [{ verse_key: '2:181', words: [w(4, 14), w(5, 14)] }] });
+  assert.equal(p.words.find(x => x.id === '2:181:5').line, 15, 'API says 14, the print has it on 15');
+  assert.equal(p.words.find(x => x.id === '2:181:4').line, 14, 'other words are untouched');
+  const e = S.normalizeApiPageResponse(589, { verses: [{ verse_key: '84:21', words: [{ position: 7, line_number: 13, page_number: 589, char_type_name: 'word', code_v2: 'G' }, { position: 8, line_number: 13, page_number: 589, char_type_name: 'end', code_v2: 'E' }] }] });
+  assert.equal(e.items.find(x => x.end).line, 14, 'the ayah-end marker follows the printed line too');
+});
+
+test('a surah header printed at the very bottom of a page (18 places) puts its basmala at the top of the next page', () => {
+  const w = (pos, line, pg) => ({ position: pos, line_number: line, page_number: pg, char_type_name: 'word', text_uthmani: 't', code_v2: 'G' });
+  const p76 = S.buildPageLines(S.normalizeApiPageResponse(76, { verses: [{ verse_key: '3:200', words: [w(1, 14, 76)] }] })).lines;
+  assert.equal(p76[14].kind, 'banner'); assert.equal(p76[14].surah, 4);
+  const p77 = S.buildPageLines(S.normalizeApiPageResponse(77, { verses: [{ verse_key: '4:1', words: [w(1, 2, 77)] }] })).lines;
+  assert.equal(p77[0].kind, 'basmala'); assert.equal(p77[0].surah, 4, 'the first line is the basmala, not another banner');
+  assert.equal(p77[1].kind, 'text');
+  const p3 = S.buildPageLines(S.normalizeApiPageResponse(3, { verses: [{ verse_key: '2:6', words: [w(1, 1, 3)] }] })).lines;
+  assert.equal(p3[14].kind, 'empty', 'other pages are not affected');
+});

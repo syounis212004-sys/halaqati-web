@@ -52,12 +52,12 @@ const apiPage = (n, words = ['w1', 'w2']) => ({ verses: [{ verse_key: n + ':1', 
 const okRes = body => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body), clone() { return okRes(body); } });
 const noCache = { open: async () => ({ match: async () => null, put: async () => {} }) };
 
-test('loader: success is normalised (end marker dropped), cached in memory, and fetched once', async () => {
+test('loader: success is normalised (end marker dropped), cached in memory; a page is built from the API pages around it, each fetched once', async () => {
   let calls = 0;
   const L = S.createPageLoader({ fetchImpl: async () => { calls++; return okRes(apiPage(2)); }, cachesImpl: noCache });
   const r = await L.loadPage(2);
   assert.equal(r.ok, true); assert.equal(r.data.verses[0].text, 'w1 w2'); assert.equal(r.data.juz, 1); assert.equal(r.data.source, 'quran-api-v4');
-  assert.equal((await L.loadPage(2)).fromCache, true); assert.equal(calls, 1);
+  assert.equal((await L.loadPage(2)).fromCache, true); assert.equal(calls, 3, 'pages 1, 2 and 3');
 });
 
 test('loader: offline / HTTP error / empty page return ok:false and NO text (no built-in fallback text exists)', async () => {
@@ -110,7 +110,32 @@ test('page data older than a week is refetched (Quran Foundation caching limit);
   const store = new Map(), cachesImpl = { open: async () => ({ match: async u => store.get(u) || null, put: async (u, r) => { store.set(u, r); } }) };
   let calls = 0; const mk = () => S.createPageLoader({ cachesImpl, fetchImpl: async () => { calls++; return okRes(JSON.parse(body)); }, now: () => clock });
   let clock = 1000000;
-  await mk().loadPage(9); assert.equal(calls, 1);
-  clock += 6 * 86400000; await mk().loadPage(9); assert.equal(calls, 1, 'fresh copy');
-  clock += 2 * 86400000; await mk().loadPage(9); assert.equal(calls, 2, 'stale copy is refetched');
+  await mk().loadPage(9); assert.equal(calls, 3);
+  clock += 6 * 86400000; await mk().loadPage(9); assert.equal(calls, 3, 'fresh copy');
+  clock += 2 * 86400000; await mk().loadPage(9); assert.equal(calls, 6, 'stale copies are refetched');
+});
+
+test('loader: a verse that runs from one printed page to the next is listed by only one of the two API pages, so a page merges its neighbours (words of other pages dropped, no duplicates)', async () => {
+  const w = (pos, line, pg) => ({ position: pos, line_number: line, page_number: pg, char_type_name: 'word', text_uthmani: 'w' + pos, code_v2: 'G' + pos });
+  const pages = {
+    119: { verses: [{ verse_key: '5:70', words: [w(1, 1, 119)] }] },
+    120: { verses: [{ verse_key: '5:76', words: [w(1, 12, 120)] }] },
+    121: { verses: [{ verse_key: '5:77', words: [w(1, 13, 120), w(2, 14, 120), w(3, 1, 121)] }] },
+    122: { verses: [{ verse_key: '5:90', words: [w(1, 1, 122)] }] }
+  };
+  const urls = [];
+  const L = S.createPageLoader({ cachesImpl: noCache, fetchImpl: async u => { urls.push(u); return okRes(pages[+u.match(/by_page\/(\d+)/)[1]]); } });
+  const r = await L.loadPage(120);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.data.words.map(x => x.id), ['5:76:1', '5:77:1', '5:77:2'], 'the two words of 5:77 that sit on page 120 come from the page-121 response');
+  assert.equal(urls.length, 3);
+  const r121 = await L.loadPage(121);
+  assert.deepEqual(r121.data.words.map(x => x.id), ['5:77:3']);
+});
+
+test('loader: if a neighbouring API page cannot be read the page is reported as failed, never drawn with words missing', async () => {
+  const ok = okRes(apiPage(5));
+  const L = S.createPageLoader({ cachesImpl: noCache, fetchImpl: async u => { if (/by_page\/6\b/.test(u)) throw new TypeError('offline'); return ok; } });
+  const r = await L.loadPage(5);
+  assert.equal(r.ok, false); assert.equal(r.data, undefined);
 });
