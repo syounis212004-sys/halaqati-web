@@ -94,7 +94,6 @@ import nativeCertificatesUrl from './features/native/certificates.js?url';
 import nativeHomeUrl from './features/native/home.js?url';
 import nativeApprovalsUrl from './features/native/approvals.js?url';
 import nativeMushafStateUrl from './features/native/mushaf-state.js?url';
-import nativeMushafScoringUrl from './features/native/mushaf-scoring.js?url';
 import nativeMushafUrl from './features/native/mushaf.js?url';
 import rc27PlansUrl from './features/rc27/plans.js?url';
 import certificatePdfUrl from './features/certificates/pdf.js?url';
@@ -185,7 +184,6 @@ const BOOT_SCRIPTS = [
   [nativeHomeUrl, 'halaqati-native-home'],
   [nativeApprovalsUrl, 'halaqati-native-approvals'],
   [nativeMushafStateUrl, 'halaqati-native-mushaf-state'],
-  [nativeMushafScoringUrl, 'halaqati-native-mushaf-scoring'],
   [nativeMushafUrl, 'halaqati-native-mushaf'],
   [rc50RuntimeUrl, 'halaqati-rc50-runtime'],
   [rc50DonorUrl, 'halaqati-rc50-donor'],

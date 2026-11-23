@@ -22,6 +22,8 @@
   gap: 10px;
   height: 100%;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   font-family: Cairo, system-ui, sans-serif;
   color: var(--hm-surface-ink);
 }
@@ -110,7 +112,7 @@ body.dark .hm-mushaf-root {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 12px;
   background: var(--hm-surface);
   border: 1px solid var(--hm-surface-line);
@@ -120,16 +122,10 @@ body.dark .hm-mushaf-root {
 .hm-score small { opacity: 0.8; }
 
 /* ---- the page */
-.hm-pagewrap {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  place-items: center;
-  container-type: size;
-}
+.hm-pagewrap { flex: none; width: 100%; display: flex; justify-content: center; }
 .hm-page {
   position: relative;
-  width: min(100cqw, 70cqh);
+  width: min(100%, 620px);
   aspect-ratio: 14 / 20;
   container-type: inline-size;
   box-sizing: border-box;
@@ -209,8 +205,8 @@ body.dark .hm-mushaf-root {
   cursor: pointer;
   transition: background-color 120ms ease;
 }
-.hm-word.in-range { background: var(--hm-range-bg); }
-.hm-word:hover { background: var(--hm-range-bg); }
+@media (hover: hover) { .hm-word:hover { background: var(--hm-range-bg); } }
+.hm-inrange { font-size: 0.85em; color: var(--hm-accent); }
 .hm-word.is-preview { outline: 0.25cqw dashed var(--hm-accent); outline-offset: 0.05em; background: var(--hm-range-bg); }
 .hm-word.is-mistake {
   background: var(--hm-mark-mistake-bg);
@@ -277,6 +273,23 @@ body.dark .hm-mushaf-root {
   cursor: pointer;
 }
 
+/* ---- bottom bar: stays on screen while the page scrolls, so the type and tools are always one tap away */
+.hm-bottom {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding: 8px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  background: var(--hm-bottom-bg, var(--hm-surface));
+  border-top: 1px solid var(--hm-surface-line);
+  box-shadow: 0 -6px 14px rgba(0, 0, 0, 0.08);
+}
+.hm-bottom .hm-types { gap: 6px; }
+.hm-bottom .hm-type { min-height: 48px; }
+
 /* ---- tool dock */
 .hm-dock {
   display: flex;
@@ -320,10 +333,12 @@ body.dark .hm-mushaf-root {
 .hm-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
 @media (min-width: 900px) {
-  .hm-mushaf-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto auto 1fr auto; column-gap: 20px; align-content: start; }
-  .hm-pagewrap { grid-column: 1; grid-row: 1 / -1; }
-  .hm-nav, .hm-types, .hm-score, .hm-dock { grid-column: 2; }
-  .hm-types { grid-template-columns: 1fr; }
+  .hm-mushaf-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto auto 1fr; column-gap: 20px; align-content: start; overflow: hidden; }
+  .hm-pagewrap { grid-column: 1; grid-row: 1 / -1; container-type: size; display: grid; place-items: center; min-height: 0; }
+  .hm-page { width: min(100cqw, 70cqh); }
+  .hm-nav, .hm-score, .hm-bottom { grid-column: 2; }
+  .hm-bottom { position: static; display: flex; box-shadow: none; border-top: 0; background: transparent; padding: 0; margin-top: 0; }
+  .hm-bottom .hm-types { grid-template-columns: 1fr; }
   .hm-dock { flex-wrap: wrap; align-self: start; }
 }
 

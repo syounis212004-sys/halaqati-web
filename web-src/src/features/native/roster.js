@@ -739,7 +739,7 @@
   const counter=(label,val,dec,inc)=>`<div class="nr-cnt"><b>${label}</b><div><button type="button" class="nr-cbtn" aria-label="إنقاص" ${val<=0?'disabled':''} onclick="NSR.${dec}">${ic('Remove',20)}</button><output>${val}</output><button type="button" class="nr-cbtn" aria-label="زيادة" onclick="NSR.${inc}">${ic('Add',20)}</button></div></div>`;
   function evalCard(d){
     const bad=d.ev==='repeat';
-    return `<div class="nr-eval ${bad?'bad':''}" id="nrEval"><div class="nr-eval-l">${ic(bad?'WarningAmber':'Verified',24)}<div><small>${d.tilawah?'التقييم العام للتلاوة':'تقييم V6 تلقائي'}</small><b>${evalLabel(d.ev)}</b></div></div><div class="nr-eval-r"><small>${d.tilawah?'النتيجة':'السلامة'}</small><b>${plain(d.safety)}%</b></div></div>`;
+    return `<div class="nr-eval ${bad?'bad':''}" id="nrEval"><div class="nr-eval-l">${ic(bad?'WarningAmber':'Verified',24)}<div><small>${d.tilawah?'التقييم العام للتلاوة':'تقييم تلقائي'}</small><b>${evalLabel(d.ev)}</b></div></div><div class="nr-eval-r"><small>${d.tilawah?'النتيجة':'السلامة'}</small><b>${plain(d.safety)}%</b></div></div>`;
   }
   function recBody(){
     const D=R.rec,st=studentOf(D.sid),se=sessionOf(D.seId),d=recDerived();
@@ -976,7 +976,6 @@
     NX.dialog('nrMushafDlg','المصحف',`<div id="nrMushafHost" class="nr-mushaf-host"></div>`,{cls:'nr-mushaf-dlg',onClose:()=>{mushafView?.destroy();mushafView=null;if(R.rec)drawRec()}});
     mushafView=window.HalaqatiMushaf.mount($id('nrMushafHost'),{
       session:D.mushaf,
-      lines:()=>D.range?.lineKeys?.length||Math.round((D.range?.pages||0)*15),
       getRange:()=>D.range,
       getCounters:()=>({mistakes:D.mistakes,prompts:D.prompts}),
       getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev)}:null},

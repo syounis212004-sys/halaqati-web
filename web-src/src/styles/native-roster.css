@@ -190,7 +190,7 @@ html[data-view="desktop"] .nr-card-main:hover{background:color-mix(in srgb,var(-
 
 /* interactive mushaf: full-screen dialog hosting the marking page */
 .nr-mushaf-dlg{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0}
-.nr-mushaf-dlg .nx-dlg-body{height:100%;display:flex;flex-direction:column}
+.nr-mushaf-dlg .nx-dlg-body{height:100%;max-height:100dvh;display:flex;flex-direction:column}
 .nr-mushaf-dlg .nx-dlg-content{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
 .nr-mushaf-host{flex:1;min-height:0}
 html[data-view="desktop"] .nr-mushaf-dlg{width:min(96vw,1000px);max-width:96vw;height:96dvh;max-height:96dvh;margin:auto;border-radius:20px}

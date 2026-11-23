@@ -5,12 +5,11 @@
 (function (root) {
   'use strict';
 
-  var S = root.HalaqatiMushafState, SC = root.HalaqatiMushafScoring;
+  var S = root.HalaqatiMushafState;
   if (!S) return;
   var H = function (v) { return S.escapeHtml(v); };
   var sharedLoader = S.createPageLoader(), fontLoader = S.createFontLoader(), basmalaCache = null;
-  var GRADE_AR = { excellent: 'ممتاز', very_good: 'جيد جداً', good: 'جيد', repeat: 'إعادة', not_rated: 'غير مقيَّم' };
-  var KINDS = [['word', 'كلمة'], ['harakah', 'حركة'], ['ayah_start', 'بداية آية']];
+    var KINDS = [['word', 'كلمة'], ['harakah', 'حركة'], ['ayah_start', 'بداية آية']];
   var ICONS = {
     tap: 'M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63-4.54-2.26a1 1 0 0 0-.44-.1h-.67V7.5a1.5 1.5 0 0 0-3 0v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z',
     highlight: 'M6 14l3 3v5h6v-5l3-3V9H6zm5-12h2v3h-2zM3.5 5.88l1.41-1.41 2.12 2.12L5.62 8zm13.46.71 2.12-2.12 1.41 1.41L18.38 8z',
@@ -34,16 +33,17 @@
           '<button type="button" class="hm-pagebtn" data-act="next" aria-label="الصفحة التالية">التالية</button>' +
           '<button type="button" class="hm-pagebtn hm-jump" data-act="range" hidden>إلى المقرر</button>' +
         '</div>' +
+        '<div class="hm-score" data-score></div>' +
+        '<div class="hm-pagewrap"><div class="hm-page" role="group" aria-label="صفحة المصحف">' +
+          '<div class="hm-page-head"><span data-surah></span><span class="hm-inrange" data-inrange></span><span data-juz></span></div>' +
+          '<div class="hm-lines" data-lines></div>' +
+          '<div class="hm-page-foot" data-foot></div>' +
+        '</div></div>' +
+        '<div class="hm-bottom">' +
         '<div class="hm-types" role="group" aria-label="نوع العلامة">' +
           '<button type="button" class="hm-type is-mistake" data-type="mistake" aria-pressed="true"><span class="hm-swatch" aria-hidden="true"></span><span>خطأ</span><b data-count="mistakes">٠</b></button>' +
           '<button type="button" class="hm-type is-prompt" data-type="prompt" aria-pressed="false"><span class="hm-swatch" aria-hidden="true"></span><span>تلقين</span><b data-count="prompts">٠</b></button>' +
         '</div>' +
-        '<div class="hm-score" data-score></div>' +
-        '<div class="hm-pagewrap"><div class="hm-page" role="group" aria-label="صفحة المصحف">' +
-          '<div class="hm-page-head"><span data-surah></span><span data-juz></span></div>' +
-          '<div class="hm-lines" data-lines></div>' +
-          '<div class="hm-page-foot" data-foot></div>' +
-        '</div></div>' +
         '<div class="hm-dock" role="toolbar" aria-label="أدوات التعليم">' +
           '<button type="button" class="hm-tool" data-tool="tap" aria-pressed="true" title="لمس كلمة (T)">' + icon('tap') + '<span>لمس</span></button>' +
           '<button type="button" class="hm-tool" data-tool="highlight" aria-pressed="false" title="تظليل بالسحب (H)">' + icon('highlight') + '<span>تظليل</span></button>' +
@@ -52,6 +52,7 @@
           '<button type="button" class="hm-tool" data-act="redo" title="إعادة (Ctrl+Shift+Z)" aria-label="إعادة">' + icon('undo', true) + '</button>' +
         '</div>' +
         '<div class="hm-credit">خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
+        '</div>' +
         '<div class="hm-live" aria-live="polite" data-live></div>' +
       '</div>';
 
@@ -76,12 +77,9 @@
       $('[data-act="prev"]').disabled = page <= 1; $('[data-act="next"]').disabled = page >= 604;
       var jump = $('[data-act="range"]'); jump.hidden = !(start && start !== page);
       if (document.activeElement !== inputEl) inputEl.value = page;
-      var lines = opts.lines ? Number(opts.lines()) || 0 : 0, html = '';
-      if (SC && lines > 0) {
-        var v7 = SC.scoreV7({ lines: lines, marks: session.exportPayload().marks, unmarked: { mistakes: Math.max(0, c.mistakes - c.marked.mistakes), prompts: Math.max(0, c.prompts - c.marked.prompts) } });
-        var v6 = opts.getV6 ? opts.getV6() : null;
-        html = '<span>تقييم مقترح (V7): <b>' + digits(v7.safety) + '٪ ' + H(GRADE_AR[v7.grade]) + '</b></span>' + (v6 ? '<small>المعتمد حالياً (V6): ' + digits(v6.safety) + '٪ ' + H(v6.label || '') + '</small>' : '');
-      } else html = '<small>اختر المقرر أولاً ليظهر التقييم.</small>';
+      var v = opts.getV6 ? opts.getV6() : null, html;
+      if (v) html = '<span>التقدير: <b>' + digits(v.safety) + '٪ ' + H(v.label || '') + '</b></span><small>الحد الأعلى للصفحة: خطأ (جملة) وتلقينان</small>';
+      else html = '<small>اختر المقرر أولاً ليظهر التقدير.</small>';
       $('[data-score]').innerHTML = html;
     }
 
@@ -140,17 +138,18 @@
     }
 
     function paintMarks() {
-      var range = curRange(), byId = {};
+      var range = curRange(), byId = {}, total = 0, inside = 0;
       pageWords().forEach(function (w) { byId[w.id] = w; });
       linesEl.querySelectorAll('.hm-word').forEach(function (el) {
         var id = el.getAttribute('data-wid'), m = session.getMark(id), w = byId[id];
         el.classList.toggle('is-mistake', !!m && m.type === 'mistake');
         el.classList.toggle('is-prompt', !!m && m.type === 'prompt');
         el.classList.toggle('is-harakah', !!m && m.kind === 'harakah');
-        el.classList.toggle('in-range', !!(range && w && S.isAyahInRange(w.surah, w.ayah, range.startSurah || (range.selectedSurahs && range.selectedSurahs.length) ? range : Object.assign({}, range, { page: session.getState().page }))));
-        if (m) el.setAttribute('aria-label', el.textContent + ' — ' + (m.type === 'mistake' ? 'خطأ' : 'تلقين') + (m.kind === 'harakah' ? ' في الحركة' : m.kind === 'ayah_start' ? ' في بداية الآية' : ''));
-        else el.removeAttribute('aria-label');
+        if (range && w) { total++; if (S.isAyahInRange(w.surah, w.ayah, range.startSurah || (range.selectedSurahs && range.selectedSurahs.length) ? range : Object.assign({}, range, { page: session.getState().page }))) inside++; }
+        if (m) el.setAttribute('aria-label', (w ? w.text : '') + ' — ' + (m.type === 'mistake' ? 'خطأ' : 'تلقين') + (m.kind === 'harakah' ? ' في الحركة' : m.kind === 'ayah_start' ? ' في بداية الآية' : ''));
+        else if (w) el.setAttribute('aria-label', w.text);
       });
+      var chip = $('[data-inrange]'); if (chip) chip.textContent = !total || !inside ? '' : inside === total ? 'ضمن المقرر' : 'جزء من المقرر';
       updateHud();
     }
 
