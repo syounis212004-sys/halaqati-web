@@ -122,3 +122,39 @@ test('exportPayload lists marks with word, kind and type in reading order', () =
   assert.deepEqual(e.marks.map(m => [m.ayah_key, m.word, m.type, m.kind]), [['112:1', 1, 'mistake', 'harakah'], ['113:1', 2, 'prompt', 'word']]);
   assert.equal(e.mistakes, 1); assert.equal(e.prompts, 1);
 });
+
+// ---- pure helpers used by the page component
+test('spanBetween: reading order across lines, either drag direction, unknown ids give nothing', () => {
+  const lines = S.buildPageLines(S.normalizeApiPageResponse(604, shortSurahs())).lines;
+  assert.deepEqual(S.spanBetween(lines, '112:1:2', '112:2:1'), ['112:1:2', '112:2:1']);
+  assert.deepEqual(S.spanBetween(lines, '112:2:1', '112:1:2'), ['112:1:2', '112:2:1'], 'dragging backwards gives the same span');
+  assert.deepEqual(S.spanBetween(lines, '112:1:1', '113:2:3').length, 9, 'crosses the banner lines without including them');
+  assert.deepEqual(S.spanBetween(lines, '113:1:1', '113:1:1'), ['113:1:1']);
+  assert.deepEqual(S.spanBetween(lines, '1:1:1', '112:1:1'), []);
+});
+
+test('fitLines: one font scale so the longest line fits the page, full lines are justified, short lines centred, empty lines ignored', () => {
+  const r = S.fitLines([290, 320, 0, 120], 300);
+  assert.equal(r.scale, 0.919); // 300 * 0.98 / 320, rounded to 3 places
+  assert.deepEqual(r.modes, ['justify', 'justify', 'none', 'center']);
+  assert.equal(S.fitLines([100, 200], 300).scale, 1, 'never scales up');
+  assert.deepEqual(S.fitLines([], 300), { scale: 1, modes: [] });
+  assert.equal(S.fitLines([100], 0).scale, 1, 'a zero-width page (not laid out yet) is not a reason to shrink to nothing');
+});
+
+test('keyboard map: 1/2 type, T/H/E tools, Ctrl+Z undo, Ctrl+Shift+Z or Ctrl+Y redo, arrows move; other keys and other modifiers do nothing', () => {
+  assert.deepEqual(S.shortcutAction({ key: '1' }), { type: 'type', value: 'mistake' });
+  assert.deepEqual(S.shortcutAction({ key: '2' }), { type: 'type', value: 'prompt' });
+  assert.deepEqual(S.shortcutAction({ key: 'h' }), { type: 'tool', value: 'highlight' });
+  assert.deepEqual(S.shortcutAction({ key: 'T' }), { type: 'tool', value: 'tap' });
+  assert.deepEqual(S.shortcutAction({ key: 'e' }), { type: 'tool', value: 'erase' });
+  assert.deepEqual(S.shortcutAction({ key: 'z', ctrlKey: true }), { type: 'undo' });
+  assert.deepEqual(S.shortcutAction({ key: 'Z', ctrlKey: true, shiftKey: true }), { type: 'redo' });
+  assert.deepEqual(S.shortcutAction({ key: 'y', metaKey: true }), { type: 'redo' });
+  assert.deepEqual(S.shortcutAction({ key: 'ArrowLeft' }), { type: 'move', value: 'next' }, 'RTL: left is the next word');
+  assert.deepEqual(S.shortcutAction({ key: 'ArrowRight' }), { type: 'move', value: 'prev' });
+  assert.deepEqual(S.shortcutAction({ key: 'ArrowDown' }), { type: 'move', value: 'down' });
+  assert.deepEqual(S.shortcutAction({ key: 'ArrowUp' }), { type: 'move', value: 'up' });
+  assert.equal(S.shortcutAction({ key: '1', altKey: true }), null);
+  assert.equal(S.shortcutAction({ key: 'x' }), null);
+});

@@ -1,256 +1,267 @@
-/* Halaqati Interactive Mushaf — page view with ayah marks (Phase 1: ayah level).
- * Embedded by native/roster.js as the «المصحف» tab of the Quran-range picker (NSR.openPicker). The component owns only its DOM; every piece of
- * state (marks, page) lives in the HalaqatiMushafState session object that the caller keeps, so a re-render of the picker never loses marks.
- * It never touches the recitation counters itself: it reports {mist, prompt} deltas through opts.onMark and the caller applies them.
- * No storage, no Supabase, no text typed in this repo (the Quran text comes from HalaqatiMushafState's loader only).
- */
+/* Halaqati interactive mushaf v2: a full 15-line page with marking tools (tap a word, drag to highlight, eraser, undo/redo).
+ * The component owns only its DOM. Marks and history live in the HalaqatiMushafState session the caller keeps; mark deltas are reported through
+ * opts.onMark({mist, prompt}) and the caller turns them into the recitation counters. No storage, no Supabase, no Quran text typed in this repo.
+ * opts: { session, loader?, lines():number of mushaf lines recited, getRange():range|null, getCounters():{mistakes,prompts}, getV6():{safety,label}|null, onMark(delta) } */
 (function (root) {
   'use strict';
 
-  var State = root.HalaqatiMushafState;
-  if (!State) return;
+  var S = root.HalaqatiMushafState, SC = root.HalaqatiMushafScoring;
+  if (!S) return;
+  var H = function (v) { return S.escapeHtml(v); };
+  var sharedLoader = S.createPageLoader();
+  var GRADE_AR = { excellent: 'ممتاز', very_good: 'جيد جداً', good: 'جيد', repeat: 'إعادة', not_rated: 'غير مقيَّم' };
+  var KINDS = [['word', 'كلمة'], ['harakah', 'حركة'], ['ayah_start', 'بداية آية']];
+  var ICONS = {
+    tap: 'M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63-4.54-2.26a1 1 0 0 0-.44-.1h-.67V7.5a1.5 1.5 0 0 0-3 0v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z',
+    highlight: 'M6 14l3 3v5h6v-5l3-3V9H6zm5-12h2v3h-2zM3.5 5.88l1.41-1.41 2.12 2.12L5.62 8zm13.46.71 2.12-2.12 1.41 1.41L18.38 8z',
+    erase: 'M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53a4.008 4.008 0 0 1-5.66 0L2.81 17c-.78-.79-.78-2.05 0-2.84l10.6-10.6c.79-.78 2.05-.78 2.83 0zM4.22 15.58l3.54 3.53c.78.79 2.04.79 2.83 0l3.53-3.53-4.95-4.95-4.95 4.95z',
+    undo: 'M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z'
+  };
+  var icon = function (name, flip) { return '<svg viewBox="0 0 24 24" aria-hidden="true"' + (flip ? ' style="transform:scaleX(-1)"' : '') + '><path d="' + ICONS[name] + '"/></svg>'; };
+  function digits(n) { return String(n == null ? '' : n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[+d]; }); }
 
-  var H = function (val) { return State.escapeHtml(val); };
-  var sharedLoader = State.createPageLoader();
-  var MARK_LABELS = { mistake: 'خطأ', prompt: 'تلقين' };
-
-  function toArabicIndicDigits(n) {
-    var map = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return String(n == null ? '' : n).replace(/\d/g, function (d) { return map[Number(d)]; });
-  }
-
-  function surahOptionsHtml(selected) {
-    return State.SURAHS.map(function (s) {
-      return '<option value="' + H(s.id) + '"' + (s.id === selected ? ' selected' : '') + '>' + H(s.id + '. ' + s.name) + '</option>';
-    }).join('');
-  }
-
-  /* opts: { session, getRange():{startSurah,startAyah,endSurah,endAyah,selectedSurahs,startPage,endPage}|null, recitation:boolean,
-   *         onMark(delta), onRange(range{startSurah,startAyah,endSurah,endAyah}), keepSurahOrder():boolean, loader, startPage } */
   function mount(container, opts) {
     if (!container || !opts || !opts.session) return null;
-    var session = opts.session;
-    var loader = opts.loader || sharedLoader;
-    var recitation = opts.recitation !== false;
-    var ui = { rendering: false, loading: false, error: null, pageData: null, popover: null, indexOpen: false, indexFilter: '', pointer: null, dead: false, token: 0 };
+    var session = opts.session, loader = opts.loader || sharedLoader;
+    var ui = { tool: 'tap', type: 'mistake', data: null, lines: null, loading: false, error: null, token: 0, drag: null, pressTimer: 0, focusId: null, dead: false, raf: 0 };
+
+    container.innerHTML =
+      '<div class="hm-mushaf-root" dir="rtl">' +
+        '<div class="hm-nav">' +
+          '<button type="button" class="hm-pagebtn" data-act="prev" aria-label="الصفحة السابقة">السابقة</button>' +
+          '<input class="hm-pageinput" type="number" min="1" max="604" inputmode="numeric" data-act="page" aria-label="رقم الصفحة">' +
+          '<span class="hm-pagetotal">/ ٦٠٤</span>' +
+          '<button type="button" class="hm-pagebtn" data-act="next" aria-label="الصفحة التالية">التالية</button>' +
+          '<button type="button" class="hm-pagebtn hm-jump" data-act="range" hidden>إلى المقرر</button>' +
+        '</div>' +
+        '<div class="hm-types" role="group" aria-label="نوع العلامة">' +
+          '<button type="button" class="hm-type is-mistake" data-type="mistake" aria-pressed="true"><span class="hm-swatch" aria-hidden="true"></span><span>خطأ</span><b data-count="mistakes">٠</b></button>' +
+          '<button type="button" class="hm-type is-prompt" data-type="prompt" aria-pressed="false"><span class="hm-swatch" aria-hidden="true"></span><span>تلقين</span><b data-count="prompts">٠</b></button>' +
+        '</div>' +
+        '<div class="hm-score" data-score></div>' +
+        '<div class="hm-pagewrap"><div class="hm-page" role="group" aria-label="صفحة المصحف">' +
+          '<div class="hm-page-head"><span data-surah></span><span data-juz></span></div>' +
+          '<div class="hm-lines" data-lines></div>' +
+          '<div class="hm-page-foot" data-foot></div>' +
+        '</div></div>' +
+        '<div class="hm-dock" role="toolbar" aria-label="أدوات التعليم">' +
+          '<button type="button" class="hm-tool" data-tool="tap" aria-pressed="true" title="لمس كلمة (T)">' + icon('tap') + '<span>لمس</span></button>' +
+          '<button type="button" class="hm-tool" data-tool="highlight" aria-pressed="false" title="تظليل بالسحب (H)">' + icon('highlight') + '<span>تظليل</span></button>' +
+          '<button type="button" class="hm-tool" data-tool="erase" aria-pressed="false" title="ممحاة (E)">' + icon('erase') + '<span>ممحاة</span></button>' +
+          '<button type="button" class="hm-tool" data-act="undo" title="تراجع (Ctrl+Z)" aria-label="تراجع">' + icon('undo') + '</button>' +
+          '<button type="button" class="hm-tool" data-act="redo" title="إعادة (Ctrl+Shift+Z)" aria-label="إعادة">' + icon('undo', true) + '</button>' +
+        '</div>' +
+        '<div class="hm-live" aria-live="polite" data-live></div>' +
+      '</div>';
+
+    var $ = function (sel) { return container.querySelector(sel); };
+    var linesEl = $('[data-lines]'), pageEl = $('.hm-page'), liveEl = $('[data-live]'), inputEl = $('[data-act="page"]');
 
     function curRange() { try { return (opts.getRange && opts.getRange()) || null; } catch (_e) { return null; } }
-    function rangeStartPage() {
-      var r = curRange();
-      if (!r) return null;
-      if (r.startSurah) return State.resolvePageForAyah(r.startSurah, r.startAyah || 1);
-      if (r.startPage) return State.clampPage(r.startPage);
-      return null;
-    }
-    function currentSurahId() {
-      if (ui.pageData && ui.pageData.verses.length) return ui.pageData.verses[0].surah;
-      var p = session.getState().page, id = 1;
-      for (var i = 0; i < State.SURAHS.length; i++) { if (State.SURAHS[i].startPage <= p) id = State.SURAHS[i].id; else break; }
-      return id;
+    function rangeStartPage() { var r = curRange(); return r && r.startSurah ? S.resolvePageForAyah(r.startSurah, r.startAyah || 1) : null; }
+    function counters() {
+      var c = session.getCounts().total, ext = opts.getCounters ? opts.getCounters() : null;
+      return ext ? { mistakes: ext.mistakes, prompts: ext.prompts, marked: c } : { mistakes: c.mistakes, prompts: c.prompts, marked: c };
     }
 
-    function popoverHtml(key) {
-      var mark = session.getMark(key), cur = mark ? mark.type : null;
-      return '<div class="hm-mushaf-popover" role="dialog" aria-label="تعليم الآية ' + H(key) + '">' +
-        '<div class="hm-mushaf-popover-head"><span>آية ' + H(key) + '</span>' +
-        '<button type="button" class="hm-mushaf-pop-close" data-action="close-popover" aria-label="إغلاق">×</button></div>' +
-        '<div class="hm-mushaf-popover-actions">' +
-        '<button type="button" class="hm-mushaf-mark-btn is-mistake' + (cur === 'mistake' ? ' is-selected' : '') + '" data-action="mark" data-mark-type="mistake" data-ayah-key="' + H(key) + '">خطأ</button>' +
-        '<button type="button" class="hm-mushaf-mark-btn is-prompt' + (cur === 'prompt' ? ' is-selected' : '') + '" data-action="mark" data-mark-type="prompt" data-ayah-key="' + H(key) + '">تلقين</button>' +
-        (cur ? '<button type="button" class="hm-mushaf-mark-btn is-clear" data-action="clear-mark" data-ayah-key="' + H(key) + '">إلغاء</button>' : '') +
-        '</div></div>';
+    // ---- hud: counts on the type buttons, score preview, undo/redo state, page number
+    function updateHud() {
+      var c = counters(), page = session.getState().page, start = rangeStartPage();
+      container.querySelector('[data-count="mistakes"]').textContent = digits(c.mistakes);
+      container.querySelector('[data-count="prompts"]').textContent = digits(c.prompts);
+      container.querySelectorAll('[data-type]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-type') === ui.type)); });
+      container.querySelectorAll('[data-tool]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-tool') === ui.tool)); });
+      $('[data-act="undo"]').disabled = !session.canUndo(); $('[data-act="redo"]').disabled = !session.canRedo();
+      $('[data-act="prev"]').disabled = page <= 1; $('[data-act="next"]').disabled = page >= 604;
+      var jump = $('[data-act="range"]'); jump.hidden = !(start && start !== page);
+      if (document.activeElement !== inputEl) inputEl.value = page;
+      var lines = opts.lines ? Number(opts.lines()) || 0 : 0, html = '';
+      if (SC && lines > 0) {
+        var v7 = SC.scoreV7({ lines: lines, marks: session.exportPayload().marks, unmarked: { mistakes: Math.max(0, c.mistakes - c.marked.mistakes), prompts: Math.max(0, c.prompts - c.marked.prompts) } });
+        var v6 = opts.getV6 ? opts.getV6() : null;
+        html = '<span>تقييم مقترح (V7): <b>' + digits(v7.safety) + '٪ ' + H(GRADE_AR[v7.grade]) + '</b></span>' + (v6 ? '<small>المعتمد حالياً (V6): ' + digits(v6.safety) + '٪ ' + H(v6.label || '') + '</small>' : '');
+      } else html = '<small>اختر المقرر أولاً ليظهر التقييم.</small>';
+      $('[data-score]').innerHTML = html;
     }
 
-    function versesHtml() {
-      var st = session.getState();
-      if (ui.loading) return '<div class="hm-mushaf-status" role="status">جارٍ تحميل صفحة ' + H(toArabicIndicDigits(st.page)) + '…</div>';
-      if (ui.error || !ui.pageData || !ui.pageData.verses.length) {
-        return '<div class="hm-mushaf-error" role="alert"><p class="hm-mushaf-error-title">تعذّر عرض صفحة ' + H(toArabicIndicDigits(st.page)) + '</p>' +
-          '<p class="hm-mushaf-error-desc">' + H(ui.error || 'تأكد من الاتصال بالإنترنت.') + ' يمكنك متابعة التسميع بالعدّادات اليدوية دون المصحف.</p>' +
-          '<div class="hm-mushaf-error-actions"><button type="button" class="hm-mushaf-btn hm-mushaf-btn-primary" data-action="retry">إعادة المحاولة</button></div></div>';
+    function announce(r, what) { if (r && r.changed) { var c = counters(); liveEl.textContent = what + '. أخطاء ' + c.mistakes + '، تلقين ' + c.prompts; } }
+    function applyResult(r, what) {
+      if (r && r.delta && (r.delta.mist || r.delta.prompt) && typeof opts.onMark === 'function') opts.onMark({ mist: r.delta.mist, prompt: r.delta.prompt });
+      paintMarks(); announce(r, what);
+    }
+
+    // ---- page rendering
+    function pageWords() { return ui.lines ? [].concat.apply([], ui.lines.map(function (l) { return l.words; })) : []; }
+    function renderPage() {
+      var st = session.getState(), surahId = ui.lines && pageWords()[0] ? pageWords()[0].surah : null, info = surahId ? S.getSurah(surahId) : null;
+      $('[data-surah]').textContent = info ? 'سورة ' + info.name : '';
+      $('[data-juz]').textContent = ui.data && ui.data.juz ? 'الجزء ' + digits(ui.data.juz) : '';
+      $('[data-foot]').textContent = digits(st.page);
+      if (ui.loading) { linesEl.innerHTML = '<div class="hm-status" role="status" style="grid-row:1 / -1">جارٍ تحميل صفحة ' + H(digits(st.page)) + '…</div>'; return; }
+      if (ui.error || !ui.lines) {
+        linesEl.innerHTML = '<div class="hm-error" role="alert" style="grid-row:1 / -1"><p>تعذّر عرض صفحة ' + H(digits(st.page)) + '.</p><p>' + H(ui.error || 'تأكد من الاتصال بالإنترنت.') + ' يمكنك متابعة التسميع بالعدّادات اليدوية دون المصحف.</p><button type="button" class="hm-pagebtn" data-act="retry">إعادة المحاولة</button></div>';
+        return;
       }
-      var range = curRange(), draft = st.rangeDraft, lastSurah = 0, html = '', verses = ui.pageData.verses;
-      if (range && range.startSurah && !range.endSurah) range = null;
-      for (var i = 0; i < verses.length; i++) {
-        var v = verses[i];
-        if (v.surah && v.surah !== lastSurah) {
-          var info = State.getSurah(v.surah);
-          if (v.ayah === 1 && info) {
-            html += '<div class="hm-mushaf-surah-banner">سورة ' + H(info.name) + '</div>';
-          }
-          lastSurah = v.surah;
-        }
-        var mark = recitation ? session.getMark(v.ayah_key) : null;
-        var cls = 'hm-mushaf-ayah';
-        if (range && State.isAyahInRange(v.surah, v.ayah, range)) cls += ' is-in-curriculum';
-        if (draft.start && draft.start.surah === v.surah && draft.start.ayah === v.ayah) cls += ' is-range-anchor';
-        if (mark) cls += ' is-marked is-mark-' + mark.type;
-        if (ui.popover === v.ayah_key) cls += ' is-focused';
-        html += '<span class="' + cls + '" role="button" tabindex="0" data-ayah-key="' + H(v.ayah_key) + '" data-surah="' + H(v.surah) + '" data-ayah="' + H(v.ayah) + '"' +
-          ' aria-label="الآية ' + H(v.ayah) + (mark ? ' — ' + H(MARK_LABELS[mark.type]) : '') + '">' +
-          '<span class="hm-mushaf-ayah-text">' + H(v.text) + '</span>' +
-          '<span class="hm-mushaf-ayah-num" aria-hidden="true">﴿' + H(toArabicIndicDigits(v.ayah)) + '﴾</span>' +
-          (mark ? '<span class="hm-mushaf-ayah-badge is-' + H(mark.type) + '">' + H(MARK_LABELS[mark.type]) + '</span>' : '') + '</span> ';
-      }
-      if (ui.popover && st.interactionMode === 'recitation' && recitation) html += popoverHtml(ui.popover);
-      return html;
+      var first = true;
+      linesEl.innerHTML = ui.lines.map(function (l) {
+        if (l.kind === 'banner') return '<div class="hm-line is-banner"><span>سورة ' + H((S.getSurah(l.surah) || {}).name || '') + '</span></div>';
+        if (l.kind === 'basmala') return '<div class="hm-line is-basmala" aria-hidden="true">﷽</div>';
+        if (l.kind === 'empty') return '<div class="hm-line"></div>';
+        return '<div class="hm-line is-justify">' + l.words.map(function (w) {
+          var tab = first ? 0 : -1; first = false;
+          return '<span class="hm-word" lang="ar" role="button" tabindex="' + tab + '" data-wid="' + H(w.id) + '">' + H(w.text) + '</span>';
+        }).join('') + '</div>';
+      }).join('');
+      ui.focusId = pageWords()[0] ? pageWords()[0].id : null;
+      fit(); paintMarks();
     }
 
-    function indexHtml() {
-      if (!ui.indexOpen) return '';
-      var q = ui.indexFilter.trim();
-      var items = State.SURAHS.filter(function (s) { return !q || s.name.indexOf(q) !== -1 || String(s.id) === q; });
-      return '<div class="hm-mushaf-index" role="region" aria-label="فهرس السور"><div class="hm-mushaf-index-head">' +
-        '<input type="search" class="hm-mushaf-input" data-action="filter-index" placeholder="ابحث باسم السورة أو رقمها…" value="' + H(ui.indexFilter) + '">' +
-        '<button type="button" class="hm-mushaf-btn hm-mushaf-btn-ghost" data-action="toggle-index">إغلاق</button></div><div class="hm-mushaf-index-grid">' +
-        items.map(function (s) {
-          return '<button type="button" class="hm-mushaf-surah-chip" data-action="jump-surah-chip" data-surah-id="' + H(s.id) + '"><span class="hm-mushaf-surah-chip-num">' + H(s.id) +
-            '</span><span class="hm-mushaf-surah-chip-name">' + H(s.name) + '</span><span class="hm-mushaf-surah-chip-pg">ص ' + H(s.startPage) + '</span></button>';
-        }).join('') + '</div></div>';
+    function fit() {
+      var rows = [].slice.call(linesEl.querySelectorAll('.hm-line'));
+      linesEl.style.setProperty('--fit', '1');
+      rows.forEach(function (r) { r.classList.remove('is-justify', 'is-center'); r.style.justifyContent = 'flex-start'; });
+      var naturals = rows.map(function (r) { return r.querySelector('.hm-word') ? r.scrollWidth : 0; });
+      var res = S.fitLines(naturals, linesEl.clientWidth);
+      linesEl.style.setProperty('--fit', String(res.scale));
+      rows.forEach(function (r, i) { r.style.justifyContent = ''; if (res.modes[i] === 'justify') r.classList.add('is-justify'); else if (res.modes[i] === 'center') r.classList.add('is-center'); });
     }
 
-    function render() {
-      if (ui.dead) return;
-      var st = session.getState(), counts = session.getCounts(st.page), target = rangeStartPage();
-      var pageBox = container.querySelector('.hm-mushaf-page'), scrollTop = pageBox ? pageBox.scrollTop : 0, samePage = pageBox && pageBox.getAttribute('data-page') === String(st.page);
-      var surah = State.getSurah(currentSurahId());
-      ui.rendering = true; // removing a focused input fires blur/change synchronously: ignore those while the DOM is being replaced
-      try { container.innerHTML = '<div class="hm-mushaf-root" dir="rtl">' +
-        (recitation
-          ? '<div class="hm-mushaf-topbar"><div class="hm-mushaf-mode-switch" role="group" aria-label="وضع التفاعل">' +
-            '<button type="button" class="hm-mushaf-seg-btn' + (st.interactionMode === 'recitation' ? ' is-active' : '') + '" data-action="set-mode" data-mode="recitation">تعليم الأخطاء</button>' +
-            '<button type="button" class="hm-mushaf-seg-btn' + (st.interactionMode === 'range' ? ' is-active' : '') + '" data-action="set-mode" data-mode="range">تحديد المقرر</button></div></div>'
-          : '<div class="hm-mushaf-hint" role="status">اختر المقرر بلمس آية البداية ثم آية النهاية.</div>') +
-        ((st.interactionMode === 'range' || !recitation)
-          ? '<div class="hm-mushaf-hint" role="status">' + (st.rangeDraft.start
-            ? 'البداية ' + H(toArabicIndicDigits(st.rangeDraft.start.surah + ':' + st.rangeDraft.start.ayah)) + ' — المس آية النهاية.'
-            : 'المس آية البداية ثم آية النهاية لتحديد المقرر.') + '</div>' : '') +
-        ((target && target !== st.page) ? '<div class="hm-mushaf-curriculum-bar"><span>المقرر المختار يبدأ في صفحة ' + H(toArabicIndicDigits(target)) + '</span>' +
-          '<button type="button" class="hm-mushaf-btn hm-mushaf-btn-soft" data-action="jump-curriculum">الانتقال للمقرر</button></div>' : '') +
-        '<div class="hm-mushaf-nav">' +
-        '<button type="button" class="hm-mushaf-btn hm-mushaf-btn-nav" data-action="prev-page"' + (st.page <= 1 ? ' disabled' : '') + ' aria-label="الصفحة السابقة">السابقة</button>' +
-        '<label class="hm-mushaf-page-jump"><span class="sr-only">رقم الصفحة</span><input type="number" min="1" max="604" inputmode="numeric" class="hm-mushaf-page-input" data-action="page-input" value="' + H(st.page) + '" aria-label="رقم الصفحة"><span class="hm-mushaf-page-total">/ 604</span></label>' +
-        '<button type="button" class="hm-mushaf-btn hm-mushaf-btn-nav" data-action="next-page"' + (st.page >= 604 ? ' disabled' : '') + ' aria-label="الصفحة التالية">التالية</button>' +
-        '<select class="hm-mushaf-select" data-action="jump-surah" aria-label="الانتقال إلى سورة">' + surahOptionsHtml(currentSurahId()) + '</select>' +
-        '<button type="button" class="hm-mushaf-btn hm-mushaf-btn-ghost" data-action="toggle-index">فهرس السور</button></div>' +
-        indexHtml() +
-        (recitation
-          ? '<div class="hm-mushaf-counters" aria-live="polite"><div class="hm-mushaf-counter-group"><span class="hm-mushaf-counter-label">هذه الصفحة:</span>' +
-            '<span class="hm-mushaf-chip is-mistake">أخطاء <b>' + H(counts.page.mistakes) + '</b></span><span class="hm-mushaf-chip is-prompt">تلقين <b>' + H(counts.page.prompts) + '</b></span></div>' +
-            '<div class="hm-mushaf-counter-group"><span class="hm-mushaf-counter-label">كل العلامات:</span>' +
-            '<span class="hm-mushaf-chip is-mistake">أخطاء <b>' + H(counts.total.mistakes) + '</b></span><span class="hm-mushaf-chip is-prompt">تلقين <b>' + H(counts.total.prompts) + '</b></span></div></div>' : '') +
-        '<div class="hm-mushaf-sheet"><div class="hm-mushaf-sheet-meta"><span>' + H(surah ? 'سورة ' + surah.name : '') + '</span><span>صفحة ' + H(toArabicIndicDigits(st.page)) +
-        (ui.pageData && ui.pageData.juz ? ' · الجزء ' + H(toArabicIndicDigits(ui.pageData.juz)) : '') + '</span></div>' +
-        '<div class="hm-mushaf-page" tabindex="0" data-page="' + H(st.page) + '" aria-label="صفحة المصحف ' + H(st.page) + '">' + versesHtml() + '</div></div></div>'; } finally { ui.rendering = false; }
-      var nb = container.querySelector('.hm-mushaf-page');
-      if (nb && samePage) nb.scrollTop = scrollTop;
+    function paintMarks() {
+      var range = curRange(), byId = {};
+      pageWords().forEach(function (w) { byId[w.id] = w; });
+      linesEl.querySelectorAll('.hm-word').forEach(function (el) {
+        var id = el.getAttribute('data-wid'), m = session.getMark(id), w = byId[id];
+        el.classList.toggle('is-mistake', !!m && m.type === 'mistake');
+        el.classList.toggle('is-prompt', !!m && m.type === 'prompt');
+        el.classList.toggle('is-harakah', !!m && m.kind === 'harakah');
+        el.classList.toggle('in-range', !!(range && w && S.isAyahInRange(w.surah, w.ayah, range)));
+        if (m) el.setAttribute('aria-label', el.textContent + ' — ' + (m.type === 'mistake' ? 'خطأ' : 'تلقين') + (m.kind === 'harakah' ? ' في الحركة' : m.kind === 'ayah_start' ? ' في بداية الآية' : ''));
+        else el.removeAttribute('aria-label');
+      });
+      updateHud();
     }
 
     function loadPage(n) {
       var token = ++ui.token, p = session.setPage(n);
-      ui.loading = true; ui.error = null; ui.popover = null; render();
+      ui.loading = true; ui.error = null; closeKinds(); renderPage(); updateHud();
       return loader.loadPage(p).then(function (res) {
         if (ui.dead || token !== ui.token) return res;
         ui.loading = false;
-        if (res && res.ok) { ui.pageData = res.data; ui.error = null; loader.prefetchNext(p); } else { ui.pageData = null; ui.error = (res && res.error) || 'تعذر تحميل بيانات الصفحة'; }
-        render();
+        if (res && res.ok) { ui.data = res.data; ui.lines = S.buildPageLines(res.data).lines; ui.error = null; loader.prefetchNext(p); }
+        else { ui.data = null; ui.lines = null; ui.error = (res && res.error) || 'تعذر تحميل بيانات الصفحة'; }
+        renderPage(); updateHud();
         return res;
       });
     }
 
-    function applyDelta(res) {
-      if (res && res.delta && (res.delta.mist || res.delta.prompt) && typeof opts.onMark === 'function') opts.onMark({ mist: res.delta.mist, prompt: res.delta.prompt });
+    // ---- tools
+    function wordEl(id) { return linesEl.querySelector('.hm-word[data-wid="' + id + '"]'); }
+    function wordAt(x, y) { var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest('.hm-word') : null; }
+    function previewSpan(ids) { linesEl.querySelectorAll('.is-preview').forEach(function (e) { e.classList.remove('is-preview'); }); (ids || []).forEach(function (id) { var e = wordEl(id); if (e) e.classList.add('is-preview'); }); }
+    function setTool(t) { ui.tool = t; linesEl.classList.toggle('is-drag', t !== 'tap'); updateHud(); }
+    function setType(t) { ui.type = t; updateHud(); }
+    var NAME = { mistake: 'خطأ', prompt: 'تلقين' };
+    function actOnWord(id) {
+      if (ui.tool === 'erase') return applyResult(session.eraseWords([id]), 'مُسحت العلامة');
+      if (ui.tool === 'highlight') return applyResult(session.markSpan([id], ui.type, { page: session.getState().page }), 'تم وضع علامة ' + NAME[ui.type]);
+      return applyResult(session.markWord(id, ui.type, { page: session.getState().page }), 'تم تبديل علامة ' + NAME[ui.type]);
     }
 
-    function activate(el) {
-      var key = el && el.getAttribute('data-ayah-key');
-      if (!key) return;
-      var st = session.getState();
-      if (st.interactionMode === 'range' || !recitation) {
-        var r = session.selectRangeAyah(Number(el.getAttribute('data-surah')), Number(el.getAttribute('data-ayah')), { keepSurahOrder: !!(opts.keepSurahOrder && opts.keepSurahOrder()) });
-        if (r && r.complete && typeof opts.onRange === 'function') {
-          opts.onRange({ startSurah: r.startSurah, startAyah: r.startAyah, endSurah: r.endSurah, endAyah: r.endAyah });
-          session.setInteractionMode('recitation');
-        }
-        render();
-        return;
+    function closeKinds() { var k = pageEl.querySelector('.hm-kinds'); if (k) k.remove(); }
+    function openKinds(el) {
+      closeKinds();
+      var id = el.getAttribute('data-wid'), r = el.getBoundingClientRect(), p = pageEl.getBoundingClientRect(), box = document.createElement('div');
+      box.className = 'hm-kinds'; box.setAttribute('role', 'menu');
+      box.innerHTML = KINDS.map(function (k) { return '<button type="button" role="menuitem" data-kind="' + k[0] + '">' + k[1] + '</button>'; }).join('');
+      box.style.top = Math.max(0, r.top - p.top - 56) + 'px';
+      box.style.insetInlineStart = Math.min(Math.max(0, p.right - r.right), p.width - 230) + 'px';
+      box.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-kind]'); if (!b) return;
+        applyResult(session.markWord(id, ui.type, { page: session.getState().page, kind: b.getAttribute('data-kind') }), 'تم وضع علامة ' + NAME[ui.type]);
+        closeKinds();
+      });
+      pageEl.appendChild(box);
+      var f = box.querySelector('button'); if (f) f.focus();
+    }
+
+    // ---- pointer: tap, long press, drag span
+    linesEl.addEventListener('pointerdown', function (e) {
+      var w = e.target.closest && e.target.closest('.hm-word'); if (!w) return;
+      closeKinds();
+      var id = w.getAttribute('data-wid');
+      ui.drag = { x: e.clientX, y: e.clientY, t: Date.now(), anchor: id, current: id, moved: false, long: false };
+      if (ui.tool === 'tap') ui.pressTimer = setTimeout(function () { if (ui.drag && !ui.drag.moved) { ui.drag.long = true; openKinds(w); } }, 450);
+      else { try { linesEl.setPointerCapture(e.pointerId); } catch (_e) {} previewSpan([id]); }
+    });
+    linesEl.addEventListener('pointermove', function (e) {
+      var d = ui.drag; if (!d) return;
+      if (!d.moved && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 10) { d.moved = true; clearTimeout(ui.pressTimer); }
+      if (ui.tool !== 'tap' && d.moved) { var w = wordAt(e.clientX, e.clientY); if (w) { d.current = w.getAttribute('data-wid'); previewSpan(S.spanBetween(ui.lines, d.anchor, d.current)); } }
+    });
+    function endPointer(e, cancelled) {
+      var d = ui.drag; ui.drag = null; clearTimeout(ui.pressTimer);
+      if (!d || cancelled) { previewSpan([]); return; }
+      if (d.long) return;
+      if (ui.tool === 'tap') { if (S.isTapGesture(d, { x: e.clientX, y: e.clientY, t: Date.now(), cancelled: false })) actOnWord(d.anchor); return; }
+      var ids = S.spanBetween(ui.lines, d.anchor, d.current); previewSpan([]);
+      if (!ids.length) return;
+      if (ui.tool === 'erase') applyResult(session.eraseWords(ids), 'مُسحت العلامات');
+      else applyResult(session.markSpan(ids, ui.type, { page: session.getState().page }), 'تم تظليل ' + ids.length + ' كلمة');
+    }
+    linesEl.addEventListener('pointerup', function (e) { endPointer(e, false); });
+    linesEl.addEventListener('pointercancel', function (e) { endPointer(e, true); });
+    linesEl.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('.hm-word')) e.preventDefault(); });
+
+    // ---- buttons, page input, keyboard
+    container.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-tool],[data-type],[data-act]'); if (!t) return;
+      if (t.hasAttribute('data-tool')) return setTool(t.getAttribute('data-tool'));
+      if (t.hasAttribute('data-type')) return setType(t.getAttribute('data-type'));
+      var a = t.getAttribute('data-act'), page = session.getState().page;
+      if (a === 'prev') loadPage(page - 1); else if (a === 'next') loadPage(page + 1); else if (a === 'retry') loadPage(page);
+      else if (a === 'range') loadPage(rangeStartPage() || page);
+      else if (a === 'undo') { var u = session.undo(); if (u) applyResult({ delta: u.delta, changed: 1 }, 'تراجع'); }
+      else if (a === 'redo') { var r = session.redo(); if (r) applyResult({ delta: r.delta, changed: 1 }, 'إعادة'); }
+    });
+    inputEl.addEventListener('change', function () { if (!ui.dead) loadPage(inputEl.value); });
+    function focusWord(id) {
+      var el = id && wordEl(id); if (!el) return;
+      var cur = wordEl(ui.focusId); if (cur) cur.setAttribute('tabindex', '-1');
+      el.setAttribute('tabindex', '0'); ui.focusId = id; el.focus();
+    }
+    function moveFocus(dir) {
+      var words = pageWords(), i = words.findIndex(function (w) { return w.id === ui.focusId; });
+      if (i === -1) return;
+      if (dir === 'next') return focusWord((words[i + 1] || words[i]).id);
+      if (dir === 'prev') return focusWord((words[i - 1] || words[i]).id);
+      var line = ui.lines.findIndex(function (l) { return l.words.some(function (w) { return w.id === ui.focusId; }); }), step = dir === 'down' ? 1 : -1;
+      for (var j = line + step; j >= 0 && j < ui.lines.length; j += step) if (ui.lines[j].words.length) {
+        var idx = Math.min(ui.lines[line].words.findIndex(function (w) { return w.id === ui.focusId; }), ui.lines[j].words.length - 1);
+        return focusWord(ui.lines[j].words[idx].id);
       }
-      ui.popover = ui.popover === key ? null : key;
-      render();
     }
-
-    function onClick(e) {
-      var t = e.target && e.target.closest ? e.target.closest('[data-action]') : null;
-      if (!t) return;
-      var a = t.getAttribute('data-action'), st = session.getState();
-      if (a === 'prev-page') loadPage(st.page - 1);
-      else if (a === 'next-page') loadPage(st.page + 1);
-      else if (a === 'retry') loadPage(st.page);
-      else if (a === 'toggle-index') { ui.indexOpen = !ui.indexOpen; render(); }
-      else if (a === 'jump-surah-chip') { ui.indexOpen = false; loadPage(State.resolvePageForAyah(Number(t.getAttribute('data-surah-id')), 1)); }
-      else if (a === 'jump-curriculum') loadPage(rangeStartPage() || st.page);
-      else if (a === 'set-mode') { session.setInteractionMode(t.getAttribute('data-mode')); ui.popover = null; render(); }
-      else if (a === 'close-popover') { ui.popover = null; render(); }
-      else if (a === 'mark' && recitation) { applyDelta(session.toggleMark(t.getAttribute('data-ayah-key'), t.getAttribute('data-mark-type'), st.page)); ui.popover = null; render(); }
-      else if (a === 'clear-mark' && recitation) { applyDelta(session.clearMark(t.getAttribute('data-ayah-key'))); ui.popover = null; render(); }
-    }
-    function onChange(e) {
-      if (ui.rendering) return;
-      var t = e.target, a = t && t.getAttribute && t.getAttribute('data-action');
-      if (a === 'page-input') loadPage(t.value);
-      else if (a === 'jump-surah') loadPage(State.resolvePageForAyah(Number(t.value), 1));
-    }
-    function onInput(e) {
-      if (ui.rendering) return;
+    container.addEventListener('keydown', function (e) {
       var t = e.target;
-      if (!t || !t.getAttribute || t.getAttribute('data-action') !== 'filter-index') return;
-      ui.indexFilter = t.value || '';
-      render();
-      var inp = container.querySelector('[data-action="filter-index"]');
-      if (inp) { inp.focus(); inp.setSelectionRange(ui.indexFilter.length, ui.indexFilter.length); }
-    }
-    function onPointerDown(e) {
-      var el = e.target && e.target.closest ? e.target.closest('.hm-mushaf-ayah') : null;
-      ui.pointer = el ? { x: e.clientX, y: e.clientY, t: Date.now(), key: el.getAttribute('data-ayah-key') } : null;
-    }
-    function onPointerUp(e) {
-      var s = ui.pointer; ui.pointer = null;
-      var el = e.target && e.target.closest ? e.target.closest('.hm-mushaf-ayah') : null;
-      if (!s || !el || el.getAttribute('data-ayah-key') !== s.key) return;
-      if (State.isTapGesture(s, { x: e.clientX, y: e.clientY, t: Date.now(), cancelled: false })) activate(el);
-    }
-    function onKey(e) {
-      var t = e.target;
-      // Enter inside the page-number box / index search must never reach a surrounding form or dialog default action
-      if (e.key === 'Enter' && t && t.tagName === 'INPUT') {
-        e.preventDefault();
-        if (t.getAttribute('data-action') === 'page-input') loadPage(t.value);
-        return;
-      }
-      if (e.key === 'Escape' && ui.popover) { e.stopPropagation(); e.preventDefault(); ui.popover = null; render(); return; }
-      if ((e.key === 'Enter' || e.key === ' ') && t && t.classList && t.classList.contains('hm-mushaf-ayah')) { e.preventDefault(); activate(t); }
-    }
-    function onPointerCancel() { ui.pointer = null; }
+      if (t && t.tagName === 'INPUT') { if (e.key === 'Enter') { e.preventDefault(); loadPage(t.value); } return; }
+      if (e.key === 'Escape' && pageEl.querySelector('.hm-kinds')) { e.stopPropagation(); closeKinds(); return; }
+      if ((e.key === 'Enter' || e.key === ' ') && t && t.classList && t.classList.contains('hm-word')) { e.preventDefault(); actOnWord(t.getAttribute('data-wid')); return; }
+      var a = S.shortcutAction(e); if (!a) return;
+      e.preventDefault();
+      if (a.type === 'type') setType(a.value); else if (a.type === 'tool') setTool(a.value);
+      else if (a.type === 'undo') { var u = session.undo(); if (u) applyResult({ delta: u.delta, changed: 1 }, 'تراجع'); }
+      else if (a.type === 'redo') { var r = session.redo(); if (r) applyResult({ delta: r.delta, changed: 1 }, 'إعادة'); }
+      else if (a.type === 'move' && t && t.classList && t.classList.contains('hm-word')) moveFocus(a.value);
+    });
 
-    container.addEventListener('click', onClick);
-    container.addEventListener('change', onChange);
-    container.addEventListener('input', onInput);
-    container.addEventListener('pointerdown', onPointerDown);
-    container.addEventListener('pointerup', onPointerUp);
-    container.addEventListener('pointercancel', onPointerCancel);
-    container.addEventListener('keydown', onKey);
+    var ro = typeof ResizeObserver === 'function' ? new ResizeObserver(function () { cancelAnimationFrame(ui.raf); ui.raf = requestAnimationFrame(function () { if (!ui.dead && ui.lines) fit(); }); }) : null;
+    if (ro) ro.observe(pageEl);
 
     var inst = {
-      loadPage: loadPage,
-      destroy: function () {
-        ui.dead = true;
-        ['click', 'change', 'input', 'pointerdown', 'pointerup', 'pointercancel', 'keydown'].forEach(function (ev) {
-          container.removeEventListener(ev, { click: onClick, change: onChange, input: onInput, pointerdown: onPointerDown, pointerup: onPointerUp, pointercancel: onPointerCancel, keydown: onKey }[ev]);
-        });
-      }
+      loadPage: loadPage, refresh: paintMarks,
+      destroy: function () { ui.dead = true; clearTimeout(ui.pressTimer); if (ro) ro.disconnect(); }
     };
-    var first = session.getState().page || 1;
-    loadPage(first);
+    updateHud();
+    loadPage(session.getState().page || rangeStartPage() || 1);
     return inst;
   }
 

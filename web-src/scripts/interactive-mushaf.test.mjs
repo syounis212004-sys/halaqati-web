@@ -86,7 +86,7 @@ test('escaping: hostile text from the API or the page never becomes markup', () 
   const n = S.normalizeApiPageResponse(1, { verses: [{ verse_key: '1:1', words: [{ char_type_name: 'word', text_uthmani: '<b>x</b>' }] }] });
   assert.equal(n.verses[0].text, '<b>x</b>', 'normalisation keeps text raw; the component escapes at render time');
   const comp = read('features/native/mushaf.js');
-  assert.match(comp, /H\(v\.text\)/); assert.doesNotMatch(comp, /innerHTML\s*=\s*[^;]*\bv\.text\b(?!\))/);
+  assert.match(comp, /H\(w\.text\)/); assert.doesNotMatch(comp, /innerHTML\s*=\s*[^;]*\bw\.text\b(?!\))/);
 });
 
 // ---- the four old range pickers stay exactly as they were; the mushaf is a separate screen (T1)

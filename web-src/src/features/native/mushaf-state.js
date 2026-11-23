@@ -301,6 +301,43 @@
     };
   }
 
+  /* ids of the words between two words (inclusive) in reading order, whatever the drag direction; [] when either is not on the page */
+  function spanBetween(lines, idA, idB) {
+    var ids = [];
+    (lines || []).forEach(function (l) { (l.words || []).forEach(function (w) { ids.push(w.id); }); });
+    var a = ids.indexOf(idA), b = ids.indexOf(idB);
+    if (a === -1 || b === -1) return [];
+    return ids.slice(Math.min(a, b), Math.max(a, b) + 1);
+  }
+
+  /* One font scale so the widest line fits the page; a line that fills the page after scaling is justified, a shorter one is centred. */
+  function fitLines(naturals, inner) {
+    var list = naturals || [], widest = Math.max.apply(null, [0].concat(list));
+    if (!(inner > 0)) return { scale: 1, modes: list.map(function (n) { return n > 0 ? 'justify' : 'none'; }) };
+    var scale = widest > 0 ? Math.min(1, Math.round(inner * 0.98 / widest * 1000) / 1000) : 1;
+    return { scale: scale, modes: list.map(function (n) { return n <= 0 ? 'none' : (n * scale / inner >= 0.88 ? 'justify' : 'center'); }) };
+  }
+
+  function shortcutAction(e) {
+    if (!e || e.altKey) return null;
+    var k = String(e.key || ''), low = k.toLowerCase();
+    if (e.ctrlKey || e.metaKey) {
+      if (low === 'z') return e.shiftKey ? { type: 'redo' } : { type: 'undo' };
+      if (low === 'y') return { type: 'redo' };
+      return null;
+    }
+    if (k === '1') return { type: 'type', value: 'mistake' };
+    if (k === '2') return { type: 'type', value: 'prompt' };
+    if (low === 't') return { type: 'tool', value: 'tap' };
+    if (low === 'h') return { type: 'tool', value: 'highlight' };
+    if (low === 'e') return { type: 'tool', value: 'erase' };
+    if (k === 'ArrowLeft') return { type: 'move', value: 'next' };
+    if (k === 'ArrowRight') return { type: 'move', value: 'prev' };
+    if (k === 'ArrowDown') return { type: 'move', value: 'down' };
+    if (k === 'ArrowUp') return { type: 'move', value: 'up' };
+    return null;
+  }
+
   function createMushafSession(options) {
     var opts = options || {};
     var nowFn = typeof opts.now === 'function' ? opts.now : Date.now;
@@ -414,6 +451,9 @@
     VALID_KINDS: VALID_KINDS,
     parseWordId: parseWordId,
     buildPageLines: buildPageLines,
+    spanBetween: spanBetween,
+    fitLines: fitLines,
+    shortcutAction: shortcutAction,
     QURAN_API_BASE: QURAN_API_BASE,
     CACHE_NAME: CACHE_NAME,
     SURAHS: SURAHS,
