@@ -747,7 +747,8 @@
     const rg=D.range,label=rg?(rg.mode==='surahs'&&rg.selectedSurahs.length?rg.selectedSurahs.map(surahName).join('، '):rg.mode==='juz'&&rg.selectedJuz.length?`الأجزاء ${rg.selectedJuz.join('، ')}`:rangeLabel(rg.startSurah,rg.startAyah,rg.endSurah,rg.endAyah,rg.startPage,rg.endPage)):null;
     const rangeCard=`<section class="nr-range"><div class="nr-range-h"><span class="nr-range-i">${ic('MenuBook',24)}</span><div><small>المقرر القرآني</small><b>${h(label||'لم يتم اختيار نطاق بعد')}</b></div></div>
       ${d.pages>0.0001?`<div class="nr-pills">${NX.pill(`${plain(d.pages)} صفحة`,'info')}${rg?.ayahs?NX.pill(`${rg.ayahs} آية`,'info'):''}</div>`:''}
-      ${NX.btn(label?'تعديل المقرر':'اختيار المقرر من المصحف',{icon:'AutoStories',full:true,onclick:'NSR.openPicker()'})}</section>`;
+      ${NX.btn(label?'تعديل المقرر':'اختيار المقرر من المصحف',{icon:'AutoStories',full:true,onclick:'NSR.openPicker()'})}
+      ${rg&&!d.tilawah&&window.HalaqatiMushaf?NX.btn('تعليم الأخطاء والتلقين على المصحف',{icon:'Edit',full:true,kind:'outlined',onclick:'NSR.openMushaf()'}):''}</section>`;
     let mid;
     if(d.tilawah){
       const a=D.tl;
@@ -784,14 +785,14 @@
   NS.setType=function(k){
     const D=R.rec;D.note=$id('nrRecNote')?.value??D.note;D.type=k;
     // switching the activity discards the picked range (Android: selectedQuranRange=null, pages=0) unless it came from the plan; re-apply the plan duty when one exists
-    D.range=null;D.planId=null;D.planType=null;
+    D.range=null;D.planId=null;D.planType=null;D.mushaf=null;
     if(!D.existing&&k!=='tilawah'){
       const se=sessionOf(D.seId),sn=snapshotFor(D.sid,k,se.session_date);
       if(sn){D.planId=sn.plan.id;D.planType=sn.plan.plan_type;const a=sn.act?(sn.act.scheduledToday?sn.act.assignment:null)||sn.act.assignment||sn.act.extraAssignment:null;D.range=rangeFromAssignment(a)}
     }
     drawRec();
   };
-  NS.cnt=function(key,delta){const D=R.rec;D[key]=Math.max(0,(D[key]||0)+delta);drawRec()};
+  NS.cnt=function(key,delta){const D=R.rec,floor=D.mushaf?D.mushaf.getCounts().total[key]||0:0;D[key]=Math.max(floor,(D[key]||0)+delta);drawRec()}; // marks on the mushaf are a floor: erase them there to go lower
   NS.tl=function(key,val,live){
     const D=R.rec;D.tl[key]=val;
     if(live){const o=$id('nrRv_'+key);if(o)o.textContent=val+'/5';partialRec();return}
@@ -965,6 +966,23 @@
   NS.pkSet=(kind,n)=>{const P=R.pick,s=kind==='surah'?P.surahSet:P.juzSet;s.has(n)?s.delete(n):s.add(n);drawPicker()};
   NS.pq=v=>{const P=R.pick;P.q=v;const box=$id('nrSurahs');if(!box)return;const q=norm(v);
     box.innerHTML=Array.from({length:114},(_,i)=>i+1).filter(s=>!q||String(s).includes(q)||norm(surahName(s)).includes(q)).map(s=>`<button type="button" class="nr-sur ${P.surahSet.has(s)?'on':''}" onclick="NSR.pkSet('surah',${s})"><i>${s}</i><span>${h(surahName(s))}</span>${P.surahSet.has(s)?ic('Check',16):''}</button>`).join('')};
+  // ---- interactive mushaf: marks on a real page feed the same two counters; V6 stays the saved score
+  let mushafView=null;
+  NS.openMushaf=function(){
+    const D=R.rec;if(!D||!D.range||!window.HalaqatiMushaf)return;
+    const M=window.HalaqatiMushafState,rg=D.range;
+    if(!D.mushaf)D.mushaf=M.createMushafSession({initialPage:M.resolvePageForAyah(rg.startSurah||1,rg.startAyah||1)});
+    D.note=$id('nrRecNote')?.value??D.note;
+    NX.dialog('nrMushafDlg','المصحف',`<div id="nrMushafHost" class="nr-mushaf-host"></div>`,{cls:'nr-mushaf-dlg',onClose:()=>{mushafView?.destroy();mushafView=null;if(R.rec)drawRec()}});
+    mushafView=window.HalaqatiMushaf.mount($id('nrMushafHost'),{
+      session:D.mushaf,
+      lines:()=>D.range?.lineKeys?.length||Math.round((D.range?.pages||0)*15),
+      getRange:()=>D.range,
+      getCounters:()=>({mistakes:D.mistakes,prompts:D.prompts}),
+      getV6:()=>{const d=recDerived();return d.pages>0?{safety:d.safety,label:evalLabel(d.ev)}:null},
+      onMark:dl=>{D.mistakes=Math.max(0,D.mistakes+dl.mist);D.prompts=Math.max(0,D.prompts+dl.prompt)}
+    });
+  };
   NS.pickOk=function(){
     const r=pickCalc();if(!r.ok)return;
     R.rec.range=r.res;R.pick.open=false;NX.closeDialog('nrPickDlg');

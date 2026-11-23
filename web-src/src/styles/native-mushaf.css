@@ -1,0 +1,338 @@
+/* Halaqati interactive mushaf v2: a full printed-proportion page (14:20, 15 lines) with marking tools.
+   Colours: the page is paper; red + solid underline + × = mistake, blue + dashed underline + ت = prompt (never colour alone).
+   Page fonts (QCF V2) are loaded at runtime from the Quran Foundation CDN by mushaf-state.js; nothing is bundled. */
+
+.hm-mushaf-root {
+  --hm-page-bg: #fffcf3;
+  --hm-page-ink: #1f2a27;
+  --hm-page-frame: #134e4a;
+  --hm-page-rule: #b45309;
+  --hm-mark-mistake: #dc2626;
+  --hm-mark-mistake-bg: rgba(220, 38, 38, 0.16);
+  --hm-mark-prompt: #2563eb;
+  --hm-mark-prompt-bg: rgba(37, 99, 235, 0.14);
+  --hm-range-bg: rgba(13, 148, 136, 0.1);
+  --hm-surface: #f0fdfa;
+  --hm-surface-ink: #134e4a;
+  --hm-surface-line: #99d6cf;
+  --hm-accent: #0f766e;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  font-family: Cairo, system-ui, sans-serif;
+  color: var(--hm-surface-ink);
+}
+
+body.dark .hm-mushaf-root {
+  --hm-page-bg: #10201d;
+  --hm-page-ink: #eaf3f0;
+  --hm-page-frame: #5eead4;
+  --hm-page-rule: #fbbf24;
+  --hm-mark-mistake: #f87171;
+  --hm-mark-mistake-bg: rgba(248, 113, 113, 0.2);
+  --hm-mark-prompt: #60a5fa;
+  --hm-mark-prompt-bg: rgba(96, 165, 250, 0.2);
+  --hm-range-bg: rgba(94, 234, 212, 0.1);
+  --hm-surface: #0b1715;
+  --hm-surface-ink: #d9efe9;
+  --hm-surface-line: #2c5a53;
+  --hm-accent: #5eead4;
+}
+
+.hm-mushaf-root :focus-visible {
+  outline: 3px solid var(--hm-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---- top bar: page navigation */
+.hm-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hm-pagebtn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--hm-surface-line);
+  border-radius: 12px;
+  background: var(--hm-surface);
+  color: var(--hm-surface-ink);
+  font: 600 14px Cairo, sans-serif;
+  cursor: pointer;
+}
+.hm-pagebtn[disabled] { opacity: 0.45; cursor: default; }
+.hm-pageinput {
+  width: 64px;
+  min-height: 44px;
+  text-align: center;
+  border: 1px solid var(--hm-surface-line);
+  border-radius: 12px;
+  background: var(--hm-surface);
+  color: var(--hm-surface-ink);
+  font: 700 16px Cairo, sans-serif;
+}
+.hm-pagetotal { font-size: 13px; opacity: 0.75; }
+.hm-jump { margin-inline-start: auto; }
+
+/* ---- type-first buttons with live counts */
+.hm-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hm-type {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 2px solid var(--hm-surface-line);
+  border-radius: 14px;
+  background: var(--hm-surface);
+  color: var(--hm-surface-ink);
+  font: 700 16px Cairo, sans-serif;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.hm-type b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.hm-type[aria-pressed="true"].is-mistake { border-color: var(--hm-mark-mistake); background: var(--hm-mark-mistake-bg); }
+.hm-type[aria-pressed="true"].is-prompt { border-color: var(--hm-mark-prompt); background: var(--hm-mark-prompt-bg); }
+.hm-type .hm-swatch { width: 18px; height: 18px; border-radius: 5px; border: 2px solid currentColor; }
+.hm-type.is-mistake .hm-swatch { color: var(--hm-mark-mistake); background: var(--hm-mark-mistake-bg); }
+.hm-type.is-prompt .hm-swatch { color: var(--hm-mark-prompt); background: var(--hm-mark-prompt-bg); border-style: dashed; }
+
+/* ---- score preview */
+.hm-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-surface-line);
+  font-size: 13px;
+}
+.hm-score b { font-size: 15px; }
+.hm-score small { opacity: 0.8; }
+
+/* ---- the page */
+.hm-pagewrap {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+.hm-page {
+  position: relative;
+  width: min(100cqw, 70cqh);
+  aspect-ratio: 14 / 20;
+  container-type: inline-size;
+  box-sizing: border-box;
+  padding: 4.2cqw 5cqw 4cqw;
+  background: var(--hm-page-bg);
+  color: var(--hm-page-ink);
+  border: 0.9cqw double var(--hm-page-frame);
+  outline: 0.25cqw solid var(--hm-page-rule);
+  outline-offset: -2.4cqw;
+  border-radius: 1.2cqw;
+  box-shadow: 0 6px 22px rgba(19, 78, 74, 0.22);
+  display: flex;
+  flex-direction: column;
+}
+.hm-page-head, .hm-page-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 600 2.6cqw Cairo, sans-serif;
+  color: var(--hm-page-frame);
+  min-height: 3.6cqw;
+}
+.hm-page-foot { justify-content: center; font-size: 3cqw; }
+
+/* the printed text block: the 15 lines share the height, each line is the glyph words of its own page font, edge to edge */
+.hm-lines {
+  /* QCF V2: a full printed line is ~15.6em wide and 15 lines need ~1.8em each, so the size is the smaller of the two limits.
+     Declared here, not on .hm-page: cqw on the container itself would measure the parent container. */
+  --qcf: min(calc(98cqw / 16), calc(146cqw / 27));
+  flex: 1;
+  min-height: 0;
+  width: calc(var(--qcf) * 15.9);
+  max-width: 100%;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: repeat(15, 1fr);
+  font-size: var(--qcf);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hm-lines.is-opening { grid-template-rows: none; align-content: center; gap: 0.4em; font-size: calc(var(--qcf) * 1.3); }
+.hm-lines.is-drag { touch-action: none; }
+.hm-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 0;
+  line-height: 1.5;
+  white-space: nowrap;
+  direction: rtl;
+}
+.hm-line.is-center { justify-content: center; column-gap: 0.25em; }
+.hm-line.is-banner { justify-content: center; }
+.hm-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 1.75em;
+  box-sizing: border-box;
+  border: 0.14em double var(--hm-page-rule);
+  border-radius: 0.3em;
+  background: linear-gradient(var(--hm-page-bg), var(--hm-range-bg));
+  color: var(--hm-page-frame);
+  pointer-events: none;
+}
+.hm-frame { column-gap: 0.45em; }
+.hm-sname { font-family: 'qcf-surah-names', Cairo, sans-serif; font-size: 1.15em; line-height: 1; }
+.hm-line.is-basmala { justify-content: center; column-gap: 0.2em; }
+
+.hm-word {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  border-radius: 0.18em;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.hm-word.in-range { background: var(--hm-range-bg); }
+.hm-word:hover { background: var(--hm-range-bg); }
+.hm-word.is-preview { outline: 0.25cqw dashed var(--hm-accent); outline-offset: 0.05em; background: var(--hm-range-bg); }
+.hm-word.is-mistake {
+  background: var(--hm-mark-mistake-bg);
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-color: var(--hm-mark-mistake);
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.2em;
+}
+.hm-word.is-prompt {
+  background: var(--hm-mark-prompt-bg);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: var(--hm-mark-prompt);
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.2em;
+}
+.hm-word.is-mistake::after {
+  content: "×";
+  position: absolute;
+  top: -0.35em;
+  inset-inline-end: -0.15em;
+  font: 800 0.42em Cairo, sans-serif;
+  color: var(--hm-mark-mistake);
+}
+.hm-word.is-prompt::after {
+  content: "ت";
+  position: absolute;
+  top: -0.35em;
+  inset-inline-end: -0.15em;
+  font: 800 0.42em Cairo, sans-serif;
+  color: var(--hm-mark-prompt);
+}
+.hm-word.is-harakah::before {
+  content: "ـَ";
+  position: absolute;
+  bottom: -0.45em;
+  inset-inline-start: 0.1em;
+  font: 700 0.4em Cairo, sans-serif;
+  color: var(--hm-page-frame);
+}
+
+/* ---- the kind popover (long press) */
+.hm-kinds {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-surface-line);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  font: 600 13px Cairo, sans-serif;
+}
+.hm-kinds button {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--hm-surface-line);
+  background: var(--hm-page-bg);
+  color: var(--hm-page-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---- tool dock */
+.hm-dock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.hm-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--hm-surface-line);
+  border-radius: 14px;
+  background: var(--hm-surface);
+  color: var(--hm-surface-ink);
+  font: 600 14px Cairo, sans-serif;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.hm-tool[aria-pressed="true"] { background: var(--hm-accent); border-color: var(--hm-accent); color: var(--hm-page-bg); }
+.hm-tool[disabled] { opacity: 0.4; cursor: default; }
+.hm-tool svg { width: 20px; height: 20px; fill: currentColor; }
+
+.hm-status, .hm-error {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  height: 100%;
+  text-align: center;
+  padding: 16px;
+  font-size: 15px;
+}
+.hm-error p { margin: 0; }
+.hm-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+@media (min-width: 900px) {
+  .hm-mushaf-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto auto auto 1fr auto; column-gap: 20px; align-content: start; }
+  .hm-pagewrap { grid-column: 1; grid-row: 1 / -1; }
+  .hm-nav, .hm-types, .hm-score, .hm-dock { grid-column: 2; }
+  .hm-types { grid-template-columns: 1fr; }
+  .hm-dock { flex-wrap: wrap; align-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-mushaf-root *, .hm-mushaf-root *::before, .hm-mushaf-root *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.hm-end { display: inline-block; pointer-events: none; }
+.hm-credit { font: 500 11px Cairo, sans-serif; opacity: 0.75; text-align: center; }
