@@ -131,7 +131,7 @@
     if(op.kind==='upsert')r=await db.from(op.table).upsert(op.obj,{onConflict:op.onConflict});
     else if(op.kind==='update')r=await db.from(op.table).update(op.obj).eq(op.key,op.val);
     else if(op.kind==='rpc')r=await db.rpc(op.name,op.args);
-    if(r&&r.error)throw r.error;
+    if(r&&r.error){const PD=window.HalaqatiPhaseDays;if(PD&&r.error.message)r.error.message=PD.friendlyPlanError(r.error.message);throw r.error}
     return r&&r.data;
   }
   const isNetErr=e=>/Failed to fetch|NetworkError|network|timeout|load failed/i.test(String(e?.message||e));

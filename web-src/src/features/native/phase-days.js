@@ -35,7 +35,16 @@
     var health = ratio > 1.10 ? 'blue' : ratio >= 0.90 ? 'green' : ratio >= 0.75 ? 'yellow' : 'red';
     return { expected: expected, behind: ratio >= 0.90 && ratio <= 1.10 ? 0 : behind, ahead: ratio > 1.10 ? ahead : 0, health: health };
   }
-  var api = { sardPace: sardPace, commonDays: commonDays, resolveBulkDays: resolveBulkDays, sameDays: same, cleanDays: clean };
+  /* Arabic text for the server's plan-phase validation errors (same wording as the Android app) */
+  function friendlyPlanError(raw) {
+    var m = String(raw == null ? '' : (raw.message || raw));
+    if (/smart plan phases may not overlap/i.test(m)) return 'تتداخل تواريخ مرحلتَي الحفظ والسرد لأحد الطلاب. اجعل بداية السرد بعد نهاية الحفظ ثم أعد المحاولة.';
+    if (/Sard must start after Hifz/i.test(m)) return 'يجب أن تبدأ مرحلة السرد بعد نهاية مرحلة الحفظ.';
+    if (/invalid Hifz date range/i.test(m)) return 'تواريخ مرحلة الحفظ غير صحيحة: النهاية قبل البداية.';
+    if (/invalid Sard date range/i.test(m)) return 'تواريخ مرحلة السرد غير صحيحة: النهاية قبل البداية.';
+    return m || 'تعذر تنفيذ العملية';
+  }
+  var api = { friendlyPlanError: friendlyPlanError, sardPace: sardPace, commonDays: commonDays, resolveBulkDays: resolveBulkDays, sameDays: same, cleanDays: clean };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.HalaqatiPhaseDays = api;
 })(typeof window !== 'undefined' ? window : globalThis);

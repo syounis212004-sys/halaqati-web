@@ -35,3 +35,13 @@ test('Sard pace: the card measures the Sard phase itself (its target and its sch
   assert.equal(fast.health, 'blue'); assert.equal(fast.ahead, 2.5);
   assert.deepEqual(D.sardPace({ target: null, completed: 3, scheduledDays: 0, remainingDays: 0 }), { expected: 0, behind: 0, ahead: 0, health: 'green' });
 });
+
+test('server errors about the plan phases are explained in Arabic', () => {
+  const m = D.friendlyPlanError('RC11.2: smart plan phases may not overlap');
+  assert.ok(m.includes('تتداخل') && !m.includes('RC11'));
+  assert.ok(D.friendlyPlanError('RC11.3: Sard must start after Hifz for plan 1').includes('بعد'));
+  assert.ok(D.friendlyPlanError('RC11.3: invalid Hifz date range for plan 1').includes('الحفظ'));
+  assert.ok(D.friendlyPlanError('RC11.3: invalid Sard date range for plan 1').includes('السرد'));
+  assert.equal(D.friendlyPlanError('أي خطأ آخر'), 'أي خطأ آخر');
+  assert.equal(D.friendlyPlanError(''), 'تعذر تنفيذ العملية');
+});
