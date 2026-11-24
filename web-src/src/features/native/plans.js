@@ -99,9 +99,11 @@ function cardHtml(r,manage){
   const activeTarget=ph&&ph.type==='sard'?(Number(p.sardTarget)>.001?Number(p.sardTarget):25):(Number(r.plan.target_pages)||0);
   const pct=activeTarget<=.001?0:Math.max(0,Math.min(100,(Number(p.completed)||0)/activeTarget*100));
   const hifzTarget=Number(r.plan.settings?.monthly_hifz_target_pages)>.001?Number(r.plan.settings.monthly_hifz_target_pages):Number(r.plan.target_pages)||0;
-  const aText=a.blockedByRetry?`إعادة تثبيت · ${assignmentText(a).split(': ').slice(1).join(': ')||assignmentText(a)}`:(Number(a.pages)<=0?(p.remaining<=0?'تم إكمال الهدف الحالي':'لا يوجد مقرر اليوم'):assignmentText(a));
-  const last=typeof smartPlanLastRecitation==='function'?smartPlanLastRecitation(r.student,r.plan):null;
-  const lastBlock=last?info(`آخر تسميع · ${smartPlanDateOfRecord(last)||'—'}`,`${actKindAr(last.activity_type)} · ${smartPlanRecitationRangeText(last)} · ${plain(last.pages_count)} ص`,'History'):info('آخر تسميع','لا يوجد تسميع مرتبط بالخطة بعد','History');
+  // an active Sard phase owns today's duty and the last recitation: take both from the Sard snapshot, like the app
+  const sv=(!tath&&ph&&ph.type==='sard'&&window.NXPhases&&window.NXPhases.sardView)?window.NXPhases.sardView(r.plan,r.student.id):null;
+  const aText=sv?(sv.text?`سرد: ${sv.text}`:sv.needsStart?'سرد: حدّد بداية المرحلة أو سجّل أول تسميع':(sv.hasAssignment&&sv.pages>0)?`سرد: ≈ ${plain(sv.pages)} ص`:sv.scheduledToday?'لا يوجد مقرر سرد اليوم':'ليس يوم دوام لمرحلة السرد'):a.blockedByRetry?`إعادة تثبيت · ${assignmentText(a).split(': ').slice(1).join(': ')||assignmentText(a)}`:(Number(a.pages)<=0?(p.remaining<=0?'تم إكمال الهدف الحالي':'لا يوجد مقرر اليوم'):assignmentText(a));
+  const last=sv?sv.last:typeof smartPlanLastRecitation==='function'?smartPlanLastRecitation(r.student,r.plan):null;
+  const lastBlock=last?info(`آخر تسميع · ${smartPlanDateOfRecord(last)||'—'}`,`${actKindAr(last.activity_type)} · ${smartPlanRecitationRangeText(last)} · ${plain(last.pages_count)} ص`,'History'):info('آخر تسميع',sv?'لا يوجد تسميع سرد سابق في هذه المرحلة':'لا يوجد تسميع مرتبط بالخطة بعد','History');
   const summary=Number(p.behindBy)>.001?`متأخر ${plain(p.behindBy)} ص`:Number(p.aheadBy)>.001?`متقدم ${plain(p.aheadBy)} ص`:'مطابق للمطلوب حتى اليوم';
   let warn='';
   if(code==='red'||code==='yellow'){const rd=Math.max(1,22-new Date().getDate()),rec=(Number(p.behindBy)||0)/rd;warn=NX.notice(code==='red'?`يحتاج متابعة: متأخر أكثر من 25% عن المطلوب حتى اليوم. للعودة للمسار يحتاج تقريبًا ${plain(rec)} ص إضافية في كل يوم حفظ متبقٍ.`:'يحتاج انتباه: يوجد تأخر عن المسار المتوقع حتى اليوم.',code==='red'?'danger':'warning')}

@@ -33,6 +33,7 @@
     "check:fcm-token": "npm run check:official-push",
     "check:push-auto": "npm run check:official-push",
     "check:official-push": "node scripts/official-capacitor-push-v2157-check.mjs && node scripts/official-capacitor-push-v2157-vm-smoke.mjs",
+    "check:plan-card-sard": "node scripts/native-plan-card-sard-check.mjs",
     "check:smart-plans": "node --test scripts/smart-plans-v217.test.mjs && node scripts/smart-plans-v217-check.mjs",
     "check:v2172": "node scripts/v2172-ui-check.mjs",
     "check:v2173": "node scripts/v2173-check.mjs",

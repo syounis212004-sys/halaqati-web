@@ -290,6 +290,18 @@
   new MutationObserver(()=>{if(sched)return;sched=true;requestAnimationFrame(()=>{sched=false;try{check()}catch(e){console.error(e)}})}).observe(document.body,{childList:true,subtree:true});
   window.rc27RefreshPhases=async function(){await P().load(true);ready=true;if(document.getElementById('rc27Phases'))paint();if(typeof render==='function')render()};
   window.NXPhases={paint,planHtml:planCard,sectionHtml,openManager:planId=>rc27PhaseTemplates(planId)};
+  // Today's Sard duty and the last Sard recitation of the student's active Sard phase, for the Smart Plans list card
+  // (same phase snapshot as the phase cards, so the list and the phase view never disagree).
+  window.NXPhases.sardView=function(plan,sid){
+    try{
+      const A=window.RC27PhaseActivities,t=T0(),sn=P().snapshot?P().snapshot(plan,t,sid):null;if(!A||!sn)return null;
+      const sa=A(plan,sn,t).find(x=>x.key==='sard');if(!sa)return null;
+      const names=typeof surahs!=='undefined'?surahs:(window.surahs||[]),nm=n=>'سورة '+(names[n-1]||n);
+      const a=sa.assignment,ln=a?.lineKeys||[];let text='';
+      if(ln.length){const e=endpointOfLine(ln.at(-1),true);if(e&&a.start)text=`من ${nm(a.start.s)} آية ${a.start.a} إلى ${nm(e.s)} آية ${e.a}`}
+      return {text,pages:a?Number(a.pages)||0:0,hasAssignment:!!a,needsStart:!!sa.needsStart,scheduledToday:!!sa.scheduledToday,last:sa.lastRecitation||null};
+    }catch(_e){return null}
+  };
   window.rc27ClosePhaseDlg=closeDlg;
 
   // ---------- archive / quick create / surplus ----------
