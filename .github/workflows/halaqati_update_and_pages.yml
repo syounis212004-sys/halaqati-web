@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment3.outputs.page_url || steps.deployment2.outputs.page_url || steps.deployment1.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -323,19 +323,35 @@ jobs:
         with:
           path: _site
 
-      # deploy-pages looks the artifact up the moment it starts; GitHub's artifact listing can lag a few seconds behind the upload,
-      # which made it fail with "Found 0 artifact(s)" at random. Wait until the listing really shows it (not a blind sleep).
-      - name: Wait until the Pages artifact is listed
+      # deploy-pages looks the artifact up the moment it starts, with a name-filtered query; the artifact listing can lag a few seconds behind the
+      # upload and it then fails with "Found 0 artifact(s)" at random. Wait with the same query it uses, then let the deploy retry on its own.
+      - name: Wait until the Pages artifact is listed (same query as deploy-pages)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           for i in $(seq 1 36); do
-            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '[.artifacts[] | select(.name == "github-pages")] | length')
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=github-pages" --jq '.total_count')
             if [ "${n:-0}" -ge 1 ]; then echo "github-pages listed after $i checks"; exit 0; fi
             sleep 5
           done
           echo "::error::the github-pages artifact was uploaded but never appeared in the artifact list"; exit 1
 
       - name: Deploy to GitHub Pages
-        id: deployment
+        id: deployment1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Deploy to GitHub Pages (retry 2)
+        id: deployment2
+        if: steps.deployment1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Pause before the last retry
+        if: steps.deployment1.outcome == 'failure' && steps.deployment2.outcome == 'failure'
+        run: sleep 30
+
+      - name: Deploy to GitHub Pages (retry 3)
+        id: deployment3
+        if: steps.deployment1.outcome == 'failure' && steps.deployment2.outcome == 'failure'
         uses: actions/deploy-pages@v4
