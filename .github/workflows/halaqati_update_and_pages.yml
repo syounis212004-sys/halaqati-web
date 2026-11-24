@@ -16,6 +16,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: read   # lets the wait step below list this run's artifacts
 
 concurrency:
   group: halaqati-publish-main
@@ -321,6 +322,19 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+      # deploy-pages looks the artifact up the moment it starts; GitHub's artifact listing can lag a few seconds behind the upload,
+      # which made it fail with "Found 0 artifact(s)" at random. Wait until the listing really shows it (not a blind sleep).
+      - name: Wait until the Pages artifact is listed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 36); do
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '[.artifacts[] | select(.name == "github-pages")] | length')
+            if [ "${n:-0}" -ge 1 ]; then echo "github-pages listed after $i checks"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::the github-pages artifact was uploaded but never appeared in the artifact list"; exit 1
 
       - name: Deploy to GitHub Pages
         id: deployment
