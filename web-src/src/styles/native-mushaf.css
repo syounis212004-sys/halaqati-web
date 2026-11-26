@@ -392,3 +392,28 @@ html body .hm-jump-dlg .hm-surah.on small, html body .hm-jump-dlg .hm-juz.on sma
 .hm-jump-dlg button:focus-visible, .hm-jump-dlg input:focus-visible { outline: 3px solid #b45309; outline-offset: 2px; }
 body.dark .hm-jump-dlg button:focus-visible, body.dark .hm-jump-dlg input:focus-visible { outline-color: #ebc66f; }
 @media (max-width: 420px) { .hm-juz-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* RC114: the mushaf has its own close button in the top bar, so the dialog's header stays only for assistive technology (its title) */
+.nr-mushaf-dlg .nx-dlg-head { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.nr-mushaf-dlg .nx-dlg-head .nx-iconbtn { display: none; }
+
+/* RC114: slim top bar (close, bookmark, previous / page counter / next, to-range) */
+.hm-grow { flex: 1 1 0; min-width: 0; }
+.hm-nav { gap: 4px; }
+.hm-icon { padding: 0 8px; font-size: 22px; line-height: 1; }
+.hm-counter { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.hm-counter b { font-size: 16px; }
+.hm-jump { white-space: nowrap; flex: none; padding: 0 10px; }
+.hm-nav .hm-icon[aria-pressed="true"] { color: var(--hm-accent); }
+
+/* RC114: the DigitalKhatt page. The glyphs are canvas outlines (ink on top, never touched); the words are transparent boxes under the ink that take
+   touches, focus and the marks, so tap / long press / drag-to-highlight work exactly as on the QCF page. Zoom and the page turn are transform + opacity only. */
+.hm-lines.is-dk { display: flex; align-items: center; justify-content: center; width: 100%; grid-template-rows: none; overflow: hidden; position: relative; touch-action: none; direction: ltr; }
+.hm-dk { position: relative; flex: none; direction: ltr; transform-origin: 50% 50%; }
+.hm-dk canvas { position: absolute; inset: 0; display: block; pointer-events: none; }
+.hm-dk .hm-dkw { position: absolute; display: block; border-radius: 0.18em; }
+.hm-dk .hm-word.is-mistake { background-color: var(--hm-mark-mistake-bg); background-image: linear-gradient(var(--hm-mark-mistake), var(--hm-mark-mistake)); background-repeat: no-repeat; background-size: 100% max(2px, 5%); background-position: 0 92%; text-decoration: none; }
+.hm-dk .hm-word.is-prompt { background-color: var(--hm-mark-prompt-bg); background-image: repeating-linear-gradient(to left, var(--hm-mark-prompt) 0 0.9em, transparent 0.9em 1.5em); background-repeat: no-repeat; background-size: 100% max(2px, 5%); background-position: 0 92%; text-decoration: none; }
+.hm-dk .hm-word:focus-visible { outline: 3px solid var(--hm-accent); outline-offset: 1px; }
+.hm-zoomreset { position: absolute; z-index: 4; bottom: 5cqw; left: 50%; transform: translateX(-50%); white-space: nowrap; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }
+.hm-zoomreset[hidden] { display: none; }

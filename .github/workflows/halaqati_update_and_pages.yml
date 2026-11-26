@@ -292,6 +292,27 @@ jobs:
           echo "Prepared GitHub Pages site:"
           du -sh _site
 
+      - name: Add the DigitalKhatt mushaf page pack (optional; generated here, never committed)
+        # The pack encodes the Quran text, so it is not stored in the repository or in the web zip: it is generated from a pinned madina.json
+        # (sha256 below) into _site/dk, publicly served with the site. A failed download, hash check or generation only removes _site/dk with a
+        # warning: the publish goes on and the app keeps using the QCF mushaf. The service worker never precaches the pack (it is cached on first use).
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -u
+          rm -rf _site/dk
+          WORK="$(mktemp -d)"
+          if curl -fsSL --retry 4 --retry-delay 3 --max-time 240 -o "$WORK/madina.json" https://digitalkhatt.org/assets/layouts/madina.json \
+             && echo "5de6e0c60d8a402b37483fed4f799eeefaebd5edd94b67ff1ac8d8e9ba5ff358  $WORK/madina.json" | sha256sum -c - \
+             && python3 -I web-src/scripts/dk/make_dk_assets.py "$WORK/madina.json" _site/dk \
+             && python3 -I web-src/scripts/dk/verify_pack.py _site/dk; then
+            echo "DigitalKhatt pack added to the site: $(du -sh _site/dk | cut -f1), $(find _site/dk -type f | wc -l) files"
+          else
+            echo "::warning::The DigitalKhatt pack could not be generated; publishing without it (the QCF mushaf stays the fallback)."
+            rm -rf _site/dk
+          fi
+          exit 0
+
       - name: Release gate (APK hash, version.json, not lower than published)
         shell: bash
         run: python3 .github/scripts/release_gate.py web . Halaqati-latest.apk version.json

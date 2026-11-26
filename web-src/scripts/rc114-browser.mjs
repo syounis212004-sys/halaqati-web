@@ -4,12 +4,14 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import { serveDist } from './_static-server.mjs';
+import { dkChecks } from './rc114-dk-checks.mjs';
 
 const out = process.env.ARTIFACTS_DIR || '.artifacts/rc114';
 fs.mkdirSync(out, { recursive: true });
 const widths = (process.env.VIEWPORTS || '360,390,768,1024,1440').split(',').map(Number);
 const exe = process.env.CHROMIUM_PATH || [ '/opt/pw-browsers/chromium', '/usr/bin/google-chrome' ].find((p) => fs.existsSync(p));
 const axeSrc = process.env.AXE_JS && fs.existsSync(process.env.AXE_JS) ? fs.readFileSync(process.env.AXE_JS, 'utf8') : null;
+const hasDk = fs.existsSync(`${process.env.DIST_DIR || 'dist'}/dk/ids.bin`);
 const { base, close } = serveDist(+(process.env.RC114_PORT || 4192));
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--no-sandbox'] });
 let fails = 0, checks = 0;
@@ -36,9 +38,10 @@ const contests = {
 const cards = [{ id: id(50), kind: 'teacher', title: 'دعم حلقة الاختبار', description: 'وصف بطاقة الدعم التجريبية', recurrence: 'monthly', slots: 1, beneficiaries: 5, status: 'open', halaqa_id: id(10), halaqa_name: H[0].name, amount: 50, currency: 'ILS', periods: [{ period: 'يناير', taken: 0, mine: null }, { period: 'فبراير', taken: 1, mine: null }], pay: {} }];
 
 async function open(width, role, opts = {}) {
-  const ctx = await browser.newContext({ viewport: { width, height: opts.height || 900 }, locale: 'ar', serviceWorkers: 'block', reducedMotion: opts.reduced ? 'reduce' : 'no-preference', permissions: opts.notify ? ['notifications'] : [] });
+  const ctx = await browser.newContext({ viewport: { width, height: opts.height || 900 }, locale: 'ar', serviceWorkers: 'block', reducedMotion: opts.reduced ? 'reduce' : 'no-preference', permissions: opts.notify ? ['notifications'] : [], hasTouch: !!opts.touch });
   const origin = new URL(base).origin;
   await ctx.route('**/*', (r) => (new URL(r.request().url()).origin === origin ? r.continue() : r.abort()));
+  if (opts.blockDk) await ctx.route('**/dk/**', (r) => r.abort());
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -275,6 +278,8 @@ const clickText = (page, t, sel = 'button') => page.locator(sel, { hasText: t })
   eq(errors, [], 'mushaf jump: no page errors');
   await ctx.close();
 
+  if (hasDk) await dkChecks({ open, ok, eq, shot, mountMushaf }); else console.log('skipping the DigitalKhatt checks: no pack in dist/dk (copy a generated pack to web-src/public/dk and rebuild)');
+
   // keyboard: a short viewport (on-screen keyboard) keeps the form reachable
   ({ ctx, page } = await open(390, 'teacher', { height: 380 }));
   await go(page, 'contests'); await clickText(page, 'مسابقة جديدة'); await page.waitForSelector('#dnContest[open]');
@@ -315,7 +320,13 @@ for (const w of widths) {
 
     o = await open(w, 'teacher');
     if (dark) await o.page.evaluate(() => document.body.classList.add('dark'));
-    await mountMushaf(o.page); await axe(o.page, `mushaf-nav-${tag}`, '.hm-nav');
+    await mountMushaf(o.page);
+    if (hasDk) {
+      await o.page.waitForSelector('.hm-dk .hm-word', { timeout: 15000 });
+      await noOverflow(o.page, `mushaf dk @${tag}`); await shot(o.page, `mushaf-dk-${tag}`); await axe(o.page, `mushaf-dk-${tag}`, '#mushafHost');
+    }
+    await axe(o.page, `mushaf-nav-${tag}`, '.hm-nav');
+    if (hasDk) { await o.page.click('[data-act="next"]'); await o.page.waitForSelector('.hm-dk .hm-word'); await o.page.waitForTimeout(800); await shot(o.page, `mushaf-dk-surah-start-${tag}`); }
     await o.page.click('[data-act="jumpdlg"]'); await o.page.waitForSelector('#hmJump[open]');
     for (const tab of ['page', 'surahs', 'juz']) {
       await o.page.click(`#hmJump [data-tab="${tab}"]`);

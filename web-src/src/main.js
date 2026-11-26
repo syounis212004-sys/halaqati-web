@@ -44,6 +44,14 @@ window.ContestRules = contestRules;
 window.ReminderLogic = reminderLogic;
 import * as mushafJump from './features/native/mushaf-jump.mjs';
 window.HalaqatiMushafJump = mushafJump;
+import * as dkEngine from './features/native/dk/dk-engine.mjs';
+import { createDkController } from './features/native/dk/dk-view.mjs';
+/* DigitalKhatt mushaf: the page pack is generated at build time and is optional; without it the QCF mushaf is used (see native/mushaf.js). */
+window.HalaqatiDk = {
+  createDkController,
+  pack: dkEngine.createPack({ base: new URL(import.meta.env.BASE_URL, document.baseURI).href }),
+  enabled: () => { let st = null; try { st = window.localStorage; } catch (_e) { /* blocked */ } return dkEngine.engineEnabled(st, location.search); },
+};
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };

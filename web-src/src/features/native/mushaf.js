@@ -6,6 +6,7 @@
   'use strict';
 
   var S = root.HalaqatiMushafState;
+  var DKX = root.HalaqatiDk || null; // DigitalKhatt engine (primary viewer); the QCF page below stays as the automatic fallback
   if (!S) return;
   var H = function (v) { return S.escapeHtml(v); };
   var sharedLoader = S.createPageLoader(), fontLoader = S.createFontLoader(), basmalaCache = null;
@@ -22,26 +23,28 @@
   function mount(container, opts) {
     if (!container || !opts || !opts.session) return null;
     var session = opts.session, loader = opts.loader || sharedLoader;
-    var ui = { tool: 'tap', type: 'mistake', data: null, lines: null, loading: false, error: null, token: 0, drag: null, pressTimer: 0, focusId: null, dead: false, raf: 0 };
+    var ui = { tool: 'tap', type: 'mistake', data: null, lines: null, loading: false, error: null, token: 0, drag: null, pressTimer: 0, focusId: null, dead: false, raf: 0, engine: 'qcf', dkOff: false };
 
     container.innerHTML =
       '<div class="hm-mushaf-root" dir="rtl">' +
-        '<div class="hm-nav">' +
-          '<button type="button" class="hm-pagebtn" data-act="prev" aria-label="الصفحة السابقة">السابقة</button>' +
-          '<input class="hm-pageinput" type="number" min="1" max="604" inputmode="numeric" data-act="page" aria-label="رقم الصفحة">' +
-          '<span class="hm-pagetotal">/ ٦٠٤</span>' +
-          '<button type="button" class="hm-pagebtn" data-act="next" aria-label="الصفحة التالية">التالية</button>' +
+        '<div class="hm-nav" role="toolbar" aria-label="تنقل المصحف">' +
+          '<button type="button" class="hm-pagebtn hm-icon" data-act="close" aria-label="إغلاق المصحف"><span aria-hidden="true">✕</span></button>' +
+          '<button type="button" class="hm-pagebtn hm-icon" data-act="bookmark" aria-pressed="false" aria-label="إضافة علامة مرجعية" hidden><span aria-hidden="true">☆</span></button>' +
+          '<span class="hm-grow"></span>' +
+          '<button type="button" class="hm-pagebtn hm-icon" data-act="prev" aria-label="الصفحة السابقة"><span aria-hidden="true">›</span></button>' +
+          '<button type="button" class="hm-pagebtn hm-counter" data-act="jumpdlg" aria-haspopup="dialog" aria-label="الانتقال إلى صفحة أو سورة أو جزء"><b data-pagecount>١</b><span>/ ٦٠٤</span></button>' +
+          '<button type="button" class="hm-pagebtn hm-icon" data-act="next" aria-label="الصفحة التالية"><span aria-hidden="true">‹</span></button>' +
+          '<span class="hm-grow"></span>' +
           '<button type="button" class="hm-pagebtn hm-jump" data-act="range" hidden>إلى المقرر</button>' +
-          '<button type="button" class="hm-pagebtn" data-act="jumpdlg" aria-haspopup="dialog" hidden>الانتقال</button>' +
-          '<button type="button" class="hm-pagebtn" data-act="bookmark" aria-pressed="false" hidden>☆ علامة</button>' +
         '</div>' +
         '<div class="hm-score" data-score></div>' +
         '<div class="hm-pagewrap"><div class="hm-page" role="group" aria-label="صفحة المصحف">' +
           '<div class="hm-page-head"><span data-surah></span><span class="hm-inrange" data-inrange></span><span data-juz></span></div>' +
           '<div class="hm-lines" data-lines></div>' +
+          '<button type="button" class="hm-pagebtn hm-zoomreset" data-act="zoomreset" hidden>إعادة الحجم</button>' +
           '<div class="hm-page-foot" data-foot></div>' +
         '</div></div>' +
-        '<div class="hm-credit">خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
+        '<div class="hm-credit" data-credit>خطوط المصحف: مجمع الملك فهد لطباعة المصحف الشريف · عبر Quran Foundation</div>' +
         '<div class="hm-bottom">' +
         '<div class="hm-types" role="group" aria-label="نوع العلامة">' +
           '<button type="button" class="hm-type is-mistake" data-type="mistake" aria-pressed="true"><span class="hm-swatch" aria-hidden="true"></span><span>خطأ</span><b data-count="mistakes">٠</b></button>' +
@@ -59,7 +62,8 @@
       '</div>';
 
     var $ = function (sel) { return container.querySelector(sel); };
-    var linesEl = $('[data-lines]'), pageEl = $('.hm-page'), liveEl = $('[data-live]'), inputEl = $('[data-act="page"]');
+    $('[data-act="close"]').hidden = !(typeof opts.onClose === 'function' || container.closest('dialog'));
+    var linesEl = $('[data-lines]'), pageEl = $('.hm-page'), liveEl = $('[data-live]'), countEl = $('[data-pagecount]'), creditEl = $('[data-credit]');
 
     function curRange() { try { return (opts.getRange && opts.getRange()) || null; } catch (_e) { return null; } }
     function rangeStartPage() { var r = curRange(); if (!r) return null; if (r.startSurah) return S.resolvePageForAyah(r.startSurah, r.startAyah || 1); return r.startPage ? S.clampPage(Math.min(+r.startPage, +(r.endPage || r.startPage))) : null; }
@@ -78,8 +82,8 @@
       $('[data-act="undo"]').disabled = !session.canUndo(); $('[data-act="redo"]').disabled = !session.canRedo();
       $('[data-act="prev"]').disabled = page <= 1; $('[data-act="next"]').disabled = page >= 604;
       var jump = $('[data-act="range"]'); jump.hidden = !(start && start !== page);
-      if (document.activeElement !== inputEl) inputEl.value = page;
-      if (J) { var bm = $('[data-act="bookmark"]'), on = marks.indexOf(page) >= 0; bm.setAttribute('aria-pressed', String(on)); bm.textContent = (on ? '★ علامة محفوظة' : '☆ علامة'); }
+      countEl.textContent = digits(page);
+      if (J) { var bm = $('[data-act="bookmark"]'), on = marks.indexOf(page) >= 0; bm.setAttribute('aria-pressed', String(on)); bm.setAttribute('aria-label', on ? 'إزالة العلامة المرجعية' : 'إضافة علامة مرجعية'); bm.firstChild.textContent = on ? '★' : '☆'; }
       var v = opts.getV6 ? opts.getV6() : null, html;
       if (v) {
         var over = session.overLimitPages();
@@ -106,13 +110,16 @@
     function renderPage() {
       var st = session.getState(), surahId = ui.lines && pageWords()[0] ? pageWords()[0].surah : null, info = surahId ? S.getSurah(surahId) : null;
       $('[data-surah]').textContent = info ? 'سورة ' + info.name : '';
-      $('[data-juz]').textContent = ui.data && ui.data.juz ? 'الجزء ' + digits(ui.data.juz) : '';
+      $('[data-juz]').textContent = ui.data && ui.data.juz ? 'الجزء ' + digits(ui.data.juz) : (ui.engine === 'dk' && J ? 'الجزء ' + digits(J.juzOfPage(st.page, layoutObj())) : '');
       $('[data-foot]').textContent = digits(st.page);
+      if (ui.engine === 'dk') creditEl.innerHTML = DK_CREDIT; else creditEl.textContent = QCF_CREDIT;
+      if (ui.engine === 'dk' && dkc && dkc.active && !ui.loading && !ui.error) { ui.focusId = pageWords()[0] ? pageWords()[0].id : null; paintMarks(); return; }
       if (ui.loading) { linesEl.innerHTML = '<div class="hm-status" role="status" style="grid-row:1 / -1">جارٍ تحميل صفحة ' + H(digits(st.page)) + '…</div>'; return; }
       if (ui.error || !ui.lines) {
         linesEl.innerHTML = '<div class="hm-error" role="alert" style="grid-row:1 / -1"><p>تعذّر عرض صفحة ' + H(digits(st.page)) + '.</p><p>' + H(ui.error || 'تأكد من الاتصال بالإنترنت.') + ' يمكنك متابعة التسميع بالعدّادات اليدوية دون المصحف.</p><button type="button" class="hm-pagebtn" data-act="retry">إعادة المحاولة</button></div>';
         return;
       }
+      linesEl.classList.remove('is-dk');
       var first = true, page = st.page, opening = S.isOpeningPage(page), shown = ui.lines;
       if (opening) shown = shown.filter(function (l) { return l.kind !== 'empty'; });
       linesEl.classList.toggle('is-opening', opening);
@@ -133,6 +140,7 @@
 
     // one size for the whole page (CSS); only a line wider than the text block is made smaller, by one ratio
     function fit() {
+      if (ui.engine === 'dk') return;
       linesEl.querySelectorAll('.hm-line').forEach(function (row) {
         row.style.fontSize = '';
         if (!row.querySelector('.hm-word')) return;
@@ -179,9 +187,9 @@
       }).catch(function () { return 'تعذر تحميل خط الصفحة'; });
     }
 
-    function loadPage(n) {
-      var token = ++ui.token, p = session.setPage(n);
-      ui.loading = true; ui.error = null; closeKinds(); renderPage(); updateHud();
+    function loadQcf(p, token) {
+      if (dkc) dkc.clear();
+      ui.engine = 'qcf'; ui.loading = true; ui.error = null; renderPage(); updateHud();
       return Promise.resolve().then(function () { return loader.loadPage(p); }).catch(function () { return { ok: false, error: 'تعذر تحميل بيانات الصفحة' }; }).then(function (res) {
         if (ui.dead || token !== ui.token) return res;
         if (res && res.ok) {
@@ -196,6 +204,24 @@
         else { ui.loading = false; ui.data = null; ui.lines = null; ui.error = (res && res.error) || 'تعذر تحميل بيانات الصفحة'; }
         renderPage(); updateHud();
         return res;
+      });
+    }
+
+    function loadPage(n) {
+      var prev = session.getState().page, token = ++ui.token, p = session.setPage(n), dir = p === prev ? 0 : (p > prev ? 1 : -1);
+      closeKinds();
+      if (!dkc || ui.dkOff || !DKX.enabled()) return loadQcf(p, token);
+      if (!dkc.active) { ui.engine = 'dk'; ui.loading = true; ui.error = null; renderPage(); }
+      updateHud();
+      return DKX.pack.available().then(function (ok) {
+        if (ui.dead || token !== ui.token) return null;
+        if (!ok) { ui.dkOff = true; return loadQcf(p, token); }   // no pack in this deployment: the QCF mushaf works as before
+        return dkc.show(p, { dir: dir, isStale: function () { return ui.dead || token !== ui.token; } }).then(function (shown) {
+          if (ui.dead || token !== ui.token) return null;
+          if (!shown) return loadQcf(p, token);                   // this page could not be served by the pack: QCF takes over for it
+          ui.engine = 'dk'; ui.loading = false; ui.error = null; ui.data = null; renderPage(); updateHud();
+          return { ok: true };
+        });
       });
     }
 
@@ -272,10 +298,11 @@
       if (a === 'prev') loadPage(page - 1); else if (a === 'next') loadPage(page + 1); else if (a === 'retry') loadPage(page);
       else if (a === 'range') loadPage(rangeStartPage() || page);
       else if (a === 'jumpdlg') openJump();
+      else if (a === 'close') { if (typeof opts.onClose === 'function') opts.onClose(); else { var dlg = container.closest('dialog'); if (dlg) dlg.close(); } }
+      else if (a === 'zoomreset') { if (dkc) dkc.resetZoom(); }
       else if (a === 'bookmark') { marks = J.toggleBookmark(marks, page); J.saveBookmarks(undefined, marks); updateHud(); liveEl.textContent = marks.indexOf(page) >= 0 ? 'أُضيفت علامة مرجعية للصفحة ' + digits(page) : 'أُزيلت العلامة المرجعية'; }
       else if (a === 'undo' || a === 'redo') undoRedo(a);
     });
-    inputEl.addEventListener('change', function () { if (ui.dead || inputEl.value === '') { inputEl.value = session.getState().page; return; } loadPage(inputEl.value).then(function () { inputEl.value = session.getState().page; }); });
     function focusWord(id) {
       var el = id && wordEl(id); if (!el) return;
       var cur = wordEl(ui.focusId); if (cur) cur.setAttribute('tabindex', '-1');
@@ -306,7 +333,7 @@
 
     // ---- jump dialog (RC114, port of Android MushafJump): page / surahs / juz tabs, the assigned range as a card, bookmarks, jump to an ayah
     var J = root.HalaqatiMushafJump || null, marks = [], jump = { tab: 'page', picked: null, q: '' };
-    if (J) { marks = J.loadBookmarks(); ['jumpdlg', 'bookmark'].forEach(function (a) { $('[data-act="' + a + '"]').hidden = false; }); }
+    if (J) { marks = J.loadBookmarks(); $('[data-act="bookmark"]').hidden = false; }
     function layoutObj() { return root.HALAQATI_QURAN_LAYOUT || null; }
     function openJump() {
       if (!J || ui.dead) return;
@@ -357,12 +384,32 @@
       paint(); if (!d.open) d.showModal();
     }
 
-    var ro = typeof ResizeObserver === 'function' ? new ResizeObserver(function () { cancelAnimationFrame(ui.raf); ui.raf = requestAnimationFrame(function () { if (!ui.dead && ui.lines) fit(); }); }) : null;
+    // ---- DigitalKhatt controller: stage, zoom, swipe and page-turn motion live in dk/dk-view.mjs; the marks and tools above work on its .hm-word layer
+    var dkc = null;
+    if (DKX && DKX.createDkController && DKX.pack) {
+      dkc = DKX.createDkController({
+        pack: DKX.pack, container: container, rootEl: $('.hm-mushaf-root'), linesEl: linesEl, wrapEl: $('.hm-pagewrap'), S: S, digits: digits,
+        hooks: {
+          getTool: function () { return ui.tool; },
+          cancelGesture: function () { clearTimeout(ui.pressTimer); ui.drag = null; previewSpan([]); closeKinds(); },
+          setLines: function (lines) { ui.lines = lines; },
+          onStage: function () { ui.engine = 'dk'; ui.loading = false; ui.error = null; ui.data = null; renderPage(); },
+          canTurn: function (dir) { var p = session.getState().page + dir; return p >= 1 && p <= 604; },
+          onTurn: function (dir) { loadPage(session.getState().page + dir); },
+          onZoom: function (z) { var b = $('[data-act="zoomreset"]'); if (b) b.hidden = !z; }
+        }
+      });
+    }
+    // attribution required by the font licence (OFL 1.1) and the layout project; the Latin names are isolated so the Arabic sentence keeps its order
+    var DK_CREDIT = 'خط المصحف <bdi dir="ltr">Madina</bdi>: © <bdi dir="ltr">2020-2025 Amine Anane</bdi> و <bdi dir="ltr">Tarteel Inc.</bdi>، رخصة <bdi dir="ltr">SIL Open Font License 1.1</bdi>. تخطيط الصفحات والأسطر: مشروع <bdi dir="ltr">DigitalKhatt (digitalkhatt.org)</bdi>، على طبعة المصحف المدني 1421هـ.';
+    var QCF_CREDIT = creditEl.textContent;
+
+    var ro = typeof ResizeObserver === 'function' ? new ResizeObserver(function () { cancelAnimationFrame(ui.raf); ui.raf = requestAnimationFrame(function () { if (ui.dead) return; if (ui.engine === 'dk' && dkc && dkc.active) { dkc.relayout(); paintMarks(); } else if (ui.lines) fit(); }); }) : null;
     if (ro) ro.observe(pageEl);
 
     var inst = {
       loadPage: loadPage, refresh: paintMarks,
-      destroy: function () { ui.dead = true; clearTimeout(ui.pressTimer); if (ro) ro.disconnect(); var jd = document.getElementById('hmJump'); if (jd && jd.open) jd.close(); }
+      destroy: function () { ui.dead = true; if (dkc) dkc.destroy(); clearTimeout(ui.pressTimer); if (ro) ro.disconnect(); var jd = document.getElementById('hmJump'); if (jd && jd.open) jd.close(); }
     };
     updateHud();
     loadPage(session.getState().page || rangeStartPage() || 1);

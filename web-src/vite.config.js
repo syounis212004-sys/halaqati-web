@@ -67,8 +67,17 @@ export default defineConfig({
         skipWaiting: false,
         navigateFallback: 'index.html',
         globPatterns: ['**/*.{html,js,css,png,svg,webmanifest,woff,woff2,ttf,json}'],
-        globIgnores: ['vendor/**'],
+        globIgnores: ['vendor/**', 'dk/**'], // the DigitalKhatt page pack (~5MB) is never precached: it is cached on first use below
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.includes('/dk/') && url.pathname.endsWith('.bin'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'halaqati-dk-5de6e0c6-g1', // madina.json digest + generator version: bump g1 when make_dk_assets.py output changes
+              expiration: { maxEntries: 700, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.includes('/vendor/'),
             handler: 'CacheFirst',
