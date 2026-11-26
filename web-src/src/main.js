@@ -42,6 +42,8 @@ import * as contestRules from './features/contests/rules.mjs';
 import * as reminderLogic from './features/reminders/schedule.mjs';
 window.ContestRules = contestRules;
 window.ReminderLogic = reminderLogic;
+import * as mushafJump from './features/native/mushaf-jump.mjs';
+window.HalaqatiMushafJump = mushafJump;
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };

@@ -32,6 +32,8 @@
           '<span class="hm-pagetotal">/ ٦٠٤</span>' +
           '<button type="button" class="hm-pagebtn" data-act="next" aria-label="الصفحة التالية">التالية</button>' +
           '<button type="button" class="hm-pagebtn hm-jump" data-act="range" hidden>إلى المقرر</button>' +
+          '<button type="button" class="hm-pagebtn" data-act="jumpdlg" aria-haspopup="dialog" hidden>الانتقال</button>' +
+          '<button type="button" class="hm-pagebtn" data-act="bookmark" aria-pressed="false" hidden>☆ علامة</button>' +
         '</div>' +
         '<div class="hm-score" data-score></div>' +
         '<div class="hm-pagewrap"><div class="hm-page" role="group" aria-label="صفحة المصحف">' +
@@ -77,6 +79,7 @@
       $('[data-act="prev"]').disabled = page <= 1; $('[data-act="next"]').disabled = page >= 604;
       var jump = $('[data-act="range"]'); jump.hidden = !(start && start !== page);
       if (document.activeElement !== inputEl) inputEl.value = page;
+      if (J) { var bm = $('[data-act="bookmark"]'), on = marks.indexOf(page) >= 0; bm.setAttribute('aria-pressed', String(on)); bm.textContent = (on ? '★ علامة محفوظة' : '☆ علامة'); }
       var v = opts.getV6 ? opts.getV6() : null, html;
       if (v) {
         var over = session.overLimitPages();
@@ -268,6 +271,8 @@
       var a = t.getAttribute('data-act'), page = session.getState().page;
       if (a === 'prev') loadPage(page - 1); else if (a === 'next') loadPage(page + 1); else if (a === 'retry') loadPage(page);
       else if (a === 'range') loadPage(rangeStartPage() || page);
+      else if (a === 'jumpdlg') openJump();
+      else if (a === 'bookmark') { marks = J.toggleBookmark(marks, page); J.saveBookmarks(undefined, marks); updateHud(); liveEl.textContent = marks.indexOf(page) >= 0 ? 'أُضيفت علامة مرجعية للصفحة ' + digits(page) : 'أُزيلت العلامة المرجعية'; }
       else if (a === 'undo' || a === 'redo') undoRedo(a);
     });
     inputEl.addEventListener('change', function () { if (ui.dead || inputEl.value === '') { inputEl.value = session.getState().page; return; } loadPage(inputEl.value).then(function () { inputEl.value = session.getState().page; }); });
@@ -299,12 +304,65 @@
       else if (a.type === 'move' && t && t.classList && t.classList.contains('hm-word')) moveFocus(a.value);
     });
 
+    // ---- jump dialog (RC114, port of Android MushafJump): page / surahs / juz tabs, the assigned range as a card, bookmarks, jump to an ayah
+    var J = root.HalaqatiMushafJump || null, marks = [], jump = { tab: 'page', picked: null, q: '' };
+    if (J) { marks = J.loadBookmarks(); ['jumpdlg', 'bookmark'].forEach(function (a) { $('[data-act="' + a + '"]').hidden = false; }); }
+    function layoutObj() { return root.HALAQATI_QURAN_LAYOUT || null; }
+    function openJump() {
+      if (!J || ui.dead) return;
+      var d = document.getElementById('hmJump');
+      if (!d) { d = document.createElement('dialog'); d.id = 'hmJump'; d.className = 'hm-jump-dlg'; d.setAttribute('aria-labelledby', 'hmJumpT'); document.body.appendChild(d); d.addEventListener('click', function (e) { if (e.target === d) d.close(); }); }
+      jump.tab = 'page'; jump.picked = null; jump.q = '';
+      var go = function (p) { if (d.open) d.close(); if (!ui.dead && p) loadPage(p); };
+      function paint() {
+        var page = session.getState().page, lay = layoutObj(), info = S.getSurah((pageWords()[0] || {}).surah), rp = J.rangePages(rangeStartPage(), (function () { var r = curRange(); return r ? (r.endSurah ? S.resolvePageForAyah(r.endSurah, r.endAyah || 1) : r.endPage) : null; })());
+        var tabs = [['page', 'الصفحة'], ['surahs', 'السور'], ['juz', 'الأجزاء']];
+        var range = rp.length ? '<section class="hm-jump-range" aria-label="ضمن المقرر"><div class="hm-jump-rhead"><b>ضمن المقرر</b><span>' + (rp.length === 1 ? 'صفحة ' + digits(rp[0]) : 'ص ' + digits(rp[0]) + ' ← ' + digits(rp[rp.length - 1]) + ' (' + digits(rp.length) + ' صفحة)') + '</span></div><div class="hm-jump-chips">' +
+          (rp.length <= 12 ? rp.map(function (p) { return '<button type="button" class="hm-chip' + (p === page ? ' on' : '') + '" data-go="' + p + '"' + (p === page ? ' aria-current="true"' : '') + '>' + digits(p) + '</button>'; }).join('') : '<button type="button" class="hm-chip" data-go="' + rp[0] + '">أول المقرر</button><button type="button" class="hm-chip" data-go="' + rp[rp.length - 1] + '">آخر المقرر</button>') + '</div></section>' : '';
+        var pane;
+        if (jump.tab === 'page') {
+          pane = '<div class="hm-jump-row"><label for="hmJumpPage">رقم الصفحة (١–٦٠٤)</label><input id="hmJumpPage" class="hm-pageinput" type="text" inputmode="numeric" dir="ltr" value="' + page + '" aria-describedby="hmJumpPageE"><button type="button" class="hm-pagebtn" data-act2="gopage">انتقال</button></div><div id="hmJumpPageE" class="hm-jump-err" role="alert"></div>' +
+            '<input id="hmJumpSlider" class="hm-jump-slider" type="range" min="1" max="604" value="' + page + '" aria-label="تحديد الصفحة بالشريط">' +
+            (marks.length ? '<h4>العلامات المرجعية</h4><div class="hm-jump-chips">' + marks.map(function (p) { return '<button type="button" class="hm-chip' + (p === page ? ' on' : '') + '" data-go="' + p + '">ص ' + digits(p) + '</button>'; }).join('') + '</div>' : '<p class="hm-jump-hint">لا علامات مرجعية بعد. استعمل زر «☆ علامة» لحفظ الصفحة.</p>');
+        } else if (jump.tab === 'surahs') {
+          var list = J.filterSurahs(S.SURAHS, jump.q);
+          pane = '<label for="hmJumpQ">ابحث عن سورة</label><input id="hmJumpQ" class="hm-jump-q" type="search" value="' + H(jump.q) + '" autocomplete="off"><ul class="hm-jump-list">' + (list.length ? list.map(function (sn) {
+            var open = jump.picked === sn.id;
+            return '<li><button type="button" class="hm-surah' + (open ? ' on' : '') + '" data-surah="' + sn.id + '" aria-expanded="' + open + '"><span class="hm-snum" aria-hidden="true">' + digits(sn.id) + '</span><b>' + H(sn.name) + '</b><small>' + digits(sn.ayahs) + ' آية · ص ' + digits(S.resolvePageForAyah(sn.id, 1)) + '</small></button>' +
+              (open ? '<div class="hm-jump-ayah"><label for="hmJumpAyah">رقم الآية (١–' + digits(sn.ayahs) + ')</label><div class="hm-jump-row"><input id="hmJumpAyah" class="hm-pageinput" type="text" inputmode="numeric" dir="ltr" aria-describedby="hmJumpAyahE"><button type="button" class="hm-pagebtn" data-act2="goayah">اذهب إلى الآية</button><button type="button" class="hm-pagebtn" data-go="' + S.resolvePageForAyah(sn.id, 1) + '">بداية السورة</button></div><div id="hmJumpAyahE" class="hm-jump-err" role="alert"></div></div>' : '') + '</li>';
+          }).join('') : '<li class="hm-jump-hint">لا توجد سورة بهذا الاسم.</li>') + '</ul>';
+        } else {
+          var cur = J.juzOfPage(page, lay);
+          pane = '<div class="hm-juz-grid">' + Array.apply(null, Array(30)).map(function (_x, i) { var j = i + 1, p = J.juzStartPage(j, lay); return '<button type="button" class="hm-juz' + (j === cur ? ' on' : '') + '" data-go="' + p + '"' + (j === cur ? ' aria-current="true"' : '') + '><b>' + digits(j) + '</b><small>ص ' + digits(p) + '</small></button>'; }).join('') + '</div><p class="hm-jump-hint">اضغط الجزء للانتقال إلى أول صفحة فيه.</p>';
+        }
+        d.innerHTML = '<div class="hm-jump-body" dir="rtl"><header><div><h3 id="hmJumpT">الانتقال</h3><small>' + H(J.hereLabel(page, info ? info.name : '', lay)) + '</small></div><button type="button" class="hm-pagebtn" data-act2="close">إغلاق</button></header>' + range +
+          '<div class="hm-jump-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" id="hmJumpTab-' + t[0] + '" aria-selected="' + (jump.tab === t[0]) + '" data-tab="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><div class="hm-jump-pane" role="tabpanel" aria-labelledby="hmJumpTab-' + jump.tab + '">' + pane + '</div></div>';
+      }
+      d.onclick = function (e) {
+        if (e.target === d) return d.close();
+        var t = e.target.closest('button'); if (!t) return;
+        if (t.hasAttribute('data-go')) return go(+t.getAttribute('data-go'));
+        if (t.hasAttribute('data-tab')) { jump.tab = t.getAttribute('data-tab'); paint(); var tb = d.querySelector('[data-tab="' + jump.tab + '"]'); if (tb) tb.focus(); return; }
+        if (t.hasAttribute('data-surah')) { var id = +t.getAttribute('data-surah'); jump.picked = jump.picked === id ? null : id; paint(); var a = d.querySelector('#hmJumpAyah') || d.querySelector('[data-surah="' + id + '"]'); if (a) a.focus(); return; }
+        var act = t.getAttribute('data-act2');
+        if (act === 'close') return d.close();
+        if (act === 'gopage') { var p = J.parsePage(d.querySelector('#hmJumpPage').value), er = d.querySelector('#hmJumpPageE'); if (!p) { er.textContent = 'اكتب رقم صفحة بين ١ و٦٠٤'; return; } return go(p); }
+        if (act === 'goayah') { var sn = S.getSurah(jump.picked), ay = sn && J.parseAyah(d.querySelector('#hmJumpAyah').value, sn.ayahs), ee = d.querySelector('#hmJumpAyahE'); if (!ay) { ee.textContent = 'اكتب رقم آية بين ١ و' + digits(sn ? sn.ayahs : 0); return; } return go(S.resolvePageForAyah(sn.id, ay)); }
+      };
+      d.oninput = function (e) {
+        if (e.target.id === 'hmJumpSlider') { var f = d.querySelector('#hmJumpPage'); if (f) f.value = e.target.value; }
+        else if (e.target.id === 'hmJumpQ') { jump.q = e.target.value; var pos = e.target.selectionStart; paint(); var q = d.querySelector('#hmJumpQ'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (_e) {} } }
+      };
+      d.onkeydown = function (e) { if (e.key === 'Enter' && e.target.id === 'hmJumpPage') { e.preventDefault(); var b = d.querySelector('[data-act2="gopage"]'); if (b) b.click(); } else if (e.key === 'Enter' && e.target.id === 'hmJumpAyah') { e.preventDefault(); var g = d.querySelector('[data-act2="goayah"]'); if (g) g.click(); } };
+      paint(); if (!d.open) d.showModal();
+    }
+
     var ro = typeof ResizeObserver === 'function' ? new ResizeObserver(function () { cancelAnimationFrame(ui.raf); ui.raf = requestAnimationFrame(function () { if (!ui.dead && ui.lines) fit(); }); }) : null;
     if (ro) ro.observe(pageEl);
 
     var inst = {
       loadPage: loadPage, refresh: paintMarks,
-      destroy: function () { ui.dead = true; clearTimeout(ui.pressTimer); if (ro) ro.disconnect(); }
+      destroy: function () { ui.dead = true; clearTimeout(ui.pressTimer); if (ro) ro.disconnect(); var jd = document.getElementById('hmJump'); if (jd && jd.open) jd.close(); }
     };
     updateHud();
     loadPage(session.getState().page || rangeStartPage() || 1);

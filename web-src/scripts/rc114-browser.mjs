@@ -67,6 +67,16 @@ async function open(width, role, opts = {}) {
   }, [role, H, contests, cards, opts.halaqas || H]);
   return { ctx, page, errors };
 }
+/** Mounts the interactive mushaf with an offline loader and a range of pages 10..12 (no Quran data is fetched or written). */
+const mountMushaf = async (page) => {
+  await page.evaluate(() => {
+    const host = document.createElement('div'); host.id = 'mushafHost'; host.style.cssText = 'position:fixed;inset:0;z-index:99999;background:var(--dn-page,#fff)';
+    document.body.appendChild(host);
+    window.__mushafSession = HalaqatiMushafState.createMushafSession({ initialPage: 1 });
+    HalaqatiMushaf.mount(host, { session: window.__mushafSession, loader: { loadPage: async () => ({ ok: false, error: 'offline test' }) }, getRange: () => ({ startPage: 10, endPage: 12 }), getCounters: () => ({ mistakes: 0, prompts: 0 }), getV6: () => null, onMark() {} });
+  });
+  await page.waitForSelector('.hm-nav');
+};
 const go = async (page, p) => { await page.evaluate(async (p) => { state.page = p; await render(); }, p); await page.waitForTimeout(150); };
 const text = (page, sel = '#content') => page.evaluate((s) => document.querySelector(s)?.innerText || '', sel);
 const navTexts = (page) => page.evaluate(() => [...document.querySelectorAll('#nav button')].map((b) => b.innerText.trim()));
@@ -231,10 +241,43 @@ const clickText = (page, t, sel = 'button') => page.locator(sel, { hasText: t })
   ok(!(await page.isVisible('#rc114Banner').catch(() => false)), 'donor never gets the reminder banner');
   await ctx.close();
 
+  // mushaf jump dialog (the page itself cannot load without the network, the navigation and dialog do not need it)
+  ({ ctx, page, errors } = await open(390, 'teacher'));
+  await mountMushaf(page);
+  ok(await page.isVisible('[data-act="jumpdlg"]') && await page.isVisible('[data-act="bookmark"]'), 'mushaf nav shows the jump and bookmark buttons');
+  await page.click('[data-act="jumpdlg"]'); await page.waitForSelector('#hmJump[open]');
+  ok(/أنت في صفحة [1١]/.test(await page.textContent('#hmJump')), 'jump dialog says where you are');
+  eq(await page.evaluate(() => [...document.querySelectorAll('#hmJump [role=tab]')].map((b) => b.textContent)), ['الصفحة', 'السور', 'الأجزاء'], 'jump tabs');
+  ok((await page.textContent('#hmJump')).includes('ضمن المقرر') && await page.locator('#hmJump .hm-jump-range [data-go]').count() === 3, 'range card with a chip per page');
+  await page.click('#hmJump .hm-jump-range [data-go="11"]'); await page.waitForTimeout(150);
+  eq(await page.evaluate(() => window.__mushafSession.getState().page), 11, 'range chip jumps to that page');
+  await page.click('[data-act="jumpdlg"]'); await page.waitForSelector('#hmJump[open]');
+  await page.fill('#hmJumpPage', '٠'); await page.click('#hmJump [data-act2="gopage"]');
+  ok(/بين [1١] و(604|٦٠٤)/.test(await page.textContent('#hmJumpPageE')), 'bad page number is explained');
+  await page.fill('#hmJumpPage', '٢٢'); await page.press('#hmJumpPage', 'Enter'); await page.waitForTimeout(150);
+  eq(await page.evaluate(() => window.__mushafSession.getState().page), 22, 'typed page (Arabic digits) jumps');
+  await page.click('[data-act="bookmark"]');
+  eq(await page.evaluate(() => JSON.parse(localStorage.getItem('halaqati_mushaf_bookmarks_v1'))), [22], 'bookmark saved on this device');
+  eq(await page.getAttribute('[data-act="bookmark"]', 'aria-pressed'), 'true', 'bookmark button shows its state');
+  await page.click('[data-act="jumpdlg"]'); await page.waitForSelector('#hmJump[open]');
+  await page.click('#hmJump [data-tab="surahs"]');
+  await page.fill('#hmJumpQ', 'بقر');
+  eq(await page.locator('#hmJump .hm-surah').count(), 1, 'surah search narrows the list');
+  await page.click('#hmJump .hm-surah'); await page.fill('#hmJumpAyah', '٢٥٥'); await page.press('#hmJumpAyah', 'Enter'); await page.waitForTimeout(150);
+  const want = await page.evaluate(() => HalaqatiMushafState.resolvePageForAyah(2, 255));
+  ok(want > 1 && (await page.evaluate(() => window.__mushafSession.getState().page)) === want, 'jump to an ayah lands on the ayah page (' + want + ')');
+  await page.click('[data-act="jumpdlg"]'); await page.waitForSelector('#hmJump[open]');
+  await page.click('#hmJump [data-tab="juz"]');
+  eq(await page.locator('#hmJump .hm-juz').count(), 30, 'thirty juz buttons');
+  await page.click('#hmJump .hm-juz:nth-child(30)'); await page.waitForTimeout(150);
+  eq(await page.evaluate(() => window.__mushafSession.getState().page), 582, 'juz 30 starts at page 582');
+  eq(errors, [], 'mushaf jump: no page errors');
+  await ctx.close();
+
   // keyboard: a short viewport (on-screen keyboard) keeps the form reachable
   ({ ctx, page } = await open(390, 'teacher', { height: 380 }));
   await go(page, 'contests'); await clickText(page, 'مسابقة جديدة'); await page.waitForSelector('#dnContest[open]');
-  await page.focus('#cfReward'); await page.evaluate(() => document.getElementById('cfSend').scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(800); await page.focus('#cfReward'); await page.evaluate(() => document.getElementById('cfSend').scrollIntoView({ block: 'center' }));
   const box = await page.locator('#cfSend').boundingBox();
   ok(box && box.y >= 0 && box.y + box.height <= 380, 'send button reachable in a 380px-high viewport');
   await ctx.close();
@@ -267,6 +310,18 @@ for (const w of widths) {
     if (dark) await o.page.evaluate(() => document.body.classList.add('dark'));
     await go(o.page, 'contests'); await noOverflow(o.page, 'admin contests @' + tag); await shot(o.page, `admin-contests-${tag}`); await axe(o.page, `admin-contests-${tag}`);
     await clickText(o.page, 'تحديد الحلقة واعتماد'); await o.page.waitForSelector('#dnDecide[open]'); await shot(o.page, `admin-decide-${tag}`); await axe(o.page, `admin-decide-${tag}`, '#dnDecide');
+    await o.ctx.close();
+
+    o = await open(w, 'teacher');
+    if (dark) await o.page.evaluate(() => document.body.classList.add('dark'));
+    await mountMushaf(o.page); await axe(o.page, `mushaf-nav-${tag}`, '.hm-nav');
+    await o.page.click('[data-act="jumpdlg"]'); await o.page.waitForSelector('#hmJump[open]');
+    for (const tab of ['page', 'surahs', 'juz']) {
+      await o.page.click(`#hmJump [data-tab="${tab}"]`);
+      if (tab === 'surahs') { await o.page.click('#hmJump .hm-surah'); }
+      await noOverflow(o.page, `mushaf jump ${tab} @${tag}`); await shot(o.page, `mushaf-jump-${tab}-${tag}`); await axe(o.page, `mushaf-jump-${tab}-${tag}`, '#hmJump');
+    }
+    eq(o.errors, [], 'no page errors (mushaf) @' + tag);
     await o.ctx.close();
   }
 }
