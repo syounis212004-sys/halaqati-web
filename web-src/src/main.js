@@ -33,10 +33,15 @@ import './styles/supervisor.css';
 import './styles/supervisor-skin.css';
 import './styles/nour.css';
 import './styles/donor.css';
+import './styles/rc114.css';
 import './styles/admin.css';
 import './styles/motion.css';
 import './styles/identity.css';
 import './core/motion-system.js';
+import * as contestRules from './features/contests/rules.mjs';
+import * as reminderLogic from './features/reminders/schedule.mjs';
+window.ContestRules = contestRules;
+window.ReminderLogic = reminderLogic;
 import * as supervisorUI from './features/supervisor/dashboard.mjs';
 import * as supervisionUI from './features/supervisor/supervision.mjs';
 window.SupervisorUI = { ...supervisorUI, ...supervisionUI };
@@ -53,6 +58,9 @@ import rc54ChatUrl from './features/rc54/chat.js?url';
 import rc66ExamsUrl from './features/rc66/exams.js?url';
 import rc85PortalUrl from './features/rc85/portal.js?url';
 import rc86ParityUrl from './features/rc86/parity.js?url';
+import contestsUiUrl from './features/contests/ui.js?url';
+import remindersUiUrl from './features/reminders/ui.js?url';
+import contributeUiUrl from './features/contribute/ui.js?url';
 import rc27DataUrl from './features/rc27/data.js?url';
 import sessionServerUrl from './features/sessions/server.js?url';
 import coreRuntimeUrl from './core/runtime.js?url';
@@ -200,6 +208,9 @@ const BOOT_SCRIPTS = [
   [rc66ExamsUrl, 'halaqati-rc66-exams'],
   [rc85PortalUrl, 'halaqati-rc85-portal'],
   [rc86ParityUrl, 'halaqati-rc86-parity'],
+  [contestsUiUrl, 'halaqati-rc114-contests'],
+  [remindersUiUrl, 'halaqati-rc114-reminders'],
+  [contributeUiUrl, 'halaqati-rc114-contribute'],
   [startupRuntimeUrl, 'halaqati-startup-runtime'],
 ];
 
