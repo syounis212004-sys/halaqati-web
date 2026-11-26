@@ -93,7 +93,8 @@
   const stepOf=p=>p.status==='delivered'?4:p.status==='received'?3:p.transfer_submitted_at?2:1;
   R.copy=async t=>{try{await navigator.clipboard.writeText(t);R.toast('نُسخ الرقم')}catch(_e){R.toast(t)}};
   R.copyEl=btn=>R.copy((btn&&btn.dataset&&btn.dataset.copy)||'');
-  R.page('donor_support',{title:'الدعم',roles:OBS,render:async()=>{
+  /* RC114: also reused by the guardian «تكفّل بحلقة» tab (contribute page); o.noSeg drops the pledges|rewards switch, which is for donors only. */
+  const pledgesRender=async o=>{
     const [cards,mine]=await Promise.all([R.rpc('rc49_support_cards'),R.rpc('rc49_my_pledges')]);
     R.cache.cards=cards;R.cache.mine=mine;
     const myHtml=mine.length?`<h3 class="dn-h">كفالاتي</h3>${mine.map((p,i)=>{const st=p.status,step=stepOf(p);
@@ -111,8 +112,10 @@
         <div class="dn-chips">${per.map(p=>`<span class="dn-chip ${p.taken>=c.slots?'full':''}">${e(p.period)}${p.mine?' ✓ كفالتك':p.taken>=c.slots?' · مكتملة':''}</span>`).join('')}</div>
         ${per.length?`<div class="dn-bar-t"><i style="width:${Math.round(cov/per.length*100)}%"></i></div><small class="dn-muted">غُطّيت ${cov} من ${per.length} فترات</small>`:''}
         <div class="dn-actions">${RC50.btn(free?'أتكفّل':'اكتملت الكفالات',`RC50.dPledge(${i})`,free?'':'disabled')}</div>`)}).join('');
-    return `${R.dSegHtml?R.dSegHtml():''}<!--dn-chat-->${myHtml}<h3 class="dn-h">فرص الدعم</h3>${open||R.card(R.empty('لا توجد بطاقات دعم مفتوحة الآن. سيصلك إشعار عند نشر بطاقة جديدة.'))}`;
-  }});
+    return `${o&&o.noSeg?'':(R.dSegHtml?R.dSegHtml():'')}<!--dn-chat-->${myHtml}<h3 class="dn-h">فرص الدعم</h3>${open||R.card(R.empty('لا توجد بطاقات دعم مفتوحة الآن. سيصلك إشعار عند نشر بطاقة جديدة.'))}`;
+  };
+  R.pledgesHtml=pledgesRender;
+  R.page('donor_support',{title:'الدعم',roles:OBS,render:()=>pledgesRender()});
   R.dPledge=i=>{
     const c=R.cache.cards[i];if(!c)return;R.cache.card=c;
     const free=(c.periods||[]).filter(p=>p.taken<c.slots&&!p.mine);if(!free.length)return;

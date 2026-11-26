@@ -45,11 +45,14 @@
 "halaqati-native-management",
 "halaqati-native-reports",
 "halaqati-native-tools",
+"halaqati-native-phase-days",
 "halaqati-native-phases",
 "halaqati-native-community",
 "halaqati-native-certificates",
 "halaqati-native-home",
 "halaqati-native-approvals",
+"halaqati-native-mushaf-state",
+"halaqati-native-mushaf",
 "halaqati-rc50-runtime",
 "halaqati-rc50-donor",
 "halaqati-rc50-admin",
@@ -63,5 +66,8 @@
 "halaqati-rc66-exams",
 "halaqati-rc85-portal",
 "halaqati-rc86-parity",
+"halaqati-rc114-contests",
+"halaqati-rc114-reminders",
+"halaqati-rc114-contribute",
 "halaqati-startup-runtime"
 ]

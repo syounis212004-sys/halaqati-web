@@ -4,3 +4,6 @@
 .claude/enforce/log/
 .claude/enforce/__pycache__/
 .playwright-mcp/
+
+# DigitalKhatt page pack: generated at build time from a pinned madina.json; it encodes the Quran text, so it is never committed
+web-src/public/dk/
