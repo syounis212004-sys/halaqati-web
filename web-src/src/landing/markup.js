@@ -86,7 +86,7 @@ const rolePanel = (r, i) => {
   <div class="hl-gal" data-role="${r.id}"><div class="hl-gal-bar">${seg}<div class="hl-chips2" role="group" aria-label="شاشات ${r.label}">${chips}</div></div><div class="hl-gal-body">${figs}</div></div>
 </div>`;
 };
-const track = (t) => `<article class="hl-track" data-hl-reveal><span class="hl-ico">${ic(ROLES.find((r) => r.id === t.role).icon)}</span><h3>${t.title}</h3><p class="hl-who">${t.who}</p><ul>${t.needs.map((n) => `<li>${ic('check')}<span>${n}</span></li>`).join('')}</ul><a class="hl-btn hl-btn-ghost" href="#hl-demo" data-role-jump="${t.role}">${t.cta}${ic('arrow')}</a></article>`;
+const track = (t) => `<article class="hl-path" data-hl-reveal><span class="hl-ico">${ic(ROLES.find((r) => r.id === t.role).icon)}</span><h3>${t.title}</h3><p class="hl-who">${t.who}</p><ul>${t.needs.map((n) => `<li>${ic('check')}<span>${n}</span></li>`).join('')}</ul><a class="hl-btn hl-btn-ghost" href="#hl-demo" data-role-jump="${t.role}">${t.cta}${ic('arrow')}</a></article>`;
 const byId = (id) => SCREENS.find((s) => s.id === id);
 const mushafFig = (id, label) => { const s = byId(id); return `<figure class="hl-mfig">${device(s, { pins: false })}<figcaption><strong>${label}</strong><span>${s.caption}</span></figcaption></figure>`; };
 
@@ -133,7 +133,7 @@ export function landingHtml({ version = '' } = {}) {
 
 <section class="hl-sec hl-paths" id="hl-paths" aria-labelledby="hl-paths-h"><div class="hl-wrap">
   <div class="hl-head"><h2 id="hl-paths-h">اختر مسارك</h2><p class="hl-lead">ثلاثة مسارات، ولكل مسار شاشاته الحقيقية أدناه.</p></div>
-  <div class="hl-tracks">${TRACKS.map(track).join('')}</div>
+  <div class="hl-paths-grid">${TRACKS.map(track).join('')}</div>
 </div></section>
 
 <section class="hl-sec hl-alt" id="hl-demo" aria-labelledby="hl-demo-h"><div class="hl-wrap">
@@ -143,7 +143,7 @@ export function landingHtml({ version = '' } = {}) {
 
 <section class="hl-sec" id="hl-mushaf" aria-labelledby="hl-mushaf-h"><div class="hl-wrap">
   <div class="hl-head"><h2 id="hl-mushaf-h">المصحف الإلكتروني للتسميع</h2><p class="hl-lead">يسمّع المحفّظ من المصحف نفسه، فتتحول العلامات إلى تقدير فوري. اللقطات من الويب ومن تطبيق أندرويد.</p></div>
-  <div class="hl-mrow">${mushafFig('web-teacher-mushaf-page', 'الويب')}${mushafFig('android-mushaf-light', 'أندرويد')}${mushafFig('android-mushaf-jump', 'الانتقال السريع')}</div>
+  <div class="hl-mrow">${mushafFig('web-teacher-mushaf-page', 'الويب')}${mushafFig('android-mushaf-light', 'أندرويد')}${mushafFig('android-mushaf-surah', 'بداية السورة على أندرويد')}</div>
   <ul class="hl-mpoints">${MUSHAF_POINTS.map(([i, t, d]) => `<li data-hl-reveal>${ic(i)}<div><h3>${t}</h3><p>${d}</p></div></li>`).join('')}</ul>
 </div></section>
 
