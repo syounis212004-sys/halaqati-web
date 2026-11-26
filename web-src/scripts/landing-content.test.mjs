@@ -16,9 +16,9 @@ test('all twelve requested feature areas are present', () => {
   assert.deepEqual(ids, ['attendance', 'certificates', 'contests', 'guardians', 'halaqas', 'mushaf', 'permissions', 'plans', 'recitation', 'reports', 'sponsorship', 'students']);
 });
 
-test('the five roles exist and each has cards', () => {
-  assert.deepEqual(ROLES.map((r) => r.id), ['teacher', 'supervisor', 'guardian', 'admin', 'donor']);
-  ROLES.forEach((r) => assert.equal(r.cards.length, 4));
+test('the five roles exist and each explains why the role needs the app', () => {
+  assert.deepEqual(ROLES.map((r) => r.id), ['admin', 'teacher', 'supervisor', 'guardian', 'donor']);
+  ROLES.forEach((r) => assert.equal(r.needs.length, 4));
 });
 
 test('APK link is the root-level latest file and matches version.json', () => {

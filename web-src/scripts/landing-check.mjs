@@ -56,22 +56,44 @@ for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
   if (ids.length) fail('dead anchors: ' + ids.join(','));
   const apk = await page.evaluate(() => [...document.querySelectorAll('a[download]')].map((a) => a.getAttribute('href')));
   if (!apk.length || apk.some((h) => h !== './Halaqati-latest.apk')) fail('apk links wrong: ' + apk);
-  for (const id of ['hl-home', 'hl-about', 'hl-features', 'hl-how', 'hl-demo', 'hl-faq', 'hl-app']) {
+  for (const id of ['hl-home', 'hl-paths', 'hl-demo', 'hl-mushaf', 'hl-features', 'hl-how', 'hl-faq', 'hl-app']) {
     await page.click(`#hl-links a[href="#${id}"]`);
     await page.waitForTimeout(1400);
     const top = await page.evaluate((i) => Math.round(document.getElementById(i).getBoundingClientRect().top), id);
     if (id !== 'hl-home' && (top < -5 || top > 140)) fail(`nav ${id} landed at ${top}`);
   }
   /* roles */
-  for (const id of ['teacher', 'supervisor', 'guardian', 'admin', 'donor']) {
+  for (const id of ['admin', 'teacher', 'supervisor', 'guardian', 'donor']) {
     await page.click(`#hl-tab-${id}`);
     const vis = await page.evaluate((i) => [...document.querySelectorAll('.hl-panel')].filter((p) => !p.hidden).map((p) => p.id), id);
     if (vis.length !== 1 || vis[0] !== `hl-panel-${id}`) fail('role panel ' + id + ' -> ' + vis);
   }
   await page.focus('#hl-tab-donor'); await page.keyboard.press('ArrowLeft');
-  if (await page.evaluate(() => document.activeElement.id) !== 'hl-tab-teacher') fail('RTL arrow-left should wrap to first tab');
+  if (await page.evaluate(() => document.activeElement.id) !== 'hl-tab-admin') fail('RTL arrow-left should wrap to first tab');
+
+  /* gallery: platform switch, screen chips, hotspots, lazy images */
+  await page.click('#hl-tab-teacher');
+  const vis = () => page.evaluate(() => [...document.querySelectorAll('#hl-panel-teacher .hl-shot')].filter((f) => !f.hidden).map((f) => f.dataset.screen));
+  if ((await vis()).join() !== 'web-teacher-home') fail('teacher gallery should start on the web home screen: ' + (await vis()));
+  await page.click('#hl-panel-teacher .hl-seg button[data-platform="android"]');
+  if (!(await vis())[0].startsWith('android-')) fail('android toggle did not show an android screen');
+  const chipsShown = await page.evaluate(() => [...document.querySelectorAll('#hl-panel-teacher .hl-chip2')].filter((c) => !c.hidden).map((c) => c.dataset.platform));
+  if (!chipsShown.length || chipsShown.some((p) => p !== 'android')) fail('android chips are mixed with web chips: ' + chipsShown);
+  await page.click('#hl-panel-teacher .hl-chip2[data-screen="android-mushaf-jump"]');
+  if ((await vis())[0] !== 'android-mushaf-jump') fail('screen chip did not switch the screen');
+  await page.waitForFunction(() => { const f = document.querySelector('#hl-panel-teacher .hl-shot:not([hidden]) img'); return f && f.complete && f.naturalWidth > 0; }, null, { timeout: 8000 }).catch(() => fail('gallery image did not load after opening it'));
+  await page.click('#hl-panel-teacher .hl-shot:not([hidden]) .hl-pin[data-pin="1"]');
+  if (!(await page.evaluate(() => document.querySelector('#hl-panel-teacher .hl-shot:not([hidden]) .hl-pinlist li:nth-child(2)').classList.contains('on')))) fail('pin press did not highlight its description');
+  await page.click('#hl-panel-teacher .hl-seg button[data-platform="web"]');
+  if (!(await vis())[0].startsWith('web-')) fail('web toggle did not return to a web screen');
+  await page.click('#hl-tab-admin');
+  if (await page.evaluate(() => document.querySelectorAll('#hl-panel-admin .hl-seg').length)) fail('admin must not offer an android switch (no real android screens)');
+  /* sizes are explicit and only the hero image is eager */
+  const imgs = await page.evaluate(() => [...document.querySelectorAll('#hlRoot picture img')].map((i) => ({ w: i.getAttribute('width'), h: i.getAttribute('height'), l: i.getAttribute('loading'), alt: !!i.alt })));
+  if (imgs.some((i) => !i.w || !i.h || !i.alt)) fail('gallery image without width/height/alt');
+  if (imgs.filter((i) => i.l !== 'lazy').length !== 1) fail('exactly one non-lazy image expected, got ' + imgs.filter((i) => i.l !== 'lazy').length);
   /* demo */
-  await page.locator('#hl-demo').scrollIntoViewIfNeeded();
+  await page.locator('#hl-try').scrollIntoViewIfNeeded();
   await page.fill('#hl-d-mist', '0'); await page.click('#hl-recform button[type=submit]');
   if (!/ممتاز/.test(await page.textContent('#hl-d-result'))) fail('demo pass message missing');
   await page.fill('#hl-d-mist', '9'); await page.click('#hl-recform button[type=submit]');
@@ -87,7 +109,7 @@ for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
   if (!(await page.evaluate(() => document.querySelectorAll('.hl-q[open]').length))) fail('faq did not open');
   /* pause decorative motion (WCAG 2.2.2) */
   await page.click('#hl-pause');
-  if (!(await page.evaluate(() => document.documentElement.hasAttribute('data-hl-paused') && getComputedStyle(document.querySelector('.hl-phone')).animationPlayState === 'paused'))) fail('pause button did not pause looping motion');
+  if (!(await page.evaluate(() => document.documentElement.hasAttribute('data-hl-paused') && getComputedStyle(document.querySelector('.hl-hero-phone')).animationPlayState === 'paused'))) fail('pause button did not pause looping motion');
   await page.click('#hl-pause');
   /* theme */
   await page.click('#hl-theme');
@@ -105,11 +127,23 @@ for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
   if (await page.getAttribute('#hl-burger', 'aria-expanded') !== 'false') fail('menu did not close after link');
   await page.screenshot({ path: path.join(shots, 'landing-390-menu.jpg'), type: 'jpeg', quality: 70 }).catch(() => {});
   await page.evaluate(() => scrollTo(0, 0));
-  await page.click('.hl-hero [data-hl-login]');
+  await page.click('.hl-hero [data-hl-signup]');
   await page.waitForSelector('#auth', { state: 'visible', timeout: 20000 }).catch(() => fail('login screen did not appear after "ابدأ الآن"'));
-  const st = await page.evaluate(() => ({ landing: document.documentElement.hasAttribute('data-landing'), root: getComputedStyle(document.getElementById('hlRoot')).display, email: !!document.getElementById('loginEmail'), emailVisible: document.getElementById('loginEmail').offsetParent !== null, hash: location.hash }));
-  if (st.landing || st.root !== 'none' || !st.emailVisible || st.hash !== '#login') fail('login hand-off state ' + JSON.stringify(st));
-  await page.screenshot({ path: path.join(shots, 'login-after-landing-390.jpg'), type: 'jpeg', quality: 70 });
+  await page.waitForFunction(() => document.getElementById('signupForm') && !document.getElementById('signupForm').classList.contains('hidden'), null, { timeout: 20000 }).catch(async () => fail('sign-up form did not open after "ابدأ الآن": ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, signup: document.getElementById('signupForm').className, auth: document.getElementById('auth').className, toggle: typeof window.toggleSignup, ready: !!window.HalaqatiCertificates })))));
+  const st = await page.evaluate(() => ({ landing: document.documentElement.hasAttribute('data-landing'), root: getComputedStyle(document.getElementById('hlRoot')).display, email: !!document.getElementById('loginEmail'), emailVisible: true, hash: location.hash }));
+  if (st.landing || st.root !== 'none' || !st.emailVisible || st.hash !== '#signup') fail('login hand-off state ' + JSON.stringify(st));
+  await page.screenshot({ path: path.join(shots, 'signup-after-landing-390.jpg'), type: 'jpeg', quality: 70 });
+  await ctx.close();
+}
+
+
+/* 3b. the login button keeps opening the existing login screen */
+{
+  const { ctx, page } = await open(1024);
+  await page.click('.hl-nav [data-hl-login]');
+  await page.waitForSelector('#loginForm', { state: 'visible', timeout: 20000 }).catch(() => fail('login form did not open'));
+  if (await page.evaluate(() => location.hash) !== '#login') fail('login hash');
+  if (await page.evaluate(() => !document.getElementById('signupForm').classList.contains('hidden'))) fail('sign-up form must stay closed for the login button');
   await ctx.close();
 }
 
@@ -120,6 +154,7 @@ for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
   await page.addInitScript(() => localStorage.setItem('halaqati_v24_last_auth', JSON.stringify({ id: 'u1', email: 'x@y.z', lastVerifiedAt: Date.now() })));
   await page.goto(srv.base + '?landing=1');
   await page.waitForTimeout(1200);
+  await page.waitForFunction(() => document.getElementById('signupForm') && !document.getElementById('signupForm').classList.contains('hidden'), null, { timeout: 20000 }).catch(async () => fail('sign-up form did not open after "ابدأ الآن": ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, signup: document.getElementById('signupForm').className, auth: document.getElementById('auth').className, toggle: typeof window.toggleSignup, ready: !!window.HalaqatiCertificates })))));
   const st = await page.evaluate(() => ({ landing: document.documentElement.hasAttribute('data-landing'), root: getComputedStyle(document.getElementById('hlRoot')).display, css: !!document.querySelector('link[href*="landing.css"]') }));
   if (st.landing || st.root !== 'none' || st.css) fail('signed-in user got landing ' + JSON.stringify(st));
   await ctx.close();

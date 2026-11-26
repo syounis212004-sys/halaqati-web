@@ -1,6 +1,7 @@
 /* Static, semantic landing markup. Pure string module: the build injects it into index.html (readable before JS, indexable),
    and landing/index.js only hydrates it. Icons are Lucide (ISC licence) paths inlined as one <symbol> sprite. */
-import { FEATURES, ROLES, STEPS, FAQ, SITE_URL } from './content.js';
+import { FEATURES, ROLES, STEPS, FAQ, SITE_URL, TRACKS, SCREENS, MUSHAF_POINTS } from './content.js';
+import { MANIFEST, PINS, screensFor, platformsFor, pinStyle, imgLoading, srcset, altFor } from './gallery-model.js';
 
 const ICONS = {
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -33,7 +34,7 @@ const ICONS = {
 const ic = (n, c = '') => `<svg class="hl-i ${c}" aria-hidden="true" focusable="false"><use href="#hli-${n}"/></svg>`;
 const sprite = `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>${Object.entries(ICONS).map(([k, v]) => `<symbol id="hli-${k}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${v}</symbol>`).join('')}</defs></svg>`;
 
-const NAV = [['hl-home', 'الرئيسية'], ['hl-about', 'عن المنصة'], ['hl-features', 'المميزات'], ['hl-how', 'كيفية الاستخدام'], ['hl-demo', 'استكشاف المنصة'], ['hl-faq', 'الأسئلة الشائعة'], ['hl-app', 'تحميل التطبيق']];
+const NAV = [['hl-home', 'الرئيسية'], ['hl-paths', 'من يناسبه'], ['hl-demo', 'استكشاف المنصة'], ['hl-mushaf', 'المصحف'], ['hl-features', 'المميزات'], ['hl-how', 'كيف تبدأ'], ['hl-faq', 'الأسئلة'], ['hl-app', 'تحميل التطبيق']];
 
 /* mini visuals inside bento tiles: pure CSS, aria-hidden */
 const MINI = {
@@ -53,8 +54,41 @@ const MINI = {
 
 const feature = (f) => `<article class="hl-tile ${f.cls}" data-hl-reveal data-feature="${f.id}"><span class="hl-ico">${ic(f.icon)}</span><h3>${f.title}</h3><p>${f.text}</p>${MINI[f.id] || ''}</article>`;
 
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* responsive <picture>: AVIF first, WebP fallback, explicit size so nothing shifts; only the hero is eager */
+const picture = (s, { hero = false, sizes }) => {
+  const m = MANIFEST[s.id];
+  return `<picture><source type="image/avif" srcset="${srcset(s.id, 'avif')}" sizes="${sizes}"><source type="image/webp" srcset="${srcset(s.id, 'webp')}" sizes="${sizes}"><img src="./landing/shots/${s.id}-${m.widths[0]}.webp" width="${m.w}" height="${m.h}" alt="${esc(altFor(s))}" loading="${imgLoading(hero)}" decoding="async"${hero ? ' fetchpriority="high"' : ''}></picture>`;
+};
+const SIZES = { phone: '(min-width: 900px) 300px, 70vw', desktop: '(min-width: 900px) 640px, 92vw' };
+const device = (s, { hero = false, pins = true, cls = '' } = {}) => {
+  const m = MANIFEST[s.id], list = pins ? PINS[s.id] || [] : [];
+  const pinsHtml = list.length ? `<ol class="hl-pins">${list.map((p, i) => `<li><button type="button" class="hl-pin" style="${pinStyle(p)}" data-pin="${i}" aria-pressed="false" aria-label="${i + 1}: ${esc(p.label)}"><span aria-hidden="true">${i + 1}</span></button></li>`).join('')}</ol>` : '';
+  const kind = s.platform === 'android' ? 'android' : s.device;
+  return `<div class="hl-dev hl-dev-${kind} ${cls}" style="--ar:${m.w}/${m.h};--ph:${m.ph}"><div class="hl-view">${picture(s, { hero, sizes: SIZES[s.device] })}${pinsHtml}</div></div>`;
+};
+const pinList = (s) => {
+  const list = PINS[s.id] || [];
+  return list.length ? `<ul class="hl-pinlist">${list.map((p, i) => `<li data-pin="${i}"><b aria-hidden="true">${i + 1}</b><div><strong>${esc(p.label)}</strong><p>${esc(p.text)}</p></div></li>`).join('')}</ul>` : '';
+};
+const figure = (s, first) => `<figure class="hl-shot hl-shot-${s.device}" data-screen="${s.id}" data-platform="${s.platform}"${first ? '' : ' hidden'}>${device(s)}<figcaption><h3>${s.title}</h3><p>${s.caption}</p>${pinList(s)}</figcaption></figure>`;
+
 const roleTab = (r, i) => `<button class="hl-tab" role="tab" id="hl-tab-${r.id}" aria-controls="hl-panel-${r.id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" type="button">${ic(r.icon)}<span>${r.label}</span></button>`;
-const rolePanel = (r, i) => `<div class="hl-panel" role="tabpanel" id="hl-panel-${r.id}" aria-labelledby="hl-tab-${r.id}" ${i === 0 ? '' : 'hidden'} tabindex="0"><p class="hl-lead">${r.lead}</p><ul class="hl-rcards">${r.cards.map(([i2, t, d]) => `<li class="hl-rcard">${ic(i2)}<div><h3>${t}</h3><p>${d}</p></div></li>`).join('')}</ul></div>`;
+const platformLabel = { web: 'الويب', android: 'أندرويد' };
+const rolePanel = (r, i) => {
+  const platforms = platformsFor(r.id), firstP = platforms[0];
+  const seg = platforms.length > 1 ? `<div class="hl-seg" role="group" aria-label="المنصة">${platforms.map((p) => `<button type="button" data-platform="${p}" aria-pressed="${p === firstP}">${platformLabel[p]}</button>`).join('')}</div>` : '';
+  const chips = platforms.flatMap((p) => screensFor(r.id, p).map((s, k) => `<button type="button" class="hl-chip2" data-screen="${s.id}" data-platform="${p}" aria-pressed="${p === firstP && k === 0}"${p === firstP ? '' : ' hidden'}>${s.title}</button>`)).join('');
+  const figs = platforms.flatMap((p) => screensFor(r.id, p).map((s, k) => figure(s, p === firstP && k === 0))).join('');
+  return `<div class="hl-panel" role="tabpanel" id="hl-panel-${r.id}" aria-labelledby="hl-tab-${r.id}" ${i === 0 ? '' : 'hidden'} tabindex="0">
+  <div class="hl-role-head"><p class="hl-lead">${r.lead}</p><ul class="hl-needs">${r.needs.map((n) => `<li>${ic('check')}<span>${n}</span></li>`).join('')}</ul></div>
+  <div class="hl-gal" data-role="${r.id}"><div class="hl-gal-bar">${seg}<div class="hl-chips2" role="group" aria-label="شاشات ${r.label}">${chips}</div></div><div class="hl-gal-body">${figs}</div></div>
+</div>`;
+};
+const track = (t) => `<article class="hl-track" data-hl-reveal><span class="hl-ico">${ic(ROLES.find((r) => r.id === t.role).icon)}</span><h3>${t.title}</h3><p class="hl-who">${t.who}</p><ul>${t.needs.map((n) => `<li>${ic('check')}<span>${n}</span></li>`).join('')}</ul><a class="hl-btn hl-btn-ghost" href="#hl-demo" data-role-jump="${t.role}">${t.cta}${ic('arrow')}</a></article>`;
+const byId = (id) => SCREENS.find((s) => s.id === id);
+const mushafFig = (id, label) => { const s = byId(id); return `<figure class="hl-mfig">${device(s, { pins: false })}<figcaption><strong>${label}</strong><span>${s.caption}</span></figcaption></figure>`; };
 
 const step = ([i, t, d], n) => `<li class="hl-step" data-hl-reveal><span class="hl-step-n">${ic(i)}<b>${n + 1}</b></span><div><h3>${t}</h3><p>${d}</p></div></li>`;
 const faq = ([q, a], i) => `<details class="hl-q" ${i === 0 ? '' : ''} name="hl-faq"><summary><span>${q}</span>${ic('chev', 'hl-chev')}</summary><div class="hl-a"><p>${a}</p></div></details>`;
@@ -67,6 +101,7 @@ export function appJsonLd(version) {
 }
 
 export function landingHtml({ version = '' } = {}) {
+  const hero = byId('web-teacher-roster'), heroDesk = byId('web-admin-home');
   return `${sprite}
 <a class="hl-skip" href="#hl-main">انتقل إلى المحتوى</a>
 <header class="hl-nav" id="hl-nav"><div class="hl-wrap hl-nav-in">
@@ -74,7 +109,7 @@ export function landingHtml({ version = '' } = {}) {
   <nav class="hl-links" id="hl-links" aria-label="التنقل الرئيسي">${NAV.map(([id, t]) => `<a href="#${id}" data-spy="${id}">${t}</a>`).join('')}</nav>
   <div class="hl-nav-act">
     <button class="hl-iconbtn" id="hl-pause" type="button" aria-label="إيقاف الحركة الزخرفية" aria-pressed="false">${ic('pause')}</button>
-    <button class="hl-iconbtn" id="hl-theme"type="button" aria-label="تبديل الوضع الداكن" aria-pressed="false">${ic('moon', 'hl-moon')}${ic('sun', 'hl-sun')}</button>
+    <button class="hl-iconbtn" id="hl-theme" type="button" aria-label="تبديل الوضع الداكن" aria-pressed="false">${ic('moon', 'hl-moon')}${ic('sun', 'hl-sun')}</button>
     <button class="hl-btn hl-btn-solid hl-login" type="button" data-hl-login>تسجيل الدخول</button>
     <button class="hl-iconbtn hl-burger" id="hl-burger" type="button" aria-label="فتح القائمة" aria-expanded="false" aria-controls="hl-links">${ic('menu', 'hl-b-open')}${ic('x', 'hl-b-close')}</button>
   </div>
@@ -86,44 +121,43 @@ export function landingHtml({ version = '' } = {}) {
   <div class="hl-hero-copy">
     <p class="hl-pill">${ic('wifioff')}تعمل بلا إنترنت أيضًا</p>
     <h1 id="hl-h1">حلقتك كلها <span>في مكان واحد</span></h1>
-    <p class="hl-sub">منصة عربية لإدارة حلقات تحفيظ القرآن الكريم: التسميع والخطط والحضور والتقارير ومتابعة أولياء الأمور، على الجوال والحاسوب.</p>
-    <div class="hl-cta"><button class="hl-btn hl-btn-solid hl-btn-lg" type="button" data-hl-login>ابدأ الآن${ic('arrow')}</button><a class="hl-btn hl-btn-ghost hl-btn-lg" href="#hl-demo">استكشف المنصة</a></div>
+    <p class="hl-sub">منصة عربية لإدارة حلقات تحفيظ القرآن الكريم: التسميع والخطط والحضور والتقارير ومتابعة أولياء الأمور، على الجوال والحاسوب وأندرويد.</p>
+    <div class="hl-cta"><button class="hl-btn hl-btn-solid hl-btn-lg" type="button" data-hl-signup>ابدأ الآن${ic('arrow')}</button><a class="hl-btn hl-btn-ghost hl-btn-lg" href="#hl-demo">استكشف المنصة</a></div>
+    <p class="hl-note">إنشاء الحساب مجاني ويحتاج اعتماد مسؤول النظام قبل الدخول.</p>
   </div>
-  <div class="hl-stage" aria-hidden="true">
-    <div class="hl-desk"><div class="hl-desk-bar"><i></i><i></i><i></i></div><div class="hl-desk-body"><aside><i class="on"></i><i></i><i></i><i></i></aside><div class="hl-desk-main"><div class="hl-kpis"><i></i><i></i><i></i></div><div class="hl-bars hl-bars-lg"><i style="--h:35%"></i><i style="--h:55%"></i><i style="--h:48%"></i><i style="--h:72%"></i><i style="--h:60%"></i><i style="--h:88%"></i><i style="--h:78%"></i></div></div></div></div>
-    <div class="hl-phone"><div class="hl-phone-top"><b>جلسة التسميع</b><small>بيانات توضيحية</small></div>
-      <div class="hl-prow"><span class="hl-av"></span><div><b>طالب تجريبي</b><small>2 صفحات</small></div><em class="ok">ممتاز</em></div>
-      <div class="hl-prow"><span class="hl-av"></span><div><b>طالبة تجريبية</b><small>1 صفحة</small></div><em class="gd">جيد جدًا</em></div>
-      <div class="hl-prow live"><span class="hl-av"></span><div><b>طالب تجريبي</b><small>جارٍ التسميع</small></div><em class="mic">${ic('mic')}</em></div>
-    </div>
+  <div class="hl-stage">
+    ${device(heroDesk, { pins: false, cls: 'hl-hero-desk' })}
+    ${device(hero, { hero: true, pins: false, cls: 'hl-hero-phone' })}
   </div>
 </div></section>
 
-<section class="hl-sec hl-about" id="hl-about" aria-labelledby="hl-about-h"><div class="hl-wrap hl-split">
-  <div><h2 id="hl-about-h">لماذا حلقاتي؟</h2><p class="hl-lead">صُمّمت لتبسّط عمل الحلقة اليومي، لا لتزيد أوراقه.</p></div>
-  <ul class="hl-points">
-    <li>${ic('mic')}<div><h3>تسميع أسرع</h3><p>سجّل التقييم والملاحظات أثناء الجلسة بدل تدوينها لاحقًا.</p></div></li>
-    <li>${ic('wifioff')}<div><h3>لا يتوقف عند انقطاع الشبكة</h3><p>تُحفظ البيانات محليًا وتُزامَن عند عودة الاتصال.</p></div></li>
-    <li>${ic('shield')}<div><h3>لكل دور ما يخصّه</h3><p>محفّظ ومشرف وولي أمر ومسؤول ومانح، كلٌّ بصلاحياته.</p></div></li>
-  </ul>
+<section class="hl-sec hl-paths" id="hl-paths" aria-labelledby="hl-paths-h"><div class="hl-wrap">
+  <div class="hl-head"><h2 id="hl-paths-h">اختر مسارك</h2><p class="hl-lead">ثلاثة مسارات، ولكل مسار شاشاته الحقيقية أدناه.</p></div>
+  <div class="hl-tracks">${TRACKS.map(track).join('')}</div>
 </div></section>
 
-<section class="hl-sec" id="hl-features" aria-labelledby="hl-feat-h"><div class="hl-wrap">
+<section class="hl-sec hl-alt" id="hl-demo" aria-labelledby="hl-demo-h"><div class="hl-wrap">
+  <div class="hl-head"><h2 id="hl-demo-h">استكشف المنصة</h2><p class="hl-lead">لقطات حقيقية من التطبيق ببيانات تجريبية. اختر دورك، ثم الشاشة، واضغط على الأرقام لتعرف ما تفعله.</p></div>
+  <div class="hl-roles"><div class="hl-tabs" role="tablist" aria-label="الأدوار" id="hl-rtabs">${ROLES.map(roleTab).join('')}</div><div class="hl-panels" id="hl-rpanels">${ROLES.map(rolePanel).join('')}</div></div>
+</div></section>
+
+<section class="hl-sec" id="hl-mushaf" aria-labelledby="hl-mushaf-h"><div class="hl-wrap">
+  <div class="hl-head"><h2 id="hl-mushaf-h">المصحف الإلكتروني للتسميع</h2><p class="hl-lead">يسمّع المحفّظ من المصحف نفسه، فتتحول العلامات إلى تقدير فوري. اللقطات من الويب ومن تطبيق أندرويد.</p></div>
+  <div class="hl-mrow">${mushafFig('web-teacher-mushaf-page', 'الويب')}${mushafFig('android-mushaf-light', 'أندرويد')}${mushafFig('android-mushaf-jump', 'الانتقال السريع')}</div>
+  <ul class="hl-mpoints">${MUSHAF_POINTS.map(([i, t, d]) => `<li data-hl-reveal>${ic(i)}<div><h3>${t}</h3><p>${d}</p></div></li>`).join('')}</ul>
+</div></section>
+
+<section class="hl-sec hl-alt" id="hl-features" aria-labelledby="hl-feat-h"><div class="hl-wrap">
   <div class="hl-head"><h2 id="hl-feat-h">كل ما تحتاجه الحلقة</h2><p class="hl-lead">اثنا عشر مجالًا يعمل بعضها مع بعض.</p></div>
   <div class="hl-bento">${FEATURES.map(feature).join('')}</div>
 </div></section>
 
-<section class="hl-sec hl-alt" id="hl-roles" aria-labelledby="hl-roles-h"><div class="hl-wrap">
-  <div class="hl-head"><h2 id="hl-roles-h">اختر دورك وشاهد ما يناسبك</h2><p class="hl-lead">تعرض المنصة لكل مستخدم صفحاته وإجراءاته.</p></div>
-  <div class="hl-roles"><div class="hl-tabs" role="tablist" aria-label="الأدوار" id="hl-rtabs">${ROLES.map(roleTab).join('')}</div><div class="hl-panels" id="hl-rpanels">${ROLES.map(rolePanel).join('')}</div></div>
-</div></section>
-
-<section class="hl-sec" id="hl-demo" aria-labelledby="hl-demo-h"><div class="hl-wrap">
-  <div class="hl-head"><h2 id="hl-demo-h">جرّب بنفسك دون تسجيل</h2><p class="hl-lead">بيانات تجريبية معزولة لا تُحفظ ولا تُرسل إلى أي مكان.</p></div>
+<section class="hl-sec" id="hl-try" aria-labelledby="hl-try-h"><div class="hl-wrap">
+  <div class="hl-head"><h2 id="hl-try-h">جرّب التسميع بنفسك دون تسجيل</h2><p class="hl-lead">بيانات تجريبية معزولة لا تُحفظ ولا تُرسل إلى أي مكان.</p></div>
   <div class="hl-demo" id="hl-demoapp">
     <div class="hl-tabs hl-dtabs" role="tablist" aria-label="أجزاء التجربة">
       <button class="hl-tab" role="tab" id="hl-dt-rec" aria-controls="hl-dp-rec" aria-selected="true" type="button">${ic('mic')}<span>تسجيل تسميع</span></button>
-      <button class="hl-tab" role="tab" id="hl-dt-mus" aria-controls="hl-dp-mus" aria-selected="false" tabindex="-1" type="button">${ic('book')}<span>مصحف مصغّر</span></button>
+      <button class="hl-tab" role="tab" id="hl-dt-mus" aria-controls="hl-dp-mus" aria-selected="false" tabindex="-1" type="button">${ic('book')}<span>هيكل صفحة المصحف</span></button>
       <button class="hl-tab" role="tab" id="hl-dt-rep" aria-controls="hl-dp-rep" aria-selected="false" tabindex="-1" type="button">${ic('chart')}<span>لوحة التقارير</span></button>
     </div>
     <div class="hl-dpanel" role="tabpanel" id="hl-dp-rec" aria-labelledby="hl-dt-rec" tabindex="0">
@@ -137,7 +171,7 @@ export function landingHtml({ version = '' } = {}) {
       <div class="hl-stud" id="hl-d-list"></div>
     </div>
     <div class="hl-dpanel" role="tabpanel" id="hl-dp-mus" aria-labelledby="hl-dt-mus" tabindex="0" hidden>
-      <div class="hl-mus"><div class="hl-mus-page" id="hl-mus-page" aria-label="صفحة مصحف توضيحية بلا نص"></div>
+      <div class="hl-mus"><div class="hl-mus-page" id="hl-mus-page" aria-label="هيكل صفحة مصحف بلا نص"></div>
         <div class="hl-mus-side"><p>هيكل صفحة المصحف بخمسة عشر سطرًا. حدّد المحفوظ لترى كيف تُعلَّم الصفحة.</p>
           <div class="hl-mus-nav"><button class="hl-btn hl-btn-ghost" id="hl-mus-prev" type="button">الصفحة السابقة</button><output id="hl-mus-num">صفحة 41</output><button class="hl-btn hl-btn-ghost" id="hl-mus-next" type="button">الصفحة التالية</button></div>
           <label>المحفوظ من الصفحة<input id="hl-mus-range" type="range" min="0" max="15" value="9" aria-describedby="hl-mus-info"></label><p id="hl-mus-info" class="hl-note"></p></div></div>
@@ -153,22 +187,11 @@ export function landingHtml({ version = '' } = {}) {
   <ol class="hl-steps" id="hl-steps">${STEPS.map(step).join('')}</ol>
 </div></section>
 
-<section class="hl-sec" id="hl-showcase" aria-labelledby="hl-show-h"><div class="hl-wrap">
-  <div class="hl-head"><h2 id="hl-show-h">لمحة عن الواجهة</h2><p class="hl-lead">تمرّر الصفحة فتتبدّل الشاشة. نماذج توضيحية مبسّطة.</p></div>
-  <div class="hl-show" id="hl-showwrap"><ol class="hl-show-steps">
-    <li data-scr="0" class="on"><h3>الرئيسية</h3><p>ما يستحق الانتباه اليوم في بطاقات واضحة.</p></li>
-    <li data-scr="1"><h3>الجلسة</h3><p>قائمة الطلاب وتقييم كل تسميعة.</p></li>
-    <li data-scr="2"><h3>التقارير</h3><p>صورة أسبوعية لتقدّم الحلقة.</p></li></ol>
-    <div class="hl-show-dev" aria-hidden="true"><div class="hl-phone hl-phone-lg"><div class="hl-scr on" data-scr="0"><div class="hl-phone-top"><b>الرئيسية</b></div><div class="hl-tilebox"><i></i><i></i></div><div class="hl-prow"><span class="hl-av"></span><div><b>جلسة اليوم</b><small>مفتوحة</small></div></div><div class="hl-prow"><span class="hl-av"></span><div><b>خطة تحتاج متابعة</b><small>تأخر يومان</small></div></div></div>
-      <div class="hl-scr" data-scr="1"><div class="hl-phone-top"><b>الجلسة</b></div><div class="hl-prow"><span class="hl-av"></span><div><b>طالب تجريبي</b></div><em class="ok">ممتاز</em></div><div class="hl-prow"><span class="hl-av"></span><div><b>طالبة تجريبية</b></div><em class="gd">جيد جدًا</em></div><div class="hl-prow"><span class="hl-av"></span><div><b>طالب تجريبي</b></div><em class="ok">ممتاز</em></div></div>
-      <div class="hl-scr" data-scr="2"><div class="hl-phone-top"><b>التقارير</b></div><div class="hl-bars hl-bars-lg"><i style="--h:40%"></i><i style="--h:62%"></i><i style="--h:50%"></i><i style="--h:84%"></i><i style="--h:70%"></i></div></div></div></div></div>
-</div></section>
-
 <section class="hl-sec hl-android" id="hl-app" aria-labelledby="hl-app-h"><div class="hl-wrap hl-split">
   <div><h2 id="hl-app-h">تطبيق حلقاتي لأندرويد</h2><p class="hl-lead">ثبّت التطبيق على جهازك واستخدمه بلا إنترنت.${version ? ` الإصدار الحالي ${version}.` : ''}</p>
     <div class="hl-cta"><a class="hl-btn hl-btn-solid hl-btn-lg" href="./Halaqati-latest.apk" download>${ic('download')}تحميل ملف APK</a></div>
     <p class="hl-note">عند التثبيت قد يطلب أندرويد السماح بالتثبيت من هذا المصدر. يمكنك أيضًا تثبيت المنصة من المتصفح كتطبيق ويب.</p></div>
-  <div class="hl-apk" aria-hidden="true">${ic('phone')}</div>
+  <div class="hl-apk-shots">${device(byId('android-mushaf-dark'), { pins: false })}${device(byId('android-reminder'), { pins: false })}</div>
 </div></section>
 
 <section class="hl-sec hl-alt" id="hl-faq" aria-labelledby="hl-faq-h"><div class="hl-wrap hl-narrow">
@@ -178,13 +201,13 @@ export function landingHtml({ version = '' } = {}) {
 
 <section class="hl-sec hl-final" id="hl-cta" aria-labelledby="hl-cta-h"><div class="hl-wrap">
   <h2 id="hl-cta-h">ابدأ بتنظيم حلقتك اليوم</h2><p class="hl-lead">أنشئ حسابك وسيعتمده مسؤول النظام.</p>
-  <div class="hl-cta hl-center"><button class="hl-btn hl-btn-solid hl-btn-lg" type="button" data-hl-login>تسجيل الدخول</button><a class="hl-btn hl-btn-ghost hl-btn-lg" href="./Halaqati-latest.apk" download>تحميل التطبيق</a></div>
+  <div class="hl-cta hl-center"><button class="hl-btn hl-btn-solid hl-btn-lg" type="button" data-hl-signup>إنشاء حساب جديد</button><button class="hl-btn hl-btn-ghost hl-btn-lg" type="button" data-hl-login>تسجيل الدخول</button></div>
 </div></section>
 </main>
 
 <footer class="hl-foot"><div class="hl-wrap hl-foot-in">
   <div class="hl-brand"><img src="./brand/logo.svg" width="32" height="32" alt="" loading="lazy"><span>حلقاتي</span></div>
-  <nav aria-label="روابط التذييل"><a href="#hl-features">المميزات</a><a href="#hl-how">كيفية الاستخدام</a><a href="#hl-faq">الأسئلة الشائعة</a><a href="./Halaqati-latest.apk" download>تحميل التطبيق</a><button type="button" class="hl-linkbtn" data-hl-login>تسجيل الدخول</button></nav>
+  <nav aria-label="روابط التذييل"><a href="#hl-demo">استكشاف المنصة</a><a href="#hl-mushaf">المصحف</a><a href="#hl-faq">الأسئلة الشائعة</a><a href="./Halaqati-latest.apk" download>تحميل التطبيق</a><button type="button" class="hl-linkbtn" data-hl-signup>إنشاء حساب</button><button type="button" class="hl-linkbtn" data-hl-login>تسجيل الدخول</button></nav>
   <p class="hl-note">حلقاتي، إدارة ومتابعة حلقات تحفيظ القرآن الكريم.${version ? ' الإصدار ' + version : ''}</p>
 </div></footer>`;
 }

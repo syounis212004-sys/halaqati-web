@@ -49,7 +49,8 @@ function setupNav(root, openApp) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && links.classList.contains('open')) { setOpen(false); burger.focus(); } }, { signal: life.signal });
   const onScroll = () => nav.classList.toggle('stuck', window.scrollY > 8);
   window.addEventListener('scroll', onScroll, { passive: true, signal: life.signal }); onScroll();
-  $$('[data-hl-login]', root).forEach((b) => b.addEventListener('click', openApp));
+  $$('[data-hl-login]', root).forEach((b) => b.addEventListener('click', () => openApp('login')));
+  $$('[data-hl-signup]', root).forEach((b) => b.addEventListener('click', () => openApp('signup')));
   /* scroll spy */
   const map = new Map($$('[data-spy]', links).map((a) => [a.dataset.spy, a]));
   const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) map.forEach((a, id) => { if (id === en.target.id) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); a.classList.toggle('on', id === en.target.id); }); }), { rootMargin: '-40% 0px -55% 0px' });
@@ -145,13 +146,32 @@ function setupDemo(root) {
   setupTabs($('.hl-dtabs', root));
 }
 
-/* ---- showcase: screen follows the step in view (works with or without GSAP) ---- */
-function setupShowcase(root) {
-  const items = $$('.hl-show-steps li', root), scrs = $$('.hl-scr', root);
-  const set = (n) => { items.forEach((li) => li.classList.toggle('on', li.dataset.scr === n)); scrs.forEach((s) => s.classList.toggle('on', s.dataset.scr === n)); };
-  items.forEach((li) => li.addEventListener('click', () => set(li.dataset.scr)));
-  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) set(e.target.dataset.scr); }), { rootMargin: '-45% 0px -45% 0px' });
-  if (window.matchMedia('(min-width:900px)').matches) items.forEach((li) => io.observe(li));
+/* ---- gallery: per role, platform switch + screen chips + hotspots. Figures are all in the markup (images load lazily only when their panel is shown) ---- */
+function setupGallery(root) {
+  $$('.hl-gal', root).forEach((gal) => {
+    const figs = $$('.hl-shot', gal), chips = $$('.hl-chip2', gal), segs = $$('.hl-seg button', gal);
+    const show = (id) => {
+      figs.forEach((f) => { f.hidden = f.dataset.screen !== id; });
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.screen === id)));
+    };
+    const setPlatform = (p) => {
+      segs.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.platform === p)));
+      chips.forEach((c) => { c.hidden = c.dataset.platform !== p; });
+      const first = chips.find((c) => c.dataset.platform === p);
+      if (first) show(first.dataset.screen);
+    };
+    chips.forEach((c) => c.addEventListener('click', () => show(c.dataset.screen)));
+    segs.forEach((b) => b.addEventListener('click', () => setPlatform(b.dataset.platform)));
+    /* hotspots: a pin and its list entry highlight each other, a second press clears */
+    figs.forEach((fig) => {
+      const pins = $$('.hl-pin', fig), items = $$('.hl-pinlist li', fig);
+      const mark = (i) => { pins.forEach((p, k) => p.setAttribute('aria-pressed', String(k === i))); items.forEach((li, k) => li.classList.toggle('on', k === i)); };
+      pins.forEach((p, i) => p.addEventListener('click', () => { const on = p.getAttribute('aria-pressed') === 'true'; mark(on ? -1 : i); if (!on && items[i]) items[i].scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); }));
+      items.forEach((li, i) => li.addEventListener('click', () => mark(i)));
+    });
+  });
+  /* "see my screens" links on the three paths open the matching role tab */
+  $$('[data-role-jump]', root).forEach((a) => a.addEventListener('click', () => { const t = document.getElementById('hl-tab-' + a.dataset.roleJump); if (t) t.click(); }));
 }
 
 async function loadMotion() {
@@ -183,7 +203,7 @@ function buildMotion(root, gsap, ScrollTrigger) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
   /* role switch choreography */
   const panels = $('#hl-rpanels', root);
-  const mo = new MutationObserver((muts) => muts.forEach((m) => { const p = m.target; if (m.attributeName === 'hidden' && !p.hidden) motionCtx.add(() => gsap.timeline({ defaults: { ease: 'power3.out', clearProps: 'transform,opacity' } }).fromTo($('.hl-lead', p), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }).fromTo($$('.hl-rcard', p), { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, stagger: 0.07 }, '<0.08')); }));
+  const mo = new MutationObserver((muts) => muts.forEach((m) => { const p = m.target; if (m.attributeName === 'hidden' && !p.hidden && p.classList.contains('hl-panel')) motionCtx.add(() => gsap.timeline({ defaults: { ease: 'power3.out', clearProps: 'transform,opacity' } }).fromTo($('.hl-lead', p), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }).fromTo($$('.hl-needs li', p), { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, stagger: 0.07 }, '<0.08')); }));
   mo.observe(panels, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
   cleanup.push(() => mo.disconnect());
 }
@@ -203,7 +223,7 @@ export async function mountLanding({ openApp }) {
   setupNav(root, openApp);
   setupTabs($('#hl-rtabs', root));
   setupFaq(root);
-  setupShowcase(root);
+  setupGallery(root);
   setupDemo(root);
   /* GSAP is fetched on the first sign of interaction (or after 6s), keeping the initial load and main thread free */
   let started = false;
