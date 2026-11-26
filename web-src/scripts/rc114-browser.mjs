@@ -70,8 +70,9 @@ async function open(width, role, opts = {}) {
 /** Mounts the interactive mushaf with an offline loader and a range of pages 10..12 (no Quran data is fetched or written). */
 const mountMushaf = async (page) => {
   await page.evaluate(() => {
-    const host = document.createElement('div'); host.id = 'mushafHost'; host.style.cssText = 'position:fixed;inset:0;z-index:99999;background:var(--dn-page,#fff)';
-    document.body.appendChild(host);
+    /* like the real screen, the mushaf sits inside a modal dialog; the jump dialog must open on top of it */
+    const host = document.createElement('dialog'); host.id = 'mushafHost'; host.style.cssText = 'width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--dn-page,#fff)';
+    document.body.appendChild(host); host.showModal();
     window.__mushafSession = HalaqatiMushafState.createMushafSession({ initialPage: 1 });
     HalaqatiMushaf.mount(host, { session: window.__mushafSession, loader: { loadPage: async () => ({ ok: false, error: 'offline test' }) }, getRange: () => ({ startPage: 10, endPage: 12 }), getCounters: () => ({ mistakes: 0, prompts: 0 }), getV6: () => null, onMark() {} });
   });
