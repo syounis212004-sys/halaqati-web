@@ -4,14 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0B5D4F" />
-  <meta name="description" content="حلقاتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم" />
-  <title>حلقاتي</title>
+  <meta name="description" content="حلقاتي - إدارة ومتابعة حلقات تحفيظ القرآن الكريم: التسميع والخطط والحضور والتقارير ومتابعة أولياء الأمور، على الجوال والحاسوب وبلا إنترنت." />
+  <title>حلقاتي - منصة إدارة حلقات تحفيظ القرآن الكريم</title>
+  <!--HL-HEAD-->
+  <link rel="icon" href="./icon-192.png" type="image/png" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="./core/cairo.css" />
   <link rel="stylesheet" href="./core/amiri.css" />
 
 </head>
 <body>
+<!--HL-BODY-->
 <div id="rc27Splash" role="img" aria-label="حلقاتي"><div class="rc27-splash-art"><img src="./brand/logo.svg" width="150" height="150" alt=""></div><div class="rc27-splash-credit"><b>صُنع بأيدٍ شرقية</b><small>Designed by : Dr. Mohammed Samir Abu Younis</small></div></div><script>try{var d=JSON.parse(localStorage.getItem('halaqati_display_v1')||'{}');if(d.reduceMotion||/[?&]n=|[?&]notification/.test(location.search)){document.getElementById('rc27Splash').remove()}}catch(e){}setTimeout(function(){var x=document.getElementById('rc27Splash');if(x)x.remove()},7000)</script>
 <div id="toast" class="toast"></div>
 <section id="auth" class="screen auth"><div class="rc27-auth-ambient" id="rc27AuthAmbient"></div><div class="auth-card"><img class="auth-logo" src="./brand/logo.svg" alt="حلقاتي" width="84" height="84"><h1>حلقاتي</h1><p>النظام الرسمي لإدارة ومتابعة حلقات تحفيظ القرآن الكريم</p><div style="text-align:center"><span class="official-badge">✓ نسخة الويب RC27.39</span></div>
@@ -187,6 +190,6 @@
 <dialog id="planDlg"><form id="planForm" class="modal"><div class="modal-head"><h3>خطة شهرية للطالب</h3><button class="close" type="button" onclick="planDlg.close()">✕</button></div><div class="form-grid"><label class="field"><span>الطالب</span><select id="plStudent" required></select></label><label class="field"><span>الشهر</span><input id="plMonth" class="input" type="month" required></label><label class="field"><span>هدف الحفظ بالشهر</span><input id="plHifz" class="input" type="number" step=".1" min="0" value="40"></label><label class="field"><span>هدف المراجعة بالشهر</span><input id="plReview" class="input" type="number" step=".1" min="0" value="120"></label><label class="field"><span>هدف السرد بالشهر</span><input id="plSard" class="input" type="number" step=".1" min="0" value="40"></label><label class="field"><span>أيام التسميع المتوقعة</span><input id="plDays" class="input" type="number" min="1" max="31" value="20"></label></div><div class="notice">سيحسب التطبيق تلقائياً الورد اليومي المطلوب من الأهداف الشهرية ÷ عدد أيام التسميع.</div><label class="field"><span>ملاحظة الخطة</span><textarea id="plNote" rows="3"></textarea></label><div class="form-actions"><button class="btn btn-primary">حفظ الخطة</button><button class="btn btn-ghost" type="button" onclick="planDlg.close()">إلغاء</button></div></form></dialog>
 
 <dialog id="importDlg"><form id="importForm" class="modal" onsubmit="event.preventDefault();commitImport()"><div class="modal-head"><h3>مركز الاستيراد الذكي</h3><button class="close" type="button" onclick="importDlg.close()">✕</button></div><div class="notice">لمنع إدخال بيانات خاطئة: الملف يُقرأ أولاً إلى منطقة مراجعة، ولا تُحفظ أي بيانات في قاعدة البيانات قبل الضغط على «اعتماد الاستيراد».</div><div class="form-grid"><label class="field"><span>نوع البيانات</span><select id="importKind"><option value="students">بيانات الطلاب</option><option value="recitations">تسميعات سابقة</option><option value="plans">خطط شهرية</option></select></label><label class="field"><span>الحلقة المستهدفة</span><select id="importHalaqa"></select></label></div><label class="field"><span>الملف</span><input id="importFile" class="input" type="file" accept=".xlsx,.xls,.csv,.docx,.pdf,image/*" onchange="readImportFile(this.files[0])"></label><div id="importStatus" class="muted">يدعم Excel/CSV مباشرة، وDOCX/PDF والصور للاستخراج والمراجعة. في استيراد الطلاب: عمود الاسم فقط إلزامي، وبقية الأعمدة اختيارية ويمكن إضافتها لاحقاً.</div><label class="field"><span>النص المستخرج / منطقة المراجعة</span><textarea id="importRaw" class="import-raw" placeholder="يمكن تعديل النص قبل التحويل. استخدم فواصل أو Tab أو | بين الحقول."></textarea></label><div class="actions"><button class="btn btn-soft" type="button" onclick="parseImportRaw()">تحويل النص إلى صفوف</button><button class="btn btn-ghost" type="button" onclick="downloadImportTemplate()">تنزيل نموذج Excel</button></div><div id="importPreview" class="import-preview" style="margin-top:10px"></div><div class="form-actions"><button class="btn btn-primary" type="submit">اعتماد الاستيراد</button><button class="btn btn-ghost" type="button" onclick="importDlg.close()">إلغاء</button></div></form></dialog>
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="/src/entry.js"></script>
 </body>
 </html>

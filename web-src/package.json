@@ -73,6 +73,7 @@
     "check:parity": "npm run check:legacy && node --test scripts/*.test.mjs && node scripts/offline-queue-stability-vm-smoke.mjs && node scripts/v2410-certificates-vm-smoke.mjs",
     "check:browser": "node scripts/browser-parity.mjs && node scripts/browser-behavior.mjs",
     "check:supervisor": "node --test scripts/supervisor-dashboard.test.mjs && node scripts/supervisor-browser.mjs",
+    "check:landing": "node --test scripts/landing-gate.test.mjs scripts/landing-demo.test.mjs scripts/landing-content.test.mjs && node scripts/landing-check.mjs",
     "check:perf-boot": "node scripts/perf-boot-check.mjs",
     "check:perf": "node scripts/perf-startup.mjs",
     "check:guardian-load": "node scripts/guardian-load-check.mjs"
