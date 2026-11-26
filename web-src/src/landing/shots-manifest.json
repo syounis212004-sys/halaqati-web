@@ -1,0 +1,302 @@
+{
+ "total_bytes": 3357356,
+ "shots": {
+  "web-admin-certificates": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#eaf4f2",
+   "bytes": 124608
+  },
+  "web-admin-contests": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#f1faf8",
+   "bytes": 59391
+  },
+  "web-admin-halaqas": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#cde1dc",
+   "bytes": 108154
+  },
+  "web-admin-home-dark": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#3b3e30",
+   "bytes": 100000
+  },
+  "web-admin-home": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#a4c4c1",
+   "bytes": 133633
+  },
+  "web-admin-support": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#f2faf9",
+   "bytes": 68416
+  },
+  "web-admin-users": {
+   "kind": "desktop",
+   "w": 1440,
+   "h": 900,
+   "widths": [
+    720,
+    1440
+   ],
+   "ph": "#f2fbf9",
+   "bytes": 80386
+  },
+  "web-donor-home": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#bacbc2",
+   "bytes": 109715
+  },
+  "web-donor-support": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#eef6f4",
+   "bytes": 80058
+  },
+  "web-guardian-contribute": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#eef6f4",
+   "bytes": 82443
+  },
+  "web-guardian-profile-dark": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#192f31",
+   "bytes": 88407
+  },
+  "web-guardian-profile": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#eaf3f3",
+   "bytes": 91292
+  },
+  "web-guardian-ranking": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#dde8e7",
+   "bytes": 98801
+  },
+  "web-supervisor-staff": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#e7efec",
+   "bytes": 92763
+  },
+  "web-teacher-home-dark": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#2d4f49",
+   "bytes": 112552
+  },
+  "web-teacher-home": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#9abcb7",
+   "bytes": 119850
+  },
+  "web-teacher-mushaf-dark": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#202f2b",
+   "bytes": 236157
+  },
+  "web-teacher-mushaf-page": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#e9ebe4",
+   "bytes": 243945
+  },
+  "web-teacher-mushaf-surah": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#e8ebe3",
+   "bytes": 227045
+  },
+  "web-teacher-plans": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#cdddda",
+   "bytes": 110060
+  },
+  "web-teacher-roster": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#e4eeea",
+   "bytes": 98248
+  },
+  "web-teacher-students": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1688,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#e8f1ee",
+   "bytes": 93709
+  },
+  "android-mushaf-light": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1708,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#ecece5",
+   "bytes": 244960
+  },
+  "android-mushaf-dark": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1708,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#28332d",
+   "bytes": 242919
+  },
+  "android-mushaf-surah": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1708,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#edede6",
+   "bytes": 223586
+  },
+  "android-mushaf-jump": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1708,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#f4f9f7",
+   "bytes": 41164
+  },
+  "android-reminder": {
+   "kind": "phone",
+   "w": 780,
+   "h": 1708,
+   "widths": [
+    390,
+    780
+   ],
+   "ph": "#f1f0ea",
+   "bytes": 45094
+  }
+ }
+}

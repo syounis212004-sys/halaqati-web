@@ -13,6 +13,10 @@ test('login deep links skip the landing page', () => {
   assert.equal(run({ hash: '#login' }), false);
   assert.equal(run({ search: '?app=1' }), false);
 });
+test('the sign-up deep link skips the landing page too', () => {
+  assert.equal(run({ hash: '#signup' }), false);
+  assert.equal(run({ hash: '#signup', webdriver: true, search: '?landing=1' }), false);
+});
 test('password recovery and OAuth returns skip the landing page', () => {
   assert.equal(run({ hash: '#access_token=a&type=recovery' }), false);
   assert.equal(run({ search: '?type=recovery' }), false);

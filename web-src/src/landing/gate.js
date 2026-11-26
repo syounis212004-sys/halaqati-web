@@ -9,7 +9,7 @@ export function shouldShowLanding(env) {
   for (var i = 0; i < keys.length; i++) {
     if (keys[i] === 'halaqati_v24_last_auth' || /^sb-.*-auth-token$/.test(keys[i])) return false;
   }
-  if (/(^|[?&#])app=/.test(search) || hash === '#login') return false;
+  if (/(^|[?&#])app=/.test(search) || hash === '#login' || hash === '#signup') return false;
   if (env.webdriver) return /(^|[?&])landing=1/.test(search);
   return true;
 }
