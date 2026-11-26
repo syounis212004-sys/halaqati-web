@@ -154,7 +154,6 @@ for (const width of [320, 360, 390, 768, 1024, 1440, 1920]) {
   await page.addInitScript(() => localStorage.setItem('halaqati_v24_last_auth', JSON.stringify({ id: 'u1', email: 'x@y.z', lastVerifiedAt: Date.now() })));
   await page.goto(srv.base + '?landing=1');
   await page.waitForTimeout(1200);
-  await page.waitForFunction(() => document.getElementById('signupForm') && !document.getElementById('signupForm').classList.contains('hidden'), null, { timeout: 20000 }).catch(async () => fail('sign-up form did not open after "ابدأ الآن": ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, signup: document.getElementById('signupForm').className, auth: document.getElementById('auth').className, toggle: typeof window.toggleSignup, ready: !!window.HalaqatiCertificates })))));
   const st = await page.evaluate(() => ({ landing: document.documentElement.hasAttribute('data-landing'), root: getComputedStyle(document.getElementById('hlRoot')).display, css: !!document.querySelector('link[href*="landing.css"]') }));
   if (st.landing || st.root !== 'none' || st.css) fail('signed-in user got landing ' + JSON.stringify(st));
   await ctx.close();
