@@ -9,7 +9,7 @@ const browser = await chromium.launch({
 
 try {
   for (const width of [390, 1280]) {
-    const context = await browser.newContext({ viewport: { width, height: 850 }, locale: 'ar', serviceWorkers: 'block' });
+    const context = await browser.newContext({ viewport: { width, height: 850 }, locale: 'ar', reducedMotion: 'reduce', serviceWorkers: 'block' });
     await context.route('**/*', (route) =>
       new URL(route.request().url()).origin === base.origin ? route.continue() : route.abort(),
     );
@@ -107,6 +107,25 @@ try {
     });
     assert.deepEqual(opened, [['student-fixture', 'program-session']]);
     console.log(`PASS ${width}px: recitation opens the selected program; no fallback into another scope`);
+    await page.evaluate(async () => {
+      state.page = 'sessions';
+      state.sessionView = 'regular-session';
+      state.sessionRoster = { attendance: [], notes: [], recitations: [] };
+      window.fixtureAttendanceWrites = 0;
+      window.NSR.load = async () => {};
+      localAttendanceSave = () => { window.fixtureAttendanceWrites++; };
+      await render();
+      window.NSR.closeConfirm();
+    });
+    await page.getByText('عدد الطلاب الذين لم يُرصد حضورهم: 1. ستبقى حالتهم غير مرصودة.', { exact: true }).waitFor();
+    const exitButton = page.locator('#nrSumDlg').getByRole('button', { name: 'خروج', exact: true });
+    await exitButton.click();
+    await page.waitForFunction(() => state.sessionView === null, null, { timeout: 8000 });
+    const exit = await page.evaluate(() => ({ session: state.sessionView, writes: window.fixtureAttendanceWrites }));
+    assert.equal(exit.session, null);
+    await page.locator('#nrRoster').waitFor({ state: 'hidden' });
+    assert.equal(exit.writes, 0);
+    console.log(`PASS ${width}px: exiting an unobserved roster writes no automatic absence`);
     await context.close();
   }
 } finally {

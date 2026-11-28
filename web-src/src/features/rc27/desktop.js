@@ -71,8 +71,9 @@
   // RC27.40: the master/detail composition now lives in native/sessions.js (sessionsPage renders list + roster itself).
   let autoOpened=false;
   async function autoOpenSession(){
-    if(!isDk()||state.page!=='sessions'||state.sessionView||autoOpened)return;
+    if(!isDk()||state.page!=='sessions'||autoOpened)return;
     autoOpened=true;
+    if(state.sessionView)return;
     const t=typeof todayStr==='function'?todayStr():new Date().toISOString().slice(0,10);
     const rows=(state.sessions||[]).filter(s=>s.status!=='cancelled');
     const pick=rows.find(s=>String(s.session_date).startsWith(t)&&s.status==='open')||rows.find(s=>s.status==='open')||rows.sort((a,b)=>String(b.session_date).localeCompare(String(a.session_date)))[0];
