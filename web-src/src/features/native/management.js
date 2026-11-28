@@ -548,8 +548,15 @@ function uBadge(u){
   if(!uActive(u))return NX.pill('موقوف','danger',{cls:'ngm-badge'});
   return NX.pill('نشط','success',{cls:'ngm-badge'});
 }
-const uActs=u=>u.approval_status==='pending'?['approve','reject','delete']:u.approval_status==='rejected'?['approve_again','delete']:['toggle',u.frozen?'unfreeze':'freeze','role',...(['teacher','supervisor'].includes(u.role)?['photo']:[]),'delete'];
-const ACT={approve:['اعتماد','Check','tonal'],reject:['رفض','Cancel','outlined'],approve_again:['اعتماد من جديد','Check','tonal'],toggle:null,role:['تغيير الصلاحية','ManageAccounts','outlined'],freeze:['تجميد','PauseCircle','outlined'],unfreeze:['فك التجميد','PlayCircle','outlined'],photo:['صورة','AccountCircle','outlined'],delete:['حذف نهائي','DeleteForever','outlined']};
+const uRequestedRole=u=>u.requested_role||u.role||'guardian';
+const uActs=u=>{
+  if(u.approval_status==='pending'||u.approval_status==='rejected'){
+    if(uRequestedRole(u)==='guardian')return ['review_link','delete'];
+    return u.approval_status==='pending'?['approve','reject','delete']:['approve_again','delete'];
+  }
+  return ['toggle',u.frozen?'unfreeze':'freeze','role',...(['teacher','supervisor'].includes(u.role)?['photo']:[]),'delete'];
+};
+const ACT={review_link:['طلبات الربط','FamilyRestroom','outlined'],approve:['اعتماد','Check','tonal'],reject:['رفض','Cancel','outlined'],approve_again:['اعتماد من جديد','Check','tonal'],toggle:null,role:['تغيير الصلاحية','ManageAccounts','outlined'],freeze:['تجميد','PauseCircle','outlined'],unfreeze:['فك التجميد','PlayCircle','outlined'],photo:['صورة','AccountCircle','outlined'],delete:['حذف نهائي','DeleteForever','outlined']};
 function uBtn(k,u,small){
   let [label,icon,kind]=k==='toggle'?[uActive(u)?'إيقاف':'تفعيل',uActive(u)?'PauseCircle':'PlayCircle','outlined']:ACT[k];
   if(k==='approve'&&U.busy===u.id)label='جاري…';
@@ -562,19 +569,18 @@ const uFiltered=()=>{
 function uList(){
   const rows=uFiltered();
   if(!rows.length)return NX.empty('لا توجد حسابات في هذا التصنيف',{icon:'AccountCircle'});
-  const reqOf=u=>u.requested_role||u.role||'guardian';
   const cards=rows.map(u=>{
     const admin=u.role==='admin',open=!!(U.open&&U.open[u.id]);
     return `<details class="ngm-card ngm-ucard ngm-uacc" ${open?'open':''} ontoggle="NGM.uOpen('${u.id}',this.open)"><summary>${uAv(u)}<span class="ngm-grow"><span class="ngm-name">${h(u.full_name||'مستخدم')}</span><span class="ngm-sub">${admin?'مسؤول النظام':h(roleAr(u.role))}</span></span>${uBadge(u)}<span class="ngm-uchev">${ic('ExpandMore',22)}</span></summary>
       <div class="ngm-ubody"><div class="ngm-sub ngm-mail1">${h(u.email||'—')}${u.phone?' · '+h(u.phone):''}</div>
-      <div class="ngm-lab">${admin?'':`الطلب: ${roleAr(reqOf(u))}`}</div>
+      <div class="ngm-lab">${admin?'':`الطلب: ${roleAr(uRequestedRole(u))}`}</div>
       ${u.rejection_reason?`<div class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</div>`:''}
       ${admin?'':`<div class="ngm-uacts ngm-uacts-s">${uActs(u).map(k=>uBtn(k,u,true)).join('')}</div>`}</div></details>`}).join('');
   const trs=rows.map(u=>{
     const admin=u.role==='admin';
     return `<tr><td><div class="ngm-ucell">${u.avatar_path?uAv(u):NX.avatar(u.full_name||'م')}<div><b>${h(u.full_name||'مستخدم')}</b><small>${h(u.phone||'')}</small></div></div></td>
       <td class="ngm-mail">${h(u.email||'—')}</td>
-      <td>${admin?'مسؤول النظام':`<div>${roleAr(u.role)}</div><small>الطلب: ${roleAr(reqOf(u))}</small>`}${u.rejection_reason?`<small class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</small>`:''}</td>
+      <td>${admin?'مسؤول النظام':`<div>${roleAr(u.role)}</div><small>الطلب: ${roleAr(uRequestedRole(u))}</small>`}${u.rejection_reason?`<small class="ngm-reject">سبب الرفض: ${h(u.rejection_reason)}</small>`:''}</td>
       <td>${uBadge(u)}</td><td><div class="ngm-racts">${admin?'—':uActs(u).map(k=>uBtn(k,u,true)).join('')}</div></td></tr>`}).join('');
   return `<div class="ngm-phone">${cards}</div><div class="ngm-desk ngm-tablewrap"><table class="ngm-table"><thead><tr><th>المستخدم</th><th>البريد</th><th>الصلاحية</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>${trs}</tbody></table></div>`;
 }
@@ -608,7 +614,9 @@ async function uRun(id,fn,success){
 const uFind=id=>(state.users||[]).find(u=>u.id===id);
 G.uAct=function(k,id){
   const u=uFind(id);if(!u||U.busy)return;
-  const req=['guardian','teacher','supervisor','observer'].includes(u.requested_role)?u.requested_role:'guardian';
+  const req=uRequestedRole(u);
+  if(k==='review_link')return go('approvals');
+  if(req==='guardian'&&['approve','approve_again','reject'].includes(k))return;
   const approve=()=>chk(db.from('profiles').update({role:req,requested_role:req,approval_status:'approved',active:true,approved_at:new Date().toISOString(),approved_by:state.user?.id,rejection_reason:null}).eq('id',id));
   if(k==='approve')uRun(id,approve,'تم اعتماد الحساب');
   else if(k==='approve_again')uRun(id,approve,'تم اعتماد الحساب من جديد');
@@ -625,6 +633,8 @@ function uReject(u){
   NX.dialog('ngmRej','رفض حساب '+(u.full_name||''),NX.field('سبب الرفض (اختياري)',{html:'<textarea id="ngmRejReason" rows="3"></textarea>'}),{cls:'nx-small-dlg ngm-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('ngmRej')"})}${NX.btn('رفض الحساب',{kind:'danger',onclick:`NGM.uRejectGo('${u.id}')`})}`});
 }
 G.uRejectGo=function(id){
+  const user=uFind(id);
+  if(!user||uRequestedRole(user)==='guardian'||user.approval_status!=='pending')return;
   const reason=($i('ngmRejReason')?.value||'').trim();NX.closeDialog('ngmRej');
   uRun(id,()=>chk(db.from('profiles').update({approval_status:'rejected',active:false,rejection_reason:reason||null}).eq('id',id)),'تم رفض طلب الحساب');
 };

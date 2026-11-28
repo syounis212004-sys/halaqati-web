@@ -66,7 +66,7 @@
       SU.busy=true;SU.err=null;repaint(f);
       try{
         const res=await rpc('rc_complete_signup',{p_name:f.name.trim(),p_phone:f.phone.trim(),p_role:SU.role,p_national_id:SU.role==='guardian'?nid:null,p_birth_date:SU.role==='guardian'?f.dob:null});
-        if(res&&res.ok===false){SU.err=res.error||'تعذر إكمال الحساب'}
+        if(res?.ok!==true){SU.err=res.error||'تعذر إكمال الحساب'}
         else{SU.busy=false;if(typeof refreshFromServer==='function')await refreshFromServer({renderAfter:true});else if(typeof checkApproval==='function')await checkApproval();return}
       }catch(e){SU.err=friendly(e)}
       SU.busy=false;repaint(f);
@@ -109,7 +109,7 @@
     if(!online())return show('الطلب يحتاج اتصالًا بالإنترنت','danger');
     go.disabled=true;
     try{const res=await rpc('rc_request_guardian_link',{p_national_id:nid,p_birth_date:dob});
-      if(res&&res.ok===false){show(res.error||'تعذر إرسال الطلب','danger');go.disabled=false;return}
+      if(res?.ok!==true){show(res?.error||'تعذر إرسال الطلب','danger');go.disabled=false;return}
       NX.closeDialog('nxAddChild');toast('تم إرسال الطلب وبانتظار الاعتماد');
     }catch(e){show(friendly(e),'danger');go.disabled=false}
   }
@@ -117,22 +117,24 @@
   // ---------- approvals page ----------
   const A={items:[],loading:false,msg:null,err:false,busy:null,idOpen:false,idQuery:'',idExp:null,idNote:null};
   const stageAr=r=>r.kind==='link'&&r.stage==='teacher'?'بانتظار موافقة المحفّظ':r.kind==='link'&&r.stage==='admin'?`وافق المحفّظ${r.teacher_name?` (${h(r.teacher_name)})`:''} · بانتظار التأكيد`:'طلب حساب جديد';
-  async function load(){
+  async function load(preserveDecision = false){
     A.loading=true;paint();
-    try{const d=await rpc('rc_pending_requests');A.items=Array.isArray(d)?d:[];A.msg=null}
+    try{const d=await rpc('rc_pending_requests');A.items=Array.isArray(d)?d:[];if(!preserveDecision){A.msg=null;A.err=false}}
     catch(e){A.err=true;A.msg=/rc_pending_requests/i.test(String(e?.message))?'لم يُطبَّق تحديث قاعدة البيانات الخاص بالاعتماد بعد.':friendly(e)}
     A.loading=false;paint();
   }
   async function review(kind,id,approve,reason){
+    if(A.busy!==null)return;
     if(!online()){A.err=true;A.msg='المراجعة تحتاج اتصالًا مباشرًا بالخادم';return paint()}
     A.busy=id;paint();
     const req=A.items.find(r=>r.id===id);
     try{
       const res=await rpc('rc_review_request',{p_kind:kind,p_id:id,p_action:approve?'approve':'reject',p_reason:(reason||'').trim()||null});
-      if(res&&res.ok===false){A.err=true;A.msg=res.error||'تعذر تنفيذ العملية'}
+      if(res?.ok!==true){A.err=true;A.msg=res?.error||'تعذر تنفيذ العملية'}
       else{A.err=false;A.msg=approve?`تمت الموافقة على طلب ${req?.name||''}`:`تم رفض طلب ${req?.name||''}`;try{db.functions.invoke('halaqati-notify',{body:{action:'push_approval_events'}}).catch(()=>{})}catch(_e){}}
     }catch(e){A.err=true;A.msg=friendly(e)}
-    A.busy=null;load();
+    await load(true);
+    A.busy=null;paint();
   }
   function reject(id,name){
     NX.dialog('nxReject',`رفض طلب ${h(name)}`,NX.field('سبب الرفض (اختياري)',{html:'<textarea id="nxRejReason"></textarea>'}),{cls:'nx-small-dlg',footer:`${NX.btn('إلغاء',{kind:'text',onclick:"NX.closeDialog('nxReject')"})}${NX.btn('تأكيد الرفض',{kind:'danger',onclick:`NXApprovals.doReject('${id}')`})}`});
@@ -165,7 +167,7 @@
   function paint(){if(state.page!=='approvals')return;const c=document.getElementById('content');if(!c)return;const keep=document.activeElement?.id==='nxIdSearch'?{s:document.activeElement.selectionStart}:null;c.innerHTML=pageHtml();if(keep){const e=document.getElementById('nxIdSearch');e?.focus();try{e?.setSelectionRange(keep.s,keep.s)}catch(_e){}}}
   window.NXApprovals={
     load,review,reject,addChild,sendChild,paint,
-    doReject(id){const r=A.items.find(x=>x.id===id),why=document.getElementById('nxRejReason')?.value||'';NX.closeDialog('nxReject');review(r?.kind||'account',id,false,why)},
+    doReject(id){const r=A.items.find(x=>x.id===id),why=document.getElementById('nxRejReason')?.value||'';NX.closeDialog('nxReject');if(r)review(r.kind,id,false,why)},
     idOpenToggle(){A.idOpen=!A.idOpen;paint()},idToggle(id){A.idExp=A.idExp===id?null:id;paint()},idSearch(v){A.idQuery=v;paint()},
     async idSave(id){
       const nid=latin(document.getElementById('nxId_'+id)?.value).replace(/\D/g,''),dob=document.getElementById('nxDob_'+id)?.value||'',err=document.getElementById('nxIdErr_'+id);
