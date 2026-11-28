@@ -595,7 +595,7 @@
   function finishRow(se,sid,data,dbId){
     const sd=data.selection_data||{};
     const fake={dataset:{dbId:dbId||'',tilawah:JSON.stringify(sd.tilawah_assessment||null)}};
-    if(!sd.smart_plan_id&&typeof window.halaqatiResolveSmartPlanForRecitation==='function'){
+    if(!isProgramSession(se)&&!sd.smart_plan_id&&typeof window.halaqatiResolveSmartPlanForRecitation==='function'){
       try{const p=window.halaqatiResolveSmartPlanForRecitation({studentId:sid,sessionId:se.id,activityType:data.activity_type,startPage:data.start_page,endPage:data.end_page});if(p){sd.smart_plan_id=p.id;sd.smart_plan_type=p.plan_type}}catch(_e){}
     }
     if(sd.smart_plan_id&&!sd.smart_plan_date)sd.smart_plan_date=se.session_date||null;
@@ -663,26 +663,12 @@
   };
   NS.closeConfirm=function(){
     const se=curSession();if(!se)return;const c=listCtx(se),sm=c.summary;
-    const text=sm.unmarked>0?`يوجد طلاب لم يُرصدوا: ${sm.unmarked}. عند الإغلاق يُسجَّل غير المرصود غائبًا، ويُعتمد الحاضر بلا تسميع «لم يُسمّع».`:'اكتمل رصد جميع الطلاب. راجع الملخص ثم أغلق الجلسة عندما تكون جاهزًا.';
+    const text=sm.unmarked>0?`عدد الطلاب الذين لم يُرصد حضورهم: ${sm.unmarked}. ستبقى حالتهم غير مرصودة.`:'راجع الملخص ثم أغلق شاشة الجلسة عندما تكون جاهزًا.';
     const up=canManage()&&se.status==='open'?NX.btn('رفع الجلسة',{kind:'tonal',icon:'CloudUpload',onclick:"NX.closeDialog('nrSumDlg');NSR.upload()"}):'';
-    NX.dialog('nrSumDlg','ملخص الجلسة قبل الإغلاق',`<p class="nx-confirm-text">${h(text)}</p>${strip(sm,c.lesson)}`,{cls:'nr-dlg-mid',footer:`${NX.btn(sm.unmarked>0?'العودة للرصد':'متابعة الجلسة',{kind:'text',onclick:"NX.closeDialog('nrSumDlg')"})}${up}${NX.btn(sm.unmarked>0?'إغلاق على أي حال':'إغلاق الجلسة',{onclick:`NSR.finish(${sm.unmarked===0})`})}`});
+    NX.dialog('nrSumDlg','الخروج من الجلسة',`<p class="nx-confirm-text">${h(text)}</p>${strip(sm,c.lesson)}`,{cls:'nr-dlg-mid',footer:`${NX.btn('متابعة الرصد',{kind:'text',onclick:"NX.closeDialog('nrSumDlg')"})}${up}${NX.btn('خروج',{onclick:'NSR.finish()'})}`});
   };
-  /** RC40 smart close: a present student with no recitation is recorded «لم يُسمّع»; an unmarked student is recorded absent. */
-  function smartCloseApply(se){
-    const c=listCtx(se);let nr=0,ab=0;
-    c.all.forEach(st=>{
-      const state0=c.states.get(st.id);
-      try{
-        if((state0==='PRESENT'||state0==='LATE')&&!c.lesson){saveNoteLocal(st.id,se.id,{participation:NOT_RECITED});nr++}
-        else if(state0==='UNMARKED'){localAttendanceSave(st.id,se.id,'absent',{excuse_reason:null,arrival_minutes_late:0});ab++}
-      }catch(_e){}
-    });
-    if(nr||ab){try{syncSoon()}catch(_e){}try{setMessage(`إغلاق ذكي: ${nr} «لم يُسمّع» · ${ab} غائب`,'success')}catch(_e){}}
-  }
-  NS.finish=function(celebrate){
+  NS.finish=function(){
     NX.closeDialog('nrSumDlg');
-    try{const se=curSession();if(se&&se.status==='open'&&canManage())smartCloseApply(se)}catch(_e){}
-    if(celebrate){try{window.RC27Motion?.celebrate()}catch(_e){}}
     closeSessionRoster();
   };
 
@@ -692,6 +678,7 @@
   const RATINGS=[['makharij','المخارج والصفات'],['tajweed','أحكام التجويد'],['waqf_ibtida','الوقف والابتداء'],['fluency','الطلاقة والترتيل']];
 
   function defaultType(se,st){
+    if(isProgramSession(se))return se.session_type==='test'?'test':'tilawah';
     if(isTathbit(st))return 'review_far';
     return ({sard:'sard',review:'review_near',test:'test',tajweed:'tilawah',tilawah:'tilawah'})[se.session_type]||'new_hifz';
   }
@@ -713,16 +700,18 @@
   async function openRecitation(sid,seId,type,planId,existingId){
     const se=sessionOf(seId),st=studentOf(sid);if(!se||!st)return;
     if(!rosterOk(seId)){try{await loadSessionRosterData(seId)}catch(_e){}}
-    await ensurePlans([sid]);
+    const program=isProgramSession(se);
+    if(!program)await ensurePlans([sid]);
     const existing=existingId?recsOf(sid).find(r=>sid_(r.id)===sid_(existingId)):null;
-    let t=canonType(existing?.activity_type||type||defaultType(se,st));
-    const snap=existing?null:snapshotFor(sid,t,se.session_date,planId);
-    const exSnap=existing?snapshotFor(sid,t,se.session_date,existing.selection_data?.smart_plan_id):null;
+    const t=canonType(existing?.activity_type||type||defaultType(se,st));
+    if(program&&!['tilawah','test'].includes(t))return toast('جلسات البرامج تقبل التلاوة والاختبار فقط');
+    const snap=existing||program?null:snapshotFor(sid,t,se.session_date,planId);
+    const exSnap=existing&&!program?snapshotFor(sid,t,se.session_date,existing.selection_data?.smart_plan_id):null;
     const useSnap=snap||exSnap;
     const assign=existing?null:(useSnap?.act?(useSnap.act.scheduledToday?useSnap.act.assignment:null)||useSnap.act.assignment||useSnap.act.extraAssignment:null);
     const ta=existing?.selection_data?.tilawah_assessment||{};
     R.rec={sid,seId,existing,type:t,range:existing?rangeFromRecord(existing):rangeFromAssignment(assign),mistakes:existing?.mistakes&&t!=='tilawah'?existing.mistakes:0,prompts:existing?.prompts||0,note:existing?.teacher_note||'',saving:false,error:null,
-      planId:existing?.selection_data?.smart_plan_id||(t==='tilawah'?null:useSnap?.plan?.id)||null,planType:existing?.selection_data?.smart_plan_type||(t==='tilawah'?null:useSnap?.plan?.plan_type)||null,planDate:existing?.selection_data?.smart_plan_date||se.session_date,
+      planId:program?null:existing?.selection_data?.smart_plan_id||(t==='tilawah'?null:useSnap?.plan?.id)||null,planType:program?null:existing?.selection_data?.smart_plan_type||(t==='tilawah'?null:useSnap?.plan?.plan_type)||null,planDate:existing?.selection_data?.smart_plan_date||se.session_date,
       tl:{riwayah:ta.riwayah||'hafs',lahn_jali:Math.max(0,+ta.lahn_jali||0),lahn_khafi:Math.max(0,+ta.lahn_khafi||0),makharij:clamp(ta.makharij,5),tajweed:clamp(ta.tajweed,5),waqf_ibtida:clamp(ta.waqf_ibtida,5),fluency:clamp(ta.fluency,5),issues:new Set(arr(ta.issue_keys))}};
     if(existing&&t==='tilawah')R.rec.mistakes=0;
     drawRec();
@@ -745,7 +734,7 @@
   }
   function recBody(){
     const D=R.rec,st=studentOf(D.sid),se=sessionOf(D.seId),d=recDerived();
-    const types=isTathbit(st)?[['review_far','تثبيت','Replay'],['tilawah','تلاوة','AutoStories']]:[['new_hifz','حفظ','MenuBook'],['review_near','مراجعة','Replay'],['sard','سرد','RecordVoiceOver'],['tilawah','تلاوة','AutoStories'],...(D.type==='test'||isProgramSession(se)?[['test','اختبار','Verified']]:[])];
+    const types=isProgramSession(se)?[['tilawah','تلاوة','AutoStories'],['test','اختبار','Verified']]:isTathbit(st)?[['review_far','تثبيت','Replay'],['tilawah','تلاوة','AutoStories']]:[['new_hifz','حفظ','MenuBook'],['review_near','مراجعة','Replay'],['sard','سرد','RecordVoiceOver'],['tilawah','تلاوة','AutoStories'],...(D.type==='test'||isProgramSession(se)?[['test','اختبار','Verified']]:[])];
     const rg=D.range,label=rg?(rg.mode==='surahs'&&rg.selectedSurahs.length?rg.selectedSurahs.map(surahName).join('، '):rg.mode==='juz'&&rg.selectedJuz.length?`الأجزاء ${rg.selectedJuz.join('، ')}`:rangeLabel(rg.startSurah,rg.startAyah,rg.endSurah,rg.endAyah,rg.startPage,rg.endPage)):null;
     const rangeCard=`<section class="nr-range"><div class="nr-range-h"><span class="nr-range-i">${ic('MenuBook',24)}</span><div><small>المقرر القرآني</small><b>${h(label||'لم يتم اختيار نطاق بعد')}</b></div></div>
       ${d.pages>0.0001?`<div class="nr-pills">${NX.pill(`${plain(d.pages)} صفحة`,'info')}${rg?.ayahs?NX.pill(`${rg.ayahs} آية`,'info'):''}</div>`:''}

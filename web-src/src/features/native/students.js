@@ -282,7 +282,30 @@
       }catch(e){toast(e.message||'تعذر تحديث حالة الطالب')}
     },{danger:!back});
   };
-  NSS.recite=id=>{NX.closeDialog('nsDetail');if(typeof openDailyForStudent==='function')openDailyForStudent(id)};
+  NSS.recite=id=>{
+    const student=findStudent(id);
+    if(!student||student.status!=='active')return toast('الطالب غير نشط');
+    const scope=state.studentHalaqa&&state.studentHalaqa!=='all'?state.studentHalaqa:student.halaqa_id;
+    const memberships=ctx().mem.get(id);
+    if(!scope||(scope!==student.halaqa_id&&!memberships?.has(scope)))return toast('اختر حلقة أو برنامجًا يشارك فيه الطالب أولًا');
+    const sessions=(state.sessions||[]).filter(session=>session.halaqa_id===scope&&session.session_date===T()&&session.status==='open'
+      &&!session.activity_data?.archived&&['tasmee','sard','review','test','tilawah','tajweed'].includes(session.session_type));
+    NX.closeDialog('nsDetail');
+    if(!sessions.length)return toast('لا توجد جلسة تسميع أو تلاوة مفتوحة اليوم في هذا النشاط');
+    const open=session=>openDailyForStudent(id,session.id);
+    if(sessions.length===1)return open(sessions[0]);
+    S.recitationChoices={sessions,open};
+    NX.dialog('nsSessionChoice','اختر جلسة اليوم',sessions.map((session,index)=>
+      NX.btn(session.title||(typeof sesAr!=='undefined'&&sesAr[session.session_type])||'جلسة',{full:true,onclick:`NSS.pickStudentSession(${index})`}),
+    ).join(''),{cls:'nx-small-dlg'});
+  };
+  NSS.pickStudentSession=index=>{
+    const choice=S.recitationChoices,session=choice?.sessions[index];
+    if(!session)return;
+    S.recitationChoices=null;
+    NX.closeDialog('nsSessionChoice');
+    return choice.open(session);
+  };
   NSS.rowClick=(e,id)=>{if(e.target.closest('input,button,a'))return;NSS.selectRow(id)};
   NSS.selectRow=id=>{
     S.panelId=id;
@@ -457,7 +480,8 @@
     const st=id?findStudent(id):null;
     if(id&&!st&&legacyOpenStudent)return legacyOpenStudent(id);
     const act=masterHalaqas().filter(x=>x.active!==false);
-    const hid=(st&&st.halaqa_id)||(act[0]&&act[0].id)||(state.halaqas[0]&&state.halaqas[0].id)||'';
+    const preferred=act.find(group=>group.id===state.studentHalaqa);
+    const hid=(st&&st.halaqa_id)||preferred?.id||(act.length===1?act[0].id:'');
     let gid=(st&&st._guardian_id)||'';
     if(st&&online()){try{const g=await db.from('student_guardians').select('guardian_id,is_primary').eq('student_id',st.id).eq('is_primary',true).maybeSingle();gid=(g.data&&g.data.guardian_id)||gid}catch(e){}}
     if(st&&!gid&&st.guardian_email)gid=((gAccounts().find(g=>String(g.email||'').toLowerCase()===String(st.guardian_email).toLowerCase()))||{}).id||'';
@@ -507,14 +531,36 @@
   NSS.edHalaqa=v=>{S.ed.hid=v;S.ed.sec.delete(v);if(S.ed.cat&&!edCats().some(c=>c.id===S.ed.cat))S.ed.cat='';paintEditor()};
   NSS.edFile=i=>{S.ed.file=i.files&&i.files[0]||null;const s=i.parentElement.querySelector('small');if(s)s.textContent=S.ed.file?S.ed.file.name:''};
   async function saveMemberships(sid,E){
-    const same=E.sec.size===E.orig.size&&[...E.sec].every(x=>E.orig.has(x));
-    if(same)return;
-    if(!online()){toast('تغيير البرامج الإضافية يحتاج اتصالاً بالإنترنت');return}
-    const today=T(),ex=await db.from('student_halaqa_memberships').select('*').eq('student_id',sid);
-    const by=new Map((ex.data||[]).map(m=>[m.halaqa_id,m]));
-    for(const hid of E.sec){if(hid===E.hid)continue;const r=await db.from('student_halaqa_memberships').upsert({student_id:sid,halaqa_id:hid,membership_type:'participant',status:'active',joined_at:(by.get(hid)&&by.get(hid).joined_at)||today,ended_at:null,updated_at:new Date().toISOString()},{onConflict:'student_id,halaqa_id'});if(r.error)throw r.error}
-    for(const [hid,row] of by){if(!hid||E.sec.has(hid)||row.status!=='active')continue;const r=await db.from('student_halaqa_memberships').update({status:'withdrawn',ended_at:today,updated_at:new Date().toISOString()}).eq('student_id',sid).eq('halaqa_id',hid);if(r.error)throw r.error}
-    const RC=window.RC27;if(RC){RC.memberships=(RC.memberships||[]).filter(m=>m.student_id!==sid).concat([...E.sec].filter(x=>x!==E.hid).map(hid=>({student_id:sid,halaqa_id:hid,status:'active'})))}
+    const added=[...E.sec].filter(hid=>hid!==E.hid&&!E.orig.has(hid));
+    const removed=[...E.orig].filter(hid=>hid!==E.hid&&!E.sec.has(hid));
+    if(!added.length&&!removed.length)return;
+    if(!online())throw new Error('تغيير البرامج الإضافية يحتاج اتصالاً بالإنترنت');
+    const today=T();
+    const existing=await db.from('student_halaqa_memberships').select('*').eq('student_id',sid);
+    if(existing.error)throw existing.error;
+    const by=new Map((existing.data||[]).map(m=>[m.halaqa_id,m]));
+    const updateCache=row=>{
+      const rc=window.RC27;
+      if(!rc)return;
+      rc.memberships=(rc.memberships||[]).filter(m=>m.student_id!==sid||m.halaqa_id!==row.halaqa_id);
+      rc.memberships.push(row);
+    };
+    for(const hid of added){
+      const previous=by.get(hid);
+      if(previous?.status==='active')continue;
+      const payload={student_id:sid,halaqa_id:hid,membership_type:'participant',status:'active',joined_at:previous?.joined_at||today,ended_at:null,updated_at:new Date().toISOString()};
+      const result=await db.from('student_halaqa_memberships').upsert(payload,{onConflict:'student_id,halaqa_id'});
+      if(result.error)throw result.error;
+      updateCache(payload);
+    }
+    for(const hid of removed){
+      const previous=by.get(hid);
+      if(previous?.status!=='active')continue;
+      const patch={status:'withdrawn',ended_at:today,updated_at:new Date().toISOString()};
+      const result=await db.from('student_halaqa_memberships').update(patch).eq('student_id',sid).eq('halaqa_id',hid);
+      if(result.error)throw result.error;
+      updateCache({...previous,...patch});
+    }
   }
   NSS.edSave=async()=>{
     const E=S.ed;if(!E||E.saving)return;
